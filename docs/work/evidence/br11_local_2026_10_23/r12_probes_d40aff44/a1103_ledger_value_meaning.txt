@@ -1,0 +1,11 @@
+plain                              READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'NoneType', 'detail': 'str'} decision fields agree True
+predicted Decimal                  READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'str', 'detail': 'str'} decision fields agree True
+predicted np.float32               READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'str', 'detail': 'str'} decision fields agree True
+predicted np.float64               READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'float', 'detail': 'str'} decision fields agree True
+iteration np.int64                 READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'NoneType', 'detail': 'str'} decision fields agree True
+charge_id uuid                     READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'NoneType', 'detail': 'str'} decision fields agree True
+detail dict                        READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'NoneType', 'detail': 'dict'} decision fields agree True
+detail set                         READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'NoneType', 'detail': 'str'} decision fields agree True
+pools np.float32 (direct charge)   READ digest==owner True types {'charge_id': 'str', 'iteration': 'int', 'realized': 'float', 'predicted': 'NoneType', 'detail': 'str'} decision fields agree True
+realized Decimal (direct charge)   REFUSED OwnerUnavailable: budget ledger 'l' is not one its owner writes down and reads back (3 read-backs failed alike): TypeError: unsu
+total nan                          READ digest==owner True types {} decision fields agree True

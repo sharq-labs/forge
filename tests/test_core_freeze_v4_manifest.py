@@ -10,6 +10,7 @@ allowed, difference by difference, with the comparator's problem list empty and 
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 import pathlib
 import subprocess
@@ -152,9 +153,10 @@ def test_the_deep_surface_carries_methods_and_member_positions(manifest):
     """R-69, finding 94: two deleted methods moved neither the V1 nor the V2 digest."""
     built = api_surface_v4.build()
     pinned = json.loads((REPO / core_freeze_v4.SURFACE_PATH).read_text(encoding="utf-8"))
-    assert api_surface_v4.canonical_bytes(built) == api_surface_v4.canonical_bytes(pinned)
-    assert manifest["api"]["deep_surface"]["digest"] == api_surface_v4.digest()
-    assert manifest["api"]["deep_surface"]["method_count"] == built["method_count"] > 1000
+    assert api_surface_v4.additive_method_problems(pinned, built) == []
+    assert manifest["api"]["deep_surface"]["digest"] == api_surface_v4.digest(pinned)
+    assert manifest["api"]["deep_surface"]["method_count"] == pinned["method_count"] > 1000
+    assert built["method_count"] >= pinned["method_count"]
     for entry in built["symbols"]:
         if entry.get("enum_members"):
             assert [m["position"] for m in entry["enum_members"]] == list(
@@ -197,3 +199,66 @@ def test_the_command_line_verifier_agrees_with_the_function(manifest):
     proc = subprocess.run([sys.executable, "-X", "utf8", "-m", "tools.certification.core_freeze_v4",
                            "--verify"], cwd=REPO, capture_output=True, text=True, encoding="utf-8", env=env)
     assert (proc.returncode == 0) == core_freeze_v4.verify(REPO).ok, proc.stdout[-2000:] + proc.stderr[-2000:]
+
+
+def _deep_surface_fixture():
+    return {
+        "schema": api_surface_v4.SCHEMA,
+        "modules": ["engcore.fixture"],
+        "symbol_count": 1,
+        "method_count": 1,
+        "symbols": [{
+            "module": "engcore.fixture", "name": "Record", "kind": "dataclass",
+            "methods": {"read": {"role": "method", "parameters": [
+                {"name": "self", "kind": "POSITIONAL_OR_KEYWORD", "has_default": False},
+                {"name": "strict", "kind": "KEYWORD_ONLY", "has_default": True, "default": False}],}},
+            "enum_members": [{"name": "FIRST", "value": "first", "position": 0},
+                             {"name": "SECOND", "value": "second", "position": 1}],
+            "dataclass_field_order": ["first", "second"],
+        }],
+    }
+
+
+def test_r22_deep_surface_descendant_comparator_rejects_breaking_changes():
+    stored = _deep_surface_fixture()
+    assert api_surface_v4.compatibility_problems(stored, json.loads(json.dumps(stored)), descendant=True) == []
+    grown = json.loads(json.dumps(stored))
+    grown["symbols"][0]["methods"]["new_method"] = {"role": "method", "parameters": []}
+    grown["method_count"] += 1
+    assert api_surface_v4.compatibility_problems(stored, grown, descendant=True) == []
+    assert api_surface_v4.compatibility_problems(stored, grown, descendant=False)
+
+    mutations = []
+    def changed(label, mutate):
+        candidate = json.loads(json.dumps(stored))
+        mutate(candidate)
+        mutations.append((label, candidate))
+
+    changed("removed method", lambda x: x["symbols"][0]["methods"].pop("read"))
+    changed("renamed method", lambda x: (x["symbols"][0]["methods"].pop("read"), x["symbols"][0]["methods"].update({"renamed": {"role": "method", "parameters": []}})))
+    changed("method role", lambda x: x["symbols"][0]["methods"]["read"].update(role="staticmethod"))
+    changed("method signature", lambda x: x["symbols"][0]["methods"]["read"]["parameters"].pop())
+    changed("parameter kind", lambda x: x["symbols"][0]["methods"]["read"]["parameters"][1].update(kind="POSITIONAL_OR_KEYWORD"))
+    changed("default presence", lambda x: x["symbols"][0]["methods"]["read"]["parameters"][1].update(has_default=False))
+    changed("default value", lambda x: x["symbols"][0]["methods"]["read"]["parameters"][1].update(default=True))
+    changed("symbol kind", lambda x: x["symbols"][0].update(kind="class"))
+    changed("symbol identity", lambda x: x["symbols"][0].update(name="OtherRecord"))
+    changed("enum order", lambda x: x["symbols"][0].update(enum_members=[{"name": "SECOND", "value": "second", "position": 0}, {"name": "FIRST", "value": "first", "position": 1}]))
+    changed("field order", lambda x: x["symbols"][0].update(dataclass_field_order=["second", "first"]))
+    changed("method count", lambda x: x.update(method_count=9))
+    changed("symbol count", lambda x: x.update(symbol_count=2))
+    changed("duplicate symbol", lambda x: x["symbols"].append(dict(x["symbols"][0])))
+    for label, candidate in mutations:
+        assert api_surface_v4.compatibility_problems(stored, candidate, descendant=True), f"{label} was accepted"
+
+
+def test_r22_deep_surface_history_requires_candidate_bytes_and_manifest_digest():
+    surface_bytes = api_surface_v4.canonical_bytes(_deep_surface_fixture())
+    assert api_surface_v4.historical_surface_problems(surface_bytes, surface_bytes, hashlib.sha256(surface_bytes).hexdigest()) == []
+    assert api_surface_v4.historical_surface_problems(surface_bytes + b"\n", surface_bytes, hashlib.sha256(surface_bytes).hexdigest())
+    # Keep stored bytes and digest valid while altering only the candidate blob. This independently
+    # demonstrates that candidate-byte equality is enforced (the prior case isolated the digest).
+    candidate_only_change = surface_bytes.replace(b"engcore.fixture", b"engcore.other")
+    assert api_surface_v4.historical_surface_problems(surface_bytes, candidate_only_change,
+                                                        hashlib.sha256(surface_bytes).hexdigest())
+    assert api_surface_v4.historical_surface_problems(surface_bytes, surface_bytes, "0" * 64)

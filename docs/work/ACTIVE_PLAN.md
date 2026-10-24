@@ -6,6 +6,164 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — R22 required-gate repair (2026-10-24)
+
+Owner explicitly authorized bounded repair of the59 remaining R21 failures,
+including necessary OD-3 work, independent review and full assurance. This supersedes
+the R21 stop on these repairs only. Preserve all historical failures, scientific
+invariants, evidence identities and gates. No new Big Rock. **No push or merge.**
+
+Start: clean05a9e4d43e60e5ab643d385c2f06c7adc8b5eeca; R21 measured source d05abfdf.
+Plan: classify59 by rootcause -> red-first bounded repair groups -> affected gates
+and independent scientific/compatibility review -> clean immutable reviewed source
+-> full documented local assurance -> certificate-only child/verify only after
+SOURCE_PASS. Stop only for a concrete unresolved scientific/architectural decision.
+Raw evidence stays outside checkout at /home/dev_kaeem/br11-r22/; R21 evidence is
+preserved. GitHub governance is not changed and cannot authorize publication.
+
+## Current bounded task - R21 integration gate recovery (2026-10-24)
+
+**R21 status: BLOCKED after completed bounded integration repairs.** Main-history reconciliation, all1211unknown provenance entries, complete746classification, retention/secret audit, local runtime setup and two required-runtime test portability repairs are complete. Final reviewed measured source`d05abfdf8216eda24a6235a9c7565d276f9a7fcc`:officialassurance REFUSED atFAST311 (59failed12922passed176skipped), SAFE_TO_PUSH:NO. Allfourinitialadditionalfailuresresolved;59remainingIDs matchRound20comparison, not a causal-equivalence claim. No receipt/certificatechild/push/merge. Stop for separate scientific/Core/OD3 repair authorization and private-protection/independent-human-review owneractions. Exact evidence and59nodeIDs: `docs/work/evidence/r21-integration-recovery/FINAL_REPORT.md`. No automatic retry, gate weakening or newBigRock.
+
+R21 is the current executable task. BR1.1 remains locally CLOSED; Kernel v0 and all
+new scientific implementation remain NOT STARTED. The owner explicitly authorized
+the documented full local-assurance workflow, campaigns, mutation shards and its
+certificate-only child, solely as prerequisites for a valid receipt. This supersedes
+the earlier assurance prohibition only for this bounded workflow. Repair and verify
+source/provenance first; freeze an independently technically reviewed source SHA;
+use controlled local WSL resources; preserve every failure; do not expand into OD-3,
+thermal, battery or UQ repairs. No push/merge unless SAFE_TO_PUSH is explicitly YES
+and every other mandatory gate is satisfied.
+
+Execution: reconcile main history (done at41663479) -> explicit provenance inventory
+repair and review -> immutable source -> documented local assurance -> certificate-only
+child and verification only if SOURCE_PASS -> publication only with protection and
+independent human approval. A technical AI review is not GitHub approving review.
+Current owner actions outstanding: supported private-repository protection capability
+(API403) and an independent human reviewer (only author sharq-labs is listed).
+No purchase, visibility change, governance change or self-approval is authorized.
+Evidence: docs/work/evidence/r21-integration-recovery/ and /home/dev_kaeem/br11-r21/.
+
+## Current bounded task - GEN2-BR1.1 authority-bound ScientificWorld + non-bypassable admission (2026-10-22)
+
+**Current continuation (2026-10-24): CLOSED within BR1.1 development scope.** Approved lifetime contract implemented in0b605b4; Round19's two substantive families repaired inb4bbee0f with red-first controls. Fresh Round20 sixperspective review plus scientific skill and completeness critic: Q1–Q7 allNO,0BLOCKER/0MAJOR/0substantiveMINOR. Targeted885pass; cleanFAST12896pass/67basefailureIDs/190skip; provenance diagnostic differs1202vs456 and remains debt. Gen1 INTACT. Evidence `docs/work/evidence/br11_local_2026_10_23/round20/README.md`. No new owner decision. Scientific Contract Kernel v0 is next authorized Big Rock; NOT STARTED per mission stop boundary. No push/PR/merge/OD3/certification. Earlier round statuses below are historical checkpoints.
+
+Development repair of GEN2-BR1's AUTHORITY_DUPLICATION_BLOCKER on `research/mind-gen2-authority-binding-v1` (base
+`1202ea6c`, BR1's report commit). Pushed to `origin` at the 2026-10-23 cloud handoff for local resumption: no PR, not
+merged, not certified. **Status: IN_PROGRESS** (not closed): review round 11 found MAJORs, fixed in `d5ef1e3`; round 12
+(at `a96baa6`) was INTERRUPTED with no result, and its two started lenses left unverified MAJOR-class leads in
+`owners.BudgetReader`. Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`.
+
+R12-T1 done locally (2026-10-23, WSL2, CPython 3.12.3; PROGRESS item 28): every round-12 lead reproduced at
+`d40aff44`; R12-1..R12-6 confirmed and fixed in `33258438` with failing-first controls
+(`tests/mind/test_authority_review_r12.py`) and mutants (17 of 18 caught; the race-only `shared_cache` recorded as
+uncontrolled); dispositions in README §9. Local commits are not pushed (WSL has no GitHub access; a bundle is handed to
+the Windows side).
+
+Fresh review round 13 at `3b407ddb` did not meet the gate (Q4 YES: MAJORs F13-02 = R13-C-F1, R13-B-F1, R13-C-F2 =
+R13-A-F1, critic R13-CRIT-1); all fixed in `13051154` with controls (`test_authority_review_r13.py`) and 32 mutants
+each caught; gates show no new failures vs base (PROGRESS item 29).
+
+Fresh review round 14 at `1c9fdd84` did not meet the gate (Q4 YES: a not-read-back state shorter than the observed
+history was never recorded, five lenses; critic CRIT14-1, a regression of the dict-only rule); fixed in `7b4a0de8`
+with controls (`test_authority_review_r14.py`) and 38 mutants each caught; gates show no new failures vs base
+(PROGRESS item 30).
+
+**R15 continuation (Codex, 2026-10-23):** recovered the clean native WSL clone at exact reviewed
+`95f3869ed020b04c36c098f0c33050aa009212b6`. Round 15 is complete (15 agents), aggregate Q4 YES.
+Its 25 findings are dispositioned in `docs/work/evidence/br11_local_2026_10_23/round15/threat_disposition_matrix.json`.
+The repair has 33 deterministic controls plus 54 bounded generated traces (87 pass), and two existing R13 dictionary controls
+in mutation proof (89 pass; 36 fail on reviewed source). 16 correctness mutants killed; one redundant guard
+removal justified by an independent recovery path and its killed compound mutant. L2: 781 passed.
+Repeated affected-path measurements completed. Clean gate source commit `ec4d23dc238d2e8818170a4029a010538e23af72`: L1 115 passed,
+regression 279 passed; guards 1496 pass / 2 base failures; expensive subset 335 pass / 13 failures / 14 errors;
+FAST 12792 pass / 67 base failures / 190 skipped. Exact failure-ID comparison: NO NEW FAILURES VS BASE.
+Rescore/benchmark MATCHES; Gen1 INTACT. Complete repair/evidence batch committed locally.
+**Round 16 RUNNING:** exact evidence-complete commit `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`,
+read-only checkout `/home/dev_kaeem/forge-r16-review`; scratch results `/home/dev_kaeem/br11-review/r16/`.
+Six independent lenses, then two independent skeptics per proposed BLOCKER/MAJOR and a completeness critic.
+Source/tests are identical to clean gate commit `ec4d23dc`. No source changes during review.
+Six lens reports collected: 8 MAJOR aliases / 2 unique families and 6 MINOR aliases / 2 unique families; Q4 YES. Both independent skeptics reproduced the two MAJOR families; completeness critic complete. Next: failing-first and separable local repairs (canonical retained history, interrupted detached reconciliation, post-return registration); preserve the pre-capture information-loss family as OPEN pending an explicit handoff/lifetime contract decision. Local repairs: 16 new controls; 6 semantic mutants killed; L2 797 passed; regression279; FAST12808 passed/67 base failures/190 skipped at clean source68db8819. Guards/expensive/FAST exact failure IDs show NO NEW FAILURES VS BASE; rescore/benchmark MATCHES, Gen1 INTACT. Round17 RUNNING on evidence-complete committed repair98d72b2ef854012780f4222706884b911c4a2f03, read-only checkout /home/dev_kaeem/forge-r17-review. Six fresh lenses complete; one known pre-capture MAJOR family (six aliases) and one new JSON-roundtrip normalization MINOR family (D2/F2). Skeptics/critic complete. JSON parity repaired with4 failing-first cases,16 new controls and7 killed mutants; L1 201pass, L2 813pass, regression279. Guards/expensive exact base failureIDs unchanged; references MATCHES/INTACT. Clean FAST at41a763a697707db1897ee1fcbf1365495875e45b:12824passed/67basefailures/190skipped. Exact guard/expensive/FAST failureIDs add0 failures. Round18 COMPLETE atcc7ef06b0d08398173d9448ff47d8abb7e375d44 (source/tests identical41a763a6): six lenses, two independent skeptics per MAJOR alias, completeness critic. Q4YES; Q1–Q3/Q5–Q7 NO within bounded review. One known MAJOR/6 aliases,0 BLOCKER,0 open substantive MINOR; no new separable defect. **PRECISELY BLOCKED / NOT CLOSED:** OWNER_DECISION_REQUIRED on stable published account bindings and recoverable history across restore while retention/reconciliation is pending. Fresh detached dict publication is a demonstrated option; full acknowledgement not required by evidence. Read docs/work/evidence/br11_local_2026_10_23/round18/OWNER_DECISION.md. Do not implement a new owner contract or weaken observation guarantee without that decision. Next: owner decision, then bounded failing-first implementation and fresh review. No closure inferred from partial repairs.
+Owner-lifetime closure 2026-10-24: the owner APPROVED stable publication/history lifetime; the prior decision stop is superseded. IN_PROGRESS: reproduce → failing-first → generic publication lifecycle → bounded mutants/state traces → established ladder → commit → fresh independent Round19. One implementation branch/check-out only; logs outside repository. BR1.1 remains NOT CLOSED. No push, PR, merge, certification, OD-3, Portfolio or Kernel implementation.
+
+Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:
+`benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
+
+The world is now a projection of FORGE's owners, verified against them at every admission and dispatch; admission
+decides on exactly the setting an executor receives (as requested: realization uncertainty is not assessed). Independent review rounds run until 0 BLOCKER / 0 MAJOR; after BR1.1 closes or is
+precisely blocked: STOP.
+
+OWNER_DECISION_REQUIRED (BR1.1 does not decide these):
+- `src/engcore/sria/campaign/budget.py` gained read-only `BudgetLedger.digest` / `.revision` (CORE_CERTIFIED,
+  `assurance_admission`), and the changed-file gate marks the certified harness tests BR1.1 adds or changes
+  (`tests/mind/test_authority_*.py`, `tests/mind/test_world_contract.py`, `tests/mind/test_world_failing_first.py`,
+  `tests/test_sria_budget_ledger_identity.py`): hardened recertification is required before merge and was NOT RUN
+  (OD-3 boundary).
+- Confirm where admission verification lives: BR1.1 puts it in `engcore.mind.world.admission`, behind the execution
+  side's `ExecutionDesk` (BR1 left this as an owner question).
+- A hard-enclosure uncertainty form or a core decision-coverage policy: without it no current value decides a
+  containment, so 9 of 21 BR1 base proposals are MISSING_INFORMATION (failed closed, nothing worked around).
+- A canonical protocol owner: protocol declarations stay caller-declared, held in force by the execution side.
+- Budget reservation and at-most-once execution at the execution owner (the desk reserves nothing).
+- A provider status loader (`ProviderStatus.from_dict`) on the providers owner.
+- Protocol level semantics across units: an action level declared in another unit executes as its conversion into
+  the variable's unit, off any other spelling of that level (the variable's own, or a bound's) by conversion rounding
+  (one or several ulps: 8 for 95 degF in degC), so a
+  bound placed at that level decides on the converted value and can go either way; this holds whether or not the
+  variable declares a level set, and an action that declares -0.0 executes -0.0 (README §4). Should bind refuse an
+  action level whose conversion into the variable's unit does not round-trip bit-exactly to the action's own spelling
+  (and, where the variable declares levels, is not bit-equal to the variable's own spelling, sign of zero included),
+  failing closed at bind, or keep deciding on the level as executed (BR1.1 does the latter)?
+- Merge requires the changed-file gate's SCIENTIFIC tier for `src/engcore/mind/world` (classification
+  `scientific_shared`) and the FAST differential at the merge SHA.
+
+Do not start the Hypothesis Portfolio, the Search Tree, Attempt Memory, the Model Critic or causal reasoning. Do not
+install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification without the owner.
+
+## Current bounded task - GEN2-BR1 ScientificWorld + Feasible ActionSpace v1 (2026-10-22)
+
+Development research on `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, local, base
+`da932552`, the sealed Gen1 head). It adds `engcore.mind.world`, imported by its own path. Gen1 is byte-identical.
+Synthetic fixtures only. The result is AUTHORITY_DUPLICATION_BLOCKER (see `benchmarks/mind_gen2_world_v1/README.md`):
+the check works, but admission is decided on world copies of owner records that nothing verifies with their owners.
+
+STOPPED by the pre-committed stopping rule. The next step needs owner decisions, not more Mind-side rules:
+- a verifiable budget ledger (`BudgetLedger` digest);
+- a head-state view;
+- a core coverage policy for interval uncertainty;
+- where admission verification lives.
+
+README section 6 lists the eight requirements. GEN2-BR1.1 (above) proposes answers in code to three of the four, each
+for the owner to confirm: the ledger digest (an additive read-only owner change, recertification pending), the
+head-state view (the run record's own head, read through `RunStateReader`), and where admission verification lives
+(`engcore.mind.world.admission`, behind the execution side's `ExecutionDesk`). The coverage policy stays an owner
+decision. Do not start the Hypothesis Portfolio, the Search
+Tree or Attempt Memory. Do not install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification
+without the owner.
+
+## Current bounded task - BR-MIND-REPSEM-01 representation + semantic roles repair (2026-10-22)
+
+Development-only repair on `research/mind-representation-semantics-v1` (worktree `D:/forge-repsem`, local, based on
+the v1 evaluation commit `d516e681`). It adds `engcore.mind.repsem` (declared variable roles, scoped claim states,
+named refusal conditions, a structured hypothesis record, role-typed binding of declared families, replayable
+judgments) and leaves `engcore.mind.minimal` and every battery v1 artifact unchanged. Synthetic fixtures only; no
+battery data was evaluated. Result: READY_FOR_BATTERY_V2 against the task's own criteria (see
+`benchmarks/mind_repsem_v1/README.md`).
+
+Next executable step: a battery v2 plan. It must freeze role declarations in the pack as protocol metadata, implement
+the fitted-OCV declared family (P1), and state up front that P1's UNKNOWN voltage uncertainty forces refusals by
+design. No push and no merge without the owner.
+
+## Current bounded task - BR-BATT-REDISC-01 battery rediscovery pilot (2026-10-21)
+
+Development pilot on `research/battery-rediscovery-pilot-v0` (local). The sealed run's preregistered conclusion is
+LEAKAGE_INVALIDATED, from an audit false positive: a 760.006 s timestamp matched the 760 F value pattern. At the
+owner's request, AMENDMENT_01 (post-seal, disclosed) fixed the regex and reran only the audit and the evaluation:
+amended conclusion REPRESENTATION_BOTTLENECK. A clean confirmation would need a v0.1 plan and a fresh sealed run.
+No Mind tuning, no formal run, no D5/N-1/Family-3a work.
+
+BR-BATT-REDISC-02 (battery_rediscovery_v1, clean re-execution with scanner v1 and a preregistered representability analysis): REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY. This is not an independent replication (same data and code). No Mind upgrade was made in this task.
+
 ## Current bounded task - remaining branches and post-merge CI (2026-10-20)
 
 Owner authorized continuing branch review and investigating Tests/Branch Policy without bypassing gates or OD3. PR180 merged with explicit archival-only approval at67585300. Twenty residual tips / fifteen maximal groups remain; nineteen tips trigger recertification. Prepare archive-only reconciliation of the seven ignored agent/configuration files from c4b9d950; do not activate their historical instructions. Review and run the changed-file gate before concrete PR approval. Investigate GitHub failure from actual job evidence: empty steps and missing log blobs currently leave root cause UNVERIFIED; obtain Annotations before prescribing a hosted-runner repair. Report: BRANCH_RECONCILIATION_CI_2026_10_20.md. No certification-sensitive implementation adoption, freeze or formal run.

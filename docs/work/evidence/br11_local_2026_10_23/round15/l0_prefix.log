@@ -1,0 +1,511 @@
+FF..FFFFFFFFFFFF.                                                        [100%]
+=================================== FAILURES ===================================
+___ test_seal_before_authoritative_comparison_refuses_inflight_pin[accounts] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c41f391c0>
+phase = 'accounts'
+
+    @pytest.mark.parametrize("phase", ["accounts", "read_back"])
+    def test_seal_before_authoritative_comparison_refuses_inflight_pin(monkeypatch, phase):
+        account, held, mode, reader = _simple()
+        reached, resume = threading.Event(), threading.Event()
+        if phase == "accounts":
+            original = reader._follow
+            def paused():
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return original()
+            reader._follow = paused
+        else:
+            original = BudgetReader._read_back
+            def paused(self):
+                result = original(self)
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return result
+            monkeypatch.setattr(BudgetReader, "_read_back", paused)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            _seal(reader, mode)
+        finally:
+            resume.set()
+            _join(thread)
+>       assert len(box) == 1 and isinstance(box[0], OwnerUnavailable)
+E       AssertionError: assert (1 == 1 and False)
+E        +  where 1 = len([OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', re...ool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}})])
+E        +  and   False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_review_r15.py:87: AssertionError
+__ test_seal_before_authoritative_comparison_refuses_inflight_pin[read_back] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c41f13f20>
+phase = 'read_back'
+
+    @pytest.mark.parametrize("phase", ["accounts", "read_back"])
+    def test_seal_before_authoritative_comparison_refuses_inflight_pin(monkeypatch, phase):
+        account, held, mode, reader = _simple()
+        reached, resume = threading.Event(), threading.Event()
+        if phase == "accounts":
+            original = reader._follow
+            def paused():
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return original()
+            reader._follow = paused
+        else:
+            original = BudgetReader._read_back
+            def paused(self):
+                result = original(self)
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return result
+            monkeypatch.setattr(BudgetReader, "_read_back", paused)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            _seal(reader, mode)
+        finally:
+            resume.set()
+            _join(thread)
+>       assert len(box) == 1 and isinstance(box[0], OwnerUnavailable)
+E       AssertionError: assert (1 == 1 and False)
+E        +  where 1 = len([OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', re...ool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}})])
+E        +  and   False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_review_r15.py:87: AssertionError
+______________ test_sealed_spend_then_restore_never_redispatches _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c41f3ae70>
+
+    def test_sealed_spend_then_restore_never_redispatches(monkeypatch):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        reached, resume = threading.Event(), threading.Event()
+        mode = {"proxy": False}
+        calls = []
+        def accounts():
+            if threading.current_thread().name == "verification":
+                reached.set()
+                assert resume.wait(10)
+            return (types.MappingProxyType(o.ledgers) if mode["proxy"] else dict(o.ledgers)), dict(o.experiments)
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, accounts, executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        thread, box = _thread(lambda: _refused(gateway, result.admitted))
+        try:
+            assert reached.wait(10)
+            mode["proxy"] = True
+            with pytest.raises(OwnerUnavailable):
+                reader.pinned()
+            o.ledgers[lid] = checkpoint
+            mode["proxy"] = False
+        finally:
+            resume.set()
+            _join(thread)
+>       assert box == [True] and calls == [1]
+E       assert ([False] == [True]
+E         
+E         At index 0 diff: False != True
+E         Use -v to get more diff)
+
+tests/mind/test_authority_review_r15.py:166: AssertionError
+_ test_async_or_resource_interruption_of_handing_never_retires_honest_reader[KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c415cb2c0>
+failure = <class 'KeyboardInterrupt'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_async_or_resource_interruption_of_handing_never_retires_honest_reader(monkeypatch, failure):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed.pop() if armed else False:
+                raise failure("injected at an explicit phase")
+            return original(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+        with pytest.raises((failure, OwnerUnavailable)):
+            reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x7f3c415cb5c0>._sealed
+
+tests/mind/test_authority_review_r15.py:181: AssertionError
+_ test_async_or_resource_interruption_of_handing_never_retires_honest_reader[RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c41622780>
+failure = <class 'RecursionError'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_async_or_resource_interruption_of_handing_never_retires_honest_reader(monkeypatch, failure):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed.pop() if armed else False:
+                raise failure("injected at an explicit phase")
+            return original(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+        with pytest.raises((failure, OwnerUnavailable)):
+            reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x7f3c41620830>._sealed
+
+tests/mind/test_authority_review_r15.py:181: AssertionError
+_ test_async_or_resource_interruption_of_handing_never_retires_honest_reader[MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c4159d4c0>
+failure = <class 'MemoryError'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_async_or_resource_interruption_of_handing_never_retires_honest_reader(monkeypatch, failure):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed.pop() if armed else False:
+                raise failure("injected at an explicit phase")
+            return original(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+        with pytest.raises((failure, OwnerUnavailable)):
+            reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x7f3c4159e690>._sealed
+
+tests/mind/test_authority_review_r15.py:181: AssertionError
+_______ test_interrupt_at_entry_listing_preserves_previously_read_spend ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c41621910>
+
+    def test_interrupt_at_entry_listing_preserves_previously_read_spend(monkeypatch):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._entries
+        armed = [True]
+        def interrupted(self, key):
+            if key[0] == "experiment" and armed:
+                armed.pop()
+                raise KeyboardInterrupt()
+            return original(self, key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_entries", interrupted)
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+        o.ledgers[lid] = checkpoint
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7f3c415e6f80>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:208: AssertionError
+___ test_readback_must_reconcile_listed_entries_before_authorizing[rollback] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c415f6cf0>
+variant = 'rollback'
+
+    @pytest.mark.parametrize("variant", ["rollback", "aba", "lying", "unread_rollback"])
+    def test_readback_must_reconcile_listed_entries_before_authorizing(monkeypatch, variant):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        live = o.ledgers[lid]
+        earlier, payload = live.charges, live.to_dict()
+        gateway.dispatch(result.admitted)
+        spent = live.charges
+        real = BudgetLedger.to_dict
+        def false_read():
+            if variant == "lying":
+                return payload
+            object.__setattr__(live, "charges", earlier)
+            value = real(live)
+            if variant == "aba":
+                object.__setattr__(live, "charges", spent)
+            if variant == "unread_rollback":
+                raise RuntimeError("dictionary changed size during iteration")
+            return value
+        object.__setattr__(live, "to_dict", false_read)
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7f3c415f65c0>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:236: AssertionError
+_____ test_readback_must_reconcile_listed_entries_before_authorizing[aba] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3caef36f30>
+variant = 'aba'
+
+    @pytest.mark.parametrize("variant", ["rollback", "aba", "lying", "unread_rollback"])
+    def test_readback_must_reconcile_listed_entries_before_authorizing(monkeypatch, variant):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        live = o.ledgers[lid]
+        earlier, payload = live.charges, live.to_dict()
+        gateway.dispatch(result.admitted)
+        spent = live.charges
+        real = BudgetLedger.to_dict
+        def false_read():
+            if variant == "lying":
+                return payload
+            object.__setattr__(live, "charges", earlier)
+            value = real(live)
+            if variant == "aba":
+                object.__setattr__(live, "charges", spent)
+            if variant == "unread_rollback":
+                raise RuntimeError("dictionary changed size during iteration")
+            return value
+        object.__setattr__(live, "to_dict", false_read)
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7f3caef58f70>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:236: AssertionError
+____ test_readback_must_reconcile_listed_entries_before_authorizing[lying] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c4159ffe0>
+variant = 'lying'
+
+    @pytest.mark.parametrize("variant", ["rollback", "aba", "lying", "unread_rollback"])
+    def test_readback_must_reconcile_listed_entries_before_authorizing(monkeypatch, variant):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        live = o.ledgers[lid]
+        earlier, payload = live.charges, live.to_dict()
+        gateway.dispatch(result.admitted)
+        spent = live.charges
+        real = BudgetLedger.to_dict
+        def false_read():
+            if variant == "lying":
+                return payload
+            object.__setattr__(live, "charges", earlier)
+            value = real(live)
+            if variant == "aba":
+                object.__setattr__(live, "charges", spent)
+            if variant == "unread_rollback":
+                raise RuntimeError("dictionary changed size during iteration")
+            return value
+        object.__setattr__(live, "to_dict", false_read)
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7f3c41654250>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:236: AssertionError
+_ test_readback_must_reconcile_listed_entries_before_authorizing[unread_rollback] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c415e3740>
+variant = 'unread_rollback'
+
+    @pytest.mark.parametrize("variant", ["rollback", "aba", "lying", "unread_rollback"])
+    def test_readback_must_reconcile_listed_entries_before_authorizing(monkeypatch, variant):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        live = o.ledgers[lid]
+        earlier, payload = live.charges, live.to_dict()
+        gateway.dispatch(result.admitted)
+        spent = live.charges
+        real = BudgetLedger.to_dict
+        def false_read():
+            if variant == "lying":
+                return payload
+            object.__setattr__(live, "charges", earlier)
+            value = real(live)
+            if variant == "aba":
+                object.__setattr__(live, "charges", spent)
+            if variant == "unread_rollback":
+                raise RuntimeError("dictionary changed size during iteration")
+            return value
+        object.__setattr__(live, "to_dict", false_read)
+        assert _refused(gateway, result.admitted) and calls == [1]
+        object.__delattr__(live, "to_dict")
+        o.ledgers[lid] = BudgetLedger.from_dict(payload)
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7f3c415c9f90>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:239: AssertionError
+______ test_honest_growth_across_unread_checkpoint_never_means_rewritten _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c4159f860>
+
+    def test_honest_growth_across_unread_checkpoint_never_means_rewritten(monkeypatch):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._account
+        key = ("ledger", "a")
+        def growing(self, account_key):
+            if account_key == key:
+                _settle(account, "middle")
+                # A second verification observed this prefix while this read ran.
+                with reader._changed:
+                    reader._note_unread(key, account.charges)
+                _settle(account, "after")
+            return original(self, account_key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_account", growing)
+            try:
+                reader.read(K, "a")
+            except OwnerUnavailable:
+                pass  # safe transient refusal is allowed
+>       assert key not in reader._diverged
+E       assert ('ledger', 'a') not in {('ledger', 'a'): "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"}
+E        +  where {('ledger', 'a'): "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"} = <engcore.mind.world.owners.BudgetReader object at 0x7f3c4159d8e0>._diverged
+
+tests/mind/test_authority_review_r15.py:260: AssertionError
+___________ test_unchanged_detached_accounts_recover_after_interrupt ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c415e2600>
+
+    def test_unchanged_detached_accounts_recover_after_interrupt(monkeypatch):
+        account, held, mode, reader = _simple()
+        reader._follow = lambda: ({k: BudgetLedger.from_dict(v.to_dict()) for k,v in held.items()}, {})
+        original = BudgetReader._account
+        armed = [True]
+        def interrupted(self, key):
+            if armed:
+                armed.pop()
+                raise KeyboardInterrupt()
+            return original(self, key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_account", interrupted)
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+>       assert reader.read(K, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r15.py:278: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:898: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:899: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7f3c415e2b70>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:961: OwnerUnavailable
+___ test_readback_straddling_honest_growth_recovers_after_transient_failure ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3c415e3da0>
+
+    def test_readback_straddling_honest_growth_recovers_after_transient_failure(monkeypatch):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._account
+        armed = [True]
+        def growing(self, key):
+            if armed:
+                armed.pop()
+                _settle(account, "growth")
+            return original(self, key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_account", growing)
+            try:
+                reader.read(K, "a")
+            except OwnerUnavailable:
+                pass
+        def moving():
+            raise RuntimeError("dictionary changed size during iteration")
+        object.__setattr__(account, "to_dict", moving)
+        with pytest.raises(OwnerUnavailable):
+            reader.read(K, "a")
+        object.__delattr__(account, "to_dict")
+        held["a"] = BudgetLedger.from_dict(account.to_dict())
+>       assert reader.read(K, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r15.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:898: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:899: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7f3c415e1460>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:961: OwnerUnavailable
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[accounts]
+FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[read_back]
+FAILED tests/mind/test_authority_review_r15.py::test_sealed_spend_then_restore_never_redispatches
+FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[MemoryError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupt_at_entry_listing_preserves_previously_read_spend
+FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[rollback]
+FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[aba]
+FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[lying]
+FAILED tests/mind/test_authority_review_r15.py::test_readback_must_reconcile_listed_entries_before_authorizing[unread_rollback]
+FAILED tests/mind/test_authority_review_r15.py::test_honest_growth_across_unread_checkpoint_never_means_rewritten
+FAILED tests/mind/test_authority_review_r15.py::test_unchanged_detached_accounts_recover_after_interrupt
+FAILED tests/mind/test_authority_review_r15.py::test_readback_straddling_honest_growth_recovers_after_transient_failure
+14 failed, 3 passed in 2.06s

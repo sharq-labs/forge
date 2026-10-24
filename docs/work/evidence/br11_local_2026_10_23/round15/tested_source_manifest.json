@@ -1,0 +1,6 @@
+{
+  "src/engcore/mind/world/owners.py": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+  "tests/mind/test_authority_review_r14.py": "4382bf8c9ce9ce63ab5c046e45be55cd5ac02610cd1d980bd0f138f736a9e297",
+  "tests/mind/test_authority_review_r15.py": "fb7401741ca3dd115cc2933887e359d162eae96c44d3026d6f41d34904736ada",
+  "tests/mind/test_authority_state_machine_r15.py": "d6686cf2e32a209de108f6624ed4a90d4fd6a9e3bd44268cb71889aea61ab69c"
+}

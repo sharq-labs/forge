@@ -1,0 +1,177 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "CRITIC six-lens completeness",
+  "review_method": "STATIC aggregation, current-source/diff inspection and reading exact-SHA executed evidence; critic tests NOT RUN",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "counts": {
+    "blockers": 0,
+    "major_aliases": 6,
+    "unique_major_families": 1,
+    "open_minor_aliases": 0,
+    "unique_open_minor_families": 0,
+    "new_defect_families": 0,
+    "prior_minor_aliases_repaired": 2,
+    "prior_unique_minor_families_repaired": 1
+  },
+  "alias_dispositions": [
+    {
+      "id": "R18-A-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "A/result.json",
+      "skeptics": {
+        "S1": "CONFIRMED",
+        "S2": "CONFIRMED"
+      },
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION"
+    },
+    {
+      "id": "R18-B-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "B/result.json",
+      "skeptics": {
+        "S1": "CONFIRMED",
+        "S2": "CONFIRMED"
+      },
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION"
+    },
+    {
+      "id": "R18-C-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "C/result.json",
+      "skeptics": {
+        "S1": "CONFIRMED",
+        "S2": "CONFIRMED"
+      },
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION"
+    },
+    {
+      "id": "R18-D-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "D/result.json",
+      "skeptics": {
+        "S1": "CONFIRMED",
+        "S2": "CONFIRMED"
+      },
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION"
+    },
+    {
+      "id": "R18-E-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "E/result.json",
+      "skeptics": {
+        "S1": "CONFIRMED",
+        "S2": "CONFIRMED"
+      },
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION"
+    },
+    {
+      "id": "R18-F-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "F/result.json",
+      "skeptics": {
+        "S1": "CONFIRMED",
+        "S2": "CONFIRMED"
+      },
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION"
+    }
+  ],
+  "findings": [],
+  "aggregate_finding": {
+    "family": "returned_live_mapping_pre_capture_loss",
+    "severity": "MAJOR",
+    "question": "Q4",
+    "file": "src/engcore/mind/world/owners.py",
+    "lines": [
+      1008,
+      1015,
+      1016,
+      1041,
+      1042,
+      936,
+      955
+    ],
+    "actual": "Native capture and recovery exhaustion leaves returned live map tuple pending with no retained spend entries. Registry checkpoint replacement changes that tuple contents. Later recovery admits old currentness and dispatches original admitted action a second time.",
+    "expected": "Handed spend remains an obligation across interruption and restore; honest interruption alone neither authorizes acceptance nor permanently retires reader.",
+    "independent_confirmation": "S1 and S2 independently confirm every A-F alias at exact SHA; native matching controls use distinct stack harnesses. F itself static-only.",
+    "matched_control": "S1 depths144/145 limit150 and S2 depths143/144 limit180: live raw tuples calls2, detached published raw tuples calls1/refusal. A/B/D/E corroborate detached association control."
+  },
+  "repair_assessment": {
+    "R17-D-2": "REPAIRED within bounded review",
+    "R17-F-2": "REPAIRED within bounded review",
+    "basis": "Changed _retained_entry mirrors distinct ledger and experiment owner read/write sequences. Exact-SHA R17 controls run by runtime lenses and both skeptics; additional ordering/conflict/interruption controls pass. Whole-account checks remain authoritative. No new separable defect identified.",
+    "documentation": "Caller-stack exclusion removed and pre-capture loss labeled unresolved; no scope-narrowing closure."
+  },
+  "minimum_owner_decision": {
+    "question": "May accounts() require execution-owner publication of stable per-call account-ID associations, with handed histories remaining recoverable across registry restore while pending, using detached published dictionaries over existing owners as the minimum replacement-case implementation?",
+    "recommended_scope": "Preserve published dictionary bindings for their reference lifetime; replace only active registry on restore. Preserve relevant handed owner entries, allowing append-only growth under existing owner rules. Define supported in-place mutation scope; do not silently equate shallow maps with immutable nested state. Callback signature can remain unchanged.",
+    "why_decision": "Existing following() accepts live mutable dict callbacks. Requiring their returned bindings to remain stable adds an execution-side semantic obligation, even without a signature change. Current local repair authorization does not silently make these formerly supported callbacks invalid. Active plan and README specifically leave lifetime boundary open.",
+    "not_required": "No mandatory full acknowledgement protocol, durable journal, reservation, second budget ledger, or scientific policy change is established. Reference lifetime can suffice for detached publication.",
+    "alternatives": [
+      "Detached stable owner publication over existing records: smallest demonstrated replacement remedy; needs broader lifetime controls.",
+      "Keep mutable publication but retain an owner-authoritative historical recovery source, optionally acknowledgement to bound retention: larger alternative needing design.",
+      "Concrete reader atomic/fresh-stack retention primitive preserving the unchanged callback contract: not excluded in principle, but none implemented or shown sufficient for repeated interruption; would require bounded adversarial evidence."
+    ]
+  },
+  "generic_local_fix_assessment": "No demonstrated additional generic local fix remains under unchanged arbitrary mutable-return contract. A wrapper that copies after the old callback returns moves the same interruption window; retry after registry replacement cannot reconstruct erased association. Permanent pending/refusal satisfies safety but can poison an honest unchanged reader; expiry and acceptance lack evidence. This is a conditional lost-information argument, not a universal impossibility claim. Editing only fixtures/adapters to detach while claiming generic following() fixed would hide the still-supported failure.",
+  "completeness": {
+    "six_lenses": "A authority/currentness; B dispatch/effects; C concurrency/seal; D identity/serialization; E replay/restore; F scientific semantics/static all complete.",
+    "two_skeptics": "S1 and S2 final exact-ID confirmations checked for all six MAJOR aliases.",
+    "Q_scope": "Q4 YES due hidden handed spend/currentness. Q1-Q3/Q5-Q7 NO means no established defect in bounded changed-path review; not exhaustive whole-system proof. Q7 remains NO because repeated action was admitted, with faulty Q4 currentness.",
+    "coverage": "R16 seal/post-return/exact-barrier controls, R17 JSON parity, A repeated detached histories, C seal/new-barrier/interruption lifecycle, D permutations/conflicts/exceptions, E prefix permutations/replay and native pair.",
+    "overprescription_corrected": "C suggested mandatory acknowledgement and several lifecycle choices. Defect confirmed; mandatory mechanism rejected by matched detached publication control and both skeptics. One publication/lifetime decision is the minimum handoff.",
+    "counts": "Six aliases are one existing family, not six major defects; skeptic/critic confirmations do not add unique findings."
+  },
+  "execution_evidence_read": {
+    "A": "32+8 passed; native and detached logs",
+    "B": "32 passed; deterministic and native logs",
+    "C": "final44 passed; initial41 passed/3 harness failures, then collection SyntaxError retained",
+    "D": "46 passed; native and detached logs",
+    "E": "48 passed including asserted-defect pair",
+    "S1": "32 passed plus independent native matched probe",
+    "S2": "49 passed including independent native matched probe and rerun E asserted-defect pair",
+    "F": "NOT RUN; static",
+    "CRITIC": "NOT RUN; static aggregation"
+  },
+  "missing_coverage": [
+    "No exhaustive concurrency/asynchronous instruction-point proof.",
+    "Detached publication correction not implemented; experiments, multiple readers, repeated restores and abandoned reads require future bounded controls.",
+    "Shallow publication controls do not freeze nested account objects/payloads.",
+    "Depths without raw retained tuple are not used as evidence callback returned.",
+    "No new comprehensive Q1-Q3/Q5-Q7 audit.",
+    "No full FAST, remote gates, certification, performance or scientific validation executed by critic."
+  ],
+  "claims_and_gates": "Review gate FAILS (one unique MAJOR remains). BR1.1 NOT CLOSED. Earlier clean-source gate comparisons remain historical at their exact source SHA, not current R18 certification. Passing probes asserting defect reproduction do not imply safety. No approval for push/PR/merge/certification/OD-3 or new capabilities.",
+  "disposition": "PRECISE_BLOCKED_HANDOFF justified after root preserves final records and bundle: remaining issue needs execution-owner publication/lifetime decision. No new independent separable local defect established. Do not stop before evidence preservation; do not claim closure.",
+  "executions": [],
+  "tests": "NOT RUN",
+  "source_reports": [
+    "/home/dev_kaeem/br11-review/r18/A/result.json",
+    "/home/dev_kaeem/br11-review/r18/B/result.json",
+    "/home/dev_kaeem/br11-review/r18/C/result.json",
+    "/home/dev_kaeem/br11-review/r18/D/result.json",
+    "/home/dev_kaeem/br11-review/r18/E/result.json",
+    "/home/dev_kaeem/br11-review/r18/F/result.json",
+    "/home/dev_kaeem/br11-review/r18/S1/result.json",
+    "/home/dev_kaeem/br11-review/r18/S2/result.json"
+  ]
+}

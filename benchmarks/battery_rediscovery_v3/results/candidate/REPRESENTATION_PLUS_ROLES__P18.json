@@ -1,0 +1,923 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "SUPPORTED",
+   "reason": "every held-out subset ['partner_cell_pulses'] meets its declared bar"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "full rank, but practical identifiability needs a declared measurement noise, and none is declared (a residual estimate is not substituted)",
+   "refusal_reason": "INSUFFICIENT_EVIDENCE"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "NOT_SUPPORTED",
+   "reason": "calibration rmse 0.01549 / p95 0.02558 against the declared bar 0.015 / 0.03"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "no structure is resolved, and compatibility with noise cannot be shown without a declared noise and a declared independence",
+   "refusal_reason": "INSUFFICIENT_EVIDENCE"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "SUPPORTED",
+   "reason": "every held-out subset ['pulses_alternate_soc'] meets its declared bar"
+  }
+ },
+ "arm": "REPRESENTATION_PLUS_ROLES",
+ "assessment": {
+  "binding": {
+   "clock": "t_s",
+   "family_id": "rc1_measured_ocv/1",
+   "measurement": "voltage_V",
+   "parameters": [
+    "R0",
+    "R1",
+    "C1"
+   ],
+   "slots": {
+    "charge_state": "soc",
+    "driver": "current_A"
+   }
+  },
+  "claim_types": {
+   "CROSS_CELL_TRANSFER": {
+    "applicability_scope": "units disjoint from calibration, inside the declared applicability domain",
+    "axis": "CROSS_CELL_TRANSFER",
+    "meaning": "the family calibrated on some units predicts held-out data of OTHER units within the declared bar",
+    "negative": "CROSS_CELL_NOT_SUPPORTED",
+    "positive": "CROSS_CELL_SUPPORTED",
+    "refusal_condition": "as within-cell; OUT_OF_DOMAIN also when a held-out unit was a calibration unit",
+    "required_evidence": "as within-cell, for a held-out set whose units are disjoint from the calibration units"
+   },
+   "IDENTIFIABILITY": {
+    "applicability_scope": "the declared family, the calibration set's design, and the declared parameter bounds",
+    "axis": "IDENTIFIABILITY",
+    "meaning": "every requested LATENT_PARAMETER of the declared family is determined by the calibration observations (IDENTIFIABLE), or at least one is not (NOT_IDENTIFIABLE)",
+    "negative": "NOT_IDENTIFIABLE",
+    "positive": "IDENTIFIABLE",
+    "refusal_condition": "REPRESENTATION_UNAVAILABLE: the family cannot be bound to declared roles or a requested parameter is not a declared LATENT_PARAMETER; INSUFFICIENT_EVIDENCE: full rank but no declared noise, or a weakly identified ridge (REVIEW)",
+    "required_evidence": "the residual Jacobian of the bound family at the calibrated estimate; IDENTIFIABLE also needs a declared measurement noise, from which the local covariance is classified by the frozen V1 identifiability rule (engcore.hybrid_uq.identifiability); a rank-deficient Jacobian decides NOT_IDENTIFIABLE without one"
+   },
+   "MODEL_ADEQUACY": {
+    "applicability_scope": "the declared family on the calibration set",
+    "axis": "MODEL_ADEQUACY",
+    "meaning": "the calibrated declared family describes the calibration data within the declared adequacy bar (or, with no bar, within the declared measurement noise)",
+    "negative": "MODEL_INADEQUATE",
+    "positive": "MODEL_ADEQUATE",
+    "refusal_condition": "REPRESENTATION_UNAVAILABLE: the family cannot be bound; INSUFFICIENT_EVIDENCE: neither a bar nor a noise is declared, or the fit fails",
+    "required_evidence": "calibration residuals of the best fit, compared with a declared bar (rmse and p95) or with a declared noise (chi-square at 0.999)"
+   },
+   "MODEL_DISCREPANCY": {
+    "applicability_scope": "the declared family on the calibration set, at the stated resolution",
+    "axis": "MODEL_DISCREPANCY",
+    "meaning": "the calibrated family's residuals show structured model-form error beyond the declared measurement noise (PRESENT), or no discrepancy is resolved above it (UNRESOLVED; never 'zero')",
+    "negative": "MODEL_DISCREPANCY_PRESENT",
+    "positive": "MODEL_DISCREPANCY_UNRESOLVED",
+    "refusal_condition": "REPRESENTATION_UNAVAILABLE: the family cannot be bound; INSUFFICIENT_EVIDENCE: no declared noise and no structure resolved (compatibility cannot be shown without a declared noise)",
+    "required_evidence": "residual chi-square against a declared noise and/or lag-1 residual autocorrelation against a declared independence of the measurement noise"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "applicability_scope": "calibration units only, inside the declared applicability domain",
+    "axis": "WITHIN_CELL_GENERALIZATION",
+    "meaning": "the calibrated family predicts held-out data of the SAME unit(s) within the declared acceptance bar",
+    "negative": "WITHIN_CELL_NOT_SUPPORTED",
+    "positive": "WITHIN_CELL_SUPPORTED",
+    "refusal_condition": "INSUFFICIENT_EVIDENCE: no such set or no bar; OUT_OF_DOMAIN: a held-out trajectory leaves the declared domain or belongs to another unit; REPRESENTATION_UNAVAILABLE: the family cannot be bound",
+    "required_evidence": "held-out prediction error of the calibrated family against the declared bar, after every held-out trajectory is shown inside the declared applicability domain"
+   }
+  },
+  "claims": {
+   "CROSS_CELL_TRANSFER": {
+    "axis": "CROSS_CELL_TRANSFER",
+    "disposition": "SUPPORTED",
+    "evidence": [
+     "sha256:bcffbcf0444aea3efda88548d6400fb835e2fc6a8b22456df60625699e94c76c"
+    ],
+    "reason": "every held-out subset ['partner_cell_pulses'] meets its declared bar",
+    "refusal": null,
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {
+     "binding": {
+      "clock": "t_s",
+      "family_id": "rc1_measured_ocv/1",
+      "measurement": "voltage_V",
+      "parameters": [
+       "R0",
+       "R1",
+       "C1"
+      ],
+      "slots": {
+       "charge_state": "soc",
+       "driver": "current_A"
+      }
+     },
+     "calibration_units": [
+      "u12"
+     ],
+     "domain": {
+      "level_A": [
+       2.45,
+       2.55
+      ],
+      "soc": [
+       0.0261016950057,
+       1.02
+      ],
+      "temperature_C": [
+       22.299936,
+       29.195108
+      ]
+     },
+     "family": "rc1_measured_ocv/1",
+     "set": "cross_unit_heldout"
+    },
+    "state": "CROSS_CELL_SUPPORTED"
+   },
+   "IDENTIFIABILITY": {
+    "axis": "IDENTIFIABILITY",
+    "disposition": "NOT_ASSESSABLE",
+    "evidence": [],
+    "reason": "full rank, but practical identifiability needs a declared measurement noise, and none is declared (a residual estimate is not substituted)",
+    "refusal": {
+     "condition": {
+      "column_norms": {
+       "C1": 0.602874908641,
+       "R0": 3.22636808999,
+       "R1": 1.78157867703
+      },
+      "declared_noise": null,
+      "rank_tol": 1e-08,
+      "ratio": 0.202330579452,
+      "requested": [
+       "R0",
+       "R1",
+       "C1"
+      ],
+      "singular_values_scaled": [
+       1.55369619661,
+       0.698001261278,
+       0.314360251753
+      ]
+     },
+     "reason": "INSUFFICIENT_EVIDENCE"
+    },
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {
+     "binding": {
+      "clock": "t_s",
+      "family_id": "rc1_measured_ocv/1",
+      "measurement": "voltage_V",
+      "parameters": [
+       "R0",
+       "R1",
+       "C1"
+      ],
+      "slots": {
+       "charge_state": "soc",
+       "driver": "current_A"
+      }
+     },
+     "bounds": {
+      "C1": [
+       1.0,
+       1000000.0
+      ],
+      "R0": [
+       0.001,
+       0.2
+      ],
+      "R1": [
+       0.0001,
+       0.2
+      ]
+     },
+     "design": "calibration set",
+     "family": "rc1_measured_ocv/1",
+     "parameters": [
+      "R0",
+      "R1",
+      "C1"
+     ]
+    },
+    "state": null
+   },
+   "MODEL_ADEQUACY": {
+    "axis": "MODEL_ADEQUACY",
+    "disposition": "NOT_SUPPORTED",
+    "evidence": [
+     "sha256:c9f380e3c552e824cf5c852a59358ad53081c6c1d676483afc39e0906066e944"
+    ],
+    "reason": "calibration rmse 0.01549 / p95 0.02558 against the declared bar 0.015 / 0.03",
+    "refusal": null,
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {
+     "basis": "declared adequacy bar",
+     "binding": {
+      "clock": "t_s",
+      "family_id": "rc1_measured_ocv/1",
+      "measurement": "voltage_V",
+      "parameters": [
+       "R0",
+       "R1",
+       "C1"
+      ],
+      "slots": {
+       "charge_state": "soc",
+       "driver": "current_A"
+      }
+     },
+     "family": "rc1_measured_ocv/1",
+     "set": "calibration"
+    },
+    "state": "MODEL_INADEQUATE"
+   },
+   "MODEL_DISCREPANCY": {
+    "axis": "MODEL_DISCREPANCY",
+    "disposition": "NOT_ASSESSABLE",
+    "evidence": [],
+    "reason": "no structure is resolved, and compatibility with noise cannot be shown without a declared noise and a declared independence",
+    "refusal": {
+     "condition": {
+      "bias": 0.000625109884299,
+      "declared_independent": null,
+      "declared_noise": null,
+      "lag1_autocorrelation": 0.997173799917,
+      "lag1_pairs": 3936,
+      "lag1_z": 62.5602397005,
+      "n": 3948,
+      "p95_abs": 0.0255752564257,
+      "parameters": 3,
+      "rmse": 0.0154912970872,
+      "structure_resolved": false
+     },
+     "reason": "INSUFFICIENT_EVIDENCE"
+    },
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {
+     "binding": {
+      "clock": "t_s",
+      "family_id": "rc1_measured_ocv/1",
+      "measurement": "voltage_V",
+      "parameters": [
+       "R0",
+       "R1",
+       "C1"
+      ],
+      "slots": {
+       "charge_state": "soc",
+       "driver": "current_A"
+      }
+     },
+     "family": "rc1_measured_ocv/1",
+     "set": "calibration"
+    },
+    "state": null
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "axis": "WITHIN_CELL_GENERALIZATION",
+    "disposition": "SUPPORTED",
+    "evidence": [
+     "sha256:3c1f829c7fd8ac6f0f9b75ff911baf3aab230d68f2cf9e9d0c5c6615a04c530a"
+    ],
+    "reason": "every held-out subset ['pulses_alternate_soc'] meets its declared bar",
+    "refusal": null,
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {
+     "binding": {
+      "clock": "t_s",
+      "family_id": "rc1_measured_ocv/1",
+      "measurement": "voltage_V",
+      "parameters": [
+       "R0",
+       "R1",
+       "C1"
+      ],
+      "slots": {
+       "charge_state": "soc",
+       "driver": "current_A"
+      }
+     },
+     "calibration_units": [
+      "u12"
+     ],
+     "domain": {
+      "level_A": [
+       2.45,
+       2.55
+      ],
+      "soc": [
+       0.0261016950057,
+       1.02
+      ],
+      "temperature_C": [
+       22.299936,
+       29.195108
+      ]
+     },
+     "family": "rc1_measured_ocv/1",
+     "set": "within_unit_heldout"
+    },
+    "state": "WITHIN_CELL_SUPPORTED"
+   }
+  },
+  "engine": "forge.mind.repsem@1.0.0",
+  "evidence": {
+   "sha256:268408cb2da1506ca01f02dbf975e5078ad6dc24d2046e76e821ae93aaf1740b": {
+    "declared_noise": null,
+    "family": "rc1_measured_ocv/1",
+    "kind": "rival_comparison",
+    "parameters_family": 3,
+    "parameters_rival": 1,
+    "rival": "rint_measured_ocv/1",
+    "rss_family": 0.947442166929,
+    "rss_rival": 1.9314007061
+   },
+   "sha256:3c1f829c7fd8ac6f0f9b75ff911baf3aab230d68f2cf9e9d0c5c6615a04c530a": {
+    "kind": "heldout_prediction",
+    "set": "within_unit_heldout",
+    "subsets": {
+     "pulses_alternate_soc": {
+      "bar": {
+       "p95_abs_max": 0.03,
+       "rmse_max": 0.015
+      },
+      "heldout_stats": {
+       "bias": 0.000135543833468,
+       "p95_abs": 0.0238355550905,
+       "rmse": 0.0102967018709,
+       "samples": 3619
+      },
+      "meets_bar": true,
+      "scored": true,
+      "units": [
+       "u12"
+      ]
+     }
+    }
+   },
+   "sha256:bcffbcf0444aea3efda88548d6400fb835e2fc6a8b22456df60625699e94c76c": {
+    "kind": "heldout_prediction",
+    "set": "cross_unit_heldout",
+    "subsets": {
+     "partner_cell_pulses": {
+      "bar": {
+       "p95_abs_max": 0.03,
+       "rmse_max": 0.015
+      },
+      "heldout_stats": {
+       "bias": 0.000122928515111,
+       "p95_abs": 0.0233898724565,
+       "rmse": 0.00998287903833,
+       "samples": 3619
+      },
+      "meets_bar": true,
+      "scored": true,
+      "units": [
+       "u10"
+      ]
+     }
+    }
+   },
+   "sha256:c9f380e3c552e824cf5c852a59358ad53081c6c1d676483afc39e0906066e944": {
+    "bar": {
+     "p95_abs_max": 0.03,
+     "rmse_max": 0.015
+    },
+    "bias": 0.000625109884299,
+    "declared_independent": null,
+    "declared_noise": null,
+    "kind": "calibration_residuals_vs_bar",
+    "lag1_autocorrelation": 0.997173799917,
+    "lag1_pairs": 3936,
+    "lag1_z": 62.5602397005,
+    "n": 3948,
+    "p95_abs": 0.0255752564257,
+    "parameters": 3,
+    "rmse": 0.0154912970872
+   }
+  },
+  "hypothesis": {
+   "applicability_domain": {
+    "units": [
+     "u12"
+    ],
+    "variables": {
+     "level_A": [
+      2.45,
+      2.55
+     ],
+     "soc": [
+      0.0261016950057,
+      1.02
+     ],
+     "temperature_C": [
+      22.299936,
+      29.195108
+     ]
+    }
+   },
+   "claims": [
+    {
+     "axis": "IDENTIFIABILITY",
+     "disposition": "NOT_ASSESSABLE",
+     "evidence": [],
+     "reason": "full rank, but practical identifiability needs a declared measurement noise, and none is declared (a residual estimate is not substituted)",
+     "refusal": {
+      "condition": {
+       "column_norms": {
+        "C1": 0.602874908641,
+        "R0": 3.22636808999,
+        "R1": 1.78157867703
+       },
+       "declared_noise": null,
+       "rank_tol": 1e-08,
+       "ratio": 0.202330579452,
+       "requested": [
+        "R0",
+        "R1",
+        "C1"
+       ],
+       "singular_values_scaled": [
+        1.55369619661,
+        0.698001261278,
+        0.314360251753
+       ]
+      },
+      "reason": "INSUFFICIENT_EVIDENCE"
+     },
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {
+      "binding": {
+       "clock": "t_s",
+       "family_id": "rc1_measured_ocv/1",
+       "measurement": "voltage_V",
+       "parameters": [
+        "R0",
+        "R1",
+        "C1"
+       ],
+       "slots": {
+        "charge_state": "soc",
+        "driver": "current_A"
+       }
+      },
+      "bounds": {
+       "C1": [
+        1.0,
+        1000000.0
+       ],
+       "R0": [
+        0.001,
+        0.2
+       ],
+       "R1": [
+        0.0001,
+        0.2
+       ]
+      },
+      "design": "calibration set",
+      "family": "rc1_measured_ocv/1",
+      "parameters": [
+       "R0",
+       "R1",
+       "C1"
+      ]
+     },
+     "state": null
+    },
+    {
+     "axis": "MODEL_ADEQUACY",
+     "disposition": "NOT_SUPPORTED",
+     "evidence": [
+      "sha256:c9f380e3c552e824cf5c852a59358ad53081c6c1d676483afc39e0906066e944"
+     ],
+     "reason": "calibration rmse 0.01549 / p95 0.02558 against the declared bar 0.015 / 0.03",
+     "refusal": null,
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {
+      "basis": "declared adequacy bar",
+      "binding": {
+       "clock": "t_s",
+       "family_id": "rc1_measured_ocv/1",
+       "measurement": "voltage_V",
+       "parameters": [
+        "R0",
+        "R1",
+        "C1"
+       ],
+       "slots": {
+        "charge_state": "soc",
+        "driver": "current_A"
+       }
+      },
+      "family": "rc1_measured_ocv/1",
+      "set": "calibration"
+     },
+     "state": "MODEL_INADEQUATE"
+    },
+    {
+     "axis": "MODEL_DISCREPANCY",
+     "disposition": "NOT_ASSESSABLE",
+     "evidence": [],
+     "reason": "no structure is resolved, and compatibility with noise cannot be shown without a declared noise and a declared independence",
+     "refusal": {
+      "condition": {
+       "bias": 0.000625109884299,
+       "declared_independent": null,
+       "declared_noise": null,
+       "lag1_autocorrelation": 0.997173799917,
+       "lag1_pairs": 3936,
+       "lag1_z": 62.5602397005,
+       "n": 3948,
+       "p95_abs": 0.0255752564257,
+       "parameters": 3,
+       "rmse": 0.0154912970872,
+       "structure_resolved": false
+      },
+      "reason": "INSUFFICIENT_EVIDENCE"
+     },
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {
+      "binding": {
+       "clock": "t_s",
+       "family_id": "rc1_measured_ocv/1",
+       "measurement": "voltage_V",
+       "parameters": [
+        "R0",
+        "R1",
+        "C1"
+       ],
+       "slots": {
+        "charge_state": "soc",
+        "driver": "current_A"
+       }
+      },
+      "family": "rc1_measured_ocv/1",
+      "set": "calibration"
+     },
+     "state": null
+    },
+    {
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "disposition": "SUPPORTED",
+     "evidence": [
+      "sha256:3c1f829c7fd8ac6f0f9b75ff911baf3aab230d68f2cf9e9d0c5c6615a04c530a"
+     ],
+     "reason": "every held-out subset ['pulses_alternate_soc'] meets its declared bar",
+     "refusal": null,
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {
+      "binding": {
+       "clock": "t_s",
+       "family_id": "rc1_measured_ocv/1",
+       "measurement": "voltage_V",
+       "parameters": [
+        "R0",
+        "R1",
+        "C1"
+       ],
+       "slots": {
+        "charge_state": "soc",
+        "driver": "current_A"
+       }
+      },
+      "calibration_units": [
+       "u12"
+      ],
+      "domain": {
+       "level_A": [
+        2.45,
+        2.55
+       ],
+       "soc": [
+        0.0261016950057,
+        1.02
+       ],
+       "temperature_C": [
+        22.299936,
+        29.195108
+       ]
+      },
+      "family": "rc1_measured_ocv/1",
+      "set": "within_unit_heldout"
+     },
+     "state": "WITHIN_CELL_SUPPORTED"
+    },
+    {
+     "axis": "CROSS_CELL_TRANSFER",
+     "disposition": "SUPPORTED",
+     "evidence": [
+      "sha256:bcffbcf0444aea3efda88548d6400fb835e2fc6a8b22456df60625699e94c76c"
+     ],
+     "reason": "every held-out subset ['partner_cell_pulses'] meets its declared bar",
+     "refusal": null,
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {
+      "binding": {
+       "clock": "t_s",
+       "family_id": "rc1_measured_ocv/1",
+       "measurement": "voltage_V",
+       "parameters": [
+        "R0",
+        "R1",
+        "C1"
+       ],
+       "slots": {
+        "charge_state": "soc",
+        "driver": "current_A"
+       }
+      },
+      "calibration_units": [
+       "u12"
+      ],
+      "domain": {
+       "level_A": [
+        2.45,
+        2.55
+       ],
+       "soc": [
+        0.0261016950057,
+        1.02
+       ],
+       "temperature_C": [
+        22.299936,
+        29.195108
+       ]
+      },
+      "family": "rc1_measured_ocv/1",
+      "set": "cross_unit_heldout"
+     },
+     "state": "CROSS_CELL_SUPPORTED"
+    }
+   ],
+   "competing_alternatives": [
+    {
+     "family_id": "rint_measured_ocv/1",
+     "status": "NOT_DISCRIMINATED"
+    }
+   ],
+   "evidence_against": [
+    {
+     "digest": "sha256:c9f380e3c552e824cf5c852a59358ad53081c6c1d676483afc39e0906066e944",
+     "kind": "MODEL_ADEQUACY",
+     "summary": "calibration rmse 0.01549 / p95 0.02558 against the declared bar 0.015 / 0.03"
+    }
+   ],
+   "evidence_for": [
+    {
+     "digest": "sha256:3c1f829c7fd8ac6f0f9b75ff911baf3aab230d68f2cf9e9d0c5c6615a04c530a",
+     "kind": "WITHIN_CELL_GENERALIZATION",
+     "summary": "every held-out subset ['pulses_alternate_soc'] meets its declared bar"
+    },
+    {
+     "digest": "sha256:bcffbcf0444aea3efda88548d6400fb835e2fc6a8b22456df60625699e94c76c",
+     "kind": "CROSS_CELL_TRANSFER",
+     "summary": "every held-out subset ['partner_cell_pulses'] meets its declared bar"
+    }
+   ],
+   "hypothesis_id": "repsem:rc1_measured_ocv/1:15157386485791df",
+   "model_family": {
+    "bound": true,
+    "cost": 0.473721083465,
+    "description": "Thevenin 1RC, measured fixed OCV table. V = OCV(z) - I*R0 - v1;  dv1/dt = I/C1 - v1/(R1*C1);  dz/dt = -I/Q.  Positive I is discharge.  Rint (R1 = 0) is the declared rival.",
+    "family_id": "rc1_measured_ocv/1",
+    "parameters": [
+     "R0",
+     "R1",
+     "C1"
+    ],
+    "required_conditions": [
+     "initial_polarization",
+     "capacity_As"
+    ],
+    "slots": [
+     {
+      "name": "driver",
+      "roles": [
+       "CONTROLLED_INPUT"
+      ],
+      "state_of": null
+     },
+     {
+      "name": "charge_state",
+      "roles": [
+       "STATE_VARIABLE"
+      ],
+      "state_of": "driver"
+     }
+    ],
+    "starts": 9
+   },
+   "parameter_set": [
+    {
+     "estimate": 2481.74876737,
+     "high": 1000000.0,
+     "low": 1.0,
+     "name": "C1",
+     "standard_error": null
+    },
+    {
+     "estimate": 0.0289402209475,
+     "high": 0.2,
+     "low": 0.001,
+     "name": "R0",
+     "standard_error": null
+    },
+    {
+     "estimate": 0.0243125136433,
+     "high": 0.2,
+     "low": 0.0001,
+     "name": "R1",
+     "standard_error": null
+    }
+   ],
+   "schema": "forge.mind.repsem.hypothesis/1",
+   "unresolved_discriminators": [
+    "rc1_measured_ocv/1 vs rint_measured_ocv/1: no declared noise to judge the residual difference",
+    "IDENTIFIABILITY: NOT_ASSESSABLE (INSUFFICIENT_EVIDENCE)",
+    "MODEL_DISCREPANCY: NOT_ASSESSABLE (INSUFFICIENT_EVIDENCE)"
+   ],
+   "variable_roles": {
+    "declarations": [
+     {
+      "basis": "declared family parameter: RC-branch capacitance",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "C1",
+      "role": "LATENT_PARAMETER",
+      "source": "protocol_metadata",
+      "unit": "F"
+     },
+     {
+      "basis": "declared family parameter: series resistance",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "R0",
+      "role": "LATENT_PARAMETER",
+      "source": "protocol_metadata",
+      "unit": "ohm"
+     },
+     {
+      "basis": "declared family parameter: RC-branch resistance",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "R1",
+      "role": "LATENT_PARAMETER",
+      "source": "protocol_metadata",
+      "unit": "ohm"
+     },
+     {
+      "basis": "the cycler applies the programmed load current; positive is discharge",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "current_A",
+      "role": "CONTROLLED_INPUT",
+      "source": "protocol_metadata",
+      "unit": "A"
+     },
+     {
+      "basis": "the pulse current level the protocol set",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "level_A",
+      "role": "FIXED_PROTOCOL_CONDITION",
+      "source": "protocol_metadata",
+      "unit": "A"
+     },
+     {
+      "basis": "charge state: evolves by coulomb counting of the applied current from the declared initial state over the declared capacity basis; no column is recorded",
+      "derived_from": [],
+      "driven_by": [
+       "current_A"
+      ],
+      "name": "soc",
+      "role": "STATE_VARIABLE",
+      "source": "protocol_metadata",
+      "unit": "1"
+     },
+     {
+      "basis": "the logger's sampling schedule",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "t_s",
+      "role": "FIXED_PROTOCOL_CONDITION",
+      "source": "protocol_metadata",
+      "unit": "s"
+     },
+     {
+      "basis": "cell temperature, logged, not controlled",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "temperature_C",
+      "role": "NUISANCE_VARIABLE",
+      "source": "protocol_metadata",
+      "unit": "degC"
+     },
+     {
+      "basis": "terminal voltage, the measured response",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "voltage_V",
+      "role": "MEASUREMENT",
+      "source": "protocol_metadata",
+      "unit": "V"
+     }
+    ],
+    "schema": "forge.mind.repsem.role_table/1"
+   }
+  },
+  "problem_digest": "15157386485791dfc8337ec422b5d18f8c7980e38b490702e95f271d4f17f359",
+  "roles": {
+   "declarations": [
+    {
+     "basis": "declared family parameter: RC-branch capacitance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "C1",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "F"
+    },
+    {
+     "basis": "declared family parameter: series resistance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "R0",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "ohm"
+    },
+    {
+     "basis": "declared family parameter: RC-branch resistance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "R1",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "ohm"
+    },
+    {
+     "basis": "the cycler applies the programmed load current; positive is discharge",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "current_A",
+     "role": "CONTROLLED_INPUT",
+     "source": "protocol_metadata",
+     "unit": "A"
+    },
+    {
+     "basis": "the pulse current level the protocol set",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "level_A",
+     "role": "FIXED_PROTOCOL_CONDITION",
+     "source": "protocol_metadata",
+     "unit": "A"
+    },
+    {
+     "basis": "charge state: evolves by coulomb counting of the applied current from the declared initial state over the declared capacity basis; no column is recorded",
+     "derived_from": [],
+     "driven_by": [
+      "current_A"
+     ],
+     "name": "soc",
+     "role": "STATE_VARIABLE",
+     "source": "protocol_metadata",
+     "unit": "1"
+    },
+    {
+     "basis": "the logger's sampling schedule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "t_s",
+     "role": "FIXED_PROTOCOL_CONDITION",
+     "source": "protocol_metadata",
+     "unit": "s"
+    },
+    {
+     "basis": "cell temperature, logged, not controlled",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "temperature_C",
+     "role": "NUISANCE_VARIABLE",
+     "source": "protocol_metadata",
+     "unit": "degC"
+    },
+    {
+     "basis": "terminal voltage, the measured response",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "voltage_V",
+     "role": "MEASUREMENT",
+     "source": "protocol_metadata",
+     "unit": "V"
+    }
+   ],
+   "schema": "forge.mind.repsem.role_table/1"
+  },
+  "schema": "forge.mind.repsem.assessment/1"
+ },
+ "problem_id": "P18",
+ "roles": "declared",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1"
+}

@@ -1,0 +1,3 @@
+kind experiment recursion limit 1000 base depth 2
+250 ('READ', False, True) e.g. k = 738 | READ
+8 ('RecursionError raised out of the reader', False, True) e.g. k = 988 | RecursionError raised out of the reader

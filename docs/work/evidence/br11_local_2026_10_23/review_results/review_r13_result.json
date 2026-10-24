@@ -1,0 +1,1154 @@
+{
+ "round": 13,
+ "sha": "3b407ddb351b558428b2bdfbc92fb21a2841102f",
+ "source": "workflow journal (full per-agent results)",
+ "reviews": [
+  {
+   "lens": "E-forge-scientific",
+   "findings": [
+    {
+     "id": "E13-F1",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Fresh-thread retry reads the result box before it checks liveness: a read-back that completes in that window refuses an honest account for good, and the refusal says '3 read-backs failed alike'",
+     "evidence": "src/engcore/mind/world/owners.py:520-525 at 3b407ddb: `thread.join(self.WAIT_S)` / `result = box.get(\"result\")` / `if result is None: if thread.is_alive(): raise OwnerUnavailable(...)` / `return None, [_Failed(\"the read-back on a fresh thread did not complete\", None, False, False)]`. If the fresh thread finishes after line 521 but before line 523, `is_alive()` is False and the code returns one synthetic non-recursion failure. In _account (owners.py:473-484) that failure fails the `all(f.recursion ...)` test (477), is not moving, and gives `len({(why,text)}) == 1`, so it reaches line 483: `_Unreadable(f\"{what} ... ({_ATTEMPTS} read-backs failed alike): the read-back on a fresh thread did not complete\")`. _read_back maps that to `_NotRead(..., True)` (owners.py:540-541), and _observe_all writes it into `self._diverged` (583-587): refused by this reader from then on. The same path is taken when the fresh thread dies from a BaseException raised in account code. Claims this contradicts: README section 4 lines 189-191 ('so a verification's own deep call stack never refuses an honest account for good ... classified by the same rule') and line 216 ('Concurrent verifications never refuse for good an account that only moved forward and that its owner reads back'); owners.py docstring 370-372.",
+     "reproduction": "Static reading. Not executed (lens E is static). A deterministic probe outline: a following reader over the battery fixture. The experiment's to_dict raises RecursionError on the calling thread and on the 'budget-read-back' thread sleeps WAIT_S+0.05 before returning real(). Monkeypatch threading.Thread.is_alive to join the thread before it answers, which stands in for a preemption between owners.py:521 and :523. Expected: OwnerUnavailable whose text contains '(3 read-backs failed alike): the read-back on a fresh thread did not complete' and 'from then on', reader._diverged is non-empty, and a later read at normal depth is still refused.",
+     "why": "The trigger is a deep caller stack together with a fresh-thread read-back that finishes about WAIT_S later; README section 8 measures large-experiment read-backs at 0.45 s alone and seconds under load. In that case an honest account that only moved forward, and that its owner can read back (the fresh thread may even have succeeded), is refused by that reader for good. The refusal reason is also wrong: it reports three alike failures that never happened. This fails closed (no wrong admission), so it is MINOR. It is still a correctness defect of the budget follower in the newest change (R12-4/R12-5), and it breaks two stated guarantees.",
+     "fix": "Check liveness first and read the box afterwards: `alive = thread.is_alive(); result = box.get(\"result\")`. If alive, raise OwnerUnavailable. Once the thread has stopped the box is final, so read the result. For 'stopped with no result' (a BaseException on the fresh thread), give an honest reason ('the fresh-thread read-back raised an interruption') and treat it as not read back (length floor) rather than as three alike failures. Add a deterministic control that patches is_alive as described above."
+    },
+    {
+     "id": "E13-F2",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "The guarantee that an abandoned fresh thread 'reaches nothing the reader holds' (private cache) has no effective regression control, and a regression reopens the R11-C-F1/R12-1 outcome class",
+     "evidence": "owners.py:505 `cache = dict(self._readback)` (a private copy) and 526-527 (adopted only when the thread finished with a result). owners.py:576 iterates `snapshot._readback.items()` inside the locked comparison before any observation is recorded. README section 5 lines 352-354: '`shared_cache` (the fresh thread writing the snapshot's cache instead of a private copy) passes every test ... (recorded, not claimed as controlled)'. docs/work/evidence/br11_local_2026_10_23/mutation/summary.txt: '[shared_cache] 666 passed, 1 skipped'. README line 191-192 states the guarantee: 'what it does later reaches nothing the reader holds (round 12)'.",
+     "reproduction": "Static reading, plus the committed mutation summary (read, not re-run). Under the shared_cache mutant, an abandoned thread inserting a new key into snapshot._readback while owners.py:576 iterates it raises RuntimeError inside `with self._changed:`. That happens after this verification's ticket was discarded (573) and before any history is recorded, so the error leaves pinned() (721). _Memo._pin_now keeps it, and admission raises a RuntimeError that Authorities.check does not catch (authority.py:292-297). A deterministic control is feasible without scheduling the race: block the fresh thread past WAIT_S, keep the snapshot that reader.pinned() returns, release and join the thread, then assert the snapshot's _readback did not gain its entry (or that the thread's cache is not the snapshot's dict).",
+     "why": "The private copy is what keeps the comparison from raising mid-way. If it regressed, a verification that read back a spend would leave without recording it. Waiters would also not be told, because the ticket was already discarded at 573 (see E13-F7). A later restore would then be re-admitted: the unobserved-spend, duplicate-dispatch class rated MAJOR in rounds 11 and 12. Under the verdict rules, an authority guarantee for Q4 with no effective regression control keeps Q4 PARTIAL. It is MINOR because the shipped code holds (static reading of 505/526).",
+     "fix": "Add the deterministic property control described above. Optionally, copy the cache at the comparison with `dict(snapshot._readback)` taken before the loop as defence in depth, and keep the claim in README section 5 as 'controlled' only once a mutant fails a test."
+    },
+    {
+     "id": "E13-F7",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "A verification is removed from the in-flight set before its comparison loop, so one interrupted inside the comparison is treated by its waiters as compared",
+     "evidence": "owners.py:572-575: `with self._changed: self._in_flight.discard(ticket); self._changed.notify_all(); pending = ...` runs BEFORE the per-key loop (577-614) that records `_seen`/`_reached`/`_diverged`. _leave (owners.py:643-652) marks waiters only `if handed and ticket in self._in_flight`, and the ticket is already gone. A waiter's predicate (619) `waiter[1] or not pending & self._in_flight` is then true with waiter[1] False, so it proceeds to the post-wait re-check (630-634) on whatever was recorded. README section 4 lines 201-202 and the accepted residual say that a verification handed accounts that left without comparing makes its waiters decide on no account ('which only the verifications then waiting for it refuse').",
+     "reproduction": "Static reading. Not executed. It needs an exception inside the locked loop: an asynchronous KeyboardInterrupt on the main thread, a MemoryError, or any regression of the kind E13-F2 describes.",
+     "why": "If a verification P holding a spend is interrupted after line 573 and before it records that key, a waiting verification D holding a restored earlier state is not refused and decides on its own state. That re-opens the re-dispatch path the wait was built to close, which the documented residual says the waiters refuse. The trigger is narrow and undemonstrated (MINOR), but it is a correctness gap in Q4's forward-only mechanism and differs from the documented residual's stated behaviour.",
+     "fix": "Discard the ticket after the comparison loop, still under the same lock, or wrap the loop in try/except BaseException that marks this ticket's waiters (waiter[1] = True) before re-raising."
+    },
+    {
+     "id": "E13-F3",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "A handed state that is not read back contributes only its length: a later rewrite at least that long is accepted, which a successful read-back would have refused for good (less information gives a more permissive outcome)",
+     "evidence": "owners.py:549-556 (_length counts entries only), 588-590 (only `self._reached[key] = max(...)` is recorded), 597-607 (rewrite detection compares only against `_seen`, the read-back histories). README section 4 lines 228-230 (new in 33258438, not pre-accepted): 'only their number is observed, so a later state at least that long that differs in them is not detected as a rewrite; a re-dispatch of what such a state recorded is refused, since returning to the state it was admitted on is going behind that length'.",
+     "reproduction": "Static reading. Scenario: seen=[a,b]. A handed spend state [a,b,c] is not read back (torn or timed out), so reached=3. The execution side restores [a,b] and settles d, giving [a,b,d] with length 3 >= reached, which extends seen: accepted, and a fresh admission is decided on a ledger that dropped c. If [a,b,c] had been read back, [a,b,d] would be refused for good (owners.py:597-601). Re-dispatch of the original AdmittedAction is still refused (its bound digest requires the length-2 state, which is behind), as the README says.",
+     "why": "This is the asymmetry the 'UNKNOWN never improves an answer' rule guards against: not being able to read a handed state makes a later rewrite acceptable that full information would refuse for good. It is strictly narrower than the owner-accepted residual (the content of a state not handed-and-read-back is never observed), and 33258438 only adds protection, so I do not count it as a new wrong outcome or as what holds Q4 PARTIAL. The sentence 'a re-dispatch of what such a state recorded is refused' is broader than what is shown: it holds for the admitted action's own re-dispatch, not for a new admission on a rewritten timeline.",
+     "fix": "Without running account code, also record each unread entry's owner identity: a BudgetCharge's charge_id or a ScientificEvaluation's evaluation_id, read through `object.__getattribute__(entry, '__dict__')` and required to be exact str. Treat a later state whose first N identities differ as a rewrite (refused for good). Honest torn moves keep their ids. Otherwise narrow the README sentence to 're-dispatch of the action admitted on an earlier state'."
+    },
+    {
+     "id": "E13-F4",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Report and docstring overstate the round-12 classification: a BaseException raised by account content leaves the classification with no trace (no length floor), and `str(exc)` does run the failure's own code",
+     "evidence": "README section 4 lines 186-187: 'A failure is described without running any code of it that could raise ... so no read-back failure leaves the classification (round 12)'. owners.py:368-369 says the same. README section 9 line 505 (R12-3): 'Fixed generically: any state not read back observes its account's length'. README section 4 line 174-175: 'Execution-side code runs only inside the owner's own serialization and read-back'. Code: _read_once catches only `Exception` (owners.py:458). _described runs `str(exc)`, the failure's own __str__ (owners.py:129), and catches only Exception. BudgetCharge passes `detail`/`predicted` through unchanged (sria/campaign/budget.py:113,125,130), so the json.dumps default=str at owners.py:432-433 runs str() on execution-side objects. A BaseException subclass raised there passes through _attempts/_account/_read_back (539-546 catch only _Unreadable/OwnerUnavailable), leaves pinned() before _length runs, and is not caught by _Memo._pin_now (authority.py:383-387, catches Exception), so every admission raises.",
+     "reproduction": "Static reading. Not executed. Example: an executor settles a charge whose `detail` object's __str__ raises a BaseException subclass. Every following verification raises out of admission, including worlds that never read that account. No floor is recorded, so after a restore the same admitted action re-admits, which is the R12-1 outcome with a BaseException instead of an Exception.",
+     "why": "The owner accepted this as 'interrupted (a BaseException ...)', so it is not filed as a new MAJOR. The report still says, without qualification, that no read-back failure leaves the classification, that every unread state observes its length, and that failures are described without running their code. Each statement is false for content-borne BaseExceptions, and the word 'interrupted' hides that the trigger can be the account's own deterministic content. That is reporting precision, so MINOR.",
+     "fix": "Qualify the three statements ('any Exception'; '__str__ is run and its Exception caught'). State in the residual that a BaseException from account content is included. Optionally, record the length floor for the account in a `except BaseException` path before re-raising: _length runs no account code."
+    },
+    {
+     "id": "E13-F5",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Abandoned fresh threads are never reclaimed: an account that recurses on the calling thread and blocks on the fresh one leaks one daemon thread (and one cache copy) per verification",
+     "evidence": "owners.py:504-524: every verification whose three calling-thread attempts all hit recursion starts a new daemon thread and abandons it after WAIT_S. Nothing bounds how many can be alive at once. README section 4 lines 190-192 says only that what the thread does later 'reaches nothing the reader holds'.",
+     "reproduction": "Static reading. An execution side that verifies from a deep stack while holding a lock its account's serialization takes, for a long stretch (b1207/a1207's pattern), or account code that blocks forever on threads named 'budget-read-back', starts one new blocked thread holding `dict(self._readback)` per verification.",
+     "why": "This is availability and resource cost only (each verification is already refused after WAIT_S, and thread.start failure is caught as OwnerUnavailable at 515-519). It is undocumented next to the round-12 claim that the wait is bounded. Performance-only, so it does not hold a question PARTIAL.",
+     "fix": "Keep at most one outstanding fresh read-back per account key (reuse it, or refuse while one is alive), and document the residual in README sections 4 and 8."
+    },
+    {
+     "id": "E13-F6",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Evidence and report precision: the committed 'controls' file shows 17 controls (13 failing), not the 18 / 14 claimed, and the README's test list stops at r10",
+     "evidence": "docs/work/evidence/br11_local_2026_10_23/README.md, layout row: 'controls/ | the round-12 controls on the tree before the fix'. controls/r12_controls_prefix_d40aff44.txt ends with '13 failed, 4 passed' and does not list test_a_state_not_read_back_while_a_rollback_waits_refuses_the_rollback. README section 5 lines 343-345 and PROGRESS item 28 claim '18 ... 14 fail'. Only mutation/summary.txt '[base] 14 failed, 4 passed' supports that, and it ran after the fix existed in the working tree (run_mutants_local.sh copies the working tree and restores HEAD's owners.py). README line 18: `tests/mind/test_authority_{failing_first,mutations,cross_domain,review_r1,...,review_r10}.py` omits r11 and r12.",
+     "reproduction": "Static reading of the committed evidence files.",
+     "why": "The 18/14 claim is supported by a committed file, but not by the file labelled as the controls evidence. The length-floor post-wait control is not shown failing-first in that file. Reporting precision only.",
+     "fix": "Replace or annotate controls/r12_controls_prefix_d40aff44.txt (say it is the 17-test pre-rewrite run and cite mutation/summary.txt [base] for 18/14), and update README line 18 to name r11 and r12."
+    }
+   ],
+   "prior_closure": [
+    {
+     "id": "R11-C-F1 = F11-1 (read-back step outside the classifying try)",
+     "closed": true,
+     "evidence": "Static reading at 3b407ddb: the whole of _read_once, from the account's serialization to the history and the parse of the served record, runs inside one `try ... except Exception` that raises _Failed (owners.py:427-460). The served experiment record is parsed from the owner's text (454), with no reader-side deepcopy. Residual: BaseException (E13-F4, accepted scope)."
+    },
+    {
+     "id": "F11-2 (a handed mapping the strict constructor refused hid another account's spend)",
+     "closed": true,
+     "evidence": "BudgetReader._handed reads each entry on its own (owners.py:660-689). Non-str keys are skipped, non-exact types are refused for good per id, aliases are refused per verification, and pinned() never calls the strict constructor on a handed mapping (715)."
+    },
+    {
+     "id": "R12-1 (b1201/b1202: unrenderable failure escapes the classification)",
+     "closed": true,
+     "evidence": "_described (owners.py:124-132) catches a failing str(exc) and falls back to the type name. It is used at 230, 322, 459, 518, 711, 717 and 839. Controls: tests/mind/test_authority_review_r12.py:105-118. Committed suite.txt shows 667 passed at 33258438 (read, not executed by me). Caveat: BaseException, E13-F4."
+    },
+    {
+     "id": "R12-2 (b1205/a1205/a1205b: two keys spelling one id)",
+     "closed": true,
+     "evidence": "owners.py:675-679 refuses the id for good. The constructor refuses at 758-759. Controls at r12:129-165. Mutants no_spelled_check and ctor_no_spelling_check fail (mutation/summary.txt)."
+    },
+    {
+     "id": "R12-3 (b1204/b1208: spend whose read-back always looks moving was never observed)",
+     "closed": true,
+     "evidence": "_NotRead.length plus _length (owners.py:101-108, 549-556), recorded at 589, compared at 606 and re-checked after the wait at 633. Controls at r12:201-262. Mutants no_floor_record, no_floor_compare, no_floor_post_wait and unreadable_length_floor_zero fail. Residual design limit: E13-F3."
+    },
+    {
+     "id": "R12-4 (b1207/a1207: unbounded fresh-thread join)",
+     "closed": true,
+     "evidence": "thread.join(self.WAIT_S) (owners.py:520) and a private cache (505). Control at r12:290-323. Mutants join_unbounded and timeout_for_good fail. New narrow race in the post-join classification: E13-F1. Private-cache control gap: E13-F2."
+    },
+    {
+     "id": "R12-5 (b1206/a1202: single fresh-thread attempt; wrapped RecursionError)",
+     "closed": true,
+     "evidence": "The fresh thread runs _attempts (owners.py:510). _recursion walks __cause__/__context__ through BaseException's own descriptors (140-152). Controls at r12:327-374. Mutants fresh_single_attempt and recursion_direct_only fail."
+    },
+    {
+     "id": "R12-6 (five round-11 mutants surviving)",
+     "closed": true,
+     "evidence": "mutation/summary.txt: id_str_call, differ_not_moving, why_only, alias_not_recorded2 and fresh_thread_no_flag each fail one r12 control (read from committed evidence, not re-run)."
+    },
+    {
+     "id": "E11-F1 (guarantee stated for handed rather than read-back states)",
+     "closed": true,
+     "evidence": "README section 4 lines 203-205 and owners.py:382-383 now state the guarantee for states 'handed to, and read back by' a verification, and list the unobserved paths (README 226-234). E13-F4 notes the 'no read-back failure leaves the classification' overstatement."
+    }
+   ],
+   "questions": [
+    {
+     "q": "Q1 a second STATE authority?",
+     "verdict": "NO",
+     "code_path": "src/engcore/mind/world/owners.py:176-266 (RunStateReader reads the owner's SystemRunResult.final_state / SystemCheckpoint.state; following mode only moves forward, 236-241). world.py:7 (the world authors no state). 33258438 changed only the failure rendering in pinned (230-231).",
+     "test": "tests/mind/test_authority_failing_first.py (stale state), test_authority_cross_domain.py, test_authority_mutations.py",
+     "evidence": "Static reading at 3b407ddb. The committed checks_33258438/suite.txt records 667 passed (read, not executed by me).",
+     "why": "State values, their revision (sequence) and their digest (SystemState.digest) come only from the system_runtime owner's record. The world holds bound projections that are verified against the owner at every admission. No open finding concerns state."
+    },
+    {
+     "q": "Q2 a second APPLICABILITY authority?",
+     "verdict": "NO",
+     "code_path": "world.py:99-124 (only ScientificModelDefinition.assess_validity, with the core status passed through unchanged); feasibility.py:854-905; owners.py:270-291 (exact ModelRegistry/ScientificModelDefinition)",
+     "test": "tests/mind/test_authority_failing_first.py (model replaced, stale), test_authority_review_r3/r4/r7 (decided = executed at validity endpoints)",
+     "evidence": "Static reading. Not touched by d40aff44..3b407ddb.",
+     "why": "The model owner decides applicability at an exact point. A current value never decides it (APPLICABILITY_INPUT_NOT_EXACT, README section 3). No open finding."
+    },
+    {
+     "q": "Q3 a duplicate UNITS authority?",
+     "verdict": "NO",
+     "code_path": "owners.py:869-882 (UnitRegistryReader: verify_registry_unmutated + registry_fingerprint); base.converts; budget amounts converted by the unit owner (README section 4)",
+     "test": "tests/mind/test_authority_failing_first.py (I), test_authority_review_r2/r7/r8",
+     "evidence": "Static reading. Not touched by the round-12 fix. The offset-unit level conversion is an owner-decision residual (accepted).",
+     "why": "Conversions and identity come only from scientific.units, and the sealed registry is bound and verified. No open finding."
+    },
+    {
+     "q": "Q4 duplicate DESIGN/SEARCH-SPACE concepts or a second BUDGET authority (incl. the follower's forward-only guarantee)?",
+     "verdict": "PARTIAL",
+     "code_path": "owners.py:332-780 (BudgetReader). New in 33258438: _described 124-132, _recursion 140-152, _handed 660-689, _NotRead/_length/_reached 101-108, 549-556, 588-590, 606, 633, and _attempts/_at_baseline_depth 486-528. The race is at 520-525, the ticket discard at 573, the cache comprehension at 576.",
+     "test": "tests/mind/test_authority_review_r5..r12.py (follower controls); r12 18 controls; no control for the private cache (shared_cache mutant survives); no control for the box-before-liveness race or for an interruption inside the comparison loop",
+     "evidence": "Static reading at 3b407ddb. Committed mutation/summary.txt shows 17 of 18 mutants caught, shared_cache surviving (read, not re-run). The prior MAJORs R11-C-F1/F11-2 and leads R12-1..R12-5 are closed in code.",
+     "why": "No BLOCKER or MAJOR: I found no demonstrated unobserved spend leading to duplicate dispatch, and no second budget authority (accounts are read back only by their owners' from_dict/to_json rules). Q4 stays PARTIAL on three open MINORs that are genuine correctness defects or uncontrolled guarantees of the forward-only follower. E13-F1: reading the result box before checking liveness can refuse an honest account for good with a false reason. E13-F2: the private-cache guarantee has no effective regression control, and a regression reopens the R12-1 class. E13-F7: a verification interrupted inside the comparison loop is treated as compared by its waiters, against the documented residual. E13-F3 (length-only observation), E13-F4 (wording), E13-F5 (thread accumulation) and E13-F6 (evidence precision) do not by themselves hold Q4 PARTIAL."
+    },
+    {
+     "q": "Q5 does the world issue SCIENTIFIC VERDICTS (incl. probabilistic->deterministic)?",
+     "verdict": "NO",
+     "code_path": "admission.py:72 (ADMISSION_CLASSIFICATION = 'action_admission_not_scientific_support'); feasibility.py:4-6, 77, 265-274 (only definite infeasibilities exported as FeasibilityVerdict(False); MISSING_INFORMATION never exported; nothing positive exported); feasibility.py:309-312 (no current value of any uncertainty kind decides containment)",
+     "test": "tests/mind/test_authority_failing_first.py (A: no interval decides), test_authority_review_r1.py",
+     "evidence": "Static reading. Not touched by the round-12 fix. README section 3 and section 11 keep the enclosure gap as an owner capability, failed closed.",
+     "why": "Admission is labelled as not scientific support. Probabilistic intervals never become deterministic containment. Replay attests self-consistency, not provenance (owners.py:43-47, admission.py:599). No open finding."
+    },
+    {
+     "q": "Q6 does an EXTERNAL PROPOSER bypass admission?",
+     "verdict": "NO",
+     "code_path": "port.py:18-24, 71-80 (LANGUAGE_MODEL proposals only via propose_suggestion with a certified ExternalSuggestion); admission.py:537-541 (_require_suggestion), 482-526 (ExecutionDesk suggestions_only)",
+     "test": "tests/mind/test_authority_failing_first.py (raw proposals never execute), test_authority_review_r1.py",
+     "evidence": "Static reading. Unchanged since round 11. The suggestions_only policy being opt-in is an accepted residual.",
+     "why": "Every dispatch goes through admit and authorize_dispatch on live owners. A proposer holds only an AdmissionGateway. No open finding."
+    },
+    {
+     "q": "Q7 does a provider/executor execute an UNADMITTED action through the Gen2 Mind interface?",
+     "verdict": "NO",
+     "code_path": "admission.py:402-442 (authorize_dispatch re-admits now and requires the identical digest), 443-455 (verify_authorization), 457-480 (_GuardedExecutor re-derives any authorization it receives), 482-526 (immutable ExecutionDesk)",
+     "test": "tests/mind/test_authority_failing_first.py (J, K, L), test_authority_mutations.py (admitted-action and authorization fields)",
+     "evidence": "Static reading. Unchanged by d40aff44..3b407ddb.",
+     "why": "Only AdmittedAction minted by admission reaches the executor, re-admitted against live owners at dispatch. A budget-follower defect refuses or raises; it does not mint. No open finding."
+    }
+   ]
+  },
+  {
+   "lens": "F-round12-rewrites-deep",
+   "findings": [
+    {
+     "id": "F13-02",
+     "severity": "MAJOR",
+     "question": "Q4",
+     "title": "A spend in a handed state that is never read back is observed only as a length: after a restore plus one more charge, the executed action is admitted and dispatched again, where a readable spend is refused for good",
+     "evidence": "owners.py@3b407ddb:542-546 (_read_back records only _NotRead(why, False, length) for OwnerUnavailable), 549-556 (_length: len of charges/_evaluations only), 588-590 (_observe_all: self._reached = max(...length)), 597-607 (the rewrite check compares history against self._seen only; _reached gates length only). README §4:228-230 and the owners.py docstring 386-388 state that only the number is observed. The README parenthetical 'a re-dispatch of what such a state recorded is refused, since returning to the state it was admitted on is going behind that length' holds only for the original AdmittedAction. A fresh projection re-admits and dispatches the same action. Probe ~/br11-review/r13/F-round12-rewrites-deep/probes/f1302_unread_state_rewrite.py (output f1302_out.txt; source also in the Windows scratch file r13/F-round12-rewrites-deep/f1302.sh). Results: [SelfFillingNote] and [VaryingNote]: two verifications handed the spend were refused once; the original re-dispatch after the restore was refused; after charge c, the fresh projection+admission of X was FEASIBLE and DISPATCHED; X executed 2 times; _reached={solver: 2}. [control: readable spend]: the fresh projection was refused ('rewrote its history'); X executed 1 time.",
+     "reproduction": "cd ~/forge-r13-review && PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review ~/forge-gen2-authority-v1/.venv/bin/python -u ~/br11-review/r13/F-round12-rewrites-deep/probes/f1302_unread_state_rewrite.py. Steps: battery owners; BudgetReader.following; ExecutionDesk(...).gateway(). Dispatch X; the executor settles charge b whose detail always fails 'moving' (the interpreter's mutation text) or with a varying message (a note store that is unreachable, with a request counter). Two verifications are handed [a,b] and refused once with floor 2. The execution side restores the pre-run ledger by object replacement (as sria.campaign does), then settles another action's charge c, giving [a,c] with length 2. project_world(declaration, authorities) -> admit X -> gateway.dispatch: X executes a second time.",
+     "why": "The lens criterion is never to re-authorize what a verification was handed and the account moved past. A verification WAS handed X's spend b, and the account moved past the state X was authorized on. Because only the length of that unread state is kept, a rewritten timeline at or beyond that length ([a,c]) is accepted, and X's spend vanishes from the budget the Mind is admitted against. The forward-only rule exists to refuse exactly this rewrite: the same sequence with a readable spend is refused for good. That is an unobserved spend permitting duplicate dispatch, reproduced through the gateway. The trigger is deterministic content an execution side can hold: the round-12 b1204/b1208 values, e.g. a note whose rendering fails with a fresh request id each time. Not a regression: d40aff44 re-dispatched even on a plain restore (r12_probes_d40aff44/b1204 'DISPATCHED AGAIN'), and 33258438 only narrowed the class. The README discloses the precondition, but its 're-dispatch ... is refused' wording overstates the protection, and this statement was explicitly not owner-accepted.",
+     "fix": "Have the floor of an unread state also carry an identity of its first L entries that can be read without running account code: each charge's charge_id (BudgetCharge __dict__, exact str) and each evaluation's evaluation_id (both unique within an account). Treat a later read-back whose first L ids differ as a rewrite, refused for good. Alternatively, refuse for good an account whose floor was set by an unread state if a later observed state has length >= floor but does not keep those ids. Add f1302 (both note variants plus the readable control) as a gateway control asserting that X executed once. Restate README §4:228-230 so it says what is and is not refused (a fresh admission after a restore plus a charge)."
+    },
+    {
+     "id": "F13-01",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Fresh-thread completion race: a fresh thread that finishes between box.get and is_alive() refuses an honest, at-rest account FOR GOOD as '3 read-backs failed alike'",
+     "evidence": "owners.py@3b407ddb:520-525. After thread.join(self.WAIT_S), result = box.get('result') is read BEFORE thread.is_alive(). When the thread completes in between, the code returns (None, [_Failed('the read-back on a fresh thread did not complete', None, False, False)]). _account (473-484) then sees one failure that is neither recursion nor moving, a set of size 1, so it raises _Unreadable('3 read-backs failed alike') and _observe_all (582-587) puts the account in _diverged for good. This contradicts README §4:189-191 ('a verification's own deep call stack never refuses an honest account for good') and §4:216. Probe ~/br11-review/r13/F-round12-rewrites-deep/probes/f1301_fresh_thread_completion_race.py (output f1301_out.txt). It pauses only the verifying thread with sys.settrace at owners.py:523 until the fresh thread ends; no reader code or member is patched. [race]: deep dispatch refused; a later read at rest at normal depth was 'refused: FOR GOOD | ... (3 read-backs failed alike): the read-back on a fresh thread did not complete'; a fresh admission later gave MISSING_INFORMATION AUTHORITY_OWNER_UNAVAILABLE; diverged=[experiment]. [control_timeout]: refused once, later served, FEASIBLE. [control_gate_open]: DISPATCHED.",
+     "reproduction": "Run the probe as above. Setup: the experiment's to_dict raises RecursionError on the verifying thread (its deep caller stack). On the 'budget-read-back' thread it waits on an event that stands for the execution side's store lock, held by another of its threads for about WAIT_S. The verifying thread's trace sets that event and joins the fresh thread at the is_alive() line, so the fresh thread finishes just after join(WAIT_S) timed out and box.get returned None.",
+     "why": "The round-12 fresh-thread retry exists so that a deep caller stack never refuses an honest account for good. Introducing the bounded join also introduced this window: an honest account that only waited on the execution side's lock for about WAIT_S is refused by that reader permanently. That needs a new reader, and every admission bound to the account fails closed meanwhile. It is fail-closed (no wrong admission or dispatch), but it is a genuine correctness defect in the budget follower's for-good classification. The same mislabel also applies to a fresh thread that dies by a BaseException.",
+     "fix": "After the join, check thread.is_alive() first and read box only when the thread is not alive, or re-read box after is_alive() returns False. Never classify the synthetic 'did not complete' failure as alike: return it as moving/transient (OwnerUnavailable, floor recorded). Add f1301 (the settrace interleaving) as a control asserting not 'from then on' and a later FEASIBLE admission."
+    },
+    {
+     "id": "F13-03",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Account content that raises a BaseException subclass (deterministic, not an interrupt) still raises out of every admission, including worlds that never read that account, and its spend is never observed (restore re-dispatches); this includes the new _described path",
+     "evidence": "owners.py@3b407ddb:458 (_read_once catches Exception only), 128-131 (_described catches Exception only around str(exc), so an Exception whose __str__ raises a BaseException escapes from inside the classifying handler), 538-546 (_read_back catches only _Unreadable/OwnerUnavailable). Probe ~/br11-review/r13/F-round12-rewrites-deep/probes/f1303_content_baseexception.py (output f1303_out.txt). [detail raises BaseException] and [detail raises an Exception whose __str__ raises BaseException] both give the same result: an unbound side ledger makes admission of a world that never reads it raise Halt; each dispatch on the spent state raises Halt; after the restore the dispatch is DISPATCHED; the executor ran 2 times.",
+     "reproduction": "Run the probe as above. Halt(BaseException) is raised from a charge detail's __str__, or from the __str__ of an Exception the detail raises.",
+     "why": "The consequences are the R11-C-F1/F11-1/b1201 ones: a raise out of every admission ('an account no world reads refuses nothing' fails) and a spend that is never observed and re-dispatched after a restore. Here the cause is a BaseException raised deterministically by account content rather than an Exception. The owner-accepted residual ('interrupted (a BaseException ...) between being handed accounts and comparing them') covers it literally, so it is filed MINOR and not re-filed as MAJOR. The word 'interrupted' hides that the execution side's account CONTENT triggers it at every verification, so the residual's scope is understated.",
+     "fix": "Either state explicitly in README §4 and the docstring that account content raising a BaseException makes every verification (of every world) raise and leaves its spend unobserved, or catch non-interrupt BaseExceptions (everything except KeyboardInterrupt and SystemExit raised by the interpreter) in _read_once and _described and classify them like Exceptions."
+    }
+   ],
+   "prior_closure": [
+    {
+     "id": "R11-C-F1 / F11-1",
+     "closed": true,
+     "evidence": "At 3b407ddb, preserved probes f1102_readback_escape_redispatch.py and c1112_deepcopy_outside_try.py were run against ~/forge-r13-review (outputs ~/br11-review/r13/F-round12-rewrites-deep/out12/). f1102: at trace depth 3 and 600, in both seq and wait orders, the re-dispatch after the restore is refused and the executor ran 1. c1112: an unbound side experiment at metadata depth 100-1000 is FEASIBLE; a bound one at depth 3/600/1000 gives a refused re-dispatch, executor ran 1. _read_once (owners.py:427-460) has its whole body inside the classifying try. Residual: the BaseException variant, F13-03, within the documented residual."
+    },
+    {
+     "id": "F11-2",
+     "closed": true,
+     "evidence": "f1105_malformed_mapping_hides_spend.py at 3b407ddb: for alias and numpy.str_ id, the re-dispatch after the restore is refused and the executor ran 1. _handed (owners.py:660-689) reads entry by entry."
+    },
+    {
+     "id": "R12 lead b1201/b1202 (unrenderable failure escapes)",
+     "closed": true,
+     "evidence": "b1201 at 3b407ddb: cases A, B and C give admissions MISSING_INFORMATION OWNER_UNAVAILABLE, a refused re-dispatch, executor ran 1. b1202: an unbound unrenderable account gives FEASIBLE; a bound one gives a refused re-dispatch, executor ran 1. _described is at owners.py:124-132. Not closed for a BaseException raised from __str__ (F13-03)."
+    },
+    {
+     "id": "R12 lead b1205/a1205 (two entries spelling one id)",
+     "closed": true,
+     "evidence": "a1205 at 3b407ddb: twin_last and twin_first give a refused second dispatch, executor calls 1. b1205 and a1205b now stop at the strict constructor's WorldRefused('two budget account ids spell one id') (owners.py:758-759); _handed refuses that id for good (owners.py:675-680)."
+    },
+    {
+     "id": "R12 lead b1204/b1208 (deterministic 'moving' content hides a spend)",
+     "closed": false,
+     "evidence": "The lead as stated (a plain restore re-dispatches) is closed: b1204 and b1208 at 3b407ddb are refused after the restore, executor ran 1 (length floor, owners.py:542-546, 588-590). But the spend is still never observed in its entries: with one more charge after the restore, a fresh admission dispatches the executed action again (F13-02, probe f1302, X executed 2 times)."
+    },
+    {
+     "id": "R12 lead b1206 (fresh-thread single attempt torn refuses for good)",
+     "closed": true,
+     "evidence": "b1206 at 3b407ddb: a deep-stack verification with a torn fresh-thread retry is served revision 1; a later one is served too (_attempts runs 3 attempts on the fresh thread, owners.py:486-495, 510)."
+    },
+    {
+     "id": "R12 lead b1207/a1207 (unbounded fresh-thread join)",
+     "closed": true,
+     "evidence": "b1207: refused 'not read back within 1.0 s on a fresh thread'; another verification was served at 0.00 s; tickets in flight []. a1207 (rerun with -u): it returned within 5 s, refused; another verification read it. Join bounded at owners.py:520. The bounded join introduced the completion race F13-01."
+    },
+    {
+     "id": "R12 lead a1202 (wrapped recursion not seen)",
+     "closed": true,
+     "evidence": "a1202 at 3b407ddb: 190 READ; 1 refused once ('no fresh thread could start'); 7 'RecursionError raised out of the reader' at caller depths 989+ (documented residual: the caller's own stack exhausted). None refused for good. _recursion walks __cause__/__context__ (owners.py:140-152)."
+    }
+   ],
+   "questions": [
+    {
+     "q": "Q1 a second STATE authority?",
+     "verdict": "NO",
+     "code_path": "33258438 touches only src/engcore/mind/world/owners.py BudgetReader/_described (git diff --stat d40aff44 33258438); RunStateReader.pinned (owners.py:218-242) changed only in error rendering (_described, 230-231)",
+     "test": "tests/mind (647 passed at 3b407ddb, command: python -m pytest tests/mind -q -p no:cacheprovider -n 2)",
+     "evidence": "From this lens's reading, the diff leaves the state reader's forward-only head check unchanged. No new state record or store is created.",
+     "why": "The round-12 rewrites are confined to the budget follower and failure rendering."
+    },
+    {
+     "q": "Q2 a second APPLICABILITY authority?",
+     "verdict": "NO",
+     "code_path": "No applicability code changed in d40aff44..3b407ddb (only owners.py BudgetReader, the _described call sites in RunStateReader/ProviderRegistryReader/DeclarationReader, and tests)",
+     "test": "tests/mind 647 passed",
+     "evidence": "diff stat: owners.py +194/-52, tests/mind/test_authority_review_r12.py added",
+     "why": "Nothing in this lens's scope selects or restates model applicability."
+    },
+    {
+     "q": "Q3 a duplicate UNITS authority?",
+     "verdict": "NO",
+     "code_path": "owners.py:140-152 _recursion only recognizes a RecursionError the unit owner wraps; no unit rule is restated",
+     "test": "test_authority_review_r12.py::test_a_recursion_failure_an_owner_wraps_is_retried_on_a_fresh_thread (passing); a1202 probe: 190 READ, 0 for good",
+     "evidence": "No conversion or comparison logic was added.",
+     "why": "Classifying a wrapped failure is not a units authority."
+    },
+    {
+     "q": "Q4 duplicate DESIGN/SEARCH-SPACE concepts or a second BUDGET authority (forward-only follower)?",
+     "verdict": "YES",
+     "code_path": "owners.py BudgetReader: _read_back 530-547, _length 549-556, _observe_all 558-635 (floor 588-590, rewrite check 597-607), _at_baseline_depth 497-528, _account 462-484",
+     "test": "Probes f1302 (X executed 2 times through gateway after restore plus one charge), f1301 (honest account refused for good by a fresh-thread completion race), f1303 (BaseException content raises out of every admission; restore re-dispatch). The existing r12 controls all pass, but none covers these cases.",
+     "evidence": "F13-02 (MAJOR) keeps Q4 at YES: an unread handed spend is observed only as a length, so a rewritten timeline of that length is accepted and the executed action is admitted and dispatched again, while the readable control is refused for good. F13-01 (MINOR, genuine correctness: honest account refused for good) and F13-03 (MINOR, within the literal documented residual) are also open. The reader is still not a second budget authority (it reads the owners' accounts by the owners' rules), and the round-11/12 MAJOR leads re-checked here reproduce as closed.",
+     "why": "The forward-only guarantee (no unobserved spend leading to duplicate dispatch) is demonstrably bypassable through the length-only observation of unread states, and that statement was not owner-accepted."
+    },
+    {
+     "q": "Q5 does the world issue SCIENTIFIC VERDICTS?",
+     "verdict": "NO",
+     "code_path": "No verdict-bearing code changed in d40aff44..3b407ddb; BudgetReader serves owner records or OWNER_UNAVAILABLE refusals",
+     "test": "tests/mind 647 passed",
+     "evidence": "The refusals produced (MISSING_INFORMATION AUTHORITY_OWNER_UNAVAILABLE/STALE) are admission statuses, not scientific verdicts.",
+     "why": "Nothing probabilistic becomes deterministic in this lens's scope."
+    },
+    {
+     "q": "Q6 does an EXTERNAL PROPOSER bypass admission?",
+     "verdict": "NO",
+     "code_path": "admission.py ExecutionDesk.gateway 526-534 and authorize_dispatch 420-440 are unchanged by 33258438. Every dispatch in probes f1301-f1303 re-admitted through admit() against live authorities.",
+     "test": "probes f1301/f1302/f1303 dispatch only via ExecutionDesk.gateway(); tests/mind 647 passed",
+     "evidence": "In F13-02 the second execution of X went through a FRESH projection and admission (FEASIBLE), not around admission: the defect is in what the budget owner reader accepts (Q4), not an admission bypass.",
+     "why": "No path dispatches without admit()."
+    },
+    {
+     "q": "Q7 does a provider/executor execute an UNADMITTED action through the Gen2 Mind interface?",
+     "verdict": "NO",
+     "code_path": "_GuardedExecutor (admission.py:457-479) re-derives every authorization; unchanged",
+     "test": "In f1301, the executor ran 0 in the race case; in f1302, each execution followed a gateway dispatch of an admitted action",
+     "evidence": "Every executor call in the probes followed authorize_dispatch on an AdmittedAction that admission minted at that moment.",
+     "why": "The duplicate execution in F13-02 is of an action admitted afresh on a budget state the reader wrongly accepted (Q4), not an unadmitted action."
+    }
+   ]
+  },
+  {
+   "lens": "C-adversarial-bypass",
+   "findings": [
+    {
+     "id": "R13-C-F1",
+     "severity": "MAJOR",
+     "question": "Q4",
+     "title": "A spent state handed to a verification but not read back keeps only its length: restore + any later charge regains the spent budget, and the action that exhausted it is admitted and dispatched again (README §4 limitation, rated here, not pre-accepted)",
+     "evidence": "owners.py:542-546: _read_back turns an OwnerUnavailable (failures differ, 'moving', or the fresh thread still alive after WAIT_S, owners.py:523-524) into _NotRead(length) using _length (549-556). owners.py:588-590: only self._reached[key] = max(..., got.length) is recorded. owners.py:596-607: a rewrite is detected only against _seen, which a not-read-back state never extends, and the floor check is just len(history) < _reached. So a later state with the same length but different entries extends _seen and is accepted. README.md:228-230 states the limitation and adds 'a re-dispatch of what such a state recorded is refused'. That holds only for the same AdmittedAction. The same action, newly admitted, is dispatched.\nProbes (Windows C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\C-adversarial-bypass\\p01_floor_gap.py, p02_fresh_thread_alive_floor_gap.py, p07_budget_regained.py; outputs in ~/br11-review/r13/C-adversarial-bypass/p01_floor_gap.out, p02_*.out, p07_*.out) at 3b407ddb:\np01 [varying] general pool 6.0; first: ADMITTED+DISPATCHED | verification on spent state: refused this verification only | ... | after restore + tiny charge: ADMITTED+DISPATCHED | executor ran 2 (same for [mutating]). Control [readable]: after restore+charge the reader raises 'rewrote its history ... refused by this reader from then on'.\np02 [deep stack under store lock] (the builder's own R12-4 configuration, honest values): 'was not read back within 1.0 s on a fresh thread' | after restore + zero-cost charge: ADMITTED+DISPATCHED | executor ran 2. Control [shallow]: 'no world (... rewrote its history)' | executor ran 1.\np07 (a) on the spent state read back: admission INFEASIBLE_BUDGET ('OVER_BUDGET',). (b) after restore + another action's 0.5 charge: ADMITTED+DISPATCHED | executor ran 2 ['simulate_pulse','simulate_pulse'] | realized for simulate_pulse: 12.0 against a general pool of 6.0.",
+     "reproduction": "cd ~/forge-r13-review && PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review ~/forge-gen2-authority-v1/.venv/bin/python ~/br11-review/r13/C-adversarial-bypass/probes/p07_budget_regained.py (also p01_floor_gap.py, p02_fresh_thread_alive_floor_gap.py). Steps: BudgetReader.following over the fixture accounts. ExecutionDesk(...).gateway(). MindWorldPort admits and executes simulate_pulse, whose executor settles the whole general pool. One verification is handed the spent ledger and does not read it back: (i) the execution side verifies on a deep stack while holding its re-entrant store lock, so the fresh thread is still alive after WAIT_S, or (ii) the charge note fails with a varying message or the mutation text. The execution side replaces the ledger with its pre-run copy, as sria.campaign restores, and settles one more charge. The Mind re-projects, proposes the same action, and it is admitted and dispatched again.",
+     "why": "The forward-only follower is what Q4 relies on: 'no re-authorization of what an account moved past, no unobserved spend leading to duplicate dispatch'. Here a verification was handed the spend, and the reader says it observes how far the account moved. Yet one restore plus one ordinary charge regains the whole spent pool. An action OVER_BUDGET on the spent state is admitted and executed a second time (12.0 realized against 6.0). When the spent state is read back, the same sequence is refused for good as a rewrite, so the guarantee depends on whether the read-back happened to succeed. The trigger in p02 is honest: the builder's own R12-4 lock configuration and the classification new in 33258438 ('alive after WAIT_S = not read back'). p01's moving classification covers a concurrent desk with a torn read. This is the round-11/12 class (a handed spend not observed, then a restore re-authorizes it). The R12-3 fix (length floor) closes the restore-only variant but leaves restore+charge open.",
+     "fix": "For a state handed and not read back, record code-free per-entry identities as well as the length: read each entry's identity straight from the owner's container (each BudgetCharge's charge_id and realized, each ScientificEvaluation's evaluation_id), requiring exact str/float through object.__getattribute__ with no account code run. Treat any later state whose first L identities differ as a rewrite, refused for good. When those identities cannot be read code-free, refuse the account for good. Add a control: not-read-back spend, restore, other charge, then same action refused. Correct README §4:228-230 so it does not imply the action itself is never re-dispatched."
+    },
+    {
+     "id": "R13-C-F2",
+     "severity": "MAJOR",
+     "question": "Q4",
+     "title": "Owner content whose rendering raises a BaseException (e.g. asyncio.CancelledError) leaves the classification at every verification: the spend leaves no trace (no history, no floor) and after a restore the SAME admitted action is re-dispatched",
+     "evidence": "owners.py:458 (_read_once) catches only Exception. owners.py:129-131 (_described) catches only Exception. owners.py:538-546 (_read_back) catches only _Unreadable/OwnerUnavailable. owners.py:723-728: pinned's finally discards the ticket and records nothing. owners.py:368-369 and README §4 (~186-187) claim a failure is 'described without running any code of it that could raise ... so no read-back failure leaves the classification'. That is false when str(exc) raises a BaseException. Probes p03_base_exception_content.py and p05_cancelled_note.py (same Windows dir; outputs in ~/br11-review/r13/C-adversarial-bypass/p03_*.out, p05_*.out):\np03 [detail raises BaseException] verifications on the spent state: ['Halt','Halt','gateway.admit raised Halt']; after restore: DISPATCHED AGAIN; executor ran 2; seen len=1 reached=None in_flight=set(). Identical for [detail raises Exception whose __str__ raises BaseException], the _described path.\np05 [ledger, CancelledError note] verifications on the spent state: ['CancelledError','CancelledError']; after restore: DISPATCHED AGAIN; executor ran 2.\nAlso reproduced at d40aff44 (p05), so it predates the round-12 fix and was not closed by it.",
+     "reproduction": "Run ~/br11-review/r13/C-adversarial-bypass/probes/p05_cancelled_note.py with the r13 PYTHONPATH and interpreter. Admit simulate_pulse through BudgetReader.following plus the ExecutionDesk gateway. The executor settles a charge whose detail is a lazily fetched note whose task was cancelled (__str__ raises asyncio.CancelledError). The canonical_digest default=str read-back calls str(detail). Every later verification raises CancelledError out of BudgetReader.pinned, and the Mind's gateway.admit raises it too. The execution side restores the ledger by replacement, and gateway.dispatch(r.admitted) runs the executor again.",
+     "why": "This duplicates the dispatch of the identical AdmittedAction, the exact outcome of R11-C-F1 and R12-1, triggered by persistent owner content and not by an interruption of the verification. README §4:232-234 lists 'one interrupted (a BaseException ...)' as unobserved. I file this beyond that scope for three reasons. (1) The failure is a deterministic property of the handed state, raised at every attempt. Under the reader's own rule ('classified by what happens, not by the exception's type'; three alike failures = refused for good) it should refuse the account for good. (2) The round-12 claim that no read-back failure leaves the classification is false for it. (3) asyncio.CancelledError is a value-level failure in ordinary async execution code, as natural as b1208's unreachable-note trigger that round 12 fixed. If the owner holds the residual to cover it, downgrade to MINOR and correct owners.py:368-369 and README §4.",
+     "fix": "Classify BaseException in _read_once and _described: catch BaseException and re-raise only KeyboardInterrupt/SystemExit, or classify those too. More robustly, in pinned()'s exit path, whenever the verification was handed accounts and did not compare, record the code-free length floor (and, per F1, the entry identities) for every handed account before leaving. Add controls for a CancelledError note and for an Exception whose __str__ raises a BaseException."
+    },
+    {
+     "id": "R13-C-F3",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "_length runs unguarded inside _read_back's except handler: an instance __dict__ key of equal hash whose __eq__ raises escapes _read_back (documented 'Total') and hides the spend",
+     "evidence": "owners.py:542-546 calls self._length(key) inside 'except OwnerUnavailable' with no try. owners.py:555: dict.get(state, 'charges') compares the probe key with any equal-hash key in the instance dict. owners.py:530-532 documents _read_back as 'Total: no failure of one account's read-back leaves this method or hides another account'. p04_length_escape.py (output ~/br11-review/r13/C-adversarial-bypass/p04_length_escape.out): [crafted __dict__] verifications on the spent state: ['LookupError','LookupError']; after restore: DISPATCHED AGAIN; executor ran 2; reached=None. Control: refused, executor ran 1, reached=2.",
+     "reproduction": "The executor settles a charge with a varying-message note, then replaces the ledger's instance __dict__ with one that holds a str-subclass key Key('charges') (str.__hash__, __eq__ raising only when called from _length) ahead of the real key. Two verifications raise LookupError. Restore by replacement, then gateway.dispatch(r.admitted) runs again.",
+     "why": "The documented totality of _read_back and the round-12 floor are bypassed, and every other account of that verification is hidden too. It needs the execution side to replace its own account's private __dict__ (in-process manipulation of an execution-side private member), so per the severity rules it is MINOR. It is a genuine correctness gap in the new code, but its trigger is inside the execution side's trust boundary.",
+     "fix": "Wrap _length in its own try (any Exception -> None, i.e. refused for good), or read the container via object.__getattribute__(account, 'charges'/'_evaluations') and check type(account.__dict__) and the key types first."
+    },
+    {
+     "id": "R13-C-F4",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "A fresh read-back thread still alive after WAIT_S is abandoned, not cancelled: a persistent lock-held deep-stack verifier accumulates one blocked daemon thread per verification",
+     "evidence": "owners.py:514-524: threading.Thread(daemon=True) is started and joined for WAIT_S. If it is still alive the method raises OwnerUnavailable and keeps no handle on the thread. In p02 the thread stays blocked on the execution side's lock until that lock is released. Nothing bounds how many such threads exist (code inspection; accumulation not measured).",
+     "reproduction": "p02's verifier, repeated N times while the store lock is continuously held, leaves N blocked 'budget-read-back' threads (not run as a count; inferred from owners.py:514-528).",
+     "why": "Resource and availability hygiene only: no wrong admission. A performance/availability issue, filed MINOR, and by itself it does not make Q4 PARTIAL.",
+     "fix": "Keep at most one outstanding fresh-thread read-back per account key, reusing or awaiting it, and document the bound."
+    }
+   ],
+   "prior_closure": [
+    {
+     "id": "R11-C-F1 / F11-1 (read-back step outside the classifying try; handed spend never observed; restore re-dispatch)",
+     "closed": true,
+     "evidence": "At 3b407ddb, the round-12-preserved f1102_readback_escape_redispatch.py printed 'a verification on the spend: DISPATCHED | re-dispatch after the restore: refused ... | executor ran 1' (trace depth 3 and 600, seq and wait orders). c1112_deepcopy_outside_try.py printed: refused, executor ran 1, at metadata depths 3/600/1000; unbound side experiment FEASIBLE. Output: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\C-adversarial-bypass\\s01_out.txt. The class reappears through a BaseException from owner content (R13-C-F2, new)."
+    },
+    {
+     "id": "F11-2 (handed mapping the strict constructor refused hid another account's spend)",
+     "closed": true,
+     "evidence": "f1105_malformed_mapping_hides_spend.py at HEAD: [alias] and [numpy str_ id], re-dispatch after the restore refused, executor ran 1 (s01_out.txt)."
+    },
+    {
+     "id": "R12-1 (b1201/b1202 unrenderable failure escapes)",
+     "closed": true,
+     "evidence": "b1201: variants A/B/C all 'refused ... executor ran 1'. b1202: unbound side ledger FEASIBLE; bound: refused, executor ran 1 (s01_out.txt). The fix does not cover a failure whose rendering raises a BaseException (R13-C-F2)."
+    },
+    {
+     "id": "R12-2 (b1205/a1205/a1205b two keys spelling one id)",
+     "closed": true,
+     "evidence": "a1205 twin_last/twin_first: second dispatch refused, executor calls 1. b1205/a1205b: strict constructor raises WorldRefused 'two budget account ids spell one id'. The probes' tracebacks are that intended refusal (s01_out.txt)."
+    },
+    {
+     "id": "R12-3 (b1204/b1208 state classified moving, never observed, restore re-dispatch)",
+     "closed": false,
+     "evidence": "Restore-only variant closed: b1204/b1208 at HEAD give 'after the restore: refused; executor ran 1'. Restore + any later charge is still open: p01 [varying]/[mutating] give 'after restore + tiny charge: ADMITTED+DISPATCHED | executor ran 2' (R13-C-F1)."
+    },
+    {
+     "id": "R12-4 (b1207/a1207 unbounded fresh-thread join)",
+     "closed": true,
+     "evidence": "b1207 at HEAD: the deep-stack verification under the re-entrant lock is refused with 'was not read back wi[thin 1.0 s]'; another verification meanwhile served (0.00 s); tickets in flight []. The new 'alive => not read back' classification feeds R13-C-F1 (p02)."
+    },
+    {
+     "id": "R12-5 (b1206 single fresh-thread attempt; a1202 wrapped recursion)",
+     "closed": true,
+     "evidence": "b1206: 'deep-stack verification (fresh-thread retry torn once) -> served revision 1'. a1202 at HEAD: 190 READ, 1 refused once (no fresh thread could start), 7 'RecursionError raised out of the reader' (documented residual: caller's own stack exhausted); no refused-for-good."
+    },
+    {
+     "id": "R12-6 (surviving mutants lacked controls)",
+     "closed": true,
+     "evidence": "tests/mind/test_authority_review_r12.py plus r11: 55 passed. tests/mind plus benchmarks/mind_gen2_authority_v1/tests: 654 passed in 28.78s (-n 2, WSL, 3b407ddb). I did not re-run the mutants myself."
+    }
+   ],
+   "questions": [
+    {
+     "q": "Q1 second STATE authority?",
+     "verdict": "NO",
+     "code_path": "src/engcore/mind/world/owners.py:176-266 (RunStateReader: exact SystemRunResult/SystemCheckpoint, forward-only head under lock); authority.py:276-320",
+     "test": "tests/mind suite 654 passed at 3b407ddb (WSL, -n 2)",
+     "evidence": "In round 12 the only change to RunStateReader was _described in its except handler (owners.py:229-231). My lens found no path where a world states a state value that the run owner does not. Edits to AdmittedAction configuration are refused at dispatch (p06: 'edited configuration: refused').",
+     "why": "State values are read from the run owner's head and digest only, and re-verified at every admission and dispatch. No open finding for Q1."
+    },
+    {
+     "q": "Q2 second APPLICABILITY authority?",
+     "verdict": "NO",
+     "code_path": "admission.py:207-210 (applicability bindings carried, gating only for MODEL_EXECUTION); owners.py:270-291 (ModelRegistryReader exact type)",
+     "test": "tests/mind suite 654 passed",
+     "evidence": "Nothing in 33258438 touches applicability. No probe of mine produced an applicability decision outside the model registry.",
+     "why": "No open finding."
+    },
+    {
+     "q": "Q3 duplicate UNITS authority?",
+     "verdict": "NO",
+     "code_path": "owners.py:869-882 (UnitRegistryReader: verify_registry_unmutated + registry_fingerprint); admission.py:194-226 (as_executed / settings_in_declared_units guard)",
+     "test": "tests/mind suite 654 passed; p06 edited configuration refused",
+     "evidence": "Executed values are converted only by the unit owner. Editing the minted configuration in place is refused ('the admitted action is not what admission yields now').",
+     "why": "No open finding for units in my lens."
+    },
+    {
+     "q": "Q4 duplicate DESIGN/SEARCH-SPACE or second BUDGET authority, incl. forward-only guarantee",
+     "verdict": "YES",
+     "code_path": "owners.py:530-556 (_read_back/_length), 558-635 (_observe_all: _reached floor vs _seen rewrite check), 497-528 (_at_baseline_depth alive => OwnerUnavailable), 420-460 (_read_once catches Exception only), 124-132 (_described catches Exception only), 691-728 (pinned)",
+     "test": "p01_floor_gap.py, p02_fresh_thread_alive_floor_gap.py, p07_budget_regained.py, p03_base_exception_content.py, p05_cancelled_note.py, p04_length_escape.py (Windows dir ...\\scratchpad\\r13\\C-adversarial-bypass\\; outputs in ~/br11-review/r13/C-adversarial-bypass/*.out)",
+     "evidence": "R13-C-F1: an action that exhausted the 6.0 general pool (OVER_BUDGET on the spent state when read back) is admitted and dispatched again after restore + one charge, executor ran 2, 12.0 realized. The read-back control refuses this for good. R13-C-F2: owner content raising asyncio.CancelledError makes the same admitted action re-dispatch after a restore (executor ran 2), at HEAD and at d40aff44.",
+     "why": "Two reproduced MAJORs: an unobserved or partly observed handed spend permits duplicate dispatch and re-authorizes budget the account moved past. R13-C-F1 and R13-C-F2 keep Q4 at YES. R13-C-F3 (MINOR, private __dict__) and R13-C-F4 (MINOR, performance) would not by themselves."
+    },
+    {
+     "q": "Q5 does the world issue SCIENTIFIC VERDICTS?",
+     "verdict": "NO",
+     "code_path": "admission.py:72 ADMISSION_CLASSIFICATION 'action_admission_not_scientific_support'; admission.py:256-263 feasibility_verdicts only from live, verified decisions",
+     "test": "tests/mind suite 654 passed",
+     "evidence": "Nothing in 33258438 touches verdict output. The admissions in my probes carry only feasibility statuses (FEASIBLE, INFEASIBLE_BUDGET, MISSING_INFORMATION).",
+     "why": "No open finding."
+    },
+    {
+     "q": "Q6 does an EXTERNAL PROPOSER bypass admission?",
+     "verdict": "NO",
+     "code_path": "admission.py:519-540 (desk/gateway _require_suggestion), 402-416 (authorize_dispatch: exact AdmittedAction, suggestions policy); port.py:69-113",
+     "test": "p06_edits_policy.py",
+     "evidence": "p06: raw proposal, AdmissionResult and FeasibilityDecision handed to dispatch are refused. suggestions_only desk dispatch and admit of a human proposal are refused. Port suggestions_only request_admission is refused. Executor calls: 1 (the legitimate one).",
+     "why": "No bypass found. The R13-C-F1/F2 duplicate dispatches go through admission and are filed under Q4."
+    },
+    {
+     "q": "Q7 does a provider/executor execute an UNADMITTED action through the Gen2 Mind interface?",
+     "verdict": "NO",
+     "code_path": "admission.py:402-454 (authorize_dispatch/verify_authorization re-admit and compare digests), 457-480 (_GuardedExecutor)",
+     "test": "p06_edits_policy.py; p01/p02/p03/p05 (re-dispatches pass through re-admission)",
+     "evidence": "Every executor call in my probes came after a successful (re-)admission. Edited or forged admitted actions and non-AdmittedAction objects are refused.",
+     "why": "Nothing unadmitted executes. The repeated executions in R13-C-F1/F2 are admissions decided on a restored budget state the follower should have refused. That is a Q4 budget-authority defect, not a Q7 bypass."
+    }
+   ]
+  },
+  {
+   "lens": "B-architecture",
+   "findings": [
+    {
+     "id": "R13-B-F1",
+     "severity": "MAJOR",
+     "question": "Q4",
+     "title": "The per-entry budget snapshot calls dict(mapping) before it reads entries one by one, so the key objects' own __hash__/__eq__ can merge or wipe out handed accounts. A spend goes unobserved and the action is dispatched twice. This is a variant of R12-2 and F11-2 that survives both fixes.",
+     "evidence": "src/engcore/mind/world/owners.py:671 (`for raw_id, account in dict(mapping or {}).items()` in _handed) and :753-759 (the strict constructor's `raw = [dict(ledgers or {}), ...]`, and its length check runs after the collapse). Building the dict runs the execution side's key __hash__/__eq__, so the duplicate-spelling check at :675 never sees an entry that was already merged. That contradicts the docstrings at :351-353 and :674 ('read entry by entry (one malformed entry never hides the others)', 'no code of the id runs'). Pre-existing since d5ef1e3 (git show d5ef1e3:owners.py:593 has the same dict(mapping) call); 33258438 added only the post-dict spelling check.",
+     "reproduction": "Probes under C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\B-architecture\\. p01_collapse.py, run in WSL at 3b407ddb: control (no odd key) 'refused; executor calls = 1'. A second entry whose key compares and hashes equal to the solver id but spells another id: the verification while spent was 'served revision 1 (spent ledger revision 2)', then 'DISPATCHED AGAIN; executor calls = 2', with no restore needed. One entry whose key's __hash__ raises, beside the well-formed spent solver ledger: 'OwnerUnavailable: ... handed over no pair of account mappings', and after the restore 'DISPATCHED AGAIN; executor calls = 2'. Strict constructor: '[ctor] accepted; ids: ['A'] A total_budget = 99.0', meaning it accepted the set and silently dropped one account. p06_collapse_std.py, with standard containers holding both entries: plain dict and OrderedDict each 'served revision 1' while the live revision was 3, then 'DISPATCHED AGAIN; calls=2'.",
+     "why": "The handed state carries the spend, and the reader serves another entry's stale ledger under the spent account's id. A desk re-authorizes an executed action, even without a restore. This is the same authority impact README section 9 recorded for R12-2 (unobserved spend, duplicate dispatch) and for F11-2 (one malformed entry hides another account's spend). No accepted residual covers it: the keys are str subclasses, and the reader claims it reads entry by entry.",
+     "fix": "Never build a dict from execution-side keys. Iterate the mapping's items once into a list of pairs, reject any key whose type is not exactly str (or copy it with str.__str__ before any hashing), and count entries before and after so any collapse refuses that id (or the whole snapshot) for good. In the constructor, refuse when the number of iterated entries differs from the number of distinct plain spellings. Add controls for an equal-but-differently-spelled key, a raising __hash__ beside a spent account, and the strict constructor."
+    },
+    {
+     "id": "R13-B-F2",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "For a handed state that is not read back, only its length is observed, so a same-length history rewrite in that state is accepted and a restore can re-authorize an executed action",
+     "evidence": "owners.py:364-368 and :386-388 (README section 4 states it), :588-590 (only `_reached` is recorded for a _NotRead state) and :597-601 (rewrite detection runs only on read-back histories). This is the NOT pre-accepted 33258438 statement.",
+     "reproduction": "p02_misc.py (b): with spend A read back, a same-length rewrite to B gives 'refused: ... rewrote its histor[y]'. With spend A not read back (a detail whose message varies, so it is classified moving), the same rewrite gives 'served revision 2'. p04_rewrite_redispatch.py: the executor replaces the ledger with one that drops its oldest charge and records its spend with a detail that cannot be read back (same length). Readable control: 'rewrote its history ... after restore: refused ... executor calls=1'. Not read back: 'reached={...solver: 1}; after restore: DISPATCHED AGAIN; executor calls=2'.",
+     "why": "The length floor closes the append-only case, which covers every spend made through BudgetLedger.settle. A rewrite that a read-back would refuse for good is accepted once its state was unreadable, and a constructed history surgery plus restore reproduces a duplicate dispatch. I grade it MINOR because it needs the execution side to falsify its own owner history (drop a settled charge, which the ledger API does not do) on top of unreadable content, it is disclosed in section 4, and the accepted residual already says unread states are not observed. A skeptic could argue MAJOR on the reproduced re-dispatch. It is a genuine semantic gap in the forward-only rule, so it is substantive for Q4.",
+     "fix": "Record a stronger observation for unread states than the length: for example, digest each entry read from the owner container without running account code, where possible, or refuse the account for good when a later read-back history of length at least _reached is not a prefix-extension of any state the reader has proven. At minimum add a control for a same-length rewrite and keep the README statement."
+    },
+    {
+     "id": "R13-B-F3",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "A BaseException subclass raised deterministically by owner content skips both the read-back classification and the length floor; the docstring says no read-back failure leaves the classification",
+     "evidence": "owners.py:458 (`except Exception`), :530-547 (_read_back catches only _Unreadable/OwnerUnavailable), docstring :368-369 ('so no read-back failure leaves the classification'), and the residual at :389-390 ('interrupted (BaseException)').",
+     "reproduction": "p02_misc.py (a): a charge detail whose __str__ raises a BaseException subclass. Both verifications 'raised Halt', 'reached = {} diverged = [] in_flight = set()', 'after restore: DISPATCHED AGAIN; executor calls = 2'.",
+     "why": "Owner-accepted as 'interrupted (a BaseException)', so it does not drive a verdict. However, this path is a deterministic property of the handed state, not an interruption, and it is the R12-1/R12-3 outcome by another exception class. The docstring claim is inaccurate.",
+     "fix": "State in section 4 and the docstring that a BaseException raised by the account's own serialization is not classified (deterministic, not only an interruption), or classify non-interrupt BaseException subclasses raised inside the read-back while re-raising KeyboardInterrupt/SystemExit after recording the length floor."
+    },
+    {
+     "id": "R13-B-F4",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Abandoned fresh read-back threads accumulate one per verification while the caller holds the lock the account's serialization takes",
+     "evidence": "owners.py:514-524 (a daemon thread is started, joined for WAIT_S, then abandoned; nothing bounds the number alive).",
+     "reproduction": "p02_misc.py (c): 10 verifications by a deep-stack verifier holding the store lock each took about 1.0006 s and were refused (not for good), and 'ALIVE read-back threads while lock held' was 10. All exited after the lock was released ('alive after lock release: 0').",
+     "why": "Availability and resources only, fail-closed. Each abandoned thread keeps running the account's serialization after its verification returned (it touches only a private cache and box). There is no authority impact.",
+     "fix": "Allow at most one outstanding fresh read-back per account and content (reuse its result or refuse while it is alive), and document the bound."
+    },
+    {
+     "id": "R13-B-F5",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "A fresh thread that ends without a result is reported as '3 read-backs failed alike'",
+     "evidence": "owners.py:525 returns one synthetic _Failed, and _account then reaches :483 and raises _Unreadable with 'failed alike'.",
+     "reproduction": "Static. p02 (a) shows that a BaseException in read-back code is the way to reach it.",
+     "why": "The outcome is fail-closed for good and acceptable; the message misstates the cause. Wording only.",
+     "fix": "Give this path its own message."
+    },
+    {
+     "id": "R13-B-F6",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "README section 8: the sentence 'the length rule refused no honest account in these runs' is vacuous evidence",
+     "evidence": "benchmarks/mind_gen2_authority_v1/README.md:460-462. In docs/work/evidence/br11_local_2026_10_23/performance/b1209_p24_instrumented.py the only account that moves is the UNBOUND 'campaign.side', and an unbound account refuses nothing (owners.py:348-349), so these runs cannot show the length rule refusing an honest bound account.",
+     "reproduction": "I read ab_r12.jsonl. Every other number in the section-8 paragraph matches the file: admission p50 12.30 (12.28-12.69) before and 12.36 (12.28-12.52) after, pin 0.17 ms, E2500 runs 48,48,14,48,48 before and 31,47,48,45,48 after, E1000 48/48 in all, 0-4 torn read-backs. My re-run at 3b407ddb (shared host): E2500 39, 48, 20 of 48 (all refusals 'in flight'), E1000 48/48. A large unbound ledger (p03) gave 48/48 at 1000 and 5000 charges (p50 241 and 643 ms).",
+     "why": "Reporting precision: a claim that the measurement could not have falsified.",
+     "fix": "Drop the sentence or add a run where the bound account is the one that moves."
+    }
+   ],
+   "prior_closure": [
+    {
+     "id": "R11-C-F1 / F11-1",
+     "closed": true,
+     "evidence": "p05_prior.py at 3b407ddb: a charge detail nested 600 levels deep, from the normal stack and with caller depths 900 and ~920, gives 'verification: served | after restore: refused | calls=1'. tests/mind/test_authority_review_r11.py passed (60 passed with r12 and the boundary tests). The read-back step now sits inside the classifying try (owners.py:427-460)."
+    },
+    {
+     "id": "F11-2",
+     "closed": false,
+     "evidence": "The variants filed in round 11 are closed: a numpy.str_ id beside the spend gives 'served | after restore: refused | calls=1', and an alias of the spent solver under 'mirror' gives 'was handed under two ids ... after restore: refused | calls=1' (p05). The class is still open through dict(mapping) at owners.py:671: one key whose __hash__ raises hides the spend on another account, and the restore is dispatched again (p01, R13-B-F1)."
+    },
+    {
+     "id": "R12-1 (unrenderable failure)",
+     "closed": true,
+     "evidence": "p05 R12-1 variant: OwnerUnavailable, refused for good, 'after restore: refused | calls=1'. _described (owners.py:124-132) runs no code that can raise out of the classification. The r12 controls pass."
+    },
+    {
+     "id": "R12-2 (two entries spelling one id)",
+     "closed": false,
+     "evidence": "The identity-hashed _Tag case from round 12 is closed (the r12 controls pass). Keys that compare equal but spell other ids collapse inside dict() before the spelling check, giving served revision 1 while the live revision was 2-3 and DISPATCHED AGAIN without a restore (p01, p06). The strict constructor also accepts such a set and drops an account. See R13-B-F1."
+    },
+    {
+     "id": "R12-3 (state that always looks moving)",
+     "closed": true,
+     "evidence": "r12 controls pass. p02 (b) and p04 show _reached is recorded for unread states, and restores to a shorter history are refused. A same-length rewrite remains open as R13-B-F2 (MINOR)."
+    },
+    {
+     "id": "R12-4 (unbounded fresh-thread join)",
+     "closed": true,
+     "evidence": "p02 (c): each verification under the held lock returned in about 1.0006 s, was refused not for good, and left in_flight empty. Thread accumulation is filed as R13-B-F4 (MINOR)."
+    },
+    {
+     "id": "R12-5 (fresh-thread single attempt, wrapped recursion)",
+     "closed": true,
+     "evidence": "owners.py:486-528 runs the same _attempts on the fresh thread, and _recursion (:140-152) walks __cause__/__context__ through BaseException's own descriptors. The r12 controls test_a_torn_fresh_thread_read_back_is_retried_not_refused_for_good and test_a_recursion_failure_an_owner_wraps_is_retried_on_a_fresh_thread pass."
+    }
+   ],
+   "questions": [
+    {
+     "q": "Q1 second STATE authority",
+     "verdict": "NO",
+     "code_path": "owners.py:176-266 RunStateReader (exact SystemRunResult/SystemCheckpoint, SystemState.digest, forward-only head under the lock)",
+     "test": "tests/mind (BR1.1 suite, 667 passed at 3b407ddb); tests/mind/test_world_boundary.py",
+     "evidence": "The suite passed 667/667 in my WSL run. The reader projects the owner's head and digest only, and nothing in 33258438 touches it.",
+     "why": "No state is decided or held outside system_runtime."
+    },
+    {
+     "q": "Q2 second APPLICABILITY authority",
+     "verdict": "NO",
+     "code_path": "owners.py:270-291 ModelRegistryReader (exact ScientificModelDefinition, registry.get)",
+     "test": "BR1.1 suite 667 passed; run_benchmark --check AUTHORITY MATCHES",
+     "evidence": "Executed at 3b407ddb. The reader never decides applicability.",
+     "why": "Nothing in this lens found applicability decided outside the model owner."
+    },
+    {
+     "q": "Q3 duplicate UNITS authority",
+     "verdict": "NO",
+     "code_path": "owners.py:869-882 UnitRegistryReader (verify_registry_unmutated + registry_fingerprint)",
+     "test": "BR1.1 suite; rescore --check BR1_RESCORE MATCHES",
+     "evidence": "Executed. The unit owner's own fingerprint is the identity.",
+     "why": "No unit table or conversion lives in the reader."
+    },
+    {
+     "q": "Q4 DESIGN/SEARCH duplicates or second BUDGET authority (forward-only follower)",
+     "verdict": "YES",
+     "code_path": "owners.py:660-689 BudgetReader._handed (dict(mapping) at :671), :735-768 __init__ (:753-759), :558-635 _observe_all",
+     "test": "No control exists for equal-but-differently-spelled keys or a raising key __hash__; the r12 controls cover only identity-hashed duplicate spellings",
+     "evidence": "p01_collapse.py and p06_collapse_std.py: a spend is hidden by another entry and the executed action is DISPATCHED AGAIN (executor calls 2), with or without a restore; one malformed key hides a well-formed account's spend; the strict constructor drops an account.",
+     "why": "Open MAJOR R13-B-F1 (unobserved spend permitting duplicate dispatch) makes this YES. R13-B-F2, a substantive MINOR (same-length rewrite of an unread state), would keep Q4 PARTIAL even after F1 is fixed. F3-F6 are MINOR wording, pre-accepted or availability issues and do not drive the verdict."
+    },
+    {
+     "q": "Q5 world issues SCIENTIFIC VERDICTS",
+     "verdict": "NO",
+     "code_path": "owners.py module docstring :1-21; readers project owner records and never assess",
+     "test": "BR1.1 suite; Gen1 gen1_reference --check GEN1_REFERENCE INTACT",
+     "evidence": "Executed at 3b407ddb.",
+     "why": "No verdict and no probabilistic-to-deterministic step appears in the owner layer, and 33258438 adds none."
+    },
+    {
+     "q": "Q6 EXTERNAL PROPOSER bypasses admission",
+     "verdict": "NO",
+     "code_path": "authority.py:246-258 memoized pins every reader whichever world is verified; admission.py admit/ExecutionDesk",
+     "test": "BR1.1 suite (test_world_boundary, test_authority_review_r*)",
+     "evidence": "Executed. The F1 trigger is the execution side's accounts() mapping, not a proposer input.",
+     "why": "The proposer chooses neither which accounts are observed nor how they are read."
+    },
+    {
+     "q": "Q7 provider/executor executes an UNADMITTED action through the Gen2 interface",
+     "verdict": "NO",
+     "code_path": "admission.py:466-470 gateway dispatch re-runs authorize_dispatch before the executor",
+     "test": "BR1.1 suite; p01 control (Pairs mapping, no odd key) is refused",
+     "evidence": "In every reproduction the second execution passed through authorize_dispatch on that verification's (misread) budget snapshot; nothing ran without admission.",
+     "why": "The duplicate dispatch is a budget-follower misread, filed under Q4 (R13-B-F1). The interface did not execute anything that was not admitted."
+    }
+   ]
+  },
+  {
+   "lens": "A-scientific-authority",
+   "findings": [
+    {
+     "id": "R13-A-F1",
+     "severity": "MAJOR",
+     "question": "Q4",
+     "title": "A charge or evaluation whose rendering raises a BaseException subclass (not an Exception) still escapes every verification: the handed spend is never observed (the round-12 length floor is never recorded), every admission raises, an account no world reads makes every admission raise, and after a restore the executed admitted action is dispatched again (executor ran 2). This is the R12-1 / R11-C-F1 class, left open by the round-12 fix.",
+     "evidence": "src/engcore/mind/world/owners.py:458-460: _read_once classifies only `except Exception`. owners.py:124-132: _described catches only Exception from str(exc). owners.py:486-495: _attempts catches only _Failed. owners.py:538-546: _read_back catches only _Unreadable/OwnerUnavailable, and _length (the round-12 floor) runs only in the OwnerUnavailable branch. owners.py:569: _read_back runs before the lock, so nothing is compared. owners.py:723-728: pinned()'s finally leaves with handed=True. authority.py:383-387: _Memo._pin_now catches only Exception, so the BaseException leaves memoized() and admit(). The report claims otherwise. README.md:175 says 'A read-back is total'. README.md:185-187 says '...so no read-back failure leaves the classification (round 12)'. README.md:217-218 says 'An account no verification reads ... refuses nothing'. README.md:493-497 (§9 R12-1) lists 'a world that never reads the account raised ... dispatched again' as fixed. The documented residual at README.md:232-234 names a verification 'interrupted (a BaseException ...)', 'which only the verifications then waiting for it refuse'. Here the failure is not an interruption: it is a property of the handed state and repeats at every verification. Every verification raises instead of being refused, and the outcome is re-dispatch of an executed admitted action.",
+     "reproduction": "WSL: ~/br11-review/r13/A-scientific-authority/a1302_base_exception_content.py (output a1302_out.txt) and a1303_unbound_base_exception_and_leak.py (a1303_out.txt), run with cd ~/forge-r13-review && PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review ~/forge-gen2-authority-v1/.venv/bin/python <probe>. Driver scripts: scratchpad\\r13\\A-scientific-authority\\p2.sh and p3.sh. The executor settles a charge whose detail's __str__ raises `class Halt(BaseException)` (the same with SystemExit). Output at 3b407ddb: 'verification 0..2 handed the spend: RAISED Halt'; 'admission 0..2 on the spend: RAISED Halt'; 'reader._reached={} _diverged=[]'; 're-dispatch of the executed admission after the restore: OK/DISPATCHED; executor calls=2'. An account no world reads, added after construction: 'admission 0/1 of a world that never reads side.ledger: RAISED Halt'. Control: the preserved b1201 (an Exception whose __str__ raises), re-run at HEAD (r12probes_head/b1201_unprintable_exception_escapes.txt), is refused with the executor run once.",
+     "why": "Q4's forward-only guarantee (no unobserved spend leading to duplicate dispatch) is broken by a reproduced re-dispatch of an executed AdmittedAction after a restore. That is the exact outcome rounds 10, 11 and the round-12 leads classed MAJOR. The trigger is execution-side account content, the same kind of trigger as b1201/b1204/c1112. It differs from b1201 only in the exception's base class. The round-12 fix (_described, the length floor) covers Exception only, and the report states the classification is total.",
+     "fix": "Make the classification total for content-raised failures. In _read_once (and _described), catch BaseException, and re-raise at once only a genuinely asynchronous interrupt (KeyboardInterrupt) after recording the account as not read back. Or, at minimum, in _read_back wrap self._account(key) in `except BaseException`: record _NotRead(..., length=_length(key)) under the lock (so _reached is kept) before re-raising. Classify a BaseException that repeats alike over the attempts as _Unreadable (for good), like any other alike failure. Add a1302/a1303 as controls: re-dispatch refused with the executor run once, and an unbound such account refuses no admission. Restate README §4 (175, 185-187, 217-218, 232-234) and §9 R12-1."
+    },
+    {
+     "id": "R13-A-F2",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "A spend the reader was HANDED but did not read back can be rewritten at equal length: a restore plus one other charge is accepted as forward, and a fresh admission re-authorizes the budget the handed state had spent (realized 12 of a general pool of 6). The same sequence with a readable state is refused for good.",
+     "evidence": "owners.py:542-546: a state that is not read back yields _NotRead(length). owners.py:588-591: only _reached is updated, and _seen is not. owners.py:596-607: a later read-back that extends _seen and has len >= _reached is accepted. README.md:227-230 and owners.py:386-388 document that only the number of entries is observed ('a later state at least that long that differs in them is not detected as a rewrite'). This was NOT pre-accepted by the owner (brief). The README's second claim, that a re-dispatch of what such a state recorded is refused, holds (reproduced). The rewrite's consequence for budget re-authorization is not stated.",
+     "reproduction": "WSL ~/br11-review/r13/A-scientific-authority/a1301_rewrite_after_unread.py (output a1301_out.txt; driver p1.sh). Admission on S0, then dispatch: run.1 spends the whole general pool (6.0). One verification is handed S1. Restore S0 and settle a zero-cost 'restored.other' (S2, the same length). [readable] control: 'fresh admission on S2: OwnerUnavailable ... rewrote its history ... refused by this reader from then on'. [unread] (run.1's detail always raises the interpreter's mutation text, as the r12 _SelfFillingNote): 'verification handed S1: refused ... moved while it was serialized; reader._reached={...: 2}'; 're-dispatch of the executed admission: refused (AUTHORITY_STALE)'; 'fresh admission on S2: feasible=True'; 'its dispatch: DISPATCHED; executor calls=2; realized spend ... = 12.0 of a general pool of 6.0'.",
+     "why": "For a read-back state the forward-only rule refuses a rewritten history for good. For a state handed and not read back (three torn read-backs, a constantly changing large account, a fresh thread still running after WAIT_S, or content that always looks moving) it observes only the length. So a restore-and-continue that erases a handed spend authorizes that money again. The old admitted action is not re-dispatched, and the same outcome is reachable through the accepted residual 'a spend and its rollback both between two verifications look like no change'. That is why this is MINOR, not MAJOR. It is still a genuine semantic gap in the Q4 guarantee for handed states, so it keeps Q4 at least PARTIAL until the owner accepts it as a residual or it is closed.",
+     "fix": "Observe the handed entries' identities without running account code, and treat a later state that differs in them as a rewrite (refused for good). For example, read each charge_id / evaluation_id from the owner's containers via object.__getattribute__(entry, '__dict__') on exact BudgetCharge / ScientificEvaluation entries, and refuse for good when that cannot be read. Otherwise have the owner accept it explicitly as a residual, with README §4 stating the consequence (a fresh admission on the rewritten state re-authorizes the handed spend's budget). Add a1301 as a control of whichever is chosen."
+    },
+    {
+     "id": "R13-A-F3",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Wording: the round-12 text overstates what the classification and the length rule achieve, and how the reader reads its owners",
+     "evidence": "owners.py:125-126, owners.py:368-369 and README.md:185-186 say a failure is described 'without running any code of it that could raise'. In fact _described runs the failure's own __str__ (owners.py:129, str(exc)) and catches Exception only; see R13-A-F1. docs/work/PROGRESS.md:8937-8940 ('Failed approach') says deciding by the history length 'is what closed it', but it leaves the rewrite gap (R13-A-F2) and does not run at all for a BaseException (R13-A-F1). The module docstring (owners.py:3) says each reader reads its owner 'through that owner's own API', but _length (owners.py:549-556) reads the private ScientificExperiment._evaluations and the ledger's charges from __dict__. That restates the owners' own revision/attempts (len of the same container) rather than calling them. README §9 R12-1 (README.md:496-497) says 'Fixed by describing failures without running code of them that can raise'.",
+     "reproduction": "Static reading at 3b407ddb (file:line above). For the behaviour behind the wording, see a1302 and a1301.",
+     "why": "These are report and record precision issues about what was fixed (CLAUDE.md truthfulness). By themselves they do not make Q4 PARTIAL.",
+     "fix": "Say 'described without letting an Exception raised by rendering it leave the classification'. Restate PROGRESS item 28's failed-approach paragraph as 'closed the re-dispatch of what a handed-unread state recorded' and name the residuals. Say in the module docstring that _length reads the owners' history containers directly (the same len the owners' revision/attempts return) so that no account code runs."
+    },
+    {
+     "id": "R13-A-F4",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Each verification whose fresh-thread retry is still running after WAIT_S leaves one more blocked daemon thread: threads accumulate while the execution side holds the lock",
+     "evidence": "owners.py:514-524: a daemon thread per retry, join(WAIT_S), and an alive thread is abandoned. README.md:190-192 says only that what it does later 'reaches nothing the reader holds'.",
+     "reproduction": "WSL ~/br11-review/r13/A-scientific-authority/a1304_fresh_thread_accumulation.py (a1304_out.txt; driver p4.sh). One thread holding the store RLock verifies 5 times from a simulated deep stack: each is refused in 1.00 s ('not read back'), 'fresh threads alive while the verifier held the lock: [5]', and 0 alive after release. A normal read then serves, with _diverged={} (no honest account refused for good; _reached recorded 3).",
+     "why": "This is resource and availability hygiene only. It is fail-closed, there is no wrong admission, and it is bounded by the number of verifications made while the lock is held. It does not make Q4 PARTIAL.",
+     "fix": "State the accumulation in README §4/§8, or keep at most one outstanding fresh thread per account and reader and refuse at once while one is still running."
+    }
+   ],
+   "prior_closure": [
+    {
+     "id": "R11-C-F1 / F11-1 (deep owner content raised out of every verification; restore re-dispatched)",
+     "closed": true,
+     "evidence": "Re-run at 3b407ddb (WSL ~/br11-review/r13/A-scientific-authority/r12probes_head/): c1112_deepcopy_outside_try.txt shows every unbound depth 100-1000 FEASIBLE, and at depth 3/600/1000 the re-dispatch after the restore is refused with the executor run once. f1102_readback_escape_redispatch.txt shows seq and wait orders at depths 3 and 600 refused, executor ran 1. The same outcome class reopens through a BaseException-raising content value: R13-A-F1."
+    },
+    {
+     "id": "F11-2 (a handed mapping the strict constructor refused hid another account's spend)",
+     "closed": true,
+     "evidence": "r12probes_head/f1105_malformed_mapping_hides_spend.txt: alias and numpy.str_ id cases are refused after the restore, executor ran 1."
+    },
+    {
+     "id": "R12-1 lead (b1201/b1202: unrenderable failure escaped classification; re-dispatch)",
+     "closed": true,
+     "evidence": "b1201 at HEAD: cases A, B and C give admissions MISSING_INFORMATION (AUTHORITY_OWNER_UNAVAILABLE), diverged True, re-dispatch refused, executor ran 1. b1202: an unbound unrenderable account leaves admission FEASIBLE; the bound case is refused, executor 1. This closes the lead as reproduced (Exception subclasses only). The BaseException sibling is open: R13-A-F1 (a1302/a1303)."
+    },
+    {
+     "id": "R12-2 lead (b1205/a1205/a1205b: two keys spelling one id)",
+     "closed": true,
+     "evidence": "a1205 at HEAD: twin_last and twin_first second dispatch refused (AUTHORITY_OWNER_UNAVAILABLE), executor calls 1. a1205b and b1205: the strict constructor raises WorldRefused 'two budget account ids spell one id' (b1205 exits 1 at BudgetReader.following's construction: fail-closed). The duplicate-spelling rule pops both entries and reads neither (owners.py:675-679). No case of merging, or of reading an account not handed under that id, was found."
+    },
+    {
+     "id": "R12-3 lead (b1204/b1208: always-'moving' spend never observed; restore re-dispatched)",
+     "closed": true,
+     "evidence": "b1204 and b1208 at HEAD: three per-verification refusals, after the restore refused, executor ran 1 (the length floor works). The rewrite of such a state at equal length is still accepted: R13-A-F2 (a1301)."
+    },
+    {
+     "id": "R12-4 lead (b1207/a1207: unbounded fresh-thread join)",
+     "closed": true,
+     "evidence": "b1207 at HEAD: refused 'not read back within 1.0 s on a fresh thread'; another verification was served in 0.00 s; tickets in flight []. a1207 re-run unbuffered (a1207_head_unbuffered.txt): it returned within 5 s, refused; the other verification read; no budget-read-back thread alive. Accumulation while the lock is held is a MINOR (R13-A-F4)."
+    },
+    {
+     "id": "R12-5 lead (b1206/a1202: single fresh-thread attempt; wrapped recursion refused an honest account for good)",
+     "closed": true,
+     "evidence": "b1206 at HEAD: served revision 1 twice. a1202: 190 READ, 7 RecursionError raised (the documented caller-stack residual), 1 'refused once ... no fresh thread could start (RecursionError)', 0 REFUSED FOR GOOD. a1201 is the same; a1203 stress: 'never refused for good', 10 refused once; a1206: refused once, then read, not diverged."
+    },
+    {
+     "id": "R12-6 (five round-11 mutants survived the suite)",
+     "closed": false,
+     "evidence": "NOT VERIFIED by this lens: the mutants were not re-run. What was run: the BR1.1 suite at 3b407ddb, 667 passed (exit 0; command in suite.sh, output ~/br11-review/r13/A-scientific-authority/suite_out.txt), including the 18 round-12 controls. The builder's mutant record (README §5, 17 of 18 caught, shared_cache uncontrolled) was not independently reproduced."
+    }
+   ],
+   "questions": [
+    {
+     "q": "Q1 a second STATE authority?",
+     "verdict": "NO",
+     "code_path": "src/engcore/mind/world/owners.py:176-266 (RunStateReader); the only round-12 change there is the refusal text (_described at owners.py:229-231)",
+     "test": "tests/mind (BR1.1 suite at 3b407ddb: 667 passed, ~/br11-review/r13/A-scientific-authority/suite_out.txt)",
+     "evidence": "git diff d40aff44..33258438 touches only owners.py (BudgetReader, _described at the owner-boundary handlers) and the r12 test; 3b407ddb changes only docs/evidence. State is still the run record's head and digest chain; the world infers no head.",
+     "why": "No state is decided or stored by the world; the state owner's digest chain decides STALE/MISSING."
+    },
+    {
+     "q": "Q2 a second APPLICABILITY authority?",
+     "verdict": "NO",
+     "code_path": "feasibility/admission paths unchanged since d40aff44; owners.ModelRegistryReader (owners.py:270-291) unchanged",
+     "test": "BR1.1 suite 667 passed; benchmark checks in docs/work/evidence/br11_local_2026_10_23/checks_33258438 (not re-run by this lens)",
+     "evidence": "The round-12 diff adds no applicability rule; model records are read only via ModelRegistry.get with exact type.",
+     "why": "Applicability stays the model owner's record assessed by the core; nothing new decides it."
+    },
+    {
+     "q": "Q3 a duplicate UNITS authority?",
+     "verdict": "NO",
+     "code_path": "owners.py:140-152 (_recursion only reads exception chains, including the unit owner's wrapped RecursionError); UnitRegistryReader owners.py:869-882 unchanged",
+     "test": "a1202 at HEAD (0 for-good refusals across caller depths with unit parsing); BR1.1 suite",
+     "evidence": "No conversion or identity rule was added; _recursion recognizes the unit owner's UnitCompatibilityError-from-RecursionError without deciding any unit question.",
+     "why": "Every conversion and level identity remains the unit owner's."
+    },
+    {
+     "q": "Q4 duplicate DESIGN/SEARCH-SPACE concepts or a second BUDGET authority (forward-only guarantee)?",
+     "verdict": "YES",
+     "code_path": "owners.py:420-460 (_read_once except Exception), 486-495, 530-547 (_read_back), 549-556 (_length), 558-635 (_observe_all), 691-728 (pinned); authority.py:381-387",
+     "test": "a1302_base_exception_content.py, a1303_unbound_base_exception_and_leak.py, a1301_rewrite_after_unread.py (outputs under ~/br11-review/r13/A-scientific-authority/); prior probes re-run in r12probes_head/",
+     "evidence": "R13-A-F1 (MAJOR): a BaseException-raising charge detail escapes every verification. _reached stays {}, every admission raises, an unbound such account makes every admission raise, and after a restore the executed admitted action is dispatched again (executor calls=2). R13-A-F2 (MINOR, substantive): a handed-but-unread spend rewritten at equal length is accepted, and a fresh admission spends the pool twice (12 of 6), where the readable control is refused for good. No second affordability rule was found: decisions use the ledger/experiment owner's read-back record. The length floor never refused an honest account for good in the stress, deep-stack and torn probes (a1203, a1201, a1202, a1206, a1304).",
+     "why": "R13-A-F1 is a reproduced unobserved spend leading to duplicate dispatch, the class rounds 10-12 rated MAJOR, left by the round-12 fix (Exception-only classification). R13-A-F2 independently keeps Q4 at least PARTIAL."
+    },
+    {
+     "q": "Q5 does the world issue SCIENTIFIC VERDICTS (incl. probabilistic->deterministic)?",
+     "verdict": "NO",
+     "code_path": "admission/feasibility unchanged since d40aff44; the round-12 change only classifies budget read-back failures",
+     "test": "BR1.1 suite 667 passed",
+     "evidence": "No decision rule was added; refusals stay MISSING_INFORMATION/OWNER_UNAVAILABLE/STALE; no current value decides containment (README §3 unchanged).",
+     "why": "Nothing in 33258438 issues or strengthens a verdict."
+    },
+    {
+     "q": "Q6 does an EXTERNAL PROPOSER bypass admission?",
+     "verdict": "NO",
+     "code_path": "admission.py:304-421 (admit, authorize_dispatch), 482-562 (ExecutionDesk/AdmissionGateway) unchanged",
+     "test": "BR1.1 suite 667 passed",
+     "evidence": "R13-A-F1 and R13-A-F2 need execution-side account content and restores; a proposer cannot write account content and has no path to an AdmittedAction other than admit.",
+     "why": "No proposer-reachable path around admission was found from this lens."
+    },
+    {
+     "q": "Q7 does a provider/executor execute an UNADMITTED action through the Gen2 Mind interface?",
+     "verdict": "NO",
+     "code_path": "admission.py:469-471 (guarded dispatch re-admits via authorize_dispatch)",
+     "test": "a1302 (the re-dispatch goes through authorize_dispatch's fresh re-admission)",
+     "evidence": "In a1302 the second execution follows a fresh re-admission that the budget follower wrongly accepted. Following rounds 10-11's convention, that is a budget-currency failure filed under Q4 (R13-A-F1), not execution without admission.",
+     "why": "Every execution still passes a re-admission at dispatch with an identical admitted digest."
+    }
+   ]
+  },
+  {
+   "lens": "D-replay-stale",
+   "findings": [
+    {
+     "id": "D13-1",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Race in the fresh-thread retry: an honest account whose read-back finishes between the join timeout and the is_alive() check is refused for good",
+     "evidence": "src/engcore/mind/world/owners.py:520-525 at 3b407ddb. The code does `thread.join(self.WAIT_S)`, then `result = box.get(\"result\")`, then checks `thread.is_alive()` only when result is None. If the thread stores its result and exits after box.get but before is_alive(), the code returns `[_Failed(\"the read-back on a fresh thread did not complete\", None, False, False)]`. In _account (owners.py:477-484) that one non-recursion, non-moving failure ends in `_Unreadable`, and _observe_all (owners.py:582-587) then puts the account in _diverged for good. The refusal text it records is false: \"(3 read-backs failed alike): the read-back on a fresh thread did not complete\", although the owner read the account back successfully. The README contradicts this outcome at section 4 lines 189-191 (\"a verification's own deep call stack never refuses an honest account for good\") and line 216 (\"never refuse for good an account that only moved forward and that its owner reads back\").",
+     "reproduction": "Probe ~/br11-review/r13/D-replay-stale/p1_race.py (script s03_race.sh). Setup: battery fixture; the main-thread to_dict raises RecursionError beyond depth+40, the same deep-stack simulation the r12 controls use; on the fresh thread the read-back is honest and takes 1.1 s. 'control' mode (nothing patched): first verification transient_timeout, a later normal-depth verification served, diverged {}. 'schedule' mode simulates the verifier being descheduled between its two checks by delaying Thread.is_alive by 0.3 s for the budget-read-back thread only: first verification FOR_GOOD, later normal-depth verification FOR_GOOD, diverged holds the experiment. Unpatched stochastic sweeps (sys.setswitchinterval(1e-6), honest completion near WAIT_S; p1_race.py sweep with 120 trials and p1c_race.py sweep_focus with 450 trials, offsets 100-260 us) produced 0 for-good outcomes: served 100+404, transient 20+46. So this is a code-level race shown only under a simulated schedule; it was not hit stochastically on CPython 3.12 with the GIL. It is more plausible in a busy multi-threaded desk (the GIL drop request is already pending when the verifier wakes) and on free-threaded builds.",
+     "why": "The R12-4 fix bounded the join but put the liveness check after the result check. That reopened the R12-5 class (an honest account refused for good, which needs a new reader) through a scheduling window. Fail-closed: no wrong admission or dispatch. It is still a genuine correctness defect in the budget follower, and its recorded refusal states a false cause. No control or mutant exercises a join that times out and then completes.",
+     "fix": "Check liveness first, then read the result: `alive = thread.is_alive(); result = box.get(\"result\")`. If result is None and the thread is alive, raise OwnerUnavailable (not read back). If result is None and the thread is not alive, re-read box once before classifying. Treat a thread that died without a result (a BaseException) as not read back for this verification, not as three alike failures. Add a deterministic control that delays is_alive, as this probe does."
+    },
+    {
+     "id": "D13-2",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Refusal texts state false causes, and README section 4's 'a refusal says the same thing at every read, so it is recordable' does not hold for not-read-back refusals",
+     "evidence": "owners.py:480-482 writes \"moved while it was serialized (3 read-backs failed differently)\" whenever any failure carries the interpreter's mutation text. That includes an unmoving account whose three failures are byte-identical. owners.py:478-479/483-484 write \"3 read-backs failed alike\" after the single synthetic fresh-thread failure (see D13-1). README section 4 line 217: \"A refusal says the same thing at every read, so it is recordable and replays.\" The not-read-back refusal embeds failures[-1].why, a message the execution side chooses, so two verifications of an unchanged state can refuse with different text.",
+     "reproduction": "Probe p2_floor_replay.py (script s05_floor_replay.sh), PYTHONHASHSEED 0/1/777. With DETAIL=mutation, the refusal on the spent state reads 'moved while it was serialized (3 read-backs failed differently): RuntimeError: dictionary changed size during iteration' for a single-threaded, unmoving ledger. The record is made and replays REPRODUCED. With DETAIL=varying, steps S2 and S2b on the same unchanged state give different result digests (ce3d6701... vs 15505e3b...), and AdmissionRecord.of raises 'WorldRefused: the owners no longer give this admission'. All refusals that last are recordable and replay byte-identical across the three seeds: behind e.g. S3 93c90833.../record 89f00556...; for-good and STALE records are identical too.",
+     "why": "Recorded and replayed refusals carry a cause that did not happen ('moved', 'failed differently/alike'), and the README's blanket recordability claim is broader than what holds. Fail-closed: no admission or dispatch is affected. This is a reporting and record-precision issue, so it does not by itself make a question PARTIAL.",
+     "fix": "Word the transient refusal as 'not read back to this verification (N attempts failed; classified as possibly moving)' and state the real attempt count. Restrict the README sentence to refusals that last (behind, rewritten, refused for good), and say that per-verification refusals embed the failure text and may not be recordable."
+    },
+    {
+     "id": "D13-3",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "The committed round-12 control evidence file does not show the cited 14 fail / 4 pass result",
+     "evidence": "docs/work/evidence/br11_local_2026_10_23/controls/r12_controls_prefix_d40aff44.txt ends '13 failed, 4 passed in 12.30s', which is 17 tests with test_a_state_not_read_back_while_a_rollback_waits_refuses_the_rollback absent. README section 5 (lines 343-344) and PROGRESS item 28 cite 18 controls, 14 failing and 4 passing. The local evidence README describes controls/ as 'the round-12 controls on the tree before the fix'. The 14/4 result appears only in mutation/summary.txt as the [base] line.",
+     "reproduction": "Script s02_controls.sh: tree of 3b407ddb with owners.py replaced by d40aff44's, round-12 controls only: '14 failed, 4 passed'. The same 14 ids as the builder's [base] line, so the claim itself is true. Sampled mutants on the r12 file: no_floor_compare 2 failed, no_floor_post_wait 1, unreadable_length_floor_zero 1, timeout_for_good 1, recursion_direct_only 1, no_spelled_check 2, render_raw 4, each identical to mutation/summary.txt. shared_cache on the full BR1.1 suite: '666 passed, 1 skipped', matching the survivor claim. Tree copies were removed afterwards.",
+     "why": "The cited evidence file appears to come from an earlier, 17-test version of the control file. A reader checking the evidence directory would find a number that does not match the claim. The claim reproduces, so this is evidence precision only.",
+     "fix": "Replace the controls/ file with the 18-test run (the mutation [base] output), or label it as the pre-rewrite 17-test run, and update EVIDENCE_MANIFEST.sha256."
+    },
+    {
+     "id": "D13-4",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Judged (not pre-accepted): the length floor does not detect a rewrite of unread entries; the README states this accurately and no wrong outcome beyond scope was found",
+     "evidence": "owners.py:588-590 records only `got.length` for a state not read back. owners.py:602-607 compares later states only by length against _reached. README section 4 lines 227-230 states the limitation exactly.",
+     "reproduction": "Probe p2c_floor_gap.py (script s06_floor_gap.sh). 'unread' mode: spend A cannot be read back (deterministic mutation text, floor 2); projection on the spent state refused (moved); after restore, refused (behind); after the execution side settles a different charge B in A's place, a fresh projection and admission are FEASIBLE and dispatched (executor calls 2, diverged []). 'readback' mode, same sequence: after restore refused (behind), then 'rewrote its history', refused for good (executor calls 1). In both modes the original AdmittedAction is never re-dispatched (p2_floor_replay S3: refused, executor_calls 1). In readback mode the same proposal is already FEASIBLE on the spent state (S1), because there is no at-most-once.",
+     "why": "Asymmetric with the read-back path, but no re-authorization of a state the account moved past and no duplicate dispatch of an admitted action: a new admission on the rewritten timeline is something the same proposal could get on the forward state anyway. It is an observation limit, documented exactly. Not substantive for Q4.",
+     "fix": "Optional: treat 'went behind a floor, then forward again' as a possible rewrite and refuse for good, or keep the gap documented. Name the floor length in the behind refusal so a recorded refusal shows which cause applied (owners.py:639-641 lists three causes without saying which)."
+    },
+    {
+     "id": "D13-5",
+     "severity": "MINOR",
+     "question": "Q4",
+     "title": "Fresh-thread waits add up per account, and each timeout leaves a daemon read-back thread running",
+     "evidence": "owners.py:520 joins for WAIT_S per account inside one verification's _read_back loop (owners.py:534-546). README section 4 lines 207-209 say such an execution side is 'refused after WAIT_S'.",
+     "reproduction": "Probe p4_kwait.py (script s09_kwait.sh): verifier holds the store lock on a deep stack, 2 handed accounts. One verification took 2.00 s (2 x WAIT_S), and 2 fresh read-back threads were still alive when it returned. A later normal verification served every account, diverged {}. Fail-closed with no deadlock.",
+     "why": "Performance and wording only. Latency is K x WAIT_S for K accounts, threads leak while the lock is held, and the README says 'WAIT_S'. Not substantive.",
+     "fix": "State 'up to WAIT_S per handed account' in README section 4, or share one deadline across the verification's fresh-thread waits."
+    }
+   ],
+   "prior_closure": [
+    {
+     "id": "R11-C-F1 / F11-1 (read-back step outside the classifying try; deeply nested content raised out of verification; restore re-dispatched)",
+     "closed": true,
+     "evidence": "At 3b407ddb every read-back step is inside _read_once's try (owners.py:427-460), and failures are described without running failure code (owners.py:124-132). Round-11 controls test_a_deeply_nested_spend_is_observed_and_its_rollback_never_redispatches and test_a_deeply_nested_account_no_world_reads_refuses_no_admission pass in the BR1.1 suite run at HEAD (s07_suite.sh: 667 passed). The preserved round-12 b1201/b1202 re-run at HEAD: admissions MISSING_INFORMATION (no raise), re-dispatch refused, executor ran 1."
+    },
+    {
+     "id": "F11-2 (a handed mapping the strict constructor refused hid another account's spend)",
+     "closed": true,
+     "evidence": "pinned() reads the handed mapping entry by entry through _handed (owners.py:660-689). test_a_malformed_entry_never_hides_a_spend_on_another_account passes at HEAD. a1205 re-run at HEAD: second dispatch refused, executor calls 1 (twin_last and twin_first)."
+    },
+    {
+     "id": "R12-1 (unrenderable failure escaped classification; duplicate dispatch)",
+     "closed": true,
+     "evidence": "_described (owners.py:124-132) is used in _read_once and at the owner-boundary handlers. Controls fail on d40aff44's owners.py (my run: part of 14 failed, 4 passed) and pass at HEAD. The render_raw mutant fails 4 controls (reproduced). b1201 at HEAD: refused, executor ran 1."
+    },
+    {
+     "id": "R12-2 (two keys spelling one id collapsed; spend hidden)",
+     "closed": true,
+     "evidence": "_handed refuses a duplicate spelling for good (owners.py:675-679) and the constructor refuses it (owners.py:758-759). no_spelled_check fails 2 controls (reproduced). a1205/a1205b/b1205 at HEAD: refused, or the constructor raises 'two budget account ids spell one id'."
+    },
+    {
+     "id": "R12-3 (state always classified moving left no trace; restore re-dispatched)",
+     "closed": true,
+     "evidence": "The length floor is recorded and compared (owners.py:543-544, 588-590, 606-607, 633-634). b1204 and b1208 at HEAD: 'after the restore: refused; executor ran 1'. p2_floor_replay S3: behind, redispatch refused, executor_calls 1, reached {solver: 2}. Mutants no_floor_compare, no_floor_post_wait and unreadable_length_floor_zero each fail a control (reproduced). The new gap is judged in D13-4."
+    },
+    {
+     "id": "R12-4 (unbounded fresh-thread join; deadlock)",
+     "closed": true,
+     "evidence": "thread.join(self.WAIT_S) (owners.py:520). b1207 at HEAD: refused within the wait, another verification served in 0.00 s, tickets in flight []. The timeout_for_good mutant fails a control. Residual race in the bounded join's classification: D13-1."
+    },
+    {
+     "id": "R12-5 (single fresh-thread attempt; wrapped recursion not seen)",
+     "closed": true,
+     "evidence": "_attempts on the fresh thread (owners.py:510) and _recursion walks the exception chain (owners.py:140-152). b1206 at HEAD: served revision 1. a1202 at HEAD: 190 READ, 7 RecursionError raised out of the reader (the documented 'caller's own stack exhausted' residual), 1 refused once (thread start failed), none refused for good. recursion_direct_only fails a control (reproduced)."
+    },
+    {
+     "id": "R12-6 (round-11 mutants that survived the interrupted round)",
+     "closed": true,
+     "evidence": "Each named mutant fails a round-12 control per the builder's summary.txt. I reproduced the base control claim (14 failed / 4 passed on d40aff44's owners.py), a sample of 7 mutants with identical failing ids, and shared_cache surviving the full suite (666 passed, 1 skipped), all matching README section 5 and PROGRESS item 28. The committed controls/ evidence file shows 13/4 over 17 tests instead (D13-3)."
+    }
+   ],
+   "questions": [
+    {
+     "q": "Q1 a second STATE authority?",
+     "verdict": "NO",
+     "code_path": "owners.py:176-266 RunStateReader (owner's request digest and state digest; forward-only head under its lock, lines 236-241); authority.py:276-320 check (STALE via the owner's state history)",
+     "test": "tests/mind/test_authority_failing_first.py, test_authority_mutations.py, test_authority_review_r5..r11 (state stale and head advance), all in the 667-passed suite at HEAD",
+     "evidence": "s07_suite.sh: 667 passed at 3b407ddb. run_benchmark --check: AUTHORITY MATCHES (owner changes after projection: 0/37 admitted). Round 12 did not touch RunStateReader beyond _described.",
+     "why": "State identity and history are the owner's own (SystemState.digest, state_history). The world never states state; it binds to it. No open finding for Q1."
+    },
+    {
+     "q": "Q2 a second APPLICABILITY authority?",
+     "verdict": "NO",
+     "code_path": "owners.py:270-291 ModelRegistryReader (exact owner type, to_json digest); rederive for MODEL_RECORD owners.py:914-918",
+     "test": "test_authority_failing_first.py, test_authority_cross_domain.py, BR1 decision re-derivation (expensive) in the suite",
+     "evidence": "Suite 667 passed. rescore --check: BR1_RESCORE MATCHES (applicability moves only to MISSING_INFORMATION, none toward FEASIBLE: moved_to_feasible 0 in BR1_RESCORE.json).",
+     "why": "Applicability is decided from the registry's record and refused when inputs are not exact. Nothing in round 12 touches it. No open finding for Q2."
+    },
+    {
+     "q": "Q3 a duplicate UNITS authority?",
+     "verdict": "NO",
+     "code_path": "owners.py:869-882 UnitRegistryReader (verify_registry_unmutated, registry_fingerprint); admission.py:615-622 replay refuses another unit registry",
+     "test": "test_authority_failing_first.py (unit spelling), test_authority_review_r3/r4/r7/r8 (as-executed levels)",
+     "evidence": "Suite 667 passed. All of my replays were REPRODUCED under the process's registry across PYTHONHASHSEED 0/1/777 (p2_floor_replay).",
+     "why": "Units come only from the sealed owner registry. No open finding for Q3."
+    },
+    {
+     "q": "Q4 duplicate DESIGN/SEARCH-SPACE concepts or a second BUDGET authority, including the follower's forward-only guarantee?",
+     "verdict": "PARTIAL",
+     "code_path": "owners.py:332-780 BudgetReader: _at_baseline_depth 497-528, _account 462-484, _read_back 530-547, _observe_all 558-635",
+     "test": "tests/mind/test_authority_review_r10/r11/r12.py; no control schedules a fresh-thread join that times out and then completes",
+     "evidence": "Forward-only held in every probe: restore after an unread spend refused (behind), executor calls 1 (p2_floor_replay S3, p2c). For-good, behind and STALE refusals record and replay byte-identical across 3 hash seeds. D13-1: a deterministic-schedule probe shows an honest account refused FOR GOOD through the join/box/is_alive race (owners.py:520-525). Unpatched sweeps hit 0/570.",
+     "why": "No duplicate budget authority, no re-authorization and no unobserved spend leading to duplicate dispatch was found. The open MINOR D13-1 is a genuine correctness defect in the budget follower: an honest account read back by its owner can be refused for good, contrary to README section 4. That finding is what keeps Q4 PARTIAL. D13-2..D13-5 are wording, evidence or performance items and do not by themselves make Q4 PARTIAL."
+    },
+    {
+     "q": "Q5 does the world issue SCIENTIFIC VERDICTS (incl. probabilistic->deterministic)?",
+     "verdict": "NO",
+     "code_path": "admission.py:304-336 admit (authority failures -> MISSING_INFORMATION); README section 3 (no current value decides a containment)",
+     "test": "test_authority_failing_first.py (no interval decides), benchmark rescore test",
+     "evidence": "rescore --check MATCHES. BR1_RESCORE.json: changed 259, status 53, codes_only 206, moved_to_feasible 0, consistent with README section 7. Budget refusals in my probes are AUTHORITY_OWNER_UNAVAILABLE / AUTHORITY_STALE, never verdicts.",
+     "why": "Refusals are authority statuses; no new deterministic claim was found. No open finding for Q5."
+    },
+    {
+     "q": "Q6 does an EXTERNAL PROPOSER bypass admission?",
+     "verdict": "NO",
+     "code_path": "admission.py:526-562 gateway/AdmissionGateway; admission.py:402-440 authorize_dispatch re-admits from the proposal",
+     "test": "test_authority_review_r12.py re-dispatch controls; test_authority_mutations.py",
+     "evidence": "In every probe, re-dispatching the admitted action after a restore was refused: p2_floor_replay S3 'admission now refuses this action', b1201/b1204/b1208/a1205 at HEAD executor ran 1. A None 'admitted' is refused as not an AdmittedAction.",
+     "why": "Dispatch always goes through a fresh admission against live readers. No open finding for Q6."
+    },
+    {
+     "q": "Q7 does a provider/executor execute an UNADMITTED action through the Gen2 Mind interface?",
+     "verdict": "NO",
+     "code_path": "admission.py:457-480 _GuardedExecutor (verify_authorization re-derives), admission.py:482-534 ExecutionDesk",
+     "test": "test_authority_failing_first.py (raw proposals never execute), test_authority_review_r1 (authorizations self-verifying)",
+     "evidence": "The executor ran only on admitted actions in all probes. Executor call counts: p2 1, p2c unread 2 (two distinct admissions), readback 1.",
+     "why": "The executor is reachable only with a re-derived DispatchAuthorization. No open finding for Q7."
+    }
+   ]
+  }
+ ],
+ "verified": [
+  {
+   "id": "F13-02",
+   "skeptic": "scope",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MAJOR",
+    "reproduction": "1) I ran the finder's probe again, copied without changes into my own dir. Script: C:/Users/DEV_KA~1/AppData/Local/Temp/claude/C--Users-dev-kaeem-Downloads-Compressed-phyx/b5e3066d-77b7-465b-b1bf-cfd7098cdf27/scratchpad/r13/verify-1-scope/f1302.sh. Probe: ~/br11-review/r13/verify-1-scope/probes/f1302_unread_state_rewrite.py, output in f1302_out.txt. Interpreter was ~/forge-gen2-authority-v1/.venv/bin/python, run on ~/forge-r13-review at 3b407ddb. Results: both SelfFillingNote and VaryingNote gave verifications ['once','once']. Re-dispatching the original action after the restore was refused, and so was re-dispatching it after c (AUTHORITY_STALE). A fresh project_world plus admit of X after restore+c came back 'FEASIBLE () -> DISPATCHED'. X executed 2 times, with _reached={solver:2}. In the readable control the projection was refused with 'rewrote its history', and X executed 1 time.\n2) I added a variant that shows the lost spend changes a budget answer, not just that a second run happens. Script: .../scratchpad/r13/verify-1-scope/budget.sh. Probe: ~/br11-review/r13/verify-1-scope/probes/f1302_budget.py, output in f1302_budget_out.txt. The solver ledger has 6.0 remaining. X's charge b uses all of it. Results:\n- (truth) readable b, no restore: a fresh admission of X is INFEASIBLE_BUDGET ('OVER_BUDGET'); remaining 0.0.\n- (readable b, restore, then c=1) the projection is refused for good ('rewrote its history'); X ran 1 time.\n- (unread b with a VaryingNote detail, restore, then c=1) remaining reads 5.0, a fresh X is 'FEASIBLE () -> DISPATCHED', and X ran 2 times.\n- (context) readable small b, no restore: a second fresh X is FEASIBLE and dispatched. So running X twice is not forbidden in itself (no at-most-once rule). The defect is that the budget the Mind is admitted against loses b.",
+    "reasoning": "I could not refute this finding. I reproduced it, and it is in scope for BR1.1.\n\nCode path at 3b407ddb:\n- `owners.py` `_read_back` (about lines 542-546): when the read-back fails with OwnerUnavailable, it keeps only `_NotRead(why, False, length)`.\n- `_length` (549-556): reads `len(charges)` or `len(_evaluations)` from the account's `__dict__`.\n- `_observe_all` (588-590): sets `self._reached = max(..., got.length)`.\n- The rewrite test (597-599) compares the new history only against `self._seen`. That still holds the last state that was actually read back, the pre-run [a].\n- `_reached` only gates on length (lines 604-605 and 627).\n\nSo [a,c] extends [a], its length 2 is at least the floor of 2, and it is accepted. Spend b disappears, and `remaining` goes from the true 0.0 to 5.0. The same sequence with a readable b is a rewrite and is refused for good. The forward-only rule exists to refuse exactly this.\n\nWhy the scope objections fail:\n(a) The accepted residual \"a reader never observes a state no verification was handed and read back\" does fit [a,b] if read literally. But the task names the README §4 statement \"only the number of its history entries is observed ... not detected as a rewrite\" (new in 33258438, README 228-230, owners.py docstring 386-388) as NOT pre-accepted. And here the state was handed to two verifications. It was not a spend-and-rollback that happened between verifications.\n(b) It needs no introspection. Every step uses public API: `settle(detail=...)`, replacing the ledger object the way sria.campaign restores, `project_world`, `admit`, and `gateway.dispatch`.\n(c) It is not just the accepted \"no at-most-once / no reservation\" residual (BUDGET_BASIS). My budget variant shows an admission the owner's true history makes INFEASIBLE_BUDGET coming back FEASIBLE and being dispatched. That is an unobserved spend permitting duplicate dispatch, which the severity rule names as MAJOR.\n(d) The trigger is exotic, and that is not grounds to downgrade. It is a charge detail that is not a str (the field is annotated str but nothing enforces it) and whose rendering fails differently each time, or that 'moves'. An experiment whose evaluations list is mutated during all three read-backs takes the same 'moved' route with valid types, though I did not run that case.\n(e) A fix looks feasible without running any account code. `_length` already reads the owner container through `__dict__`. `BudgetCharge` is a frozen dataclass with `__dict__` and a `charge_id` field, so the floor could also carry the first L ids.\n\nThe README's 're-dispatch of what such a state recorded is refused' is true only for the original AdmittedAction, which I confirmed is refused with AUTHORITY_STALE. It overstates the protection against a fresh admission. No test controls this: tests/mind/test_authority_review_r12.py R12-3 covers only a return behind the floor, not a rewrite at or beyond it.\n\nSeverity: MAJOR, not downgraded. One could argue BLOCKER, since the dispatch is over budget relative to the true history. I keep MAJOR for consistency with how round 11 rated the analogous F11-1 (restore re-dispatch), and because the account as the owner now states it does show remaining budget. Question Q4 should be YES while this is open."
+   }
+  },
+  {
+   "id": "R13-C-F1",
+   "skeptic": "scope",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MAJOR",
+    "reproduction": "Reproduced at 3b407ddb351b558428b2bdfbc92fb21a2841102f. In ~/forge-r13-review, `git rev-parse HEAD` printed 3b407ddb351b558428b2bdfbc92fb21a2841102f and the tree was clean. I ran the finding's probes unchanged, copied to ~/br11-review/r13/verify-3-scope/{p01_floor_gap.py,p07_budget_regained.py}, through the wrapper scripts C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-3-scope\\run1.sh and run2.sh, with PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review and ~/forge-gen2-authority-v1/.venv/bin/python.\n\np01 output:\n- [varying]: general pool 6.0; first: ADMITTED+DISPATCHED | verification on spent state: refused this verification only | on spent state: OwnerUnavailable 'moved while it was serialized' | after restore + tiny charge: ADMITTED+DISPATCHED | executor ran 2: ['simulate_pulse','simulate_pulse'].\n- [mutating]: the same result, executor ran 2.\n- Control [readable]: after restore + charge, OwnerUnavailable '... rewrote its history ... refused by this reader from then on'.\n\np07 output:\n- (a) On the spent state read back, the same proposal is INFEASIBLE_BUDGET ('OVER_BUDGET',).\n- (b) pool 6.0 | first: ADMITTED+DISPATCHED | refused: 'was not read back' (fresh thread) | after restore + another action's 0.5 charge: ADMITTED+DISPATCHED | executor ran 2 | realized for simulate_pulse: 12.0.\n\nEvery path goes through public surfaces: BudgetReader.following, ExecutionDesk(...).gateway(), MindWorldPort, BudgetLedger.settle(detail=...), and replacing the ledger in the handed mapping. p01 reads reader._seen/_reached only for a diagnostic print. tests/mind/test_authority_review_r12.py covers only the restore-without-a-later-charge variant (_ledger_spend_then_restore, lines 53-110 and 202-245). There is no control for restore + charge.",
+    "reasoning": "Summary: I tried to refute this finding and could not. It holds and is within BR1.1 scope, and MAJOR is the right severity.\n\nMechanism, verified in owners.py at 3b407ddb:\n- _read_back (542-546) turns an OwnerUnavailable (failures that differ or look like mutation, or a fresh thread still alive after WAIT_S, 523-524) into _NotRead(length), with the length from _length (549-556).\n- _observe_all records only `_reached[key] = max(..., got.length)` for that state (588-590). It does not touch _seen.\n- Rewrite detection compares only against _seen (596-601). The floor check is `len(history) < _reached` (604-605).\n- So after a spent state S1 (length n+1) is handed but not read back, a restore to S0 plus any one charge c' gives a state of length n+1. That state extends _seen (still S0) and reaches the floor, so it is accepted and recorded. The spend in S1 is erased.\n- When S1 was read back, the same sequence is refused for good as a rewrite. Whether the budget can be regained therefore depends on whether one read-back happened to succeed.\n\nRefutation attempts:\n1. Accepted residual \"a state no verification was handed and read back\": does not save it. Round 12's R12-3 had exactly this trigger class (a handed spend that is not read back, then a restore that re-dispatches). The builder rated it MAJOR (\"unobserved spend, duplicate dispatch\", README section 9, lines 502-505) and fixed it with this length floor. So the project treats handed-but-not-read-back spends as in scope. The brief also lists the README section 4 length-only limitation as NOT pre-accepted. This finding shows the R12-3 fix closes only the window between the restore and the next charge. In a campaign that restores and continues, the next charge is the normal next step.\n2. Residual \"no at-most-once execution / no budget reservation\": does not apply. This is not one AdmittedAction run twice. It is a fresh admission on a budget the reader was handed as spent: 12.0 realized against a pool of 6.0, and OVER_BUDGET on the spent state when it is read back. That is exactly Q4's \"no re-authorization of what an account moved past\".\n3. Exotic or introspection trigger: p01 uses an execution-side `detail` object whose rendering fails with a varying message or with the interpreter's mutation text. These are the same b1204/b1208 triggers the builder accepted as real in R12-3. It needs no introspection of reader or execution-side private members. p07's fresh-thread-alive path overrides to_dict on the account instance and raises RecursionError under an RLock. That is more synthetic, but it is execution-side code in the account's own serialization, the documented trust surface. p01 alone suffices, and the rubric says not to downgrade for an exotic trigger.\n4. README accuracy: README.md:228-230 documents that a later state that is at least as long and differs in its entries is not detected. It then says \"a re-dispatch of what such a state recorded is refused\". That is true only for re-presenting the same AdmittedAction on the restored state. The same action, re-proposed and newly admitted after one more charge, is dispatched. The claim materially overstates the guarantee.\n\nSeverity: a reproduced unobserved spend that permits duplicate dispatch, and a regained exhausted pool. That is MAJOR by the rubric. It is the same class as the R12-3 MAJOR, which the newest change left open. I do not rate it BLOCKER: the admission is made on a state the execution side actually holds (restored), consistent with how prior rounds rated this class. The question stays Q4 = YES while this is open. The proposed fix is a reasonable direction: record per-entry identities read code-free from the owner's container, and refuse the account for good when they cannot be read that way. It needs a restore + charge control."
+   }
+  },
+  {
+   "id": "F13-02",
+   "skeptic": "repro",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MAJOR",
+    "reproduction": "I ran it in WSL against ~/forge-r13-review, whose HEAD is 3b407ddb351b558428b2bdfbc92fb21a2841102f (git rev-parse confirmed it). Interpreter: ~/forge-gen2-authority-v1/.venv/bin/python, with PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review.\n\n(1) The original probe, copied as-is to ~/br11-review/r13/verify-0-repro/f1302_orig.py (sha256 f6f2c810...), output in f1302_orig_out.txt:\n- SelfFillingNote and VaryingNote: verifications=['once','once']; the original re-dispatch after the restore was refused; after charge c the original is still refused (AUTHORITY_STALE); the fresh projection and admission of X are FEASIBLE and DISPATCHED; X executed 2 times; _reached={solver: 2}.\n- Readable control: the fresh projection is refused ('rewrote its history'); X executed 1 time.\n\n(2) My own variant, ~/br11-review/r13/verify-0-repro/v3.py, output in v3_out.txt; script at Windows scratch r13/verify-0-repro/run3.sh. It runs three scenarios for each of three detail kinds:\n- Scenario A (two verifications handed the spend, restore only): the fresh projection is refused as 'behind' for all three kinds. The length floor works.\n- Scenario B (as A, plus another action's charge run.Y.1):\n  - Unreadable kinds: just before the fresh admission, a verification is served the ledger with charge ids ['...solver.spent', 'run.Y.1']. X's own charge run.X.1 is absent, although two verifications were handed it. The fresh admission is FEASIBLE and DISPATCHED, and X executed 2 times.\n  - Readable kind: refused for good as 'rewrote its history'; X executed 1 time.\n- Scenario C (spend never handed to any verification, restore plus c): X is dispatched twice for all kinds. This is the accepted residual.\n\nThe outcome for an unreadable spend that WAS handed (B) is the same as for one never handed (C). The only difference from the readable case is that the entries could not be read.",
+    "reasoning": "I tried to refute this and could not. It reproduces exactly, and the code explains it.\n\n**Why it happens.** In owners.py at 3b407ddb:\n- _read_back, lines 542-546: when a handed account raises OwnerUnavailable, it keeps only _NotRead(why, False, length).\n- _length, lines 549-556: that length is just len() of the charges or _evaluations container.\n- _observe_all, lines 588-590: the only trace stored is self._reached = max(..., length).\n- The rewrite test at line 597 compares the history only against self._seen, which still holds the pre-spend prefix [a]. The later state [a, c] therefore extends what was seen.\n- Line 606 checks only the length (2 >= _reached 2). The state is accepted and served.\n\nSo X's spend b vanishes from the budget that admission and dispatch read. The gateway then dispatches X a second time, through the public Mind-facing path (project_world, admit, ExecutionDesk.gateway().dispatch). No in-process introspection is used.\n\n**Refutation attempts.**\n\n1. *Is it the accepted residual about \"a state no verification was handed and read back\"?* Read literally, that wording covers this state. But the task explicitly says the new §4 statement about handed-but-unread entries is NOT pre-accepted. Separately, README §9 R12-3 (lines 502-505) records this exact trigger class (b1204/b1208: mutation text, varying message) as a MAJOR. Its impact is given as \"unobserved spend, duplicate dispatch\", marked \"Fixed generically\". My scenario B shows the fix holds only for a bare restore (scenario A). One later charge by any other action restores the duplicate dispatch. So this is the same outcome R12-3 classified as MAJOR, left open by its fix, not a new reading of an old residual.\n\n2. *Is the duplicate dispatch correct behaviour, since at-most-once is the execution owner's job?* The forward-only rule exists precisely to refuse this rewrite. With a readable spend the same sequence is refused for good, both in the control and in scenario B for the readable kind. Treating handed-but-unread states differently is a fail-open of the rule, not a principled difference. A closed form appears possible without running account code: comparing exact-str charge_id / evaluation_id values from __dict__ for the first L entries.\n\n3. *Is the trigger illegitimate?* settle types detail as str but does not enforce it. The same content was accepted as an in-scope trigger in round 12 and is pinned in tests/mind/test_authority_review_r12.py:186-204. Those tests assert only the bare-restore re-dispatch of the original AdmittedAction. No test covers restore plus a charge, or a fresh admission.\n\n4. *Is it already disclosed?* README §4:228-230 does disclose that only the number of entries is observed. But its parenthetical \"a re-dispatch of what such a state recorded is refused\" is true only for the original AdmittedAction. A fresh admission of the same action after restore plus c is dispatched. Combined with R12-3's \"Fixed generically\", the report overstates the protection.\n\n**Verdict.** Per the rubric, an unobserved spend that permits duplicate dispatch, reproduced through the gateway, is MAJOR, and an exotic trigger is not grounds to downgrade it. The owner could choose to accept the §4 limit as a documented residual. That would be an explicit scoping decision that has not been made, and the R12-3 \"fixed\" claim would then need to be restated."
+   }
+  },
+  {
+   "id": "R13-C-F2",
+   "skeptic": "repro",
+   "verdict": {
+    "confirmed": false,
+    "severity": "MINOR",
+    "reproduction": "I re-ran the finding's probes unchanged in WSL at HEAD 3b407ddb351b558428b2bdfbc92fb21a2841102f (clean worktree ~/forge-r13-review, gate venv), and added a control probe. Generator script: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-4-repro\\gen.sh. Probes: p05_cancelled_note.py, p03_base_exception_content.py and v_controls.py in that directory. Outputs are in ~/br11-review/r13/verify-4-repro/*.out.\n\nThe mechanics reproduce exactly.\n- p05, ledger with a CancelledError note: seen=['CancelledError','CancelledError']; after restore DISPATCHED AGAIN; executor ran 2.\n- p05, experiment variant: refused (OwnerUnavailable, then MISSING_INFORMATION AUTHORITY_OWNER_UNAVAILABLE); executor ran 1. The finding does not claim otherwise.\n- p03, both the direct Halt variant and the Exception-whose-__str__-raises-Halt variant: DISPATCHED AGAIN; executor ran 2; seen_len=1, reached=None, not diverged.\n\nControls in v_controls.py:\n- A (CancelledError note, two direct reads): DISPATCHED AGAIN; executor ran 2.\n- B (CancelledError note, NO verification between the dispatch and the restore): DISPATCHED AGAIN; executor ran 2.\n- B2 (ordinary str detail, no verification): DISPATCHED AGAIN; executor ran 2.\n- C (ValueError note, two reads): refused (AUTHORITY_OWNER_UNAVAILABLE); diverged=True; executor ran 1.\n- D (CancelledError note, only gateway.admit verifies): admit raised CancelledError; then DISPATCHED AGAIN.\n\nSo a verification that a BaseException interrupts leaves the reader exactly as if no verification had happened (A == B == B2). The Exception-class path that round 12 fixed works (C).",
+    "reasoning": "The reproduction holds. The MAJOR rating does not: the outcome is the accepted, documented residual, not a new wrong outcome beyond its scope.\n\n1. The code path matches the finding. owners.py:458 (_read_once) and owners.py:130 (_described) catch only Exception. _read_back catches only _Unreadable and OwnerUnavailable (owners.py:540-542). So a BaseException raised while the owner's canonical_digest default=str rendering runs (owners.py:432-433, str(detail)) leaves pinned(). pinned's finally (owners.py:723-728) calls _leave(ticket, handed=True). That only marks verifications then waiting on this ticket; it records no history and no _reached floor.\n\n2. The accepted residual covers exactly this.\n- The class docstring at owners.py:385-390 lists among what is \"never observed\": \"one interrupted (BaseException) between being handed accounts and comparing them\". README section 4 lines 232-234 say the same (\"a BaseException ... which only the verifications then waiting for it refuse\"). The round-13 brief carries that wording as an owner-accepted residual.\n- Nothing in that text limits where the BaseException comes from. Owner content raising asyncio.CancelledError or a custom BaseException during the read-back is a BaseException between being handed accounts and comparing them.\n- An unobserved state that is then rolled back looks like no change. That is a second accepted residual (\"a spend and its rollback both between two verifications look like no change\"), alongside \"no at-most-once execution\". Controls B and B2 show the identical re-dispatch with no verification at all. The BaseException-interrupted verification adds no wrong outcome beyond the residual. It is a verification that, as documented, observes nothing.\n- The trigger is also execution-side. The execution side settles a charge whose detail object raises a BaseException when stringified, and then itself restores the ledger by replacement. Both acts sit on the side that owns at-most-once execution.\n\n3. Not catching BaseException is a defensible design. CancelledError, KeyboardInterrupt, SystemExit and GeneratorExit are cancellation and exit signals. A reader that turned them into refusals would swallow cancellation. Inside the reader, a content-origin CancelledError cannot be told apart from a genuine one. The finding's comparison with round 12's RecursionError handling does not carry over: RecursionError is an Exception subclass, so it falls under the classified path. The interruption residual is defined by type (\"a BaseException\"). The Mind never admits anything on the spent state: gateway.admit raises, which fails closed.\n\n4. What is genuinely wrong is documentation, so it is MINOR.\n- owners.py:368-369 and README section 4 lines 185-187 claim that a failure \"is described without running any code of it that could raise ... so no read-back failure leaves the classification\".\n- _described's docstring (owners.py:125-126) makes the same claim, but it does run code that can raise: it calls str(exc) at owners.py:129. A BaseException from that call, or from the owner's own rendering, does leave the classification.\n- The same docstring at owners.py:389-390, and README:232-234, carve BaseException out, so the text contradicts itself. It should say \"no read-back failure that is an Exception leaves the classification; a BaseException is the documented interruption residual\".\n\nOptional hardening, not required by the contract: in pinned's exit path, when the verification was handed accounts and did not compare, record the code-free _length floor for each handed account. That would refuse the re-dispatch in A and D without swallowing the BaseException.\n\n5. Verdict on the finding: the reproduction is accurate. A NEW MAJOR outside the documented scope does not hold. What remains is the overclaiming documentation (MINOR). By itself that does not make Q4 PARTIAL under the reporting convention."
+   }
+  },
+  {
+   "id": "R13-C-F2",
+   "skeptic": "scope",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MAJOR",
+    "reproduction": "Reproduced at 3b407ddb351b558428b2bdfbc92fb21a2841102f in WSL with ~/forge-gen2-authority-v1/.venv/bin/python, against the detached worktree ~/forge-r13-review (HEAD checked, clean). Driver: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-5-scope\\run1.sh. Probes are copied to ~/br11-review/r13/verify-5-scope/ (p03 sha256 d0fb1d56..., p05 sha256 fd2514e1...). I also wrote my own v1_variants.py there, with controls.\n\nOutput:\n- p03, a detail that raises BaseException: ['Halt','Halt','gateway.admit raised Halt']; after the restore it was DISPATCHED AGAIN and the executor ran 2 times; seen len=1, reached=None. The variant whose detail raises an Exception whose __str__ raises Halt gave the identical result.\n- p05, ledger with a CancelledError note: ['CancelledError','CancelledError']; DISPATCHED AGAIN; executor ran 2. The experiment variant was refused and the executor ran once, so that half does not reproduce.\n- v1 A, an ordinary Exception from the read-back whose __str__ raises asyncio.CancelledError (the _described path): three pins raised CancelledError and gateway.admit raised CancelledError; floor=None, diverged=False; after the restore it was DISPATCHED AGAIN and the executor ran 2 times.\n- v1 B, the R12-1 control (an Exception whose __str__ raises ValueError): OwnerUnavailable, admit returned admitted=False, diverged=True; after the restore it was refused and the executor ran once.\n- v1 C, a plain TypeError control: same as B, refused, executor ran once.\n- v1 D, a detail whose __str__ raises CancelledError directly: DISPATCHED AGAIN, executor ran 2 times.\n\nThe only difference between B and A is whether the failure's rendering raises an Exception or a BaseException.",
+    "reasoning": "I tried to refute the finding on scope and could not. I graded it Q4 MAJOR, inside BR1.1.\n\nCode path at 3b407ddb:\n- owners.py:458: _read_once catches only Exception.\n- owners.py:128-131: _described calls str(exc) and catches only Exception. So a BaseException raised while a failure is being rendered escapes the handler that was meant to classify it.\n- owners.py:538-546: _read_back catches only _Unreadable and OwnerUnavailable. The exception then leaves _observe_all (569) and pinned() (721).\n- owners.py:723-728: the finally block only discards the ticket. Nothing is written to _seen, _reached or _diverged. My probe confirms floor=None and diverged=False.\n- The execution side then restores the pre-run ledger. The reader still holds the pre-spend history and the restored state matches it, so dispatching the same AdmittedAction again is admitted, and the executor runs twice.\n\nThe scope refutation I tried: README §4:232-234 and owners.py:389-390 accept, as a residual, \"one interrupted (a BaseException, ...) between being handed accounts and comparing them\". Read literally, that could cover variant D, where the owner content itself raises CancelledError. It does not cover variant A, for three reasons:\n1. In A the read-back failed with an ordinary Exception, which is a read-back failure, not an interruption. Only the reader's own description of that failure leaks a BaseException.\n2. This is exactly the class of the round-12 lead R12-1 (b1201/b1202). The owner triaged R12-1 as \"unobserved spend, duplicate dispatch, fail-open of the forward-only rule\" (README §9, round-12 triage) and fixed it by \"describing failures without running code of them that can raise\". The fix is incomplete: control B, the ValueError rendering, is now refused, while A, the CancelledError rendering, still re-dispatches.\n3. The shipped text at owners.py:368-369 and README §4:185-187 says \"A failure is described without running any code of it that could raise ... so no read-back failure leaves the classification (round 12)\". That is false for A.\n\nFor D, the owner's own precedent puts persistent content outside the \"interrupted\" residual. R11-C-F1 (owner content nested deeply enough to raise out of every verification) was graded MAJOR and fixed, separately from the accepted \"caller's own stack exhausted\" residual. A failure that is a deterministic property of the handed state, raised at every attempt, is the same kind of case.\n\nOther checks:\n- Trigger realism: BudgetLedger.settle accepts a non-str detail, since budget.py:282 only annotates it as str. CancelledError is a BaseException in ordinary async code.\n- Who controls the trigger: execution-side content, the same trust position the round 10-12 MAJORs assumed.\n- No introspection: the attack needs no access to private members or closures. The probe reads _reached and _diverged only to report them.\n- No regression control exists. The only BaseException in tests/mind is test_authority_review_r11.py:367, which tests a one-off interruption.\n- Side effect: every admission raises, rather than refusing, while the spent state is held. That is a fail-closed denial of service, not a wrong admission.\n\nSeverity: this is a reproduced unobserved spend that permits a duplicate dispatch of the identical admitted action. That is MAJOR under the brief's rule, and the trigger being exotic is not a reason to downgrade it. The finding's own fallback, \"downgrade if the owner holds the residual to cover it\", does not apply to variant A. A suggested fix: catch BaseException in _described and _read_once, re-raising only KeyboardInterrupt and SystemExit. Alternatively, record the length floor for every handed account in pinned()'s exit path when it leaves without comparing. Either way, add controls for a CancelledError note and for an Exception whose __str__ raises a BaseException."
+   }
+  },
+  {
+   "id": "R13-C-F1",
+   "skeptic": "repro",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MAJOR",
+    "reproduction": "I wrote an independent probe and ran it at 3b407ddb351b558428b2bdfbc92fb21a2841102f. git rev-parse in ~/forge-r13-review printed that SHA, and status showed a clean tree.\n- Probe: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-2-repro\\v01.py (WSL copy: ~/br11-review/r13/verify-2-repro/v01.py).\n- Output: ~/br11-review/r13/verify-2-repro/v01.out.\n- Runner: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-2-repro\\mk.sh v01.py. It runs `cd ~/forge-r13-review && PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review ~/forge-gen2-authority-v1/.venv/bin/python v01.py`.\n\nThe probe uses only public surfaces: BudgetReader.following over the battery fixture, ExecutionDesk(...).gateway() and MindWorldPort. The executor settles the whole general pool (6.0) for simulate_pulse. Results (exit 0):\n- [READ] (control: the spent state is read back) admits and dispatches first. On the spent state, admission is INFEASIBLE_BUDGET ('OVER_BUDGET',). After restore by replacement plus a 0.5 charge from another action: \"no world (... rewrote its history ...)\". The executor ran once.\n- [DEEPLOCK] (the builder's own R12-4 configuration: verification on a deep stack while holding the execution side's re-entrant store lock, with a simulated RecursionError as in test_authority_review_r12.py:290-323) prints \"was not read back within 1.0 s on a fresh thread\". Reader state is seen=1, reached=2, diverged=False. After restore plus the 0.5 charge: ADMITTED+DISPATCHED. simulate_pulse ran twice, so 12.0 was realized against a pool of 6.0.\n- [VARYING] (the builder's own R12-3 trigger: a charge detail whose __str__ raises a fresh message each time) prints \"moved while it was serialized\", refused once. reached=2. After restore plus charge: ADMITTED+DISPATCHED, and simulate_pulse ran twice.\n- [DEEPLOCK_RESTORE_ONLY] refuses after restore (\"is behind\"), and the executor ran once. The R12-3 length floor closes only the restore-only variant.\n- [DEEPLOCK_OTHER_VIA_DESK] also refuses. While the account is behind, the post-restore charge cannot come through this reader's admission, so it has to be settled by the execution side itself (sria.campaign's own action, bookkeeping, or another reader/desk). That narrows the trigger but does not remove it.\n- [NONE] (the documented residual: the spent state is never handed) gives the same re-dispatch. That is accepted; the finding is the handed-but-not-read-back case.",
+    "reasoning": "The finding holds at the reviewed SHA, and I could not refute it on contract grounds.\n\n**Code path (owners.py at 3b407ddb).**\n- Lines 542-546: when _read_back gets OwnerUnavailable, it records only _NotRead(why, False, length). The OwnerUnavailable comes either from the 'moving' classification at 480-482 or from the fresh thread still being alive after WAIT_S at 523-524. The length is read by _length at 549-556.\n- Lines 588-590: the comparison stores only self._reached[key] = max(..., got.length). _seen is never extended with that state's entries.\n- Lines 596-607: a rewrite is detected only against _seen. The floor check is len(history) < _reached.\n- Consequence: restore to the pre-run ledger, then one charge, yields a history that extends _seen (the pre-run prefix) and has length equal to _reached. It is accepted as forward, and simulate_pulse, which was OVER_BUDGET on the spent state, is re-admitted and dispatched.\n- When the same spent state is read back, the identical sequence is refused for good as a rewrite. The forward-only guarantee for a handed spend therefore depends on whether the read-back happened to succeed.\n\n**Why this is not covered by an accepted residual.**\n- The task lists the README §4 'only their number is observed' statement as new in 33258438 and not pre-accepted.\n- The accepted residual 'a state no verification was handed and read back' would literally cover this case. However, the builder itself treated the restore-only version of this exact case as MAJOR. README §9's round-12 row, R12-3 (README.md:502-505), reads 'Impact: unobserved spend, duplicate dispatch ... Fixed generically: any state not read back observes its account's length'. Round 11's F11-1, the same class, was also MAJOR.\n- The 'generic' fix closes restore-only and leaves restore + charge open. That is the newest change leaving a MAJOR of the same class.\n\n**Triggers are the builder's own honest configurations.**\n- The R12-4 lock/deep-stack setup (test_authority_review_r12.py:290-323).\n- The R12-3 varying or mutation-text notes (test_authority_review_r12.py:186-204).\n- Neither attack introspects private members.\n\n**Report claim.** README.md:229-230 says 'a re-dispatch of what such a state recorded is refused'. That holds only for the identical AdmittedAction returning to its admission state. The same action, newly admitted after restore plus a charge, is dispatched. Together with README.md:504-505 ('Fixed generically'), this overstates what the R12-3 fix guarantees.\n\n**Mitigating facts, which narrow the trigger but do not change the severity.**\n- The post-restore charge must be settled outside this reader's admission path; my DEEPLOCK_OTHER_VIA_DESK scenario shows the Mind cannot supply it while the account is behind.\n- The outcome equals the accepted never-handed residual.\n\n**Severity.** By the rubric, an unobserved spend that permits duplicate dispatch is MAJOR. It is demonstrated here (executor ran twice, 12.0 realized against a 6.0 pool), and it bears on Q4."
+   }
+  },
+  {
+   "id": "R13-B-F1",
+   "skeptic": "scope",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MAJOR",
+    "reproduction": "I copied lens B's probes (p01_collapse.py, p06_collapse_std.py) unchanged into ~/br11-review/r13/verify-7-scope/. The driver is C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-7-scope\\go.sh. I ran it in WSL Ubuntu-24.04 against ~/forge-r13-review (git log -1 = 3b407ddb351b558428b2bdfbc92fb21a2841102f, clean tree) with ~/forge-gen2-authority-v1/.venv/bin/python (3.12.3).\n\nOutput of p01:\n- Control (same Pairs mapping, no odd key): verification while spent 'served revision 2 (spent ledger revision 2)'; after restore 're-dispatch refused'; executor calls = 1.\n- eq-collapse, no restore: 'served revision 1 (spent ledger revision 2)', then 'DISPATCHED AGAIN; executor calls = 2'.\n- eq-collapse with restore: the same, DISPATCHED AGAIN, calls = 2.\n- hash-raises on another entry, then restore: 'OwnerUnavailable: the execution side handed over no pair of account mappings: TypeError: unhashable junk id', then 'DISPATCHED AGAIN; executor calls = 2'.\n- Constructor: '[ctor] accepted; ids: ['A'] A total_budget = 99.0'. It accepted the set and silently dropped one account.\n\nOutput of p06:\n- Plain dict holding both entries: 'live revision 3: served revision 1; ... DISPATCHED AGAIN; calls=2'.\n- OrderedDict: the same.\n- MappingProxyType over the same dict: 'served revision 2; refused; calls=1'. That container does not collapse; the finding does not claim it does.",
+    "reasoning": "I could not refute this finding on severity or on scope.\n\n1. Code path at 3b407ddb.\n- `BudgetReader._handed` (src/engcore/mind/world/owners.py:671) iterates `dict(mapping or {}).items()`. Building that dict runs each key's own `__hash__`/`__eq__`. A str-subclass key that spells 'zz.cached.copy' but compares equal to the solver id is merged into the solver entry, and the stale value replaces the spent one under the solver's id.\n- The duplicate-spelling check (:674-679) and `str.__str__` both run only after that merge, so they never see the lost entry.\n- The strict constructor does the same: :753 `raw = [dict(ledgers or {}), ...]`, and its length check at :758 compares two counts that were both taken after the collapse.\n- This contradicts the reader's own contract. The docstring at :351-353 says entries are read entry by entry, that one malformed entry never hides the others, and that a str subclass is read as the plain str it spells. The comment at :674 says 'no code of the id runs'. The builder's own control `test_a_str_subclass_id_is_read_under_its_spelling_and_runs_no_code` (tests/mind/test_authority_review_r12.py:168) states the same guarantee.\n- The R12-2 control (`_Tag`, :122-158) covers only the inverse case: keys that spell one id but are unequal as objects. Nothing controls keys that are equal as objects but spell different ids.\n\n2. Wrong outcome, reproduced. The spent state was handed in the mapping: in p06 it sits in an ordinary dict, where the execution side's own `d[lid]` lookup returns the spent ledger. The reader never observed that state, served revision 1, and the desk dispatched the executed action a second time. This happened with no restore at all. It is exactly the severity rule's 'unobserved spend that permits duplicate dispatch' (Q4, forward-only guarantee).\n\n3. Scope.\n- It needs no introspection of execution-side private members or closures. It uses only what `accounts()` hands over.\n- It is not among the accepted residuals. The 'key that is not a str' residual does not apply, because these keys are str subclasses, which the reader explicitly claims to handle.\n- The 'a reader never observes a state no verification was handed' residual does not apply either, because the spent state was handed.\n- README section 9 recorded the same class (R12-2: keys spelling one id collapsed and hid a spend) and the same impact (F11-2: one malformed entry hid another account's spend) as authority defects, and fixed them. This variant survives both fixes.\n- The trigger (a key with a custom `__eq__`/`__hash__`, or a stateful one inside a plain dict) is exotic. Under the instructions, an exotic trigger does not justify downgrading an authority flaw.\n- Earlier scope skeptics graded some flaws that were declared by the execution side as MINOR (R4-A1, F11-2). The builder treated all of them as MAJOR. This reader's documented purpose is to defend against malformed handed mappings, so a failure here is a failure of its stated guarantee.\n\n4. One caveat. The hash-raises sub-case ends in the `_handed` exception handler (:714-718), which labels it 'handed over no pair of account mappings'. That is close to the accepted residual 'a verification whose accounts() ... hands no pair of mappings'. Still, it is the same path and impact as F11-2, which was fixed as MAJOR: one malformed entry raises and hides a spend on a well-formed account. Even if that sub-case is set aside, the eq-collapse sub-case alone (dispatched twice with no restore, also through a plain dict and an OrderedDict) and the constructor that silently drops an account are each enough for MAJOR.\n\n5. Pre-existing since d5ef1e3 (per the finding; I did not check that commit). This does not move it out of scope, because all of BR1.1 (1202ea6c..3b407ddb) is under review.\n\nVerdict: confirmed MAJOR, in scope. It keeps Q4 at YES."
+   }
+  },
+  {
+   "id": "R13-B-F1",
+   "skeptic": "repro",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MAJOR",
+    "reproduction": "I wrote my own probe and ran it in WSL at 3b407ddb351b558428b2bdfbc92fb21a2841102f. git rev-parse inside the probe printed that SHA, and the worktree status was clean. Script: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-6-repro\\v1.sh. Probe: ~/br11-review/r13/verify-6-repro/v1_collapse.py. The fixture is battery simulate_pulse with a BudgetReader.following whose accounts() returns a PLAIN dict. After the first dispatch the executor settles one charge on the solver ledger. That dict then also holds a pre-spend copy of the ledger under a str-subclass key. The key spells 'zz.cached.copy', but its __hash__ and __eq__ make it equal to the solver id. It compared unequal when it was inserted, so the execution side's own dict keeps both entries, and d[lid] in that dict returns the spent ledger. Output:\n- Control A (no extra entry): 'served rev 2 (live rev 2) ... re-dispatch: refused (AUTHORITY_STALE); executor calls=1'.\n- Control B (extra entry under a plain str-subclass key that spells another id): snapshot ids ['...solver','zz.cached.copy'], 'refused; executor calls=1'.\n- Attack: 'served rev 1 (live rev 2); snapshot ledger ids: ['synthetic.battery.pulse-cell.solver'] / re-dispatch (no restore): DISPATCHED AGAIN; executor calls=2'.\n- Strict constructor, with a Mapping that states (\"A\", total 10) and (A2(\"B\"), total 99) where A2 is equal to everything: 'accepted; ids: ['A'] A.total_budget = 99.0'. One account was silently dropped, and the other entry's account was served under 'A'.\n\nI also re-ran lens B's p01_collapse.py and p06_collapse_std.py unchanged at the same SHA (v2.sh). Both reproduce. eq-collapse gives DISPATCHED AGAIN, calls = 2, with or without a restore. A plain dict and an OrderedDict each give 'served revision 1' and then DISPATCHED AGAIN, calls=2. MappingProxyType does not trigger it (served revision 2, refused). git show d5ef1e3:src/engcore/mind/world/owners.py:593 has the same `dict(mapping or {}).items()` call, so this has been there since d5ef1e3. tests/mind/test_authority_review_r12.py passes 18/18 at this SHA, so no existing control catches this.",
+    "reasoning": "I could not refute it. owners.py:671 (`for raw_id, account in dict(mapping or {}).items()`) rebuilds the handed mapping as a dict before the per-entry reading at 672-686. That rebuild runs the key objects' own __hash__ and __eq__. A key that spells another id but is equal to the solver id therefore overwrites the solver id's value with the other entry's account. The spelling check at :675 only ever sees the merged result. This contradicts the reader's stated contract in three places:\n- the class docstring at :351-353: 'read entry by entry', 'a str subclass is read as the plain str it spells';\n- the comment at :674: 'no code of the id runs';\n- README section 4, lines 156-159.\n\nUnder that contract, the attack mapping states two accounts, 'solver' (spent) and 'zz.cached.copy' (stale). Control B shows the reader reading exactly that when the key's __eq__ and __hash__ are not overridden. So the reader misreads what the execution side handed. The execution side did not lie: its own dict lookup d[lid] returns the spent ledger.\n\nThe consequence is the one the rubric names as MAJOR: a handed spend goes unobserved, the stale ledger is served under the spent account's id (rev 1 while live is rev 2), and the admitted action is dispatched a second time with no restore.\n\nNo accepted residual covers it:\n- The key is a str subclass, so 'an account handed under a key that is not a str' does not apply.\n- The spent state was handed in a well-formed pair of mappings, so 'hands no pair of mappings' does not apply.\n- The state was handed, so 'a state no verification was handed' does not apply.\n- BUDGET_BASIS (no at-most-once execution) applies only to spends the follower did not observe because they were never handed and read back.\n\nThere is precedent for this severity. README section 9's triage of R12-2 recorded the same impact for a str-subclass key collapse, 'owner-identity confusion, unobserved spend, duplicate dispatch', and the builder fixed it. This finding is the mirror case that survives that fix: different spellings that compare equal, instead of one spelling under keys that differ as objects. The strict constructor (:753, length check at :758) has the same defect. The length check compares lengths after dict() has already collapsed the entries, so it accepts the set and drops an account.\n\nOne sub-claim is weaker. In the variant where one key's __hash__ raises, the reader reports 'handed over no pair of account mappings' (OwnerUnavailable), and the action is re-dispatched only after a restore. That arguably falls inside the accepted residual for 'hands no pair of mappings', although it also contradicts 'one malformed entry never hides the others'. The equal-key collapse needs no restore and is not covered by any residual, so the MAJOR stands on that case alone.\n\nThe finding is MAJOR rather than BLOCKER because the rubric's MAJOR category names exactly 'unobserved spend that permits duplicate dispatch'. Q4 (budget follower forward-only guarantee) is YES on this finding."
+   }
+  },
+  {
+   "id": "R13-A-F1",
+   "skeptic": "scope",
+   "verdict": {
+    "confirmed": true,
+    "severity": "MINOR",
+    "reproduction": "I reproduced this independently at 3b407ddb351b558428b2bdfbc92fb21a2841102f, after confirming HEAD with git log -1 in ~/forge-r13-review. Probe: ~/br11-review/r13/verify-9-scope/v9.py. Output: ~/br11-review/r13/verify-9-scope/v9_out.txt. Driver: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-9-scope\\s2.sh. Command: cd ~/forge-r13-review && PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review ~/forge-gen2-authority-v1/.venv/bin/python v9.py.\n\nOutput:\n- Exception control (Boom): verify gives OwnerUnavailable and the account goes into diverged. The re-dispatch after the restore gives DispatchRefused, executor calls 1.\n- BaseException (class Halt(BaseException)): verify RAISED Halt, with reached={} and diverged=[]. The re-dispatch after the restore gives OK/DISPATCHED, executor calls 2.\n- Baseline with no exception: a plain spend, then a restore with no verification in between. The re-dispatch gives OK/DISPATCHED, executor calls 2.\n\nI also read the lens's own a1302_out.txt and a1303_out.txt. They match: Halt and SystemExit escape every verification and admission, and an account no world reads makes admissions raise Halt.",
+    "reasoning": "WHAT HOLDS. The mechanism is real and I reproduced it.\n- owners.py:458-460: _read_once catches only Exception.\n- owners.py:124-132: _described catches only Exception.\n- owners.py:486-495: _attempts catches only _Failed.\n- owners.py:538-546: _read_back catches only _Unreadable and OwnerUnavailable, so the _length floor is never recorded.\n- authority.py:383-387: _Memo._pin_now catches only Exception.\nSo when a charge detail's __str__ raises a BaseException, that exception leaves pinned(), read() and admit(). Nothing is recorded, and after the execution side restores the ledger, the admitted action is dispatched again (executor ran 2).\n\nWHY IT IS NOT MAJOR: the outcome is inside an accepted, documented residual.\n1. Both the residual list in the task and README:231-234 name, as never observed, the state of a verification \"interrupted (a BaseException, or the caller's own stack exhausted inside the reader) between being handed accounts and comparing them, which only the verifications then waiting for it refuse\". The class docstring says the same at owners.py:388-390: \"one interrupted (``BaseException``) between being handed accounts and comparing them\".\n   - The parenthesis defines \"interrupted\" as any BaseException. It does not mean only an asynchronous KeyboardInterrupt.\n   - The probe's verification is exactly that case: it was handed the accounts (pinned sets handed=True) and raised a BaseException inside _read_back, before the comparison in _observe_all.\n2. The owner's own regression test for this residual models it the same way. tests/mind/test_authority_review_r11.py:367-389 defines class _Interrupted(BaseException) and raises it from the account's own to_dict, which is execution-side account content, inside the read-back. So an account-content-raised custom BaseException is the case the accepted residual was written around. The finding says \"it is not an interruption: it is a property of the handed state\". That rereads the residual more narrowly than its text and its control.\n3. The design is consistent. grep finds no `except BaseException` anywhere in src/engcore/mind/world. A BaseException from accounts() itself also propagates, and that is a separate documented residual (\"a verification whose accounts() raises\"). Not catching SystemExit and BaseException subclasses is standard Python practice. The proposed fix would swallow SystemExit and GeneratorExit from content, which is a design change in its own right.\n4. The wrong outcome is the same as the documented baseline. My control shows a spend and a restore with no observing verification in between re-dispatch too (executor ran 2): \"a spend and its rollback both between two verifications look like no change\", together with BUDGET_BASIS (no at-most-once execution). The Halt case adds nothing beyond that. Every verification in between raised, so none observed the state, which is what the residual says.\n5. To reach the re-dispatch, the caller has to swallow a BaseException that every admission and verification re-raises, and keep going. A deployment that does not do that terminates or propagates, so it fails closed. No admission or dispatch happens while the spend is present: every attempt raises.\n6. The unbound-account case is the same. An account no world reads makes admissions raise Halt, which fails closed (no wrong admission). The execution side could already cause this through accounts() raising a BaseException, a documented residual.\n\nWHAT REMAINS (MINOR, documentation imprecision). README:175 says \"A read-back is total\". README:185-187 says \"so no read-back failure leaves the classification\". README:217-218 says \"An account no verification reads ... refuses nothing\". None of these sentences repeats the BaseException carve-out. It is stated two paragraphs later (README:231-234) and in the class docstring. The §9 R12-1 row (README:493-497) is accurate for the Exception class it describes. The report should say that classification is total over Exception and that a BaseException raised by content or by an interrupt is the documented interrupted-verification residual, including that it raises out of every admission, bound or unbound, until the content changes. This is wording in a section that states the limit elsewhere. It is not a false claim about what was run or measured.\n\nQ4 impact: this does not make Q4 YES. On its own it is documentation wording, which the convention says does not make a question PARTIAL. The underlying behaviour (unobserved state, re-dispatch after a restore) is an owner-accepted residual, not a new wrong outcome."
+   }
+  },
+  {
+   "id": "R13-A-F1",
+   "skeptic": "repro",
+   "verdict": {
+    "confirmed": false,
+    "severity": "MINOR",
+    "reproduction": "I rewrote the probe independently and ran it at 3b407ddb351b558428b2bdfbc92fb21a2841102f (git rev-parse HEAD in ~/forge-r13-review confirmed the SHA, and the worktree was clean).\n- Driver: C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\verify-8-repro\\v1.sh\n- Probe: ~/br11-review/r13/verify-8-repro/v801_base_exception_redispatch.py\n- Output: ~/br11-review/r13/verify-8-repro/v801_out.txt\n- Command: cd ~/forge-r13-review && PYTHONPATH=$HOME/forge-r13-review/src:$HOME/forge-r13-review ~/forge-gen2-authority-v1/.venv/bin/python -u <probe>\n\nWhat the mechanics reproduce:\n- Control, a charge detail whose __str__ raises ValueError: every verification is OwnerUnavailable and the account is refused for good (_diverged set). Every admission is AUTHORITY_OWNER_UNAVAILABLE. Re-dispatch after the restore is REFUSED, executor calls=1.\n- Detail raising Halt(BaseException), SystemExit or GeneratorExit, with 3 verifications between the spend and the restore: every verification and admission RAISES. _seen len=1, _reached={}, _diverged=[]. Re-dispatch after the restore is OK/DISPATCHED, executor calls=2.\n- Decisive extra control (not in the finding): the same Halt case with NO verification between the spend and the restore behaves the same, OK/DISPATCHED and calls=2. A clean ledger with no verification between also re-dispatches (calls=2). That is the accepted \"a spend and its rollback both between two verifications look like no change\" residual.\n- Unbound account added after construction: with the ValueError detail, admissions are feasible=True. With the Halt detail, admissions RAISE Halt.\n\nSo the claimed mechanics hold. The claimed wrong outcome adds nothing beyond the documented, owner-accepted residual.",
+    "reasoning": "The mechanics reproduce. Exactly as the finding says, these handlers catch only Exception:\n- _read_once, owners.py:458\n- _described, owners.py:124-132\n- _attempts, owners.py:493\n- _read_back, owners.py:540-546\n- pinned(), owners.py:710/716\n\nSo a BaseException raised while rendering account content leaves pinned() before _observe_all compares (owners.py:569). Nothing is recorded. After a restore, the executed AdmittedAction is dispatched again.\n\nThat outcome is the documented, owner-accepted residual, not a new wrong outcome:\n\n(1) The residual names this mechanism with no restriction on where the BaseException comes from. owners.py:385-390 says what is never observed includes \"one interrupted (BaseException) between being handed accounts and comparing them\". README.md:232-234 says the same, and the task's accepted list repeats it. A BaseException raised from the account's serialization during the read-back is, literally, a BaseException between being handed accounts and comparing them.\n\n(2) The builder's own regression test models \"interrupted\" in exactly this way. tests/mind/test_authority_review_r11.py:367-396 defines _Interrupted(BaseException) and raises it from the experiment's to_dict during the read-back (execution-side account content). The finding's \"this is content, not an interruption\" distinction therefore has no basis in the contract. A content BaseException that repeats is simply an interruption at every verification. Each one is individually within the residual.\n\n(3) The duplicate dispatch it produces is the same as the separately accepted residual. My added control, Halt with no verification at all between the spend and the restore, gives an identical result: dispatched, executor calls=2. A clean ledger with no verification between also re-dispatches. Verifications that raise instead of completing add no authority and remove none. A raised admission is not an admission, so nothing is admitted while the content is present. At-most-once execution is explicitly the execution owner's (BUDGET_BASIS, accepted). And the only party that can plant such content and restore the ledger is the execution side itself, which could equally run its executor twice.\n\n(4) The R12-1 precedent does not carry over. R12-1 was an Exception escaping a handler the contract says classifies failures (the README classifies Exceptions as failures and documents BaseExceptions as interruptions that propagate). The line drawn at BaseException is consistent and follows Python convention: SystemExit and GeneratorExit should propagate. The finding's proposed fix (catch BaseException) would make the reader swallow or reorder interpreter control flow.\n\n(5) The report claims the finding cites are imprecise but not materially false:\n- README:175 \"A read-back is total\" and README:185-187 \"no read-back failure leaves the classification\" sit in the same section that, at 232-234, carves out BaseException interruptions.\n- README:217-218, \"an account no verification reads ... refuses nothing\", is still literally true: the Halt case does not refuse, it propagates an interruption. The follower reads every handed account at every pin (README:226).\n- The §9 R12-1 row describes the Exception variants (b1201/b1202), and those are fixed (my control shows refused, calls=1).\n\nWhat remains is MINOR:\n- Documentation precision: §4 could say that an account whose own serialization raises a BaseException makes every verification, including those of worlds that do not bind it, raise that BaseException, and that its spend is unobserved.\n- An optional hardening: record _NotRead(length=_length(key)) under the lock before re-raising, so the round-12 length floor survives an interruption.\n\nNo wrong admission is demonstrated. No proposer path reaches this: the trigger is execution-side ledger content."
+   }
+  }
+ ],
+ "critic": {
+  "findings": [
+   {
+    "id": "R13-CRIT-1",
+    "severity": "MAJOR",
+    "question": "Q4",
+    "title": "The handed CONTAINER's own code (its truthiness, __iter__/keys) decides what was handed before the entry-by-entry reading starts. A spent account handed inside a dict that says it is empty, or that skips one key, is never observed, and after a restore the SAME admitted action is dispatched again. This has the same root as R13-B-F1 but a broader trigger: a fix that only stops key hashing would not close it.",
+    "evidence": "src/engcore/mind/world/owners.py:671 `for raw_id, account in dict(mapping or {}).items():`. `mapping or {}` calls the handed object's __len__/__bool__. dict(mapping) calls an overridden keys() whenever __iter__ is overridden. Both run before the per-entry checks at owners.py:672-686, so an entry the container drops never reaches _entry_refusals and gets no refusal at all. The constructor has the same pattern at owners.py:753 (`dict(ledgers or {})`). The class docstring (owners.py:351) promises that what a verification is handed is read entry by entry and that one malformed entry never hides the others. Probe ~/br11-review/r13/critic/p1_container.py, run at 3b407ddb, output: `plain verification-2 on the spent state: served 2 / plain after restore: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE); executor ran 1`; `falsy verification-2 on the spent state: served None (no such account handed) / falsy after restore: RE-DISPATCHED; executor ran 2`; `hiding ... served None ... / hiding after restore: RE-DISPATCHED; executor ran 2`.",
+    "reproduction": "Windows script C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\critic\\s2.sh writes and runs ~/br11-review/r13/critic/p1_container.py against ~/forge-r13-review. Steps: battery fixture with a following BudgetReader; admit simulate_pulse; dispatch, and the executor settles run.1 on the solver ledger. The next accounts() returns the ledgers in `class Falsy(dict): __len__ -> 0` (or a dict subclass whose __iter__/keys skip the solver id). reader.read is served None (not refused). Restore the pre-run ledger and hand a plain dict again. gateway.dispatch(r.admitted) is accepted and the executor runs twice. The same flow with a plain dict is refused.",
+    "why": "The spent state was handed to a verification in a mapping of the right shape. The reader's own snapshot code let the container delete it with no trace: no history, no length floor, no refusal. The next verification then compares the restored state against the old history, accepts it, and the executed action is dispatched again. This is the F11-2 / R12-2 / R13-B-F1 class (a handed mapping hides a spend, followed by duplicate dispatch), which both skeptics confirmed as MAJOR for R13-B-F1. Whether it is MAJOR or an owner-accepted residual depends on whether the handed container counts as 'handed'. Either way it must be decided together with R13-B-F1, and a B-F1 fix limited to key __hash__/__eq__ leaves this path open.",
+    "fix": "Refuse to the verification any handed mapping that is not exactly a dict, or read it only through dict's own C-level methods: `type(mapping) is dict` and then `dict.items(mapping)`, with no `or {}` truthiness. Read every key through str.__str__ before any hashing, and refuse duplicate spellings. Apply the same rule in __init__. Add controls for a falsy container, a key-skipping container and the B-F1 key-equality container, and run the existing re-dispatch harness on each."
+   },
+   {
+    "id": "R13-CRIT-2",
+    "severity": "MINOR",
+    "question": "Q4",
+    "title": "The length floor's monotonic max (a later, shorter not-read-back state must not lower the floor) has no regression control: mutant floor_not_max survives every test under tests/mind.",
+    "evidence": "src/engcore/mind/world/owners.py:589 `self._reached[key] = max(self._reached.get(key, 0), got.length)`. The mutant replaces it with `self._reached[key] = got.length` (added to a copy of the builder's mutate_r12_local.py). Results at 3b407ddb in an archive copy: `[floor_not_max] 477 passed` (tests/mind -k authority) and `[floor_not_max full tests/mind] 647 passed`. Unmutated, -k authority gives 477 passed. The builder's own mutation set (docs/work/evidence/br11_local_2026_10_23/mutation/mutate_r12_local.py) does not include this mutant. My run also confirms that shared_cache survives (477 passed), which matches the builder's recorded survivor and E13-F2.",
+    "reproduction": "Run C:\\Users\\DEV_KA~1\\AppData\\Local\\Temp\\claude\\C--Users-dev-kaeem-Downloads-Compressed-phyx\\b5e3066d-77b7-465b-b1bf-cfd7098cdf27\\scratchpad\\r13\\critic\\s4.sh and s5.sh (archive tree, apply the mutant, run pytest tests/mind -n 2, restore; the tree was removed afterwards and owners.py was cmp-identical before removal).",
+    "why": "Without max, two not-read-back states (spent length N+2, then a restored length N+1 that is still unreadable) lower the floor, so a readable length-N+1 state that differs from the spent one is accepted. That is one more re-authorized charge on top of R13-C-F1. A forward-only guarantee for Q4 with no effective regression control counts as substantive under the PARTIAL definition. Q4 is already YES because of the MAJORs.",
+    "fix": "Add a control: two consecutive not-read-back verifications at decreasing lengths, then a readable state between the two lengths must be refused as behind."
+   }
+  ],
+  "prior_closure": [
+   {
+    "id": "R11-C-F1 / F11-1 (read-back step outside the classifying try; restore re-dispatched)",
+    "closed": true,
+    "evidence": "owners.py:458-460: every Exception from a read-back, including its rendering, goes through _described (owners.py:124-132) and is classified. All six lenses report it closed for Exception subclasses. What still escapes is a BaseException raised by owner content (R13-A-F1/C-F2/B-F3/F13-03/E13-F4). That falls inside the owner-accepted residual 'one interrupted (a BaseException, ...) between being handed accounts and comparing them' and only fails closed (the admission raises). I agree with the repro skeptic: MINOR, plus a doc imprecision at owners.py:368-369 ('no read-back failure leaves the classification') and README section 4."
+   },
+   {
+    "id": "F11-2 (a handed mapping the strict constructor refused hid another account's spend)",
+    "closed": true,
+    "evidence": "The exact F11-2 mechanism (a typed-wrong entry) now reaches _entry_refusals entry by entry (owners.py:681-684); lenses A/C/D/E/F report it closed. The class it belongs to (a handed mapping hides a spend, then duplicate dispatch) stays open through R13-B-F1 (key __hash__/__eq__) and R13-CRIT-1 (container truthiness/iteration). My probe p1_container.py shows RE-DISPATCHED, executor ran 2."
+   },
+   {
+    "id": "R12-1 (b1201/b1202 unrenderable failure escaped classification)",
+    "closed": true,
+    "evidence": "owners.py:124-132 and 459. Builder mutants render_raw and moving_raw_str are killed (mutation/summary.txt). Lenses agree. The BaseException residual is noted under R11-C-F1."
+   },
+   {
+    "id": "R12-2 (b1205/a1205/a1205b two keys spelling one id)",
+    "closed": false,
+    "evidence": "The identity-hash _Tag case is refused (owners.py:675-679, 758-759), but the round-12 fix runs dict(mapping or {}) first (owners.py:671). R13-B-F1 (both skeptics confirmed MAJOR) and my R13-CRIT-1 reproduction (falsy or hiding container: RE-DISPATCHED, executor ran 2) show that the same outcome, a handed spend hidden and then dispatched twice, still happens."
+   },
+   {
+    "id": "R12-3 (b1204/b1208 a state always classified moving left no trace; restore re-dispatched)",
+    "closed": false,
+    "evidence": "Re-dispatch of the SAME admitted action is now refused, because the floor at owners.py:589/606 puts the restored state behind. I reproduced R13-C-F1 independently with ~/br11-review/r13/critic/p2_cf1.py: `readable (control): ... re-projection refused: OwnerUnavailable: ... rewrote its history ...; executor ran 1` versus `not read back: v2=OwnerUnavailable; fresh admission DISPATCHED; executor ran 2`. Restore plus one other charge re-authorizes the spent budget. PROGRESS.md:8939-8940 ('is what closed it') and README section 9 R12-3 ('Fixed generically') overstate the closure."
+   },
+   {
+    "id": "R12-4 (b1207/a1207 unbounded fresh-thread join)",
+    "closed": true,
+    "evidence": "owners.py:520 `thread.join(self.WAIT_S)`. Builder mutant join_unbounded is killed (mutation/summary.txt); lenses agree. Residual MINORs: thread accumulation (A-F4/B-F4/C-F4/D13-5/E13-F5) and the box/is_alive race (D13-1/F13-01/E13-F1). The race contradicts README section 4's 'Concurrent verifications never refuse for good an account that only moved forward and that its owner reads back', but only in a narrow, fail-closed window."
+   },
+   {
+    "id": "R12-5 (b1206/a1202 single fresh-thread attempt; wrapped recursion)",
+    "closed": true,
+    "evidence": "owners.py:510 runs _attempts on the fresh thread and owners.py:140-152 walks the exception chain. Builder mutants fresh_single_attempt and recursion_direct_only are killed; lenses agree."
+   },
+   {
+    "id": "R12-6 (round-11 mutants that survived the interrupted round)",
+    "closed": true,
+    "evidence": "I ran the five survivors myself (archive of 3b407ddb, tests/mind -k authority, -n 2). Each is killed by one r12 control: id_str_call (1 failed, 476 passed), differ_not_moving (1 failed), why_only (1 failed), alias_not_recorded2 (1 failed), fresh_thread_no_flag (1 failed). Lens A's 'closed: false' is contradicted by this run. shared_cache still survives (477 passed), which the README records as uncontrolled (E13-F2)."
+   }
+  ],
+  "questions": [
+   {
+    "q": "Q1 a second STATE authority?",
+    "verdict": "NO",
+    "code_path": "src/engcore/mind/world/owners.py:176-266 (RunStateReader, unchanged by 33258438 except _described at :231); authority.py _Memo",
+    "test": "tests/mind -k authority at 3b407ddb, unmutated: 477 passed (my run, s4.sh)",
+    "evidence": "git diff --stat d40aff44..3b407ddb: the only src file changed is src/engcore/mind/world/owners.py, and the change is in BudgetReader plus the shared _described helper. All six lenses: NO.",
+    "why": "State stays read from the run owner's committed head. The round-12 change does not touch state authority."
+   },
+   {
+    "id": "Q2",
+    "q": "Q2 a second APPLICABILITY authority?",
+    "verdict": "NO",
+    "code_path": "owners.py:270-291 ModelRegistryReader (unchanged); admission.py (unchanged in 33258438)",
+    "test": "same suite run: 477 passed",
+    "evidence": "Diff scope as above; all lenses NO; no open finding.",
+    "why": "Applicability stays the model registry's. 33258438 does not touch it."
+   },
+   {
+    "q": "Q3 a duplicate UNITS authority?",
+    "verdict": "NO",
+    "code_path": "owners.py:869-883 UnitRegistryReader (unchanged)",
+    "test": "same suite run: 477 passed",
+    "evidence": "Diff scope as above; all lenses NO.",
+    "why": "No unit logic was added. The recursion-chain walk only classifies an owner's wrapped error and decides no unit."
+   },
+   {
+    "q": "Q4 duplicate DESIGN/SEARCH-SPACE concepts or a second BUDGET authority (forward-only guarantee)?",
+    "verdict": "YES",
+    "code_path": "owners.py:530-556 (_read_back/_length), :581-591 and :606-607 (floor only, entries of a not-read-back state never compared), :671 (dict(mapping or {}) before entry-by-entry reading)",
+    "test": "Probes ~/br11-review/r13/critic/p2_cf1.py (R13-C-F1/F13-02 reproduced: fresh admission DISPATCHED, executor ran 2; readable control refused) and ~/br11-review/r13/critic/p1_container.py (R13-CRIT-1: falsy and hiding containers RE-DISPATCHED, executor ran 2; plain control refused). Mutant floor_not_max survives 647 tests/mind tests.",
+    "evidence": "Open MAJORs keeping Q4 at YES: R13-C-F1 = F13-02 (confirmed by both skeptics and reproduced by me), R13-B-F1 (confirmed by both skeptics), R13-CRIT-1 (reproduced by me, same root as B-F1). Open MINORs: the BaseException class (in accepted scope), the fresh-thread race, thread accumulation, report precision, and R13-CRIT-2 (no control for the floor's max).",
+    "why": "A handed spend that was not read back, or that the handed container hides, can be re-authorized after a restore, so the follower's forward-only guarantee fails in the very cases where it rests on its own observation. Lenses D and E rated the length rule MINOR and did not find B-F1, so their PARTIAL is consistent with their own findings. With skeptic-confirmed MAJORs, the round verdict is YES."
+   },
+   {
+    "q": "Q5 does the world issue SCIENTIFIC VERDICTS (incl. probabilistic->deterministic)?",
+    "verdict": "NO",
+    "code_path": "admission.py / feasibility.py (unchanged in 33258438)",
+    "test": "same suite run: 477 passed",
+    "evidence": "Diff scope; all lenses NO; no open finding.",
+    "why": "Budget follower refusals are OWNER_UNAVAILABLE / MISSING_INFORMATION and never become scientific verdicts."
+   },
+   {
+    "q": "Q6 does an EXTERNAL PROPOSER bypass admission?",
+    "verdict": "NO",
+    "code_path": "admission.py admit(); authority.py:246-258 memoized pins every reader whatever the world",
+    "test": "same suite run: 477 passed",
+    "evidence": "Diff scope; all lenses NO. Every re-dispatch in my probes is the execution side's own restore, not a proposer's choice, and the proposer is never handed the accounts() container.",
+    "why": "No proposer-reachable path into the budget follower's container or into admission changed."
+   },
+   {
+    "q": "Q7 does a provider/executor execute an UNADMITTED action through the Gen2 Mind interface?",
+    "verdict": "NO",
+    "code_path": "ExecutionDesk gateway re-verification (unchanged in 33258438)",
+    "test": "same suite run: 477 passed; in p1/p2 every dispatch went through gateway.dispatch of an admitted action",
+    "evidence": "The duplicate dispatches in R13-C-F1/R13-CRIT-1 are re-verified, admitted actions, so the defect is the budget follower's (Q4), not an unadmitted dispatch.",
+    "why": "Nothing reaches the executor without admission plus re-verification; the wrong outcome sits in what that verification observes."
+   }
+  ]
+ }
+}

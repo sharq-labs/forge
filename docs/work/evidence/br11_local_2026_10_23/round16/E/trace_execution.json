@@ -1,0 +1,10 @@
+{
+  "command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/E/trace_repro.py",
+  "cwd": "/home/dev_kaeem/forge-r16-review",
+  "exit": 1,
+  "env": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "log": "/home/dev_kaeem/br11-review/r16/E/trace_repro.log"
+}

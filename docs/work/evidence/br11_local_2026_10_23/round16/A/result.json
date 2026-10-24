@@ -1,0 +1,141 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "compared_base": "95f3869ed020b04c36c098f0c33050aa009212b6",
+  "lens": "A — Authority/currentness",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_basis": {
+    "Q1": "No second state authority demonstrated in this bounded changed-path review; changed implementation is BudgetReader.",
+    "Q2": "No second applicability authority demonstrated; applicability paths are unchanged by this repair.",
+    "Q3": "No duplicate units authority demonstrated; unit ownership paths are unchanged by this repair.",
+    "Q4": "YES: R16-A-1 demonstrates loss of a handed spend during native-retention interruption, allowing duplicate simulation execution after a checkpoint restore.",
+    "Q5": "No new scientific verdict or probabilistic-to-deterministic promotion demonstrated; this is a synthetic accounting/currentness finding.",
+    "Q6": "No external-proposer admission bypass demonstrated.",
+    "Q7": "No direct executor/provider path avoiding admission demonstrated. R16-A-1 re-admits the previously admitted action through the desk using an incorrectly current budget record, so classified under Q4."
+  },
+  "findings": [
+    {
+      "id": "R16-A-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Interrupted native retention leaves a live mapping pending; later recovery observes a replacement checkpoint and permits duplicate execution",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 977,
+      "related_lines": [
+        {
+          "line": 978,
+          "reason": "Native retention is assigned only after it completes; failure leaves the raw mapping from line 977."
+        },
+        {
+          "line": 897,
+          "reason": "Recovery consumes whatever currently resides in the raw mapping."
+        },
+        {
+          "line": 961,
+          "reason": "A later pin recovers the pending handing before continuing."
+        },
+        {
+          "line": 1000,
+          "reason": "Immediate recovery can fail at the same exhausted caller depth; second failure is swallowed while original failure propagates."
+        }
+      ],
+      "evidence_kind": "EXECUTED: deterministic fault injection plus native CPython stack-exhaustion corroboration without monkeypatches",
+      "smallest_reproduction": [
+        "Use the existing synthetic battery fixture and _desk helper with BudgetReader.following(lambda: (o.ledgers, o.experiments)); retain a BudgetLedger.from_dict checkpoint before the first dispatch.",
+        "Dispatch the admitted simulate_pulse once; its executor records run.1 with BudgetLedger.settle.",
+        "Invoke reader.pinned() from a caller near the existing interpreter recursion limit. In probe_native_stack.py at depths 994/995 (limit 1000), accounts() returns the spent live dictionaries and native capture plus recovery encounter RecursionError. The pending buffer contains the original tuple of live dictionaries, with no unread spend barrier.",
+        "Outside the deep caller, replace o.ledgers[lid] with the pre-spend checkpoint using the normal object-replacement restore pattern.",
+        "Dispatch the same admitted action. Recovery now reads the replacement from the mutable dictionary, removes the pending obligation, and the executor runs again."
+      ],
+      "actual_result": "Native depth 994 and 995: pending_before_restore=[[4,\"tuple\"]], unread_before_restore={}, redispatch_refused=false, calls=2, sealed=null. Controlled two-interruption versions reproduce for KeyboardInterrupt, MemoryError and RecursionError.",
+      "expected_result": "A verification was handed the spend. An interrupted capture must not allow later recovery to treat the restored pre-spend account as that handed observation. The second dispatch must be refused, executor calls remaining 1; interruption alone must not falsely seal an unchanged honest reader.",
+      "positive_controls": "No interruption and one injected interruption both preserve the spend and refuse redispatch. Native neighboring depth 993 retains _RetainedHanding and refuses redispatch; depths 975..992 also refuse after restore. Existing R15 controls all pass (87 cases), so they miss the earlier native-retention transition.",
+      "threat_families": [
+        "native handing retention",
+        "resource/asynchronous interruption",
+        "live mapping replacement",
+        "interrupted recovery",
+        "hidden spend",
+        "checkpoint restore",
+        "duplicate execution"
+      ],
+      "trust_boundary": "Native corroboration changes no reader/account private state and installs no methods. It uses the execution owner's ordinary live dictionaries, public BudgetLedger.settle/from_dict, and the public gateway dispatch path. Private state is inspected only for diagnostics after failure. The injected cases model the interruption checkpoint, but the unpatched deep-caller case independently establishes the outcome. It is not the accepted spend-and-rollback-between-verifications residual: accounts() returned the spent mapping and the reader left a pending record for that handing.",
+      "contract_reference": "benchmarks/mind_gen2_authority_v1/README.md:311-315 says another interruption leaves the handing pending and preserves spend when a live dictionary entry is replaced after interruption; this path disproves that guarantee.",
+      "regression_gap": "test_interrupted_handing_preserves_spend_before_detached_restore injects _handed only after _retain_handing has succeeded. The generated handing phase uses the same later boundary. Neither exercises raw mapping -> native retained entries -> recovery failure.",
+      "proposed_correction": "Make the raw-mapping-to-retained-entry transition interruption-safe: never discharge an unfinished observation by rereading a live mapping that may have changed since the handing. Ensure the original native account entries survive before returning control, including at exhausted caller depth, or retain an unresolved observation that cannot grant currentness merely from later replacement contents. Preserve recovery for unchanged honest accounts and add the native-depth and two-interruption controls; no new budget authority is needed.",
+      "proof_paths": [
+        "/home/dev_kaeem/br11-review/r16/A/probe_retention.py",
+        "/home/dev_kaeem/br11-review/r16/A/probe_retention.log",
+        "/home/dev_kaeem/br11-review/r16/A/probe_native_stack.py",
+        "/home/dev_kaeem/br11-review/r16/A/probe_native_stack.log"
+      ]
+    }
+  ],
+  "tested_transitions": [
+    "Existing R15 deterministic controls and generated traces: 87 passed, including seal before comparison, seal during/after wait, moving read-back refusal, retained canonical history, interrupted listing, detached unchanged recovery and post-retention interrupted handing.",
+    "Native-retention interruption before capture: zero, one and two failures; live mapping restored after failed verification; observed executor call counts.",
+    "Native CPython caller-stack exhaustion at 22 bounded depths 975..996 with recursion limit left at 1000; no host-memory exhaustion or sleeps.",
+    "Clean source checkout and exact owners import identity checked before test/probe execution and at completion."
+  ],
+  "missing_coverage": [
+    "No exhaustive bytecode interruption model or proof; the executed defect is the specific raw-mapping retention transition.",
+    "No further sweep of partial two-map capture, signal arrival at cleanup bytecodes, or retained-entry reconciliation concurrency beyond the shipped 87 controls.",
+    "Q1-Q3/Q5-Q7 were assessed against changed implementation and documented owner mapping; no new broad regression pack for unchanged authorities was run.",
+    "No full FAST, certification, hardened recertification, formal proof, scientific validation, external service or integration claim."
+  ],
+  "executions": [
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/A/probe_retention.py",
+      "exit": 0,
+      "log_path": "/home/dev_kaeem/br11-review/r16/A/probe_retention.log",
+      "invoked_via": "wsl -d Ubuntu-24.04 -- python3 /home/dev_kaeem/br11-review/r16/A/run_probe.py",
+      "result": "Exit 0. Zero/one KeyboardInterrupt controls: redispatch refused, executor calls=1. Two interruptions at native retention for KeyboardInterrupt, MemoryError, RecursionError: pending raw tuple; restore then redispatch accepted, executor calls=2."
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/A/probe_native_stack.py",
+      "exit": 0,
+      "log_path": "/home/dev_kaeem/br11-review/r16/A/probe_native_stack.log",
+      "invoked_via": "wsl -d Ubuntu-24.04 -- python3 /home/dev_kaeem/br11-review/r16/A/run_native.py",
+      "result": "Exit 0. Native caller-depth sweep 975..996 with unchanged recursion limit 1000: depths 994 and 995 have RecursionError and pending raw tuple; restore then redispatch accepted, executor calls=2. Depth 993 pending _RetainedHanding and restore refused, executor calls=1. Depth 996 also duplicated but had no pending record and is not used as the demonstrated retained-handing finding."
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/A/pt -n 1 -q tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py",
+      "exit": 0,
+      "result": "bringing up nodes...\nbringing up nodes...\n\n........................................................................ [ 82%]\n...............                                                          [100%]\n87 passed in 3.18s",
+      "log_path": "/home/dev_kaeem/br11-review/r16/A/controls.log",
+      "invoked_via": "wsl -d Ubuntu-24.04 -- python3 /home/dev_kaeem/br11-review/r16/A/run_controls.py"
+    },
+    {
+      "command": "wsl -d Ubuntu-24.04 -- git -C /home/dev_kaeem/forge-r16-review status --porcelain=v1",
+      "exit": 0,
+      "result": "Empty output; source checkout clean",
+      "log_path": "/home/dev_kaeem/br11-review/r16/A/source_identity.json"
+    }
+  ],
+  "source_identity": {
+    "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+    "source_checkout": "/home/dev_kaeem/forge-r16-review",
+    "git_status_porcelain": "",
+    "interpreter": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "python": "CPython 3.12.3",
+    "owners_import": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+    "source_hashes": {
+      "src/engcore/mind/world/owners.py": "96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367",
+      "tests/mind/test_authority_review_r15.py": "fb7401741ca3dd115cc2933887e359d162eae96c44d3026d6f41d34904736ada",
+      "tests/mind/test_authority_state_machine_r15.py": "d6686cf2e32a209de108f6624ed4a90d4fd6a9e3bd44268cb71889aea61ab69c"
+    }
+  },
+  "inspection_notes": [
+    "Read the required brief, CLAUDE.md, architecture map, live BR1.1 ACTIVE_PLAN entry, benchmark lifecycle clarification and R15 dispositions, R15 threat matrix, changed owners.py and nearest R14/R15 controls.",
+    "Compared production diff 95f3869e..b8a65bb9 using the permitted source history checkout.",
+    "WSL rg was unavailable; used bounded Python/sed reads. One matrix summarizer stopped on a non-dict entry after printing the findings; this was inspection only, not a test."
+  ],
+  "limitations": "Independent bounded software correctness review using synthetic fixtures; not scientific validation or certification. Source remained read-only. Artifacts written only under this lens scratch directory."
+}

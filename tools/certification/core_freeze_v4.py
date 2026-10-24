@@ -767,6 +767,18 @@ def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance:
           ["api"]["pinned_files"][V1_FROZEN_SNAPSHOT_FILE],
           f"{V1_FROZEN_SNAPSHOT_FILE} at {stored['commit'][:12]}")
     facts = api_facts(root)
+    stored_surface_bytes = (root / SURFACE_PATH).read_bytes()
+    stored_surface = json.loads(stored_surface_bytes)
+    candidate_surface = subprocess.run(["git", "show", f"{candidate}:{SURFACE_PATH}"], cwd=root, capture_output=True)
+    authenticated_surface = (candidate_surface.returncode == 0
+        and not surface.historical_surface_problems(
+            stored_surface_bytes, candidate_surface.stdout,
+            manifest.get("pinned_api_files", {}).get(SURFACE_PATH, "")))
+    v.add("api.deep_surface_history_unchanged", authenticated_surface,
+          "stored deep surface equals the candidate's committed bytes and the manifest pin")
+    if v.mode == "DESCENDANT" and authenticated_surface:
+        facts["deep_surface"] = {"path": SURFACE_PATH, "schema": stored_surface["schema"],
+                                 "digest": surface.digest(stored_surface), "method_count": stored_surface["method_count"]}
     problems = facts["additive_only_problems"] + facts["v2_additive_only_problems"]
     v.add("api.additive_only", not problems, "; ".join(problems[:4]) or
           "no non-additive difference from either stored surface")
@@ -779,10 +791,11 @@ def verify(root: pathlib.Path, *, require_clean: bool = True, require_assurance:
     pinned = {rel: v2.sha256_bytes((root / rel).read_bytes()) for rel in manifest.get("pinned_api_files", {})}
     v.add("api.pinned_files", pinned == manifest.get("pinned_api_files"),
           "the four snapshots and the deep surface are the bytes this freeze recorded")
-    v.add("api.deep_surface_is_the_live_one",
-          surface.canonical_bytes() == surface.canonical_bytes(
-              json.loads((root / SURFACE_PATH).read_text(encoding="utf-8"))),
-          f"{surface.build()['method_count']} method signatures and every enum member's position")
+    deep_problems = surface.compatibility_problems(stored_surface, surface.build(), descendant=v.mode == "DESCENDANT")
+    v.add("api.deep_surface_is_the_live_one", authenticated_surface and not deep_problems,
+          "; ".join(deep_problems[:4]) or
+          "historical surface preserved; existing methods, enums and fields exact; descendant method additions only")
+
 
     # R-70: the supersession names its rule.
     refusal = v3_fixtures_refused()

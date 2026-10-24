@@ -1,0 +1,9 @@
+engcore from /home/user/forge/src/engcore/__init__.py
+admitted: True
+spent revision 2 before revision 1
+T2 handed spent ledger: True
+D (re-dispatch, ticket earlier, read after the restore): DISPATCHED AGAIN | executor calls: 2
+T2: pinned; serves revision 2
+a later re-dispatch: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor calls: 2
+after the restored account moves on, verification 0 -> OwnerUnavailable budget ledger 'synthetic.battery.pulse-cell.solver' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refu
+after the restored account moves on, verification 1 -> OwnerUnavailable budget ledger 'synthetic.battery.pulse-cell.solver' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refu

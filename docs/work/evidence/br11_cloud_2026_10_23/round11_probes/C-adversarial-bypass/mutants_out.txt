@@ -1,0 +1,22 @@
+== M2_no_diverged_recheck: rc=0
+611 passed in 31.87s
+== M8_timeout_ignored: rc=1
+FAILED tests/mind/test_authority_review_r10.py::test_a_rollback_read_by_an_earlier_started_verification_never_redispatches
+FAILED tests/mind/test_authority_review_r9.py::test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_redispatches
+FAILED tests/mind/test_authority_review_r9.py::test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_verification
+FAILED tests/mind/test_authority_review_r7.py::test_no_deadlock_with_an_execution_side_that_verifies_under_its_own_lock
+4 failed, 607 passed in 36.79s
+== M12_exp_fromdict_transient: rc=0
+611 passed in 51.82s
+== M11_ledger_fromdict_transient: rc=0
+611 passed in 32.36s
+== M10_written_all_transient: rc=1
+FAILED tests/mind/test_authority_review_r10.py::test_a_handed_state_its_owner_cannot_write_down_refuses_the_account_for_good[value0]
+FAILED tests/mind/test_authority_review_r10.py::test_a_handed_state_its_owner_cannot_write_down_refuses_the_account_for_good[nan]
+FAILED tests/mind/test_authority_review_r10.py::test_a_handed_state_its_owner_cannot_write_down_refuses_the_account_for_good[value2]
+3 failed, 608 passed in 29.05s
+== M13_no_torn_check: rc=1
+FAILED tests/mind/test_authority_review_r8.py::test_an_experiment_whose_serialized_accounting_is_not_its_evaluations_is_refused
+1 failed, 610 passed in 51.95s
+== M14_recursion_transient: rc=0
+611 passed in 57.51s

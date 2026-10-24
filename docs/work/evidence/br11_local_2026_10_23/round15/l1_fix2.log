@@ -1,0 +1,30 @@
+........................................................................ [ 72%]
+........F..................                                              [100%]
+=================================== FAILURES ===================================
+_ test_an_unread_state_with_a_new_entry_still_refuses_an_object_replacing_restore _
+
+    def test_an_unread_state_with_a_new_entry_still_refuses_an_object_replacing_restore():
+        o = ax.owned("battery")
+        eid = next(iter(o.experiments))
+        reader = BudgetReader.following(lambda: (dict(o.ledgers), dict(o.experiments)))
+        live = o.experiments[eid]
+        before = ScientificExperiment.from_dict(live.to_dict())
+        real = live.to_dict
+    
+        def moving():
+            raise RuntimeError("dictionary changed size during iteration")
+    
+        object.__setattr__(live, "to_dict", moving)
+        live.record(ScientificEvaluation("camp.1", {}, status=EvaluationStatus.NOT_CONVERGED, detail="x"))
+        with pytest.raises(OwnerUnavailable):                                  # a new entry, never read back
+            reader.read(OwnerKind.EXPERIMENT, eid)
+        o.experiments[eid] = before
+>       with pytest.raises(OwnerUnavailable, match="from then on"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'from then on'
+E         Actual message: "budget experiment 'synthetic.battery.pulse-cell.experiment' is behind the history this reader observed (it went back a revision, or this verification's snapshot is older than one already observed): refused while it is behind"
+
+tests/mind/test_authority_review_r14.py:247: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r14.py::test_an_unread_state_with_a_new_entry_still_refuses_an_object_replacing_restore
+1 failed, 98 passed in 7.75s

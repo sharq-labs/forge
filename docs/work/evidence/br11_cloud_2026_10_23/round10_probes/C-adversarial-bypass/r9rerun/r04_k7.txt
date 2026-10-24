@@ -1,0 +1,5 @@
+CONTROLLED_INPUT < level as executed 35.00000000000006 | 35 degC spellings: [('INFEASIBLE_PROTOCOL', ('CONSTRAINT_VIOLATED',))] | admitted: 0 | 25 degC: FEASIBLE
+CONTROLLED_INPUT <= level as executed 35.00000000000006 | 35 degC spellings: [('INFEASIBLE_PROTOCOL', ('CONSTRAINT_VIOLATED',))] | admitted: 0 | 25 degC: FEASIBLE
+FIXED_PROTOCOL_CONDITION < level as executed 35.00000000000006 | 35 degC spellings: [('INFEASIBLE_PROTOCOL', ('CONSTRAINT_VIOLATED',))] | admitted: 0 | 25 degC: FEASIBLE
+FIXED_PROTOCOL_CONDITION <= level as executed 35.00000000000006 | 35 degC spellings: [('INFEASIBLE_PROTOCOL', ('CONSTRAINT_VIOLATED',))] | admitted: 0 | 25 degC: FEASIBLE
+exit 0

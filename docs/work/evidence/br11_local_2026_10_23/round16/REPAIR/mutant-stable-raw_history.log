@@ -1,0 +1,116 @@
+.FF.........F...                                                         [100%]
+=================================== FAILURES ===================================
+_____________ test_retained_history_uses_owner_normalization[1.0] ______________
+
+iteration = 1.0
+
+    @pytest.mark.parametrize("iteration", [1, 1.0, "1"])
+    def test_retained_history_uses_owner_normalization(iteration):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = {"a": account}
+        reader = BudgetReader.following(lambda: (held, {}))
+        account.settle(charge_id="new", action_id="new", iteration=iteration,
+                       family="explore", realized=1.)
+        _interrupt_handing(reader)
+        held["a"] = BudgetLedger.from_dict(account.to_dict())
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x78f5593e99d0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+_____________ test_retained_history_uses_owner_normalization[1_1] ______________
+
+iteration = '1'
+
+    @pytest.mark.parametrize("iteration", [1, 1.0, "1"])
+    def test_retained_history_uses_owner_normalization(iteration):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = {"a": account}
+        reader = BudgetReader.following(lambda: (held, {}))
+        account.settle(charge_id="new", action_id="new", iteration=iteration,
+                       family="explore", realized=1.)
+        _interrupt_handing(reader)
+        held["a"] = BudgetLedger.from_dict(account.to_dict())
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x78f5593ec5f0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+_________ test_owner_malformed_retained_history_never_becomes_current __________
+
+    def test_owner_malformed_retained_history_never_becomes_current():
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = {"a": account}
+        reader = BudgetReader.following(lambda: (held, {}))
+        checkpoint = BudgetLedger.from_dict(account.to_dict())
+        # The owner accepts this charge, but its own from_dict cannot normalize it.
+        account.settle(charge_id="unread", action_id="other", iteration="not-an-integer",
+                       family="explore", realized=1.)
+        _interrupt_handing(reader)
+        held["a"] = checkpoint
+        for _ in range(2):
+            with pytest.raises(OwnerUnavailable):
+                reader.read(OwnerKind.BUDGET_LEDGER, "a")
+>       assert reader._unread_entries
+E       assert {}
+E        +  where {} = <engcore.mind.world.owners.BudgetReader object at 0x78f5596484a0>._unread_entries
+
+tests/mind/test_authority_review_r16.py:194: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r16.py::test_retained_history_uses_owner_normalization[1.0]
+FAILED tests/mind/test_authority_review_r16.py::test_retained_history_uses_owner_normalization[1_1]
+FAILED tests/mind/test_authority_review_r16.py::test_owner_malformed_retained_history_never_becomes_current
+3 failed, 13 passed in 2.63s

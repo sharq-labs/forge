@@ -1,0 +1,119 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "C concurrency/seal/interruption lifecycle",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R18-C-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Native pre-capture resource exhaustion still loses handed spend and permits duplicate dispatch after checkpoint replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1015,
+      "related_lines": [
+        1016,
+        1038,
+        1042,
+        1043,
+        1045,
+        1002
+      ],
+      "evidence_type": "executed native CPython resource failure; no owner/private implementation patch in this probe",
+      "smallest_reproduction": "probe_native.py depth145 or146 with recursionlimit150: construct battery fixture and desk; save ledger checkpoint; dispatch once (executor settles run.1); call reader.pinned through deep native call stack; catch RecursionError; replace handed ledger dictionary value with saved checkpoint; dispatch the same admitted action.",
+      "actual_result": "At depths145 and146 native.log records pending_types=[tuple], redispatch_refused=false, executor_calls=2, sealed=null, diverged=[]. Depth144 retains _RetainedHanding and refuses redispatch; depths141\u2013143 also refuse. Depth147\u2013148 do not establish returned handing and are not used as defect evidence.",
+      "expected_result": "A spend handed by accounts before capture failed must remain a barrier to re-admission after owner checkpoint replacement; interruption must not implicitly erase it or permanently seal an honest reader.",
+      "threat_families": [
+        "repeated native pre-capture/recovery failure",
+        "mutable returned dictionary replaced before retry",
+        "hidden observed spend",
+        "duplicate simulated execution after rollback"
+      ],
+      "trust_boundary": "Inside documented in-process boundary: ordinary executor settlement and checkpoint replacement plus native recursion exhaustion; no object introspection used to falsify owner state. Instrumentation only reads reader diagnostics after the failed call. This is the explicitly OPEN R17 native-capture family, not a new family.",
+      "proposed_correction": "Owner decision required for stable publication and acknowledgement lifetime: execution owner retains the exact handed observation until reader acknowledgement, including post-return/pre-registration interruption and failed recovery. A shallow returned mapping alone is insufficient if referenced account state can be rewritten. Keep UNKNOWN/refusal while pending; acknowledgement must mean captured/comparable observation, never merely callback return. Specify abandonment/reset and bounded recovery without treating interruption as corruption. Do not claim durable at-most-once or add a second budget authority.",
+      "coverage": "Exact-SHA native 19-depth bounded probe; defect evidenced only depths145\u2013146. Existing one-shot post-return recovery controls pass."
+    }
+  ],
+  "repair_assessment": "R17 owner JSON parity repair survived 16 existing R17 controls, 16 R16 controls, and 12 new deterministic lifecycle/JSON-boundary controls. No new authority defect established by this lens.",
+  "bounds": "Read-only source; synthetic software controls only. No scientific validation, certification, full FAST, remote operations or contract implementation.",
+  "handoff_lifetime_decision": {
+    "status": "OWNER_DECISION_REQUIRED; no protocol selected",
+    "observation": "Reader-side catch/retry cannot reconstruct a prior mapping value after owner replacement if both initial capture and immediate recovery failed. More retries or a fresh stack can improve availability but do not establish publication durability. Permanent poisoning would violate the honest-interruption invariant.",
+    "required_decisions": [
+      "What exact owner-owned observation is published and how long it survives independent of verification stack lifetime",
+      "Who acknowledges stable capture, and whether a return with exception can ever acknowledge (should not silently do so)",
+      "How immutable/stable entry histories survive mutable account and dictionary replacement",
+      "How unacknowledged abandoned verification is recovered or explicitly reset without authorizing rollback",
+      "What resource/storage limits cause temporary refusal without silently losing a handing"
+    ],
+    "authority_boundary": "Transport retention of existing owner records need not create new scientific or budget authority. Any new ordering/durability obligation is execution-owner semantics and requires explicit approval; current code/docs do not implement it."
+  },
+  "tested_transitions": [
+    "canonical JSON outside lock -> concurrent structural seal -> worker refusal (both owners)",
+    "canonical JSON outside lock -> concurrent later spend retained in newer barrier -> stale worker refusal, honest later recovery (both owners)",
+    "canonical JSON outside lock -> interrupted rollback handing -> later rolled-back account refusal (both owners)",
+    "retained canonicalization raises KeyboardInterrupt/MemoryError/RecursionError -> unread spend barrier persists -> rollback refused -> original detached checkpoint recovers (both owners)",
+    "R16 single-interruption registration recovery, exact barrier guard and retained alternatives controls",
+    "R17 canonical owner JSON equality and true rewrite/rollback/invalid serializer controls",
+    "native pre-capture/capture/recovery depth ladder"
+  ],
+  "missing_coverage": [
+    "No exhaustive asynchronous instruction-point interruption exploration",
+    "No fresh-thread serialization timeout expansion in this lens",
+    "No new execution-owner publication/acknowledgement implementation exists to test",
+    "Q1-Q3/Q5-Q7 only scoped static review; not broad re-review of those layers",
+    "Sealed-reader retained references are unreachable via pins; not classified as correctness finding"
+  ],
+  "executions": [
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c 'import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True));assert owners.__file__.startswith('\"'\"'/home/dev_kaeem/forge-r18-review/'\"'\"');assert subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True).strip()=='\"'\"'cc7ef06b0d08398173d9448ff47d8abb7e375d44'\"'\"''",
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/C/identity.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py",
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 1,
+      "log": "/home/dev_kaeem/br11-review/r18/C/controls_initial.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/C/probe_native.py",
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/C/native.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c 'import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True));assert owners.__file__.startswith('\"'\"'/home/dev_kaeem/forge-r18-review/'\"'\"');assert subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True).strip()=='\"'\"'cc7ef06b0d08398173d9448ff47d8abb7e375d44'\"'\"''",
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/C/identity.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py",
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 2,
+      "log": "/home/dev_kaeem/br11-review/r18/C/controls_syntax.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/C/probe_native.py",
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/C/native.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py",
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/C/controls_final.log"
+    }
+  ],
+  "failed_approaches": "Initial scratch controls: 41 passed/3 failed due two overstrong sealed cleanup assertions and duplicate experiment evaluation id. Second scratch collection SyntaxError from correction indentation. Corrected final run:44 passed. All failure logs preserved; no production defect inferred from harness failures."
+}

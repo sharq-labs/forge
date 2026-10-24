@@ -1,0 +1,44 @@
+{
+  "name": "discard_retained_histories",
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src",
+    "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/pt",
+    "tests/mind/test_authority_review_r17.py",
+    "tests/mind/test_authority_review_r16.py"
+  ],
+  "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src:/home/dev_kaeem/forge-gen2-authority-v1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "exit_code": 1,
+  "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/pytest.log",
+  "identity_command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-c",
+    "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+  ],
+  "identity_exit_code": 0,
+  "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src/engcore/mind/world/owners.py\n",
+  "source_sha256": "699fc9ae84050cf803db550ed305f9fbfe79cbd3a9ba5f3db7c009ad29ac5916",
+  "summary": "10 failed, 22 passed in 1.65s",
+  "failures": [
+    "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-ledger]",
+    "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-experiment]",
+    "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-ledger]",
+    "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-experiment]",
+    "FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[handed = True]",
+    "FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[self._uncompared[ticket] = mapping]",
+    "FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[rollback]",
+    "FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[different]",
+    "FAILED tests/mind/test_authority_review_r16.py::test_experiment_detached_histories_reconcile_without_losing_attempts[True]",
+    "FAILED tests/mind/test_authority_review_r16.py::test_retained_conflict_cannot_be_erased_by_returning_to_first_branch"
+  ]
+}

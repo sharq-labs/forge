@@ -1,0 +1,976 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "no held-out set of this kind is supplied"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "REFUSED",
+   "reason": "RELAXATION -> problem_refused (REFUSED)"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "within_cell_heldout/later_cycles -> insufficient_evidence (NOT_ASSESSABLE)"
+  }
+ },
+ "arm": "OLD_MIND",
+ "disposition_by_seed": {
+  "0": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "REFUSED",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  },
+  "1": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "REFUSED",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  },
+  "2": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "REFUSED",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  }
+ },
+ "primary_seed": 0,
+ "problem_id": "P28",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1",
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "v1_record": {
+  "adapter": {
+   "budget_max": 40,
+   "tolerance_ln": 0.05,
+   "translation": {
+    "PREDICTION": {
+     "empty_region": "NOT_ASSESSABLE",
+     "indistinguishable": "NOT_ASSESSABLE",
+     "insufficient_evidence": "NOT_ASSESSABLE",
+     "law": "compare to the declared bar",
+     "no_dependence": "NOT_ASSESSABLE",
+     "problem_refused": "REFUSED",
+     "refused": "REFUSED",
+     "unidentifiable_passive_association": "NOT_ASSESSABLE"
+    },
+    "RELAXATION": {
+     "indistinguishable": "REVIEW",
+     "insufficient_evidence": "REVIEW",
+     "law_linear_only": "REVIEW",
+     "law_with_curvature": "SUPPORTED",
+     "law_without_input": "REVIEW",
+     "no_dependence": "NOT_SUPPORTED",
+     "problem_refused": "REFUSED",
+     "refused": "REFUSED",
+     "unidentifiable_passive_association": "REVIEW"
+    }
+   }
+  },
+  "answers": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "no held-out set of this kind is supplied"
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "REFUSED",
+    "reason": "RELAXATION -> problem_refused (REFUSED)",
+    "sub": {
+     "RELAXATION": "REFUSED"
+    }
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "within_cell_heldout/later_cycles -> insufficient_evidence (NOT_ASSESSABLE)",
+    "sub": {
+     "within_cell_heldout/later_cycles": "NOT_ASSESSABLE"
+    }
+   }
+  },
+  "arm": "MIND",
+  "detail": {
+   "pools": {
+    "PREDICTION": 689,
+    "RELAXATION": 8
+   },
+   "prediction": {
+    "within_cell_heldout/later_cycles": {
+     "heldout_pool_size": 607,
+     "per_seed": {
+      "0": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": true,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 1676.953,
+          "low": 190.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 4.026389228000425,
+          "low": 3.7607985839080857,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P28:PREDICTION[within_cell_heldout/later_cycles]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          3.6554630467791207,
+          4.029581554780258
+         ],
+         "t_on_s": [
+          207.97000000000025,
+          1602.1879999999999
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "7ea09f7a74194e068ea3771628afeaca7413735b2eb45c95b2c062c067b3555f",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.067016,
+         "query_ref": "mind-000-c0f7a848b1cb",
+         "requested": {
+          "I_A": 3.76109615414,
+          "t_on_s": 589.102737069
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 0,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "dfe139e2db529dc36a8b7ebff752032f44e41b8d42131a1b8a7d58de5d275550",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      },
+      "1": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": true,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 1676.953,
+          "low": 190.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 4.026389228000425,
+          "low": 3.7607985839080857,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P28:PREDICTION[within_cell_heldout/later_cycles]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          3.6554630467791207,
+          4.029581554780258
+         ],
+         "t_on_s": [
+          207.97000000000025,
+          1602.1879999999999
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "7ea09f7a74194e068ea3771628afeaca7413735b2eb45c95b2c062c067b3555f",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.05666,
+         "query_ref": "mind-000-72c2766c283f",
+         "requested": {
+          "I_A": 3.79874460189,
+          "t_on_s": 778.460155283
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 1,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "d37eaaa755e0e25ae7a0418bf33467e4a2c0ddd0f1212ca3c417ca8da8825b05",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      },
+      "2": {
+       "conclusion": {
+        "diagnostics": {
+         "copy:T_K": "set aside: a function of the settable inputs, which identify the interventional dependence",
+         "evidence": 5,
+         "extrapolates": true,
+         "inclusion:z": 0.980156905,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": [],
+         "settable_r2:T_K": 0.964086959,
+         "settable_r2:z": 0.804413733
+        },
+        "kind": "unidentifiable_passive_association",
+        "laws": [],
+        "leading_status": "",
+        "reason": "the observable is associated with the passive covariate z (inclusion 0.980), which varies independently of every settable input; no admissible experiment sets it, so its causal effect cannot be separated from a hidden common cause",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [
+        "8c7d72b6a19b58408162907f47efd7f78569da35187a713ea7fb7a9ff7d66ba1",
+        "a017dc6a7fc7d8bcfbe81bf20b2e5bca386d4ae00d25027861c57c957459b3f5",
+        "bf015928e56ea1b42cd5ed6f9e26e5a23e55425352054f214eb24ea89888f119",
+        "b1682310c7cea4dca0a5117fb70f317e6b4f18062fcaa63379c1e5143bd66e1b",
+        "38b818c2c682d66c985dca8920ee37508941a8103834296f3e8f0809fee995df"
+       ],
+       "final_stop": {
+        "budget_remaining": 35,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": 0.009270926
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": 0.03087253
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": 0.949896981
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": 0.004545603
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": 0.00541396
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 1676.953,
+          "low": 190.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 4.026389228000425,
+          "low": 3.7607985839080857,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P28:PREDICTION[within_cell_heldout/later_cycles]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          3.6554630467791207,
+          4.029581554780258
+         ],
+         "t_on_s": [
+          207.97000000000025,
+          1602.1879999999999
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "7ea09f7a74194e068ea3771628afeaca7413735b2eb45c95b2c062c067b3555f",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.053896,
+         "query_ref": "mind-005-24c5dad4b530",
+         "requested": {
+          "I_A": 3.81113436029,
+          "t_on_s": 1209.08442228
+         }
+        }
+       ],
+       "queries_served": 5,
+       "registry_head": "fca3bf292acf970e76b2b9197742d6feb36d733115c8de2fb1d1bf36172086c6",
+       "sealed_pre_result_predictions": 1,
+       "seed": 2,
+       "served": [
+        {
+         "ln_distance": 0.014462,
+         "query_ref": "mind-000-b803c7d8d704",
+         "sample": "P28-c02#177"
+        },
+        {
+         "ln_distance": 0.022862,
+         "query_ref": "mind-001-7ce422086bfc",
+         "sample": "P28-c01#114"
+        },
+        {
+         "ln_distance": 0.035657,
+         "query_ref": "mind-002-414445ea20ee",
+         "sample": "P28-c04#22"
+        },
+        {
+         "ln_distance": 0.031052,
+         "query_ref": "mind-003-4ea5f66c1387",
+         "sample": "P28-c04#28"
+        },
+        {
+         "ln_distance": 0.045718,
+         "query_ref": "mind-004-e341f13e0acc",
+         "sample": "P28-c03#63"
+        }
+       ],
+       "steps": 5,
+       "trace_digest": "7752bb406d54f63199114723004acaff29d13c85c61e69530b6d675210f12254",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "unidentifiable_passive_association"
+       }
+      }
+     },
+     "region": {
+      "I_A": [
+       3.6554630467791207,
+       4.029581554780258
+      ],
+      "t_on_s": [
+       207.97000000000025,
+       1602.1879999999999
+      ]
+     },
+     "set": "within_cell_heldout",
+     "subset": "later_cycles"
+    }
+   },
+   "probes": {
+    "RELAXATION": {
+     "per_seed": {
+      "0": {
+       "problem_refused": "input 't_off_s': the settable box is a positive interval low < high",
+       "seed": 0,
+       "translation": {
+        "disposition": "REFUSED",
+        "key": "problem_refused"
+       }
+      },
+      "1": {
+       "problem_refused": "input 't_off_s': the settable box is a positive interval low < high",
+       "seed": 1,
+       "translation": {
+        "disposition": "REFUSED",
+        "key": "problem_refused"
+       }
+      },
+      "2": {
+       "problem_refused": "input 't_off_s': the settable box is a positive interval low < high",
+       "seed": 2,
+       "translation": {
+        "disposition": "REFUSED",
+        "key": "problem_refused"
+       }
+      }
+     },
+     "pool_size": 8
+    }
+   }
+  },
+  "disposition_by_seed": {
+   "0": {
+    "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+    "IDENTIFIABILITY": "REFUSED",
+    "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+    "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+    "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+   },
+   "1": {
+    "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+    "IDENTIFIABILITY": "REFUSED",
+    "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+    "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+    "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+   },
+   "2": {
+    "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+    "IDENTIFIABILITY": "REFUSED",
+    "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+    "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+    "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+   }
+  },
+  "dispositions_stable_across_seeds": true,
+  "eliminated": [],
+  "hypotheses": [
+   "mind:L[]Q[]",
+   "mind:L[u0,u1,x0,x1]Q[]",
+   "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+   "mind:L[u0,u1,x0]Q[]",
+   "mind:L[u0,u1,x0]Q[x0]",
+   "mind:L[u0,u1,x1]Q[]",
+   "mind:L[u0,u1,x1]Q[x1]",
+   "mind:L[u0,u1]Q[]",
+   "mind:L[u0,x0,x1]Q[]",
+   "mind:L[u0,x0,x1]Q[x0,x1]",
+   "mind:L[u0,x0]Q[]",
+   "mind:L[u0,x0]Q[x0]",
+   "mind:L[u0,x1]Q[]",
+   "mind:L[u0,x1]Q[x1]",
+   "mind:L[u0]Q[]",
+   "mind:L[u1,x0,x1]Q[]",
+   "mind:L[u1,x0,x1]Q[x0,x1]",
+   "mind:L[u1,x0]Q[]",
+   "mind:L[u1,x0]Q[x0]",
+   "mind:L[u1,x1]Q[]",
+   "mind:L[u1,x1]Q[x1]",
+   "mind:L[u1]Q[]",
+   "mind:L[x0,x1]Q[]",
+   "mind:L[x0,x1]Q[x0,x1]",
+   "mind:L[x0]Q[]",
+   "mind:L[x0]Q[x0]",
+   "mind:L[x1]Q[]",
+   "mind:L[x1]Q[x1]"
+  ],
+  "mind": "forge.mind.minimal@1.0.0",
+  "observations_used": 0,
+  "parameters": {
+   "C1": null,
+   "R0": null,
+   "R1": null,
+   "basis": "not representable: the Mind's laws are log-linear dependences of a probe observable, not 1RC parameters"
+  },
+  "primary_seed": 0,
+  "problem_id": "P28",
+  "refusal_reasons": [
+   "RELAXATION -> problem_refused (REFUSED)",
+   "no held-out set of this kind is supplied",
+   "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it",
+   "within_cell_heldout/later_cycles -> insufficient_evidence (NOT_ASSESSABLE)"
+  ],
+  "schema": "forge.battery_rediscovery.arm_output/1",
+  "seeds": [
+   0,
+   1,
+   2
+  ]
+ }
+}

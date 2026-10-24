@@ -1,0 +1,138 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "C concurrency / seal / interruption lifecycle",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R17-C-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Native pre-capture resource failure still permits handed spend to disappear and simulated execution to repeat",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 998,
+      "related_lines": [
+        999,
+        1025,
+        1026,
+        1028
+      ],
+      "smallest_reproduction": "probe_exact.py: build battery desk; dispatch once, saving pre-spend canonical ledger; at CPython recursion limit150 call reader.pinned through145 recursive frames; inspect raw callback tuple pending; replace owner mapping entry with checkpoint; dispatch original admitted action.",
+      "actual_result": "Unpatched native RecursionError; pending tuple references exactly owner mapping, containing revision2. After normal mapping replacement the same pending mapping contains revision1. Gateway does not refuse and calls simulated executor a second time. No seal. exact.log restored_revision2 is measured after second dispatch settlement, not before it.",
+      "expected_result": "A returned handing that held revision2 must not disappear after interruption; restored revision1 must be refused and executor calls remain1. Honest interruption alone must not permanently seal reader.",
+      "actualproof": "Executed exact source, no production monkeypatch in native probe. exact.log asserts pending tuple mapping is owner mapping and spent account identity before restore. native.log depths145/146 independently show same failure; depth144 retains _RetainedHanding and refuses rollback. Depth147/148 not used as proof because callback return is not established.",
+      "new_or_existing": "Known R16 OPEN family independently reproduced on repaired R17 SHA; not a new regression.",
+      "trustscope": "Ordinary canonical BudgetLedger checkpoint replacement by execution side plus native stack exhaustion. No private runtime mutation in reproduction. Reduced recursion limit is deterministic caller-resource fault injection; no serializer or reader implementation override. This crosses documented all-returned-handings preservation contract, not unobservable spend entirely between verifications.",
+      "threat_families": [
+        "returned mutable mapping lifetime",
+        "recovery resource interruption",
+        "forgotten observed spend",
+        "duplicate simulated dispatch"
+      ],
+      "proposed_correction": "Select execution-owner handoff lifetime contract with an identified publication slot and retained canonical snapshot/history until authoritative comparison acknowledgement. Cover interrupted publication and acknowledgement, restore and concurrency. A local arbitrary retry count, worker, or later read cannot reconstruct overwritten uncaptured data. Permanent sealing solely from native interruption conflicts with honest-reader usability. Narrowing observation to successful native capture would weaken the contract and requires explicit owner selection.",
+      "log_paths": [
+        "/home/dev_kaeem/br11-review/r17/C/exact.log",
+        "/home/dev_kaeem/br11-review/r17/C/native.log"
+      ]
+    }
+  ],
+  "local_repair_assessment": "Executed 16 supplied R16 controls plus3 independent lifecycle controls:19 passed. Canonical detached histories reconcile, exact barrier replacement refuses stale reconciliation, seal during unlocked reconciliation prevents acceptance, interrupted canonical reconciliation preserves barrier and permits later honest recovery. No newly demonstrated bypass in these repairs.",
+  "availability_assessment": "40 independently detached interrupted handings retain40 pending observations then clear on successful canonical reconciliation. Growth is linear in unresolved handings in this bounded probe; no independent MAJOR/MINOR assigned merely for memory growth. Sustained unreconcilable content may grow storage; stress/OOM behavior not proven.",
+  "contract_assessment": "The open information-loss case requires retained owner-side data or weakening the returned-handings promise. Current local repairs solve separable canonicalization/registration cases but do not establish a lifetime for uncaptured mutable contents. No generic local remedy demonstrated that simultaneously preserves all returned spend and recovers honest interrupted readers without evidence of corruption.",
+  "explicit_scope": "Read-only bounded software review; no scientific validation, certification, formal proof, full FAST, source or git mutations.",
+  "read_sources": [
+    "CLAUDE.md",
+    "docs/architecture/README.md",
+    "docs/work/ACTIVE_PLAN.md BR1.1 entry",
+    "benchmarks/mind_gen2_authority_v1/README.md lifecycle clarification",
+    "docs/work/evidence/br11_local_2026_10_23/round16/threat_disposition_matrix.json",
+    "docs/work/evidence/br11_local_2026_10_23/round16/OWNER_HANDOFF_DECISION.md",
+    "src/engcore/mind/world/owners.py diff b8a65bb9..HEAD",
+    "tests/mind/test_authority_review_r16.py"
+  ],
+  "tested_transitions": [
+    "16 committed R16 canonicalization/retention/registration/stale barrier controls",
+    "seal by invalid concurrent handing while prior verifier reconciles outside lock",
+    "interrupted retained canonicalization refuses then honest recovery",
+    "40 detached interrupted observations followed by successful cleanup",
+    "native stack capture/retention boundary sweep depths130..148 at recursion limit150",
+    "exact raw pending mapping identity and replacement before redispatch"
+  ],
+  "missing_coverage": [
+    "No exhaustive arbitrary bytecode interruption schedule or formal concurrency proof.",
+    "No real MemoryError/OOM injection or sustained hostile memory-growth test.",
+    "No native multi-reader owner publication contract exists to test.",
+    "Q1-Q3 and Q5-Q7 limited to scoped changed-path static examination; no new independent broad admission tests.",
+    "No testing after acknowledgement returns for previously pinned snapshot reuse beyond documented pin semantics."
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['git','rev-parse','HEAD'],text=True));assert owners.__file__=='/home/dev_kaeem/forge-r17-review/src/engcore/mind/world/owners.py';assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=='98d72b2ef854012780f4222706884b911c4a2f03'"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/C/identity.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/C/pt",
+        "tests/mind/test_authority_review_r16.py",
+        "/home/dev_kaeem/br11-review/r17/C/test_lifecycle.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/C/controls.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r17/C/probe_native_depth.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/C/native.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r17/C/probe_exact.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "result": "Counterexample reproduced; explicit assertions completed.",
+      "log": "/home/dev_kaeem/br11-review/r17/C/exact.log"
+    }
+  ]
+}

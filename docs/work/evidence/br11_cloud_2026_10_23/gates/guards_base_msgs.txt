@@ -1,0 +1,10 @@
+E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}
+E       assert {'_AuditOnlyR...tion.py', ...} == {}
+E         
+E         Left contains 7 more items:
+E         {'BalanceTerm': 'src/engcore/scientific/conservation.py',
+E          'ConservationBalance': 'src/engcore/scientific/conservation.py',
+E          'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py',
+E          'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py',
+E          'FieldDefinition': 'src/engcore/scientific/fields/definition.py',...
+E         

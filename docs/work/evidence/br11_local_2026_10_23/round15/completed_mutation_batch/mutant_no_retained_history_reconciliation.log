@@ -1,0 +1,111 @@
+..............FF........................................................ [ 80%]
+.................                                                        [100%]
+=================================== FAILURES ===================================
+___________ test_unchanged_detached_accounts_recover_after_interrupt ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7d72767585c0>
+
+    def test_unchanged_detached_accounts_recover_after_interrupt(monkeypatch):
+        account, held, mode, reader = _simple()
+        reader._follow = lambda: ({k: BudgetLedger.from_dict(v.to_dict()) for k,v in held.items()}, {})
+        original = BudgetReader._account
+        armed = [True]
+        def interrupted(self, key):
+            if armed:
+                armed.pop()
+                raise KeyboardInterrupt()
+            return original(self, key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_account", interrupted)
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+>       assert reader.read(K, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r15.py:278: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1014: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1015: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7d727675a060>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1078: OwnerUnavailable
+___ test_readback_straddling_honest_growth_recovers_after_transient_failure ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7d7276758350>
+
+    def test_readback_straddling_honest_growth_recovers_after_transient_failure(monkeypatch):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._account
+        armed = [True]
+        def growing(self, key):
+            if armed:
+                armed.pop()
+                _settle(account, "growth")
+            return original(self, key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_account", growing)
+            try:
+                reader.read(K, "a")
+            except OwnerUnavailable:
+                pass
+        def moving():
+            raise RuntimeError("dictionary changed size during iteration")
+        object.__setattr__(account, "to_dict", moving)
+        with pytest.raises(OwnerUnavailable):
+            reader.read(K, "a")
+        object.__delattr__(account, "to_dict")
+        held["a"] = BudgetLedger.from_dict(account.to_dict())
+>       assert reader.read(K, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r15.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1014: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1015: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7d727675a420>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1078: OwnerUnavailable
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_unchanged_detached_accounts_recover_after_interrupt
+FAILED tests/mind/test_authority_review_r15.py::test_readback_straddling_honest_growth_recovers_after_transient_failure
+2 failed, 87 passed in 3.04s

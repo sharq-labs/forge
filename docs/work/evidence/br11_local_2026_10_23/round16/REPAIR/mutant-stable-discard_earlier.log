@@ -1,0 +1,97 @@
+........FF.F....                                                         [100%]
+=================================== FAILURES ===================================
+____________ test_detached_pending_spend_never_disappears[rollback] ____________
+
+kind = 'rollback'
+
+    @pytest.mark.parametrize("kind", ["rollback", "different"])
+    def test_detached_pending_spend_never_disappears(kind):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = [account]
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+        saved = BudgetLedger.from_dict(account.to_dict())
+        _settle(account, "new")
+        _interrupt_handing(reader)
+        if kind == "different":
+            _settle(saved, "different")
+        held[0] = saved
+        _interrupt_handing(reader)
+>       with pytest.raises(OwnerUnavailable):
+E       Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r16.py:98: Failed
+___________ test_detached_pending_spend_never_disappears[different] ____________
+
+kind = 'different'
+
+    @pytest.mark.parametrize("kind", ["rollback", "different"])
+    def test_detached_pending_spend_never_disappears(kind):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = [account]
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+        saved = BudgetLedger.from_dict(account.to_dict())
+        _settle(account, "new")
+        _interrupt_handing(reader)
+        if kind == "different":
+            _settle(saved, "different")
+        held[0] = saved
+        _interrupt_handing(reader)
+>       with pytest.raises(OwnerUnavailable):
+E       Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r16.py:98: Failed
+__________ test_concurrent_new_barrier_invalidates_old_reconciliation __________
+
+    def test_concurrent_new_barrier_invalidates_old_reconciliation():
+        import threading
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "first")
+        _interrupt_handing(reader)
+        _interrupt_handing(reader)
+        entered, resume = threading.Event(), threading.Event()
+        real_history = BudgetReader._history
+        real_read = BudgetReader._read_back
+        local = threading.local()
+        errors = []
+        def read(snapshot):
+            result = real_read(snapshot)
+            if threading.current_thread() is worker:
+                local.reconcile = True
+            return result
+        def history(items):
+            if getattr(local, "reconcile", False):
+                local.reconcile = False
+                entered.set()
+                assert resume.wait(5)
+            return real_history(items)
+        def run():
+            try:
+                reader.read(OwnerKind.BUDGET_LEDGER, "a")
+            except BaseException as exc:
+                errors.append(exc)
+        worker = threading.Thread(target=run)
+        with patch.object(BudgetReader, "_read_back", read), patch.object(BudgetReader, "_history", staticmethod(history)):
+            worker.start()
+            try:
+                assert entered.wait(5)
+                _settle(account, "second")
+                _interrupt_handing(reader)
+            finally:
+                resume.set()
+                worker.join(5)
+        assert not worker.is_alive()
+        assert len(errors) == 1 and isinstance(errors[0], OwnerUnavailable)
+>       assert not reader._diverged
+E       assert not {('ledger', 'a'): "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"}
+E        +  where {('ledger', 'a'): "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"} = <engcore.mind.world.owners.BudgetReader object at 0x702a0ce09d30>._diverged
+
+tests/mind/test_authority_review_r16.py:174: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[rollback]
+FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[different]
+FAILED tests/mind/test_authority_review_r16.py::test_concurrent_new_barrier_invalidates_old_reconciliation
+3 failed, 13 passed in 2.28s

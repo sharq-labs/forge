@@ -1,0 +1,618 @@
+{
+  "base_sha": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
+  "environment": "unchanged WSL CPython3.12.3 existing venv",
+  "rows": [
+    {
+      "suite": "r20v2-guards_local",
+      "current_log": "/home/dev_kaeem/br11-review/lifetime-closure/r20v2-guards_local.log",
+      "base_log": "/home/dev_kaeem/br11-logs/gates_base_1202ea6c_r3/guards.txt",
+      "current_log_sha256": "c40830da954074730c51ea792604897935a77b7f667578d9caa52406e397ad0c",
+      "base_log_sha256": "b8c3549693e2d2a0f35e03bea502c8a8a30b238847d5fd73d8fb77732393ad80",
+      "new": [],
+      "fixed": [],
+      "reasons": [
+        {
+          "node": "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
+          "current_reason": "E       AssertionError: a function takes a verification threshold as a bare float: [('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__', ['conservation_atol', 'temperature_atol', 'local_power_atol'])]",
+          "base_reason": "E       AssertionError: a function takes a verification threshold as a bare float: [('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__', ['conservation_atol', 'temperature_atol', 'local_power_atol'])]",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one",
+          "current_reason": "E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}",
+          "base_reason": "E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}",
+          "same": true
+        }
+      ],
+      "summary": "2 failed, 1600 passed in 41.70s"
+    },
+    {
+      "suite": "r20v2-expensive_local",
+      "current_log": "/home/dev_kaeem/br11-review/lifetime-closure/r20v2-expensive_local.log",
+      "base_log": "/home/dev_kaeem/br11-logs/gates_base_1202ea6c_r3/expensive.txt",
+      "current_log_sha256": "41cc744597a37ff4a5ed6c7fe0f5655daad1f8edf600521e0b4e974871e93662",
+      "base_log_sha256": "b2adec20cf8673f72a1329591e03f6755c5927a26ea4ed94c750760fbed70b1f",
+      "new": [],
+      "fixed": [],
+      "reasons": [
+        {
+          "node": "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_a2_the_provider_actually_computes_the_answer",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_b2_the_netlist_translation_is_deterministic_and_assigns_names",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_b_both_paths_consume_the_same_canonical_problem",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_c2_the_provider_answer_satisfies_craftys_own_assembled_equations",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_c_native_and_ngspice_agree_within_the_preregistered_tolerance",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_d2_only_one_dispatch_entry_differs",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e2_case_e_two_stage_coupled_results_agree",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e3_the_electrical_quantities_at_the_fixed_point_agree",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e4_iteration_counts_are_recorded_not_required",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e_case_a_coupled_results_agree",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_f_provenance_distinguishes_the_execution",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g3_a_missing_requested_quantity_is_a_provider_failure",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g4_provider_failure_is_none_of_the_other_three_failures",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g5_the_singular_precondition_is_detected_on_both_paths",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_i_no_provider_syntax_reaches_a_scientific_record",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_m_the_two_solvers_execute_the_same_realization",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_n_substituting_the_provider_does_not_inflate_the_record",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p2_the_corrupted_power_is_refused_before_the_coupled_loop_admits_it",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p3_the_relations_are_independent_of_the_quantity_they_check",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p4_admission_is_a_provider_failure_not_a_scientific_verdict",
+          "current_reason": "E       assert False",
+          "base_reason": "E       assert False",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_CorruptPower-V_drop \\\\* I]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedCurrent-current convention]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedPower-V_drop \\\\* I]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        }
+      ],
+      "summary": "13 failed, 335 passed, 14 errors in 38.01s"
+    },
+    {
+      "suite": "r20-clean-fast",
+      "current_log": "/home/dev_kaeem/br11-review/lifetime-closure/r20-clean-fast.log",
+      "base_log": "/home/dev_kaeem/br11-logs/gates_base_1202ea6c_r3/fast.txt",
+      "current_log_sha256": "85053793d6f409cea5ba73974da0cae0bf5607b81c87f9ad888af38ee4e156d4",
+      "base_log_sha256": "7a3b60baa392f3f96b5e2e71d49661c36858ac421c2d074a8610a9adfa701dc9",
+      "new": [],
+      "fixed": [],
+      "reasons": [
+        {
+          "node": "benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_source_is_byte_identical_to_its_source_commit",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance",
+          "current_reason": "E       AssertionError: [{'rule_prefix': '', 'class': 'UNKNOWN_PROVENANCE', 'role': 'UNREVIEWED_CHANGE', 'rationale': 'new or changed bytes need explicit provenance review', ...}]",
+          "base_reason": "E       AssertionError: [{'rule_prefix': '', 'class': 'UNKNOWN_PROVENANCE', 'role': 'UNREVIEWED_CHANGE', 'rationale': 'new or changed bytes need explicit provenance review', ...}]",
+          "same": true
+        },
+        {
+          "node": "benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured",
+          "current_reason": "E       assert 1202 == 0",
+          "base_reason": "E       assert 456 == 0",
+          "same": false
+        },
+        {
+          "node": "tests/claims/test_offline_revalidation.py::test_offline_verification_never_returns_verified",
+          "current_reason": "E           AssertionError: assert <BundleStatus.NOT_REPRODUCIBLE: 'not_reproducible'> is <BundleStatus.VERIFIED: 'verified'>",
+          "base_reason": "E           AssertionError: assert <BundleStatus.NOT_REPRODUCIBLE: 'not_reproducible'> is <BundleStatus.VERIFIED: 'verified'>",
+          "same": true
+        },
+        {
+          "node": "tests/claims/test_offline_revalidation.py::test_replay_re_earns_what_offline_verification_cannot",
+          "current_reason": "E       AssertionError: assert (<BundleStatus.NOT_REPRODUCIBLE: 'not_reproducible'> is <BundleStatus.VERIFIED: 'verified'>)",
+          "base_reason": "E       AssertionError: assert (<BundleStatus.NOT_REPRODUCIBLE: 'not_reproducible'> is <BundleStatus.VERIFIED: 'verified'>)",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_certificate.py::test_the_certificate_describes_this_tree",
+          "current_reason": "E       AssertionError:",
+          "base_reason": "E       AssertionError:",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully",
+          "current_reason": "E       AssertionError: assert 'd042ff0c789c...8b9a180242156' == 'ace745a17c06...d974547280b10'",
+          "base_reason": "E       AssertionError: assert 'd042ff0c789c...8b9a180242156' == 'ace745a17c06...d974547280b10'",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies",
+          "current_reason": "E       AssertionError:",
+          "base_reason": "E       AssertionError:",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree",
+          "current_reason": "E       AssertionError:",
+          "base_reason": "E       AssertionError:",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions",
+          "current_reason": "E       assert b'{\"method_co...ictive_uq\"}]}' == b'{\"method_co...ictive_uq\"}]}'",
+          "base_reason": "E       assert b'{\"method_co...ictive_uq\"}]}' == b'{\"method_co...ictive_uq\"}]}'",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
+          "current_reason": "E       AssertionError: a function takes a verification threshold as a bare float: [('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__', ['conservation_atol', 'temperature_atol', 'local_power_atol'])]",
+          "base_reason": "E       AssertionError: a function takes a verification threshold as a bare float: [('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__', ['conservation_atol', 'temperature_atol', 'local_power_atol'])]",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_scientific_audit_batch55.py::test_r67_every_folded_mutation_still_matches_the_live_source_exactly_once",
+          "current_reason": "E       AssertionError: these folded mutations no longer describe the source, so the guards behind them are unverified whatever their batch log printed:",
+          "base_reason": "E       AssertionError: these folded mutations no longer describe the source, so the guards behind them are unverified whatever their batch log printed:",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see",
+          "current_reason": "E       assert b'{\"method_co...ictive_uq\"}]}' == b'{\"method_co...ictive_uq\"}]}'",
+          "base_reason": "E       assert b'{\"method_co...ictive_uq\"}]}' == b'{\"method_co...ictive_uq\"}]}'",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one",
+          "current_reason": "E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}",
+          "base_reason": "E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}",
+          "same": true
+        },
+        {
+          "node": "tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module",
+          "current_reason": "E           AssertionError: omega",
+          "base_reason": "E           AssertionError: omega",
+          "same": true
+        },
+        {
+          "node": "tests/test_interface_flux_execution.py::test_unqualified_direct_mapper_escape_and_stale_support_refuse",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable",
+          "current_reason": "E       AssertionError: assert (7 == 8)",
+          "base_reason": "E       AssertionError: assert (7 == 8)",
+          "same": true
+        },
+        {
+          "node": "tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names",
+          "current_reason": "E       AssertionError: these folded mutations no longer describe the source, so the guards behind them are unverified whatever their batch log printed:",
+          "base_reason": "E       AssertionError: these folded mutations no longer describe the source, so the guards behind them are unverified whatever their batch log printed:",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_a_constant_field_maps_to_the_same_constant",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_a_non_convex_quadrilateral_is_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_a_signed_field_that_integrates_to_zero_is_conserved_without_division_by_zero",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_a_source_partly_outside_the_target_support_is_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_a_target_outside_the_source_support_is_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_hexahedral_cells_are_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_node_fields_are_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_offset_scale_units_are_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_structured_remap_between_unequal_cell_counts_per_axis",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_structured_remap_matches_hand_computed_overlaps",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_conservative_cell_mapping.py::test_unequal_triangles_are_weighted_by_their_overlap_area",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase1_coupling_convergence_coverage.py::test_a_self_loop_is_a_lagged_edge",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_coupling_authority.py::test_a_relaxed_native_plan_is_built_with_torn_only_relaxation",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_coupling_authority.py::test_an_iteration_limit_is_not_completed_on_both_paths",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_coupling_authority.py::test_the_runtime_build_keeps_every_produced_result",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_coupling_authority.py::test_the_runtime_build_reaches_the_native_outcome_iterations_and_values[nominal]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_coupling_authority.py::test_the_runtime_build_reaches_the_native_outcome_iterations_and_values[two_stage]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_coupling_authority.py::test_the_torn_edges_are_exactly_the_edges_the_runtime_requires_criteria_on",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_external_coupling.py::test_a_crashed_provider_is_a_classified_refusal_not_a_numerical_failure",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_external_coupling.py::test_a_field_coupled_run_maps_the_flux_conservatively_and_records_it",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_external_coupling.py::test_a_flux_mapped_by_nearest_site_is_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_external_coupling.py::test_a_numerical_non_convergence_keeps_its_retryable_type",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_external_coupling.py::test_the_authority_refuses_mock_external_participants_unless_allowed",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_external_coupling.py::test_the_contract_is_honoured_by_a_conservative_flux_and_a_consistent_temperature",
+          "current_reason": "E       AssertionError: assert ['legacy pros...ld semantics'] == []",
+          "base_reason": "E       AssertionError: assert ['legacy pros...ld semantics'] == []",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_field_transfer.py::test_a_constant_maps_to_the_same_constant_between_two_tetrahedralizations_of_a_cube",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_field_transfer.py::test_a_degenerate_tetrahedron_is_refused",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_field_transfer.py::test_a_vector_field_is_remapped_component_by_component",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_field_transfer.py::test_tetrahedral_remap_conserves_the_integral_and_stays_within_the_source_range",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_field_transfer.py::test_the_same_tetrahedra_in_another_order_map_as_a_permutation",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_review_regressions.py::test_a_redundant_forward_tear_is_refused",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_review_regressions.py::test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[1]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[2]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[3]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws2_electrothermal_migration.py::test_a_refused_transfer_is_a_recorded_stop_on_both_paths",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws2_electrothermal_migration.py::test_a_relaxed_plan_requires_criteria_on_the_torn_edges_only",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws2_electrothermal_migration.py::test_an_iteration_limit_reproduces_the_native_final_iterate",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[nominal]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[nominal_relaxed]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[two_stage]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[two_stage_relaxed]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws3_conjugate_interface.py::test_an_explicit_plan_is_admitted_only_as_satisfied_to_its_splitting_error",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws3_conjugate_interface.py::test_an_honest_graph_is_admitted_and_states_both_conditions_and_what_it_does_not_establish",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws3_conjugate_interface.py::test_an_implicit_plan_must_measure_both_interface_edges",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws3_conjugate_interface.py::test_the_receiver_sign_flips_with_the_declared_normal",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-conservatively]",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        },
+        {
+          "node": "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-heat flux dimension]",
+          "current_reason": "E       AssertionError: Regex pattern did not match.",
+          "base_reason": "E       AssertionError: Regex pattern did not match.",
+          "same": true
+        }
+      ],
+      "summary": "67 failed, 12896 passed, 190 skipped, 2 warnings in 309.15s (0:05:09)"
+    }
+  ]
+}

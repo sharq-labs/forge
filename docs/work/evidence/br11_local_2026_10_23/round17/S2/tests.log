@@ -1,0 +1,28 @@
+{"alias": "A1", "failures": 2, "restore": true, "refused": false, "calls": 2, "sealed": null}
+.{"alias": "B1", "failures": 2, "restore": true, "refused": false, "calls": 2, "sealed": null}
+.{"alias": "C1", "failures": 2, "restore": true, "refused": false, "calls": 2, "sealed": null}
+.{"alias": "D1", "failures": 2, "restore": true, "refused": false, "calls": 2, "sealed": null}
+.{"alias": "E1", "failures": 2, "restore": true, "refused": false, "calls": 2, "sealed": null}
+.{"alias": "F1", "failures": 2, "restore": true, "refused": false, "calls": 2, "sealed": null}
+.{"alias": "A1", "failures": 1, "restore": true, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "B1", "failures": 1, "restore": true, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "C1", "failures": 1, "restore": true, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "D1", "failures": 1, "restore": true, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "E1", "failures": 1, "restore": true, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "F1", "failures": 1, "restore": true, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "A1", "failures": 2, "restore": false, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "B1", "failures": 2, "restore": false, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "C1", "failures": 2, "restore": false, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "D1", "failures": 2, "restore": false, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "E1", "failures": 2, "restore": false, "refused": true, "calls": 1, "sealed": null}
+.{"alias": "F1", "failures": 2, "restore": false, "refused": true, "calls": 1, "sealed": null}
+.{"kind": "ledger", "numeric": true, "json_correction": false, "false_retired": true}
+.{"kind": "experiment", "numeric": true, "json_correction": false, "false_retired": true}
+.{"kind": "ledger", "numeric": false, "json_correction": false, "false_retired": false}
+.{"kind": "experiment", "numeric": false, "json_correction": false, "false_retired": false}
+.{"kind": "ledger", "numeric": true, "json_correction": true, "false_retired": false}
+.{"kind": "experiment", "numeric": true, "json_correction": true, "false_retired": false}
+.{"kind": "ledger", "numeric": false, "json_correction": true, "false_retired": false}
+.{"kind": "experiment", "numeric": false, "json_correction": true, "false_retired": false}
+.................
+42 passed in 2.92s

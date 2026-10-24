@@ -1,0 +1,41 @@
+"""R16 replay records remain historical; source and owner behavior unchanged."""
+import types
+import pytest
+from engcore.mind.world import AdmissionRecord, Authorities, BudgetReader, ExecutionDesk, FeasibleActionSpace, OwnerKind, replay_admission
+from engcore.mind.world.authority import OwnerUnavailable
+from engcore.mind.world.base import WorldRefused
+from engcore.sria.campaign.budget import BudgetLedger
+from tests.mind.test_authority_review_r14 import _desk, _solver, _settle, _SelfFillingNote, ax
+
+@pytest.mark.parametrize("phase", ["normal", "observed_rollback", "seal", "unread_spend"])
+def test_historical_record_replays_without_gaining_dispatch_authority(phase):
+    o = ax.owned("battery")
+    lid = _solver(o)
+    mode = {"sealed": False}
+    def accounts():
+        return (types.MappingProxyType(o.ledgers) if mode["sealed"] else dict(o.ledgers)), dict(o.experiments)
+    reader, authorities, gateway, first = _desk(o, accounts, lambda auth: None)
+    checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+    if phase == "observed_rollback":
+        _settle(o.ledgers[lid], "run.1")
+        assert reader.read(OwnerKind.BUDGET_LEDGER, lid) is not None
+        o.ledgers[lid] = checkpoint
+    elif phase == "seal":
+        mode["sealed"] = True
+        with pytest.raises(OwnerUnavailable):
+            reader.pinned()
+        mode["sealed"] = False
+    elif phase == "unread_spend":
+        _settle(o.ledgers[lid], "run.1", _SelfFillingNote())
+        with pytest.raises(OwnerUnavailable):
+            reader.pinned().read(OwnerKind.BUDGET_LEDGER, lid)
+    result = gateway.admit(FeasibleActionSpace.build(first.world), first.proposal)
+    assert (result.admitted is not None) is (phase == "normal")
+    record = AdmissionRecord.of(result, authorities).to_dict()
+    replay = replay_admission(record)
+    print(phase, result.status.value, replay.outcome.value)
+    assert replay.outcome.value == "reproduced"
+    frozen = Authorities.from_snapshot(record["snapshot"])
+    assert not frozen.live
+    with pytest.raises(WorldRefused):
+        ExecutionDesk(frozen, lambda auth: None, accept_synthetic=True)

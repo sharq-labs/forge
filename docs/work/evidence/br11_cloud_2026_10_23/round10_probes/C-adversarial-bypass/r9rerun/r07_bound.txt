@@ -1,0 +1,8 @@
+{'worlds': 1800, 'constraint_admitted': 100, 'validity_admitted': 100}
+constraint: var m, action level Quantity(magnitude=348.753280839895, units='foot'), bound '< 348.753280839895 foot' -> FEASIBLE; executor received x = 106.29999999999998 m (in ft: 348.75328083989496)
+validity: var m, action level Quantity(magnitude=348.753280839895, units='foot'), bound '< 348.753280839895 foot' -> FEASIBLE; executor received x = 106.29999999999998 m (in ft: 348.75328083989496)
+constraint: var m, action level Quantity(magnitude=1176.8700787401574, units='foot'), bound '< 1176.8700787401574 foot' -> FEASIBLE; executor received x = 358.7099999999999 m (in ft: 1176.8700787401572)
+validity: var m, action level Quantity(magnitude=1176.8700787401574, units='foot'), bound '< 1176.8700787401574 foot' -> FEASIBLE; executor received x = 358.7099999999999 m (in ft: 1176.8700787401572)
+constraint: var m, action level Quantity(magnitude=2551.5748031496064, units='foot'), bound '< 2551.5748031496064 foot' -> FEASIBLE; executor received x = 777.7199999999999 m (in ft: 2551.574803149606)
+validity: var m, action level Quantity(magnitude=2551.5748031496064, units='foot'), bound '< 2551.5748031496064 foot' -> FEASIBLE; executor received x = 777.7199999999999 m (in ft: 2551.574803149606)
+exit 0

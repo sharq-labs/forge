@@ -1,0 +1,1 @@
+Reused completed R14 base run at 1202ea6c3d96f5c31d0b142a32438da75e020cae, same WSL Ubuntu 24.04 clone and unchanged CPython 3.12.3 .venv. No dependency installation or base change in this session. Base worktree clean. The preserved r3 run, not the missing R12 rerun, supports 913 passed / 2 failed guards. Base is red: use NO NEW FAILURES VS BASE, never FAST GREEN.

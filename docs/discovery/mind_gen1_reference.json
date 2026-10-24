@@ -1,0 +1,641 @@
+{
+ "benchmarks": {
+  "battery_rediscovery_v0": {
+   "commits": {
+    "amendment_01": "dbf1794c6c0d2b0109f401773155e550ee57fd1f",
+    "evaluation": "986cc43ceb385bdf8138bbc3d41cc1d68e0b1f9e",
+    "freeze": "085d9a7c686d707edf70af29a8e9f6086791875d",
+    "seal": "e1be5910081f531e19637697e3d103bc2953f12e"
+   },
+   "plan_sha256_file": "adc3a30f5966892885cd3fc4ea3a49871adea2ad489becee189dd52dafc3c1bf",
+   "records": {
+    "PLAN.json": {
+     "bytes": "11029",
+     "git_blob": "bd5de286035764a3d6b3db6d50c33f6b4bdfc051",
+     "sha256": "adc3a30f5966892885cd3fc4ea3a49871adea2ad489becee189dd52dafc3c1bf"
+    },
+    "results/AMENDMENT_01.json": {
+     "bytes": "2343",
+     "git_blob": "4b3879903175305d0fb2e4611f861cc2dc3eaeba",
+     "sha256": "02356c677f8102fed226349287e7b7be20e2e6a71bd8efc34efc31b5829b03e4"
+    },
+    "results/EVALUATION.json": {
+     "bytes": "39034",
+     "git_blob": "ce920cdb7296cbf9bbc311663fc95a3bbf645000",
+     "sha256": "02131f27ada52f8854bbbd1630dfe0adb2146282445d31c144f718198a9234d8"
+    },
+    "results/EVALUATION_AMENDMENT_01.json": {
+     "bytes": "41418",
+     "git_blob": "e9674421a9044623d8e176ea8d877ca90a231421",
+     "sha256": "acaf295a123f7ef37083b163fbe54ef8dc85164ee5524be0d05a04f47fd503f6"
+    },
+    "results/SEAL.json": {
+     "bytes": "2466",
+     "git_blob": "ec4717a5e7197698fc9d800eb0879930ccd764d8",
+     "sha256": "6d37cffb6ccb6b40595be2c62728f329a62b488ec9a88f7733aa76fee860b1d7"
+    }
+   },
+   "seal": {
+    "code_commit": "085d9a7c686d707edf70af29a8e9f6086791875d",
+    "plan_sha256": "adc3a30f5966892885cd3fc4ea3a49871adea2ad489becee189dd52dafc3c1bf",
+    "sealed_outputs": {
+     "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_FIT__P1.json": "5032f81e2e117401999b81f9cf55f8bd02b54b6fe15b53451569e0dff5ed23f5",
+     "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_FIT__P2.json": "a317ae04aad0a5a6fd16775e8ab536afeed070f23102c7ac8cb44dcbd19774d2",
+     "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_REFUSE__P1.json": "ce05c3d5e3aeb2faacb9af02a8c6af69c5a0610fc89075f28afe5b0aed51c6e0",
+     "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_REFUSE__P2.json": "2e73e7c618492ec07591b4ac3eb0dfbbf710e8eeb3a3eb5be6f93f5176ab408a",
+     "benchmarks/battery_rediscovery_v0/results/candidate/CAREFUL_BASELINE__P1.json": "1d6f8c90669f7e11dc02000e23b08189af2ab6a70307c13a8df7ea4544dcc4ee",
+     "benchmarks/battery_rediscovery_v0/results/candidate/CAREFUL_BASELINE__P2.json": "faa2e61e2d355330a78a173b69cac2560d852529487a4c8a672616e0a08dbfe1",
+     "benchmarks/battery_rediscovery_v0/results/candidate/FIXED_FIT__P1.json": "70f5832665f2c809fe92bbfaba65263b8c425bd821b9181bc507fa05b5f2d698",
+     "benchmarks/battery_rediscovery_v0/results/candidate/FIXED_FIT__P2.json": "31be4752fff392577f92363bf895e9c33458e6d6f3613399b5001d76411ecf9f",
+     "benchmarks/battery_rediscovery_v0/results/candidate/MIND_TRACES__P1.json": "33ae21d23628294ab64d76c9d474b3c4fea56ee5c1ccd6ac0ae0b248a29cf2aa",
+     "benchmarks/battery_rediscovery_v0/results/candidate/MIND_TRACES__P2.json": "76ea124539586617f2bc450faa0df52468f533847e571601841cfc77833dad48",
+     "benchmarks/battery_rediscovery_v0/results/candidate/MIND__P1.json": "9b9d29cfda619dc6d145f5769665b992d66e3d784c5c4e447fe165d50a62e092",
+     "benchmarks/battery_rediscovery_v0/results/candidate/MIND__P2.json": "cd61594cbb8a52b32057fb242a762251c2e90fafc9c2f994298f63644eb5c3ac"
+    },
+    "status": "PASS"
+   },
+   "standing": "preregistered LEAKAGE_INVALIDATED (audit false positive); AMENDMENT_01 reading REPRESENTATION_BOTTLENECK is a disclosed post-seal amendment, not a clean confirmation",
+   "task": "BR-BATT-REDISC-01",
+   "verdict": "LEAKAGE_INVALIDATED",
+   "verdict_amendment_01": "REPRESENTATION_BOTTLENECK"
+  },
+  "battery_rediscovery_v1": {
+   "commits": {
+    "evaluation": "d516e68185a700166c968de1bf0fa96930e27b93",
+    "freeze": "53e6a6dbccab6fb697be994b12872140efc4a6c0",
+    "seal": "c0613435f3af3d2979ffa5b4dfc26dfe3ac0f9a1"
+   },
+   "plan_sha256_file": "3b7e6676a8c2c37636d21683e858002f7b21733ddd853be02f660217898bb979",
+   "records": {
+    "PLAN.json": {
+     "bytes": "22390",
+     "git_blob": "d9df447f5b5fb748a04c99e3e195801260cd9a13",
+     "sha256": "3b7e6676a8c2c37636d21683e858002f7b21733ddd853be02f660217898bb979"
+    },
+    "results/EVALUATION.json": {
+     "bytes": "21614",
+     "git_blob": "2605a624e38ef0901659637d7ca2d05f349b59ee",
+     "sha256": "0d7f240d43cc33213aa229ffe0c55b0c80a4cb2b06a064f7985ec2a8a68ae62c"
+    },
+    "results/SEAL.json": {
+     "bytes": "2697",
+     "git_blob": "c9ea2e23d2f98cd0e10403aa456acfb07c6396ef",
+     "sha256": "65f9600fcbeba956152ff265916dee1399fc5ffe3d9b62f2120d10124168bd7e"
+    }
+   },
+   "seal": {
+    "code_commit": "53e6a6dbccab6fb697be994b12872140efc4a6c0",
+    "plan_sha256": "3b7e6676a8c2c37636d21683e858002f7b21733ddd853be02f660217898bb979",
+    "sealed_outputs": {
+     "benchmarks/battery_rediscovery_v1/results/candidate/ALWAYS_FIT__P1.json": "5032f81e2e117401999b81f9cf55f8bd02b54b6fe15b53451569e0dff5ed23f5",
+     "benchmarks/battery_rediscovery_v1/results/candidate/ALWAYS_FIT__P2.json": "a317ae04aad0a5a6fd16775e8ab536afeed070f23102c7ac8cb44dcbd19774d2",
+     "benchmarks/battery_rediscovery_v1/results/candidate/ALWAYS_REFUSE__P1.json": "ce05c3d5e3aeb2faacb9af02a8c6af69c5a0610fc89075f28afe5b0aed51c6e0",
+     "benchmarks/battery_rediscovery_v1/results/candidate/ALWAYS_REFUSE__P2.json": "2e73e7c618492ec07591b4ac3eb0dfbbf710e8eeb3a3eb5be6f93f5176ab408a",
+     "benchmarks/battery_rediscovery_v1/results/candidate/CAREFUL_BASELINE__P1.json": "1d6f8c90669f7e11dc02000e23b08189af2ab6a70307c13a8df7ea4544dcc4ee",
+     "benchmarks/battery_rediscovery_v1/results/candidate/CAREFUL_BASELINE__P2.json": "faa2e61e2d355330a78a173b69cac2560d852529487a4c8a672616e0a08dbfe1",
+     "benchmarks/battery_rediscovery_v1/results/candidate/FIXED_FIT__P1.json": "70f5832665f2c809fe92bbfaba65263b8c425bd821b9181bc507fa05b5f2d698",
+     "benchmarks/battery_rediscovery_v1/results/candidate/FIXED_FIT__P2.json": "31be4752fff392577f92363bf895e9c33458e6d6f3613399b5001d76411ecf9f",
+     "benchmarks/battery_rediscovery_v1/results/candidate/MIND_TRACES__P1.json": "33ae21d23628294ab64d76c9d474b3c4fea56ee5c1ccd6ac0ae0b248a29cf2aa",
+     "benchmarks/battery_rediscovery_v1/results/candidate/MIND_TRACES__P2.json": "76ea124539586617f2bc450faa0df52468f533847e571601841cfc77833dad48",
+     "benchmarks/battery_rediscovery_v1/results/candidate/MIND__P1.json": "9b9d29cfda619dc6d145f5769665b992d66e3d784c5c4e447fe165d50a62e092",
+     "benchmarks/battery_rediscovery_v1/results/candidate/MIND__P2.json": "cd61594cbb8a52b32057fb242a762251c2e90fafc9c2f994298f63644eb5c3ac"
+    },
+    "status": "PASS"
+   },
+   "standing": "REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY; same data as v0, the developer knew v0's answers: not blind, not an independent replication",
+   "task": "BR-BATT-REDISC-02",
+   "verdict": "REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY"
+  },
+  "battery_rediscovery_v2": {
+   "commits": {
+    "evaluation": "625f5fea5867e4adf0c73df6c7544b37a1680b91",
+    "freeze": "f62299863cc75ac367861ed8f28b10cc6b292e81",
+    "replay": "6a75d816f7ed76ce31c89a00bcf80110dc716c2e",
+    "seal": "ee3a6946e302c0fa56d55a1b3314e99f70aff65d"
+   },
+   "plan_sha256_file": "85f1b7f300b3cfab2f94c0cab9041798d8ff37c7bd2173913128d3b886db2566",
+   "records": {
+    "MUTATION_REPORT_post_seal.json": {
+     "bytes": "120482",
+     "git_blob": "51c51740c85e56955676d2dd087dd871c40370c3",
+     "sha256": "dd78553f7d69f656445fcc1e679f72daab89b9158e003644cf0e8acc84c27e89"
+    },
+    "MUTATION_REPORT_pre_run.json": {
+     "bytes": "120480",
+     "git_blob": "c245b6ca4daee590aea124b3facd9fd89ff46940",
+     "sha256": "1b5b65fa7bc126045e24edf625e2d75f226a9f57d66584a2e62da826ef0feb53"
+    },
+    "PLAN.json": {
+     "bytes": "33454",
+     "git_blob": "3dcf6aae3e770404b03eeedd32b2fc28a78bc6b7",
+     "sha256": "85f1b7f300b3cfab2f94c0cab9041798d8ff37c7bd2173913128d3b886db2566"
+    },
+    "results/EVALUATION.json": {
+     "bytes": "48617",
+     "git_blob": "d289e3dd58947865928f75678e0ea10ba6673a7c",
+     "sha256": "c93bd08c3d99ee75e3115e7d9067ce47c44fb450a206a3a77e31be11fd106d2f"
+    },
+    "results/SEAL.json": {
+     "bytes": "3652",
+     "git_blob": "0d2ba8030348e80a4f2a1723e8c6d6c0b9a13c7c",
+     "sha256": "843c6e142eb5cb45c9751baedd4655c5df2b8337f8c52761f750a8d3e9d09f4e"
+    },
+    "results/TRUTH.json": {
+     "bytes": "10205",
+     "git_blob": "beb8409657e100618b8ba1a16c6a60c1864acd53",
+     "sha256": "797109422f2869c8ae197300ee7b1390cf21a0a11ba3c89b511822e525f4a64c"
+    },
+    "results/replay/REPLAY.json": {
+     "bytes": "5501",
+     "git_blob": "dc101f11f917be9a85fa49b7bc27cc2dd0952348",
+     "sha256": "a6c6e230b237546319648c239a8f3dfe8071e2692935e5cb7963348d68e41f60"
+    }
+   },
+   "seal": {
+    "code_commit": "f62299863cc75ac367861ed8f28b10cc6b292e81",
+    "plan_sha256": "85f1b7f300b3cfab2f94c0cab9041798d8ff37c7bd2173913128d3b886db2566",
+    "sealed_outputs": {
+     "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_FIT__Q1.json": "5ad42da185f71ee34b89cf1879da381f20bcb9f7c1a0c44eb2f25baab27887b7",
+     "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_FIT__Q2.json": "318622942a8a0ae9add2676df0e5639a057017c1b559ff3f7c175f956b7a7a4f",
+     "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_REFUSE__Q1.json": "852053be5ec6db5f93ea440a97d4e4dc0577d7264b47916d109675d40f18ad83",
+     "benchmarks/battery_rediscovery_v2/results/candidate/ALWAYS_REFUSE__Q2.json": "cbec7f5339951a978cd0f714d4929a9c74280ed95da2a6670a292c60896e4076",
+     "benchmarks/battery_rediscovery_v2/results/candidate/CAREFUL_BASELINE__Q1.json": "f9a982fbb635a08ccb42091ff66670348e6c1900d551aa7ba5397fbace3ca0c8",
+     "benchmarks/battery_rediscovery_v2/results/candidate/CAREFUL_BASELINE__Q2.json": "662c254f292ae5453136670a7abecb11626f374437dc9b320dc9e17d6a86c3d8",
+     "benchmarks/battery_rediscovery_v2/results/candidate/FIXED_FIT__Q1.json": "321d904119d942c093431d51cb84bb749b72487eb9ebd77e00f74a1b633df827",
+     "benchmarks/battery_rediscovery_v2/results/candidate/FIXED_FIT__Q2.json": "81f68f4095e869b51e965aabf4ca507e0396fce1c21c12a57d8fa998c735b7f2",
+     "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND_TRACES__Q1.json": "c56ebf67cae9e43e23285b74da75d9dd130712161b9a1c7de367d460e921bf30",
+     "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND_TRACES__Q2.json": "3fbb84b744903cdde8edcfb28bbbe0c0b157e95d15e91ccad0efbe9feca76c23",
+     "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND__Q1.json": "105092d71f1063afbf1e40a10cfb1fbf8db64aac7fa30559fbca8a404546f58c",
+     "benchmarks/battery_rediscovery_v2/results/candidate/OLD_MIND__Q2.json": "567c12fd8729de001b634413981905f220eb4d45ac5680767773114caf6a46c4",
+     "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_ONLY__Q1.json": "b5d71d2ef248d945c80fabb60da2cca065c6f859f480814e3740c4313558d975",
+     "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_ONLY__Q2.json": "f37fd214e14288924f778212c201706f9e9a7d46d602f62110bc23277f89c255",
+     "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_PLUS_ROLES__Q1.json": "3b4c1f7ac7f073177c122d5ce89637acc5ffb4f84b46a79fe7de30062f44f050",
+     "benchmarks/battery_rediscovery_v2/results/candidate/REPRESENTATION_PLUS_ROLES__Q2.json": "4aecbe8406468184f735a25e051d3552a32d4eb777c6e4456d3b92a5cca64dbc",
+     "benchmarks/battery_rediscovery_v2/results/candidate/SEMANTIC_ROLES_ONLY__Q1.json": "14026a333dd2a37230adbd4b97ca8d71351e1cfc90579d81f2b860f3864c9040",
+     "benchmarks/battery_rediscovery_v2/results/candidate/SEMANTIC_ROLES_ONLY__Q2.json": "664842ec356cece933a75f04f7b580ba5cc4def1788acd0ac8c725b358888436"
+    },
+    "status": "PASS"
+   },
+   "standing": {
+    "EVIDENCE_STRENGTH": "LIMITED_SMALL_N",
+    "described_as": "REAL_DATA_IMPROVEMENT_CONFIRMED_BY_PREREGISTERED_V2_RULE",
+    "limitations": [
+     "only 5 decided-truth instances",
+     "only 2 decided held-out instances",
+     "one answer flip can materially change the result (H3 rests on 2 held-out instances)",
+     "Q1's fitted 1RC is physically degenerate: R1 on its 1 ohm upper bound, tau ~5200 s",
+     "Q2 reuses the LG HG2 pulse windows previously seen in v1 (re-split by SOC set point, not new data)",
+     "the combined arm and the independent reference converged to effectively the same optimum (held-out rmse agrees to ~1e-11): this shows correct implementation on real data, not that the 1RC model is physically right",
+     "the win is mostly structural: OLD_MIND and SEMANTIC_ROLES_ONLY cannot judge adequacy or discrepancy (v1 vocabulary) and REPRESENTATION_ONLY is refused at binding by design",
+     "regression pack, SCIENTIFIC tier and certification were NOT RUN"
+    ],
+    "not_promoted": "v2 is not verified science and is not strengthened by this record",
+    "verdict_as_recorded": "REAL_DATA_IMPROVEMENT_CONFIRMED"
+   },
+   "task": "BR-BATT-REDISC-03",
+   "verdict": "REAL_DATA_IMPROVEMENT_CONFIRMED"
+  },
+  "mind_repsem_v1": {
+   "commits": {
+    "failing_first_tests": "db4397446774d789c92f7e0a20338f097d51e430",
+    "freeze_recheck": "8603463936b3e4010ac2a541a7663976fae97703",
+    "repair": "cac1c584d8056720cc2c83f63fe93d3b32a83151"
+   },
+   "records": {
+    "results/ABLATION.json": {
+     "bytes": "286846",
+     "git_blob": "7467ee59e62146f44de60a6aa61ef8422cb11458",
+     "sha256": "b46a61e74f415d94ada15265eb334bee91fdc587d5a549fbf3c98314ed01e7ae"
+    },
+    "results/GAP_MAP.json": {
+     "bytes": "6983",
+     "git_blob": "f905699a6bc85eab7dda884eb36223135d5fde03",
+     "sha256": "9f0cbd9d3545a268ddd7f394db33bf5b55446a2caccc6c888f340d6cd9040ae6"
+    }
+   },
+   "standing": "READY_FOR_BATTERY_V2 on synthetic fixtures only (development evidence)",
+   "task": "BR-MIND-REPSEM-01"
+  }
+ },
+ "capability": {
+  "arm_output_schema": "forge.battery_rediscovery_v2.arm_output/1",
+  "compared_arms": [
+   "OLD_MIND",
+   "REPRESENTATION_ONLY",
+   "SEMANTIC_ROLES_ONLY",
+   "REPRESENTATION_PLUS_ROLES",
+   "CAREFUL_BASELINE"
+  ],
+  "not_in_gen1": [
+   "ScientificWorld",
+   "ActionSpace",
+   "HypothesisPortfolio",
+   "SearchTree",
+   "AttemptMemory",
+   "Ax/BoTorch",
+   "PySINDy/PySR",
+   "ModelCritic",
+   "mechanism reasoning"
+  ],
+  "pack_manifest_schema": "forge.battery_rediscovery_v2.pack_manifest/1",
+  "primary_seed": 0,
+  "problem_schema": "forge.mind.repsem.problem/1",
+  "questions": [
+   "MODEL_ADEQUACY",
+   "IDENTIFIABILITY",
+   "WITHIN_CELL_GENERALIZATION",
+   "CROSS_CELL_TRANSFER",
+   "MODEL_DISCREPANCY"
+  ],
+  "reference_arms": [
+   "FIXED_FIT",
+   "ALWAYS_FIT",
+   "ALWAYS_REFUSE"
+  ],
+  "replay_format": {
+   "arm_outputs": "content digest (sha256 of canonical JSON) of every (arm, problem) output, re-executed from the pack (benchmarks.battery_rediscovery_v2.candidate.run.replay_all)",
+   "minimal_mind_traces": "benchmarks.battery_rediscovery_v1.candidate.mind_arm.replay_traces over the forge.mind.minimal.trace/1 hash chain (VERIFIED)",
+   "repsem": "engcore.mind.repsem.replay: re-assess under the recorded roles and require byte identity (EXACT)"
+  },
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "what_gen1_is": "the Minimal Mind loop (engcore.mind.minimal, BR-MIND-01) plus the representation and semantic-roles repair (engcore.mind.repsem, BR-MIND-REPSEM-01), driven by the battery_rediscovery_v2 adapters on declared Thevenin 1RC / Rint families with a measured or a fitted piecewise-linear OCV"
+ },
+ "components": {
+  "leakage_firewall": {
+   "directory": null,
+   "files": {
+    "benchmarks/battery_rediscovery_v1/leakage.py": {
+     "bytes": "17141",
+     "git_blob": "7c320428953e038d43d971860f58d1bc7fe121e5",
+     "sha256": "1c52d53ef00270dc42e78328cd2950987992a91fa954f0d85a0c6491b1274dac"
+    },
+    "benchmarks/battery_rediscovery_v1/mutation.py": {
+     "bytes": "9641",
+     "git_blob": "c123d69f7c6bdf2fd0eae1ff658e8bd763e1577a",
+     "sha256": "1e59ccf94d66b4e80ecb78851175d3ba9e8dc10f7af17ea2470fc930542d70c4"
+    },
+    "benchmarks/battery_rediscovery_v2/leakage.py": {
+     "bytes": "16106",
+     "git_blob": "8e3a02b4a9d6661ceaf06c1df136b0d2bfaf1e12",
+     "sha256": "84ed2f4fda556d48e0b503ddaed834dea92e29a9517f81b6dd3914de930063bd"
+    },
+    "benchmarks/battery_rediscovery_v2/mutation.py": {
+     "bytes": "6708",
+     "git_blob": "fc3a3bf6db0c7fd9c376350dcf82d94a7b8c96c5",
+     "sha256": "10599c44a112b87c1bbf0a73cc0cc7f12fcd7a10433a356f5f5907fb1202803a"
+    },
+    "benchmarks/battery_rediscovery_v2/sandbox_run.py": {
+     "bytes": "1791",
+     "git_blob": "6f2792c82d9db6c71443cacdec314cef2b7cc46b",
+     "sha256": "c1eacb54a63fad6b6beb05be0d936fcb686e39c727f619b2e8ad822bf75f7520"
+    }
+   },
+   "git_tree": null,
+   "role": "scanner v1 (numeric/text engines) and firewall v2 (candidate-material policy, provenance, runtime audit) with their mutation suites and sandbox"
+  },
+  "minimal_mind": {
+   "directory": "src/engcore/mind/minimal",
+   "files": {
+    "src/engcore/mind/__init__.py": {
+     "bytes": "1213",
+     "git_blob": "e69c76466a66811024720460a9bf54150d9e301e",
+     "sha256": "a9021b919b3d3a6674109d8323a569dd963531f59965d0e32057c6d6a9915999"
+    },
+    "src/engcore/mind/minimal/__init__.py": {
+     "bytes": "2783",
+     "git_blob": "c5e3db7247d4d7eb2d528db03912adcd5a8e5e4d",
+     "sha256": "c42b41b8a7fc8718f1a089f0406c09b99e89a76d0f68e9e87356faeb712c7e94"
+    },
+    "src/engcore/mind/minimal/competition.py": {
+     "bytes": "21314",
+     "git_blob": "6ec106f0832ae664e65a5438989f85c8ae7504d2",
+     "sha256": "d92d6104b8cdfe6075a742c36e0181c7f227a78e834fe6df2e90521f24e08ee7"
+    },
+    "src/engcore/mind/minimal/experiments.py": {
+     "bytes": "13948",
+     "git_blob": "cd4829560e5e3cd12fa5683966d15fcf032bcc52",
+     "sha256": "f06886b6c25c221d1df90e62364b54e7faacc789db1ffe3573ba7b8a56f931a1"
+    },
+    "src/engcore/mind/minimal/falsifier.py": {
+     "bytes": "3998",
+     "git_blob": "4e94e8eb4e5c4c35c0d5c7eee022ce883fcfb8f3",
+     "sha256": "cde282cfb68ef49d51812e9befb26c9affaf04deb206bd0e27d5da3b9f8d1332"
+    },
+    "src/engcore/mind/minimal/outcome_model.py": {
+     "bytes": "19684",
+     "git_blob": "78b6efa3a2f8318e57f453fd0877360fd86fdbcc",
+     "sha256": "282a421d4574cc7caff6a053375f1f9700c2b219ae7408ae9399371407ab146e"
+    },
+    "src/engcore/mind/minimal/problem.py": {
+     "bytes": "6495",
+     "git_blob": "a195218efa25503a460ef9b5685ac788d1434442",
+     "sha256": "5d2856fc00facaa2e21c024e40390d5f3a377b536b5b1de08f0117eec8b6f3cd"
+    },
+    "src/engcore/mind/minimal/runner.py": {
+     "bytes": "26493",
+     "git_blob": "e0158ae4d04cec259c1cdab10ef6c9f65a5a1dfd",
+     "sha256": "4b2350234f7b2276c3d162ac5249a745cc14e20c995715d5e7f309fcc588b8b8"
+    },
+    "src/engcore/mind/minimal/stopping.py": {
+     "bytes": "2859",
+     "git_blob": "4cfa46e6f4444d873fff99525aa75a7a78cf4752",
+     "sha256": "0363a830449c1eedcff88462fcedba0ec61efc4579104d481149c3b5e8630fed"
+    },
+    "src/engcore/mind/minimal/structures.py": {
+     "bytes": "9903",
+     "git_blob": "3f91b04032f1ddc314f9525073c654bd00320a0d",
+     "sha256": "cb0b83274832160da978257a67198d7ee2f2f9a9bd74c6f6d8c6ed4d0011deff"
+    },
+    "src/engcore/mind/minimal/trace.py": {
+     "bytes": "5055",
+     "git_blob": "7595eff6d780a8d032e4368a76fb59b2ab945489",
+     "sha256": "1260f09d007e39399d3f23767a77cdf9ac56016f0392125998e1a7e920b77c01"
+    }
+   },
+   "git_tree": "17db855067a1d71f8b6da2c28d81f556d12a8905",
+   "role": "Minimal Mind source (engcore.mind.minimal), byte-exact from the Mind source commit"
+  },
+  "platform_dependencies": {
+   "directory": null,
+   "files": {
+    "src/engcore/hybrid_uq/identifiability.py": {
+     "bytes": "30015",
+     "git_blob": "4680664dd5618a5fde5da230f4b167171fc6ecef",
+     "sha256": "611d37249d9878ce8c77e2d4532d471ec1d273b502579477d432c4f39ceabee7"
+    },
+    "src/engcore/inference/calibration.py": {
+     "bytes": "49198",
+     "git_blob": "c8a43fd5d945b8273a7bd44baab9f217719b0af3",
+     "sha256": "4292a76e37ee3d73fe9be274684130224587dc0ee910a5c4227c18621c258900"
+    }
+   },
+   "git_tree": null,
+   "role": "engcore modules the Gen1 judgments call directly (identifiability classifier and its status vocabulary); not Gen1 code, bound so that a platform change is visible"
+  },
+  "repsem": {
+   "directory": "src/engcore/mind/repsem",
+   "files": {
+    "src/engcore/mind/repsem/__init__.py": {
+     "bytes": "2329",
+     "git_blob": "f6f34e4fb8ef3771a51c869c198549eb25faa1bd",
+     "sha256": "9f29cb0a8ed21976f54577e67157d264f26809d1bdd3c797a8a9bf5a4eaff550"
+    },
+    "src/engcore/mind/repsem/assess.py": {
+     "bytes": "32591",
+     "git_blob": "826d2c77ebfafa65fe9d2ec802bfc76a25308cd8",
+     "sha256": "fb715985cfdedd335c4feaac508c8b6aed2b6b8c892f923f9e9bcc30c66cc52d"
+    },
+    "src/engcore/mind/repsem/claims.py": {
+     "bytes": "12719",
+     "git_blob": "076bc004259f8f252ca0109715a1e08500fcd9e7",
+     "sha256": "8abbe88c927576febaf657e753b378280a90996b8143720f26fde02074e4fa22"
+    },
+    "src/engcore/mind/repsem/families.py": {
+     "bytes": "6483",
+     "git_blob": "d7f5de8fcfb75cda59dd2d8da4989e03f561ecb2",
+     "sha256": "364a49fc72d7db3eee0d137b5738edbf043c0eaf7682e7c5baf4ce16686a93c9"
+    },
+    "src/engcore/mind/repsem/hypothesis.py": {
+     "bytes": "5040",
+     "git_blob": "c5b9366e6c88b0c595f2455d666f6ea9578d05e5",
+     "sha256": "db3a9316c57cf462e3f041a6070f2cf3019b09b957134496207ea3b7992d7dd7"
+    },
+    "src/engcore/mind/repsem/roles.py": {
+     "bytes": "12544",
+     "git_blob": "f995927ed6cb0d0d671b3615cec56b4e08ac8a5c",
+     "sha256": "96367f9a46b6d8cf2f37deb149477f4bfe39ccc964abcd9c9ca4d7ec020eb6bf"
+    }
+   },
+   "git_tree": "9b25329da6d2928a5f9d711ebdb571495a7f1b5a",
+   "role": "representation + semantic-roles repair (engcore.mind.repsem): roles, scoped claims, named refusals, ScientificHypothesis, role-typed family binding, deterministic assessment and replay"
+  },
+  "repsem_ablation_adapters": {
+   "directory": null,
+   "files": {
+    "benchmarks/mind_repsem_v1/__init__.py": {
+     "bytes": "122",
+     "git_blob": "aa83f45bdf6d7ac8697e330e51e1de92b70bafb3",
+     "sha256": "b06dbe7d465b912c5d67f1145c4939c44bf0096c229917f5fc28ad126bc23b65"
+    },
+    "benchmarks/mind_repsem_v1/arms.py": {
+     "bytes": "8657",
+     "git_blob": "810180d35c795b9b08692ed4c8e4ebaad181da68",
+     "sha256": "46f7ed960d4cff9c7651c775b8283e6772cc1313096efc1610df7a0b21b49735"
+    },
+    "benchmarks/mind_repsem_v1/fixtures.py": {
+     "bytes": "21525",
+     "git_blob": "a08df1679558520dc9e7e58e1ac805ce1f8082e2",
+     "sha256": "16c6af37197f2d7a779c923851d5f2ede9cc918c67f4e0cc249a10bf5f416ec5"
+    }
+   },
+   "git_tree": null,
+   "role": "the repsem ablation arms reused by v2 (role-posed load pool) and its fixtures"
+  },
+  "v1_adapters_and_baselines": {
+   "directory": "benchmarks/battery_rediscovery_v1/candidate",
+   "files": {
+    "benchmarks/battery_rediscovery_v1/__init__.py": {
+     "bytes": "243",
+     "git_blob": "8e148f6a93d84e4c84ff2cd2d3cb7c208e6c4777",
+     "sha256": "ed7abe03c3087bd4c92990621e5ac8d718b37532b47c25984be8a40497f91452"
+    },
+    "benchmarks/battery_rediscovery_v1/candidate/__init__.py": {
+     "bytes": "296",
+     "git_blob": "ddf17d9fa4f6a18b00a80023064ce5c9dadbdd4e",
+     "sha256": "8a0fa5142993065b6d88798e43ffb2a61d30cdb9165a3b4f97417ed36ebe184b"
+    },
+    "benchmarks/battery_rediscovery_v1/candidate/baselines.py": {
+     "bytes": "15245",
+     "git_blob": "058cb9b7697126fd3423b4f938c95d911b01f904",
+     "sha256": "6d71600c3c1b1eaf577798e7fac44bf37ef0a51aef874337633d099bec42541f"
+    },
+    "benchmarks/battery_rediscovery_v1/candidate/common.py": {
+     "bytes": "4602",
+     "git_blob": "dc1bc5cf8cbbdd61eb36815bdb86afea232f4950",
+     "sha256": "2b2163f9e1f1eb4088763ccbbf7982dbd16882ca2b7adfa7d87f187fc811226d"
+    },
+    "benchmarks/battery_rediscovery_v1/candidate/mind_arm.py": {
+     "bytes": "22470",
+     "git_blob": "c9a22cb9bebedeb466513037ecedb9753168e132",
+     "sha256": "959182aa04ca85f50daf8d8aa00ceafa5cbef657477ce3286bd0b224b3a83f1b"
+    },
+    "benchmarks/battery_rediscovery_v1/candidate/model.py": {
+     "bytes": "10786",
+     "git_blob": "e2dbd10b321dfb1678d5525d60d4295b3c1e513d",
+     "sha256": "9dfcdd33495fae1d1eaa2be2feea5b2da94d4e7d1f7e2aeb2c9bd988f59055a6"
+    }
+   },
+   "git_tree": "1fa5853c5e5bbc7b3565fd08c554036fea8ec4d6",
+   "role": "battery_rediscovery_v1 candidate: the Minimal Mind adapter (mind_arm), the problem view, the 1RC model, and the CAREFUL / FIXED_FIT / ALWAYS_FIT / ALWAYS_REFUSE baselines"
+  },
+  "v2_primary_adapters": {
+   "directory": "benchmarks/battery_rediscovery_v2/candidate",
+   "files": {
+    "benchmarks/__init__.py": {
+     "bytes": "304",
+     "git_blob": "004e972750b570e313e62f24156159975cd3451a",
+     "sha256": "06dd19293c8381eafa491dfd1be8ca413dcb3ea20a1c490cf24b810e6720c7df"
+    },
+    "benchmarks/battery_rediscovery_v2/__init__.py": {
+     "bytes": "219",
+     "git_blob": "20d5f272405b2f8fa848a8aa56cf2dcf951739ee",
+     "sha256": "a9725684ed8a924eb3241ab6e6ebbc7b13408c3de9050211a2fce2f792cd3908"
+    },
+    "benchmarks/battery_rediscovery_v2/candidate/__init__.py": {
+     "bytes": "0",
+     "git_blob": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",
+     "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "benchmarks/battery_rediscovery_v2/candidate/arms.py": {
+     "bytes": "9962",
+     "git_blob": "49096af67b1e6c189175be82c13f62a26849b6f5",
+     "sha256": "bfe9a62a87e83e4fe66c25d5653a36243c235cbf474062cfa405309650c889a3"
+    },
+    "benchmarks/battery_rediscovery_v2/candidate/common.py": {
+     "bytes": "3429",
+     "git_blob": "bcc31e26954dbe3427cf48cf3d24519b1b656d7b",
+     "sha256": "474c8a41a58d1de6f5bda85cc915e48f000aaf6c41a36a39fbe9db8bf01b6407"
+    },
+    "benchmarks/battery_rediscovery_v2/candidate/families.py": {
+     "bytes": "5355",
+     "git_blob": "c7f27b8e7a043eb8275b1b50df41f794fef6a64e",
+     "sha256": "3b9d1d4b9013b4145318cca55aa6f42cae995e2baae3e9fd01fdb4537e2d3304"
+    },
+    "benchmarks/battery_rediscovery_v2/candidate/run.py": {
+     "bytes": "5219",
+     "git_blob": "72857daa3045f1a441c6022740b8e28408d76491",
+     "sha256": "6880048b0485b4445ae13023c6b6628a63f146cbadefbff468d48f2c37ad33ae"
+    },
+    "benchmarks/battery_rediscovery_v2/candidate/views.py": {
+     "bytes": "4793",
+     "git_blob": "9b7441302c6983b013d003e8ca9ec9a2e5935049",
+     "sha256": "8db4995b65e68e990f065632bc3e8449fc0efa0531cb91c33b9f9a957bbb542c"
+    }
+   },
+   "git_tree": "443fd7ece68c3e2b0099cdca15abb55690584a4a",
+   "role": "battery_rediscovery_v2 candidate package: the five compared arms and three reference arms, the v1 problem view, the declared Thevenin families, pack loading, the answer vocabulary, run and replay"
+  },
+  "v2_reference_protocol": {
+   "directory": null,
+   "files": {
+    "benchmarks/battery_rediscovery_v2/evaluator/conclusion.py": {
+     "bytes": "7765",
+     "git_blob": "9b81d8b11c55fe17242ec034da9de47e18ab0bcf",
+     "sha256": "4b6094f7d58ee6d6c7e2297385620c8de4153a73457623fc8a0bcdc1cc2cd335"
+    },
+    "benchmarks/battery_rediscovery_v2/evaluator/reference.py": {
+     "bytes": "36295",
+     "git_blob": "a47eed475a604cbc865066365d639144ee99fcb6",
+     "sha256": "fab4761b8d1a5db1a724dea49f8c82d9d5c4fad8488342a7240767001ae22863"
+    },
+    "benchmarks/battery_rediscovery_v2/evaluator/score.py": {
+     "bytes": "3383",
+     "git_blob": "609e4d170ccf18c533315fad3845c664ed6eb053",
+     "sha256": "572d8591d12cf2bda9fd38f80338ae2054a1cbfecd7e3dbfd33ace8912e05997"
+    },
+    "benchmarks/battery_rediscovery_v2/evaluator/truth.py": {
+     "bytes": "2823",
+     "git_blob": "59f8920d8ceffd52032fbc433c96dca2ea9a13d3",
+     "sha256": "5f091f60c5df062f2bf7740c31182679dede4bc91d4bd8834715032322b22027"
+    }
+   },
+   "git_tree": null,
+   "role": "battery_rediscovery_v2 evaluator: reference truth protocol, scoring, conclusion rule"
+  }
+ },
+ "generation_status": {
+  "CERTIFIED": "NO",
+  "FORMAL": "NO",
+  "GENERATION": 1,
+  "IMPLEMENTED": "YES",
+  "MEASURED": "YES",
+  "REAL_DATA_SIGNAL": "YES",
+  "SCIENTIFICALLY_VERIFIED": "NO",
+  "TESTED": "YES"
+ },
+ "reference": {
+  "branch": "research/battery-rediscovery-v2",
+  "commit": "b8160e2101884b9f8018d4d3be5e1a80a8004b2d",
+  "minimal_mind_source_commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+  "note": "local research branch; identities are git object ids, so they hold for any clone that contains the commit",
+  "pushed": false,
+  "repsem_failing_first_tests_commit": "db4397446774d789c92f7e0a20338f097d51e430",
+  "repsem_head_commit": "8603463936b3e4010ac2a541a7663976fae97703",
+  "repsem_repair_commit": "cac1c584d8056720cc2c83f63fe93d3b32a83151",
+  "tree": "5c1c69a8d8b847071c9e0723a5429a91023bffd4"
+ },
+ "schema": "forge.mind.gen1_reference/1",
+ "vocabularies": {
+  "axes": [
+   "MODEL_ADEQUACY",
+   "IDENTIFIABILITY",
+   "WITHIN_CELL_GENERALIZATION",
+   "CROSS_CELL_TRANSFER",
+   "MODEL_DISCREPANCY"
+  ],
+  "claim_states": [
+   "IDENTIFIABLE",
+   "NOT_IDENTIFIABLE",
+   "MODEL_ADEQUATE",
+   "MODEL_INADEQUATE",
+   "MODEL_DISCREPANCY_UNRESOLVED",
+   "MODEL_DISCREPANCY_PRESENT",
+   "WITHIN_CELL_SUPPORTED",
+   "WITHIN_CELL_NOT_SUPPORTED",
+   "CROSS_CELL_SUPPORTED",
+   "CROSS_CELL_NOT_SUPPORTED"
+  ],
+  "claim_types": [
+   "CROSS_CELL_TRANSFER",
+   "IDENTIFIABILITY",
+   "MODEL_ADEQUACY",
+   "MODEL_DISCREPANCY",
+   "WITHIN_CELL_GENERALIZATION"
+  ],
+  "dispositions": [
+   "SUPPORTED",
+   "NOT_SUPPORTED",
+   "REVIEW",
+   "NOT_ASSESSABLE",
+   "REFUSED"
+  ],
+  "non_committal": [
+   "REVIEW",
+   "NOT_ASSESSABLE",
+   "REFUSED"
+  ],
+  "refusal_reasons": [
+   "OUT_OF_DOMAIN",
+   "NOT_IDENTIFIABLE",
+   "INSUFFICIENT_EVIDENCE",
+   "REPRESENTATION_UNAVAILABLE",
+   "CONFLICTING_EVIDENCE",
+   "NO_DISCRIMINATING_EVIDENCE"
+  ],
+  "repsem_dispositions": [
+   "SUPPORTED",
+   "NOT_SUPPORTED",
+   "REVIEW",
+   "REFUSED",
+   "NOT_ASSESSABLE"
+  ],
+  "role_sources": [
+   "problem_specification",
+   "protocol_metadata",
+   "legacy_adapter_default"
+  ],
+  "scientific_roles": [
+   "CONTROLLED_INPUT",
+   "FIXED_PROTOCOL_CONDITION",
+   "STATE_VARIABLE",
+   "MEASUREMENT",
+   "DERIVED_QUANTITY",
+   "LATENT_PARAMETER",
+   "NUISANCE_VARIABLE"
+  ]
+ }
+}

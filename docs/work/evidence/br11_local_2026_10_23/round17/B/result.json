@@ -1,0 +1,133 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "B - dispatch/effect/redispatch",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "scope": "Bounded synthetic accounting and software control-flow review only. No scientific validation, certification, formal proof, external provider run, source mutation or new protocol. Q1-Q3/Q5-Q7 NO is lens-local, not exhaustive coverage.",
+  "findings": [
+    {
+      "id": "R17-B-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted native capture still loses returned spend and allows duplicate simulation dispatch after owner checkpoint replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1000,
+      "related_lines": [
+        911,
+        939,
+        999,
+        1026,
+        1027
+      ],
+      "smallest_reproduction": "Construct synthetic battery desk with following reader returning live owner dicts; save pre-execution canonical ledger; dispatch once and settle run.1; interrupt _retain_handing at entry on both initial capture and immediate recovery; restore owner mapping entry to saved ledger; dispatch original authorization again. See probe_handing_boundary.py retention_and_cleanup_interrupted.",
+      "actual_result": {
+        "calls": 2,
+        "refused": false,
+        "pending_before_restore": {
+          "4": "tuple"
+        },
+        "unread_before_restore": {},
+        "sealed": null,
+        "diverged": []
+      },
+      "expected_result": "Original dispatch authorization must be refused after a verification was handed the spent state, including when authoritative comparison was interrupted. No second simulated execution.",
+      "threat_families": [
+        "native pre-capture information loss",
+        "live mapping checkpoint replacement",
+        "hidden observed spend permits redispatch"
+      ],
+      "evidence": "/home/dev_kaeem/br11-review/r17/B/probe_handing_boundary.log",
+      "trust_scope": "Within documented returned-handing guarantee: exact owner records, ordinary mapping replacement by canonical checkpoint, injected asynchronous interruption checkpoints. No private reader mutation, invented evidence, serializer trick, unadmitted action or external provider execution.",
+      "novelty": "Known OPEN family independently reproduced on R17, alias R16-B-2. Not a new repair regression.",
+      "proposed_correction": "Select execution-owner retained handoff/publication lifetime contract preserving a stable observation across owner restore until authoritative comparison acknowledgement. Do not silently narrow observation to successful capture. Sentinel/local retry handles one-shot registration but cannot reconstruct content absent from all retained state after both captures abort. Permanent poisoning solely for interruption violates honest-reader availability; arbitrary retries do not establish complete preservation."
+    }
+  ],
+  "assessment": "The new canonical normalization, all-history prefix comparison and exact barrier identity guard did not produce a new wrong dispatch outcome in this bounded lens. Single native capture failure and post-return checkpoints at lines 996/998/999 now preserve spend. All six permutations of three detached retained canonical prefixes block both old-authorization dispatch and fresh world re-admission after rollback without permanent divergence. Complete uncaptured-history guarantee requires owner handoff/lifetime decision, not a generic local reconciliation correction.",
+  "tested_transitions": [
+    "Exact Git SHA and owners import path before execution",
+    "One native capture interruption, recovery then checkpoint restore: refused, one effect",
+    "One interrupt after callback return line996: refused, one effect",
+    "One interrupt after handed flag line998: refused, one effect",
+    "One interrupt before registry store line999: refused, one effect",
+    "Two native capture interruptions: known unsafe restore and repeat effect reproduced",
+    "Six permutations of detached base/spent/extended observations interrupted before comparison; rollback refuses original dispatch and newly projected re-admission; calls remains one",
+    "R16 16 regression controls: normalization of iteration 1/1.0/string, repeated detached histories, rollback/conflict, malformed retained reconciliation, exact stale barrier concurrency, experiment histories, returning to prior conflicting branch"
+  ],
+  "missing_coverage": [
+    "No exhaustive bytecode/signal checkpoint exploration",
+    "No large-memory pressure or retained-history resource bound measurement",
+    "No actual solver/provider execution; synthetic executor only",
+    "No new independent concurrency stress; executed deterministic existing stale-barrier Event control",
+    "No full FAST, certification, dependency changes or owner protocol implementation",
+    "Non-budget authorities outside this lens not exhaustively revisited"
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r17/B/probe_handing_boundary.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "env_overrides": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/B/probe_handing_boundary.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/mind/test_authority_review_r16.py",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/B/pt",
+        "-n",
+        "1"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "env_overrides": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/B/r16_controls.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r17/B/probe_dispatch_histories.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "env_overrides": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/B/probe_dispatch_histories.log"
+    }
+  ],
+  "identity_evidence": "/home/dev_kaeem/br11-review/r17/B/identity.log",
+  "reviewed_material": [
+    "CLAUDE.md",
+    "docs/architecture/README.md",
+    "current BR1.1 ACTIVE_PLAN entry",
+    "README lifecycle and R16 dispositions",
+    "R16 threat_disposition_matrix.json",
+    "R16 OWNER_HANDOFF_DECISION.md proposal",
+    "b8a65bb9..98d72b2e owners.py diff",
+    "owners.py capture/recovery/readback/comparison lifecycle",
+    "tests/mind/test_authority_review_r14.py helpers and adjacent controls",
+    "tests/mind/test_authority_review_r16.py"
+  ]
+}

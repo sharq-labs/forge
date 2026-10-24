@@ -1,0 +1,2 @@
+[rollback_in_readback] same authorization dispatched again: True; executor calls 2; unread []; diverged []
+[fail_then_rollback] same authorization dispatched again: False; executor calls 1; unread []; diverged []

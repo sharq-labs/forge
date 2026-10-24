@@ -1,0 +1,4 @@
+FAILED tests/mind/test_authority_review_r8.py::test_a_spend_one_verification_read_is_observed_before_a_rollback_can_be_read
+FAILED tests/mind/test_authority_review_r9.py::test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_redispatches
+FAILED tests/mind/test_authority_review_r9.py::test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_verification
+3 failed, 566 passed in 18.74s

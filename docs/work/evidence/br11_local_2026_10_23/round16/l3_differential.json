@@ -1,0 +1,78 @@
+[
+  {
+    "suite": "guards_local",
+    "new": [],
+    "fixed": [],
+    "branch_ids": [
+      "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
+      "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one"
+    ],
+    "base_ids": [
+      "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
+      "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one"
+    ]
+  },
+  {
+    "suite": "expensive_local",
+    "new": [],
+    "fixed": [],
+    "branch_ids": [
+      "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates",
+      "tests/test_heterogeneous_ngspice.py::test_a2_the_provider_actually_computes_the_answer",
+      "tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process",
+      "tests/test_heterogeneous_ngspice.py::test_b2_the_netlist_translation_is_deterministic_and_assigns_names",
+      "tests/test_heterogeneous_ngspice.py::test_b_both_paths_consume_the_same_canonical_problem",
+      "tests/test_heterogeneous_ngspice.py::test_c2_the_provider_answer_satisfies_craftys_own_assembled_equations",
+      "tests/test_heterogeneous_ngspice.py::test_c_native_and_ngspice_agree_within_the_preregistered_tolerance",
+      "tests/test_heterogeneous_ngspice.py::test_d2_only_one_dispatch_entry_differs",
+      "tests/test_heterogeneous_ngspice.py::test_e2_case_e_two_stage_coupled_results_agree",
+      "tests/test_heterogeneous_ngspice.py::test_e3_the_electrical_quantities_at_the_fixed_point_agree",
+      "tests/test_heterogeneous_ngspice.py::test_e4_iteration_counts_are_recorded_not_required",
+      "tests/test_heterogeneous_ngspice.py::test_e_case_a_coupled_results_agree",
+      "tests/test_heterogeneous_ngspice.py::test_f_provenance_distinguishes_the_execution",
+      "tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure",
+      "tests/test_heterogeneous_ngspice.py::test_g3_a_missing_requested_quantity_is_a_provider_failure",
+      "tests/test_heterogeneous_ngspice.py::test_g4_provider_failure_is_none_of_the_other_three_failures",
+      "tests/test_heterogeneous_ngspice.py::test_g5_the_singular_precondition_is_detected_on_both_paths",
+      "tests/test_heterogeneous_ngspice.py::test_i_no_provider_syntax_reaches_a_scientific_record",
+      "tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical",
+      "tests/test_heterogeneous_ngspice.py::test_m_the_two_solvers_execute_the_same_realization",
+      "tests/test_heterogeneous_ngspice.py::test_n_substituting_the_provider_does_not_inflate_the_record",
+      "tests/test_heterogeneous_ngspice.py::test_p2_the_corrupted_power_is_refused_before_the_coupled_loop_admits_it",
+      "tests/test_heterogeneous_ngspice.py::test_p3_the_relations_are_independent_of_the_quantity_they_check",
+      "tests/test_heterogeneous_ngspice.py::test_p4_admission_is_a_provider_failure_not_a_scientific_verdict",
+      "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_CorruptPower-V_drop \\\\* I]",
+      "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedCurrent-current convention]",
+      "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedPower-V_drop \\\\* I]"
+    ],
+    "base_ids": [
+      "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates",
+      "tests/test_heterogeneous_ngspice.py::test_a2_the_provider_actually_computes_the_answer",
+      "tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process",
+      "tests/test_heterogeneous_ngspice.py::test_b2_the_netlist_translation_is_deterministic_and_assigns_names",
+      "tests/test_heterogeneous_ngspice.py::test_b_both_paths_consume_the_same_canonical_problem",
+      "tests/test_heterogeneous_ngspice.py::test_c2_the_provider_answer_satisfies_craftys_own_assembled_equations",
+      "tests/test_heterogeneous_ngspice.py::test_c_native_and_ngspice_agree_within_the_preregistered_tolerance",
+      "tests/test_heterogeneous_ngspice.py::test_d2_only_one_dispatch_entry_differs",
+      "tests/test_heterogeneous_ngspice.py::test_e2_case_e_two_stage_coupled_results_agree",
+      "tests/test_heterogeneous_ngspice.py::test_e3_the_electrical_quantities_at_the_fixed_point_agree",
+      "tests/test_heterogeneous_ngspice.py::test_e4_iteration_counts_are_recorded_not_required",
+      "tests/test_heterogeneous_ngspice.py::test_e_case_a_coupled_results_agree",
+      "tests/test_heterogeneous_ngspice.py::test_f_provenance_distinguishes_the_execution",
+      "tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure",
+      "tests/test_heterogeneous_ngspice.py::test_g3_a_missing_requested_quantity_is_a_provider_failure",
+      "tests/test_heterogeneous_ngspice.py::test_g4_provider_failure_is_none_of_the_other_three_failures",
+      "tests/test_heterogeneous_ngspice.py::test_g5_the_singular_precondition_is_detected_on_both_paths",
+      "tests/test_heterogeneous_ngspice.py::test_i_no_provider_syntax_reaches_a_scientific_record",
+      "tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical",
+      "tests/test_heterogeneous_ngspice.py::test_m_the_two_solvers_execute_the_same_realization",
+      "tests/test_heterogeneous_ngspice.py::test_n_substituting_the_provider_does_not_inflate_the_record",
+      "tests/test_heterogeneous_ngspice.py::test_p2_the_corrupted_power_is_refused_before_the_coupled_loop_admits_it",
+      "tests/test_heterogeneous_ngspice.py::test_p3_the_relations_are_independent_of_the_quantity_they_check",
+      "tests/test_heterogeneous_ngspice.py::test_p4_admission_is_a_provider_failure_not_a_scientific_verdict",
+      "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_CorruptPower-V_drop \\\\* I]",
+      "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedCurrent-current convention]",
+      "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedPower-V_drop \\\\* I]"
+    ]
+  }
+]

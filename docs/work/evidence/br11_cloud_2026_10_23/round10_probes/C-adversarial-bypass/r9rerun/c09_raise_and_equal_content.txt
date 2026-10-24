@@ -1,0 +1,7 @@
+S6 dispatch: DISPATCHED
+S6 re-dispatch while accounts() raises: refused (is action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE))
+S6 re-dispatch after a rollback (the spend was observed at the first re-dispatch? no: it raised): DISPATCHED | executor ran 2
+S7 dispatch: DISPATCHED
+S7 re-dispatch after an equal-content replacement: refused (w refuses this action (MISSING_INFORMATION: AUTHORITY_STALE))
+S7 re-dispatch after a rollback by replacement: refused (is action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1
+exit 0

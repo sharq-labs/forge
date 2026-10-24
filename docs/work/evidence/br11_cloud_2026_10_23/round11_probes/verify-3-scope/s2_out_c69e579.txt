@@ -1,0 +1,10 @@
+/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r11/verify-3-scope/tree-c69e579/src/engcore/__init__.py
+[control   ] [none] re-dispatch after the restore: DISPATCHED | executor ran 2
+[control   ] [seq ] verification on the spend: MISSING_INFORMATION AUTHORITY_STALE | re-dispatch after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[control   ] [wait] D waited for P: False | P (handed the spend): DISPATCHED | D (handed the restore): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[moving-key] [none] re-dispatch after the restore: DISPATCHED | executor ran 2
+[moving-key] [seq ] verification on the spend: MISSING_INFORMATION AUTHORITY_OWNER_UNAVAILABLE | re-dispatch after the restore: DISPATCHED | executor ran 2
+[moving-key] [wait] D waited for P: False | P (handed the spend): DISPATCHED | D (handed the restore): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[deep      ] [none] re-dispatch after the restore: DISPATCHED | executor ran 2
+[deep      ] [seq ] verification on the spend: DISPATCHED | re-dispatch after the restore: DISPATCHED | executor ran 2
+[deep      ] [wait] D waited for P: False | P (handed the spend): DISPATCHED | D (handed the restore): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1

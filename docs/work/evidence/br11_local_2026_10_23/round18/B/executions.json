@@ -1,0 +1,17 @@
+[
+  {
+    "command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/probe.py",
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/B/probe.log"
+  },
+  {
+    "command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/native.py",
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/B/native.log"
+  },
+  {
+    "command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/B/pt",
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/B/controls.log"
+  }
+]

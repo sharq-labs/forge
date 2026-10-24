@@ -1,0 +1,71 @@
+import threading
+from unittest.mock import patch
+import pytest
+from engcore.mind.world import BudgetReader
+from engcore.mind.world.authority import OwnerUnavailable
+from tests.mind.test_authority_review_r16 import _interrupt_handing
+from tests.mind.test_authority_review_r17 import _fixture,_append,_checkpoint
+
+@pytest.mark.parametrize('kind',['ledger','experiment'])
+@pytest.mark.parametrize('transition',['seal','advance','rollback'])
+def test_canonical_json_inflight_transition(kind,transition):
+ account,held,follow,reader,owner_kind=_fixture(kind)
+ old=_checkpoint(account,kind)
+ _append(account,kind,{2:'a',10:'b'})
+ _interrupt_handing(reader)
+ held[0]=_checkpoint(account,kind)
+ entered,resume=threading.Event(),threading.Event()
+ real=BudgetReader._retained_entry
+ outcome=[]
+ def retained(k,e):
+  if threading.current_thread() is worker and not entered.is_set():
+   entered.set();assert resume.wait(5)
+  return real(k,e)
+ def run():
+  try:outcome.append(reader.read(owner_kind,'a'))
+  except BaseException as e:outcome.append(e)
+ worker=threading.Thread(target=run)
+ with patch.object(BudgetReader,'_retained_entry',staticmethod(retained)):
+  worker.start()
+  try:
+   assert entered.wait(5)
+   if transition=='seal':
+    with patch.object(reader,'_follow',lambda:None):
+     with pytest.raises(OwnerUnavailable):reader.pinned()
+    assert reader._sealed
+   elif transition=='advance':
+    if kind=='ledger':held[0].settle(charge_id='next',action_id='next',iteration=2,family='explore',realized=1.)
+    else:
+     from engcore.scientific.experiments.evaluation import ScientificEvaluation,EvaluationStatus
+     held[0].record(ScientificEvaluation('next',{},status=EvaluationStatus.NOT_CONVERGED))
+    _interrupt_handing(reader)
+   else:
+    held[0]=old
+    _interrupt_handing(reader)
+  finally:resume.set();worker.join(5)
+ assert not worker.is_alive()
+ assert len(outcome)==1
+ if transition in ('seal','advance'):assert isinstance(outcome[0],OwnerUnavailable)
+ if transition!='seal':
+  assert reader._sealed is None and not reader._diverged
+  if transition=='advance':assert reader.read(owner_kind,'a') is not None
+  else:
+   with pytest.raises(OwnerUnavailable):reader.read(owner_kind,'a')
+ assert not reader._in_flight
+ if transition!='seal':assert not reader._uncompared
+
+@pytest.mark.parametrize('kind',['ledger','experiment'])
+@pytest.mark.parametrize('fault',[KeyboardInterrupt,MemoryError,RecursionError])
+def test_retained_json_interruption_keeps_spend_then_recovers(kind,fault):
+ account,held,_,reader,owner_kind=_fixture(kind)
+ old=_checkpoint(account,kind)
+ _append(account,kind,{2:'a',10:'b'})
+ _interrupt_handing(reader)
+ held[0]=old
+ with patch.object(BudgetReader,'_retained_entry',side_effect=fault):
+  with pytest.raises(OwnerUnavailable):reader.read(owner_kind,'a')
+ assert reader._unread_entries and not reader._diverged and reader._sealed is None
+ with pytest.raises(OwnerUnavailable):reader.read(owner_kind,'a')
+ held[0]=_checkpoint(account,kind)
+ assert reader.read(owner_kind,'a') is not None
+ assert not reader._in_flight and not reader._uncompared and not reader._unread_entries

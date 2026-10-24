@@ -1,0 +1,79 @@
+M1_alias_readback (from_dict(payload), back=rebuilt.to_dict()): .................................................... [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 94%]
+....................                                                     [100%]
+
+M2_no_ticket_rule (earlier = False): ved_before_a_rollback_can_be_read
+FAILED tests/mind/test_authority_review_r9.py::test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_redispatches
+FAILED tests/mind/test_authority_review_r9.py::test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_verification
+
+     FAILED tests/mind/test_authority_review_r8.py::test_a_spend_one_verification_read_is_observed_before_a_rollback_can_be_read
+     FAILED tests/mind/test_authority_review_r9.py::test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_redispatches
+     FAILED tests/mind/test_authority_review_r9.py::test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_verification
+M3_any_other_in_flight (stricter rule): .................................................... [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 94%]
+....................                                                     [100%]
+
+M4_no_cache_prune: riment object at 0x7f2fb7b03950>}).experiments
+
+tests/mind/test_authority_review_r9.py:159: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r9.py::test_the_read_back_cache_keeps_only_the_accounts_handed_over_now
+
+     FAILED tests/mind/test_authority_review_r9.py::test_the_read_back_cache_keeps_only_the_accounts_handed_over_now
+M5_bind_raw_conversion: ^^^^^^^^^
+E       Failed: DID NOT RAISE WorldRefused
+
+tests/mind/test_authority_review_r9.py:206: Failed
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r9.py::test_a_fixed_condition_every_check_would_refuse_is_refused_at_bind
+
+     FAILED tests/mind/test_authority_review_r9.py::test_a_fixed_condition_every_check_would_refuse_is_refused_at_bind
+M6_level_problem_any_level: ARED"
+E       assert (None is not None)
+
+tests/mind/test_authority_review_r9.py:200: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r9.py::test_a_value_executed_at_another_declared_level_than_its_own_is_refused
+
+     FAILED tests/mind/test_authority_review_r9.py::test_a_value_executed_at_another_declared_level_than_its_own_is_refused
+M7_stale_for_any_other:     Use -v to get more diff
+
+tests/mind/test_authority_review_r8.py:203: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r8.py::test_no_account_or_provider_outside_the_declaration_in_force_is_read[other_content]
+
+     FAILED tests/mind/test_authority_review_r8.py::test_no_account_or_provider_outside_the_declaration_in_force_is_read[other_content]
+M8_memo_clears_pin_error: ^^^^^^^^^^
+E           Failed: DID NOT RAISE WorldRefused
+
+tests/mind/test_authority_review_r9.py:184: Failed
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r9.py::test_an_owner_whose_pin_fails_is_pinned_once_per_verification
+
+     FAILED tests/mind/test_authority_review_r9.py::test_an_owner_whose_pin_fails_is_pinned_once_per_verification
+M9_ledger_not_plain_checked: .................................................... [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 94%]
+....................                                                     [100%]
+
+M10_experiment_not_plain_checked: ning_its_code[value0]
+FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value1]
+FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value2]
+
+     FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value0]
+     FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value1]
+     FAILED tests/mind/test_authority_review_r9.py::test_an_experiment_whose_data_is_not_plain_json_is_refused_without_running_its_code[value2]
+M11_read_back_under_lock: .................................................... [ 56%]
+........................................................................ [ 75%]
+........................................................................ [ 94%]
+....................                                                     [100%]
+
+M12_waiting_not_applied (records but decides): ved_before_a_rollback_can_be_read
+FAILED tests/mind/test_authority_review_r9.py::test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_redispatches
+FAILED tests/mind/test_authority_review_r9.py::test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_verification
+
+     FAILED tests/mind/test_authority_review_r8.py::test_a_spend_one_verification_read_is_observed_before_a_rollback_can_be_read
+     FAILED tests/mind/test_authority_review_r9.py::test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_redispatches
+     FAILED tests/mind/test_authority_review_r9.py::test_an_older_mapping_compared_after_a_newer_one_is_refused_only_for_its_verification

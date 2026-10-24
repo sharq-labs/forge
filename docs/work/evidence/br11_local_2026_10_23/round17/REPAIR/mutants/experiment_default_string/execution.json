@@ -1,0 +1,35 @@
+{
+  "name": "experiment_default_string",
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src",
+    "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/pt",
+    "tests/mind/test_authority_review_r17.py",
+    "tests/mind/test_authority_review_r16.py"
+  ],
+  "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src:/home/dev_kaeem/forge-gen2-authority-v1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "exit_code": 1,
+  "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/pytest.log",
+  "identity_command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-c",
+    "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+  ],
+  "identity_exit_code": 0,
+  "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src/engcore/mind/world/owners.py\n",
+  "source_sha256": "94ffd2d8f87004f6d4d1ad0e56dd0d21a9ed9809749e4cf15de34b9624987ef9",
+  "summary": "1 failed, 31 passed in 2.01s",
+  "failures": [
+    "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]"
+  ]
+}

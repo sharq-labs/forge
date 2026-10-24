@@ -1,0 +1,4 @@
+units available 560
+178 ('READ', False, True) e.g. k = 798 yA | READ
+12 ('REFUSED FOR GOOD', True, True) e.g. k = 971 MF | REFUSED FOR GOOD: budget experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner writes down and reads back (3 read-backs failed alike): UnitCompatibilityError: unparsable unit 'megafarad': maximum recursion depth exceeded; the account was handed over in that state, which cannot be ordered against t
+8 ('RecursionError raised out of the reader', False, True) e.g. k = 988 daH | RecursionError raised out of the reader

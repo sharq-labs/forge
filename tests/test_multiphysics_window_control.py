@@ -290,12 +290,19 @@ def _subdivisions(run):
     return sum(1 for e in run.final_outputs["_window_control"]["events"] if e["action"] == "subdivided")
 
 
-def test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable():
+def test_step_size_memory_reduces_rejections_and_preserves_the_clipped_final_window():
     without, _, _ = _explicit_runtime(_policy(minimum=0.1), end=2.0)
     remembered_runtime, src, sink = _explicit_runtime(WindowControlPolicy(_q(0.1), 0.5, 4, None, 2.0), end=2.0)
     plain, remembered = _run(without), _run(remembered_runtime)
-    # nominal 0.5 s always fails (> 0.25 s): 8 subdivisions without memory; with growth 2, every other window
-    assert _subdivisions(plain) == 8 and _subdivisions(remembered) == 4
+    # Seven nominal 0.5 s attempts fail. At t=1.75 the remaining interval is already
+    # 0.25 s, so the clipped final window succeeds without a rejection.
+    assert _subdivisions(plain) == 7 and _subdivisions(remembered) == 4
+    assert [(w.start.magnitude_in("s"), w.end.magnitude_in("s")) for w in plain.windows] == [
+        (i / 4, (i + 1) / 4) for i in range(8)
+    ]
+    rejected_starts = [e["start_s"] for e in plain.final_outputs["_window_control"]["events"]
+                       if e["action"] == "subdivided"]
+    assert rejected_starts == [i / 4 for i in range(7)]
     widths = [w.end.magnitude_in("s") - w.start.magnitude_in("s") for w in remembered.windows]
     assert all(width <= 0.25 + 1e-12 for width in widths)
     assert remembered.ended_at.magnitude_in("s") == pytest.approx(2.0)

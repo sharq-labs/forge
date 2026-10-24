@@ -1,0 +1,8 @@
+{"sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44", "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]", "owners": "/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py"}
+{"mode": "same", "detach": false, "interrupts": 0, "pending": 0, "unread": 1, "old_refused": true, "fresh_dispatched": true, "calls": 2, "sealed": null, "diverged": false}
+{"mode": "rollback", "detach": false, "interrupts": 0, "pending": 0, "unread": 1, "old_refused": true, "fresh_dispatched": false, "calls": 1, "sealed": null, "diverged": false}
+{"mode": "rewrite", "detach": false, "interrupts": 0, "pending": 0, "unread": 1, "old_refused": true, "fresh_dispatched": false, "calls": 1, "sealed": null, "diverged": true}
+{"mode": "rollback", "detach": false, "interrupts": 1, "pending": 0, "unread": 1, "old_refused": true, "fresh_dispatched": false, "calls": 1, "sealed": null, "diverged": false}
+{"mode": "rollback", "detach": false, "interrupts": 2, "pending": 1, "unread": 0, "old_refused": false, "fresh_dispatched": true, "calls": 3, "sealed": null, "diverged": false}
+{"mode": "rollback", "detach": true, "interrupts": 1, "pending": 0, "unread": 1, "old_refused": true, "fresh_dispatched": false, "calls": 1, "sealed": null, "diverged": false}
+{"mode": "rollback", "detach": true, "interrupts": 2, "pending": 1, "unread": 0, "old_refused": true, "fresh_dispatched": false, "calls": 1, "sealed": null, "diverged": false}

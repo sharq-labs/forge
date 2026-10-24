@@ -1,0 +1,105 @@
+[base] FAILED tests/mind/test_authority_review_r13.py::test_a_spend_not_read_back_is_never_readmitted_after_a_restore_and_another_charge[one_other_charge]
+[base] FAILED tests/mind/test_authority_review_r13.py::test_content_raising_a_base_exception_is_refused_and_never_redispatched[base_exception]
+[base] FAILED tests/mind/test_authority_review_r13.py::test_content_raising_a_base_exception_is_refused_and_never_redispatched[cancelled]
+[base] FAILED tests/mind/test_authority_review_r13.py::test_content_raising_a_base_exception_is_refused_and_never_redispatched[rendering_raises_base_exception]
+[base] FAILED tests/mind/test_authority_review_r13.py::test_an_account_raising_a_base_exception_no_world_reads_refuses_no_admission
+[base] FAILED tests/mind/test_authority_review_r13.py::test_an_interrupted_read_back_is_re_raised_after_the_spend_was_observed
+[base] FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[says_empty]
+[base] FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[skips_the_solver]
+[base] FAILED tests/mind/test_authority_review_r13.py::test_a_handed_mapping_that_is_not_a_dict_refuses_the_verification
+[base] FAILED tests/mind/test_authority_review_r13.py::test_the_strict_constructor_reads_a_dict_from_its_own_storage
+[base] FAILED tests/mind/test_authority_review_r13.py::test_a_fresh_thread_completing_after_the_wait_is_read_not_refused_for_good
+[base] FAILED tests/mind/test_authority_review_r13.py::test_a_blocked_fresh_thread_is_not_joined_by_another_for_the_same_account
+[base] FAILED tests/mind/test_authority_review_r13.py::test_fresh_thread_waits_share_one_deadline_per_verification
+[base] FAILED tests/mind/test_authority_review_r13.py::test_a_verification_interrupted_inside_its_comparison_makes_its_waiters_decide_on_nothing
+[base] 14 failed, 5 passed in 5.23s
+[unread_length_only] FAILED tests/mind/test_authority_review_r13.py::test_a_spend_not_read_back_is_never_readmitted_after_a_restore_and_another_charge[one_other_charge]
+[unread_length_only] 1 failed, 683 passed, 1 skipped in 17.89s
+[no_note_unread] FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_read_back_always_looks_moving_is_never_redispatched[mutation_text]
+[no_note_unread] FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_read_back_always_looks_moving_is_never_redispatched[varying_message]
+[no_note_unread] FAILED tests/mind/test_authority_review_r12.py::test_a_state_not_read_back_while_a_rollback_waits_refuses_the_rollback
+[no_note_unread] FAILED tests/mind/test_authority_review_r13.py::test_a_spend_not_read_back_is_never_readmitted_after_a_restore_and_another_charge[one_other_charge]
+[no_note_unread] FAILED tests/mind/test_authority_review_r13.py::test_a_spend_not_read_back_is_never_readmitted_after_a_restore_and_another_charge[nothing]
+[no_note_unread] FAILED tests/mind/test_authority_review_r13.py::test_an_interrupted_read_back_is_re_raised_after_the_spend_was_observed
+[no_note_unread] FAILED tests/mind/test_authority_review_r13.py::test_a_shorter_state_not_read_back_never_replaces_a_longer_one
+[no_note_unread] 7 failed, 677 passed, 1 skipped in 17.87s
+[no_unread_check_on_read] FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_read_back_always_looks_moving_is_never_redispatched[mutation_text]
+[no_unread_check_on_read] FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_read_back_always_looks_moving_is_never_redispatched[varying_message]
+[no_unread_check_on_read] FAILED tests/mind/test_authority_review_r13.py::test_a_spend_not_read_back_is_never_readmitted_after_a_restore_and_another_charge[one_other_charge]
+[no_unread_check_on_read] FAILED tests/mind/test_authority_review_r13.py::test_a_spend_not_read_back_is_never_readmitted_after_a_restore_and_another_charge[nothing]
+[no_unread_check_on_read] FAILED tests/mind/test_authority_review_r13.py::test_an_interrupted_read_back_is_re_raised_after_the_spend_was_observed
+[no_unread_check_on_read] FAILED tests/mind/test_authority_review_r13.py::test_a_shorter_state_not_read_back_never_replaces_a_longer_one
+[no_unread_check_on_read] 6 failed, 678 passed, 1 skipped in 18.21s
+[no_unread_post_wait] FAILED tests/mind/test_authority_review_r12.py::test_a_state_not_read_back_while_a_rollback_waits_refuses_the_rollback
+[no_unread_post_wait] 1 failed, 683 passed, 1 skipped in 18.59s
+[unread_not_cleared] FAILED tests/mind/test_authority_review_r13.py::test_an_honest_account_not_read_back_is_read_once_it_moves_on_in_place
+[unread_not_cleared] 1 failed, 683 passed, 1 skipped in 18.03s
+[unreadable_entries_tolerated] FAILED tests/mind/test_authority_review_r12.py::test_a_state_not_read_back_whose_length_cannot_be_read_refuses_its_account_for_good
+[unreadable_entries_tolerated] 1 failed, 683 passed, 1 skipped in 18.30s
+[base_exception_not_classified] FAILED tests/mind/test_authority_review_r13.py::test_content_raising_a_base_exception_is_refused_and_never_redispatched[base_exception]
+[base_exception_not_classified] FAILED tests/mind/test_authority_review_r13.py::test_content_raising_a_base_exception_is_refused_and_never_redispatched[cancelled]
+[base_exception_not_classified] FAILED tests/mind/test_authority_review_r13.py::test_an_account_raising_a_base_exception_no_world_reads_refuses_no_admission
+[base_exception_not_classified] 3 failed, 681 passed, 1 skipped in 18.16s
+[described_exception_only] FAILED tests/mind/test_authority_review_r13.py::test_content_raising_a_base_exception_is_refused_and_never_redispatched[rendering_raises_base_exception]
+[described_exception_only] 1 failed, 683 passed, 1 skipped in 18.34s
+[interrupt_not_caught] FAILED tests/mind/test_authority_review_r13.py::test_an_interrupted_read_back_is_re_raised_after_the_spend_was_observed
+[interrupt_not_caught] 1 failed, 683 passed, 1 skipped in 17.80s
+[interrupt_swallowed] FAILED tests/mind/test_authority_review_r13.py::test_an_interrupted_read_back_is_re_raised_after_the_spend_was_observed
+[interrupt_swallowed] 1 failed, 683 passed, 1 skipped in 17.95s
+[items_trust_mapping] FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[says_empty]
+[items_trust_mapping] FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[skips_the_solver]
+[items_trust_mapping] FAILED tests/mind/test_authority_review_r13.py::test_a_handed_mapping_that_is_not_a_dict_refuses_the_verification
+[items_trust_mapping] FAILED tests/mind/test_authority_review_r13.py::test_the_strict_constructor_reads_a_dict_from_its_own_storage
+[items_trust_mapping] 4 failed, 680 passed, 1 skipped in 17.56s
+[ctor_dict] FAILED tests/mind/test_authority_review_r13.py::test_the_strict_constructor_reads_a_dict_from_its_own_storage
+[ctor_dict] 1 failed, 683 passed, 1 skipped in 17.43s
+[unread_keeps_shorter] FAILED tests/mind/test_authority_review_r13.py::test_a_shorter_state_not_read_back_never_replaces_a_longer_one
+[unread_keeps_shorter] 1 failed, 683 passed, 1 skipped in 17.51s
+[box_before_alive] 684 passed, 1 skipped in 17.49s
+[no_one_thread_per_account] FAILED tests/mind/test_authority_review_r13.py::test_a_blocked_fresh_thread_is_not_joined_by_another_for_the_same_account
+[no_one_thread_per_account] 1 failed, 683 passed, 1 skipped in 18.44s
+[no_shared_deadline] FAILED tests/mind/test_authority_review_r13.py::test_fresh_thread_waits_share_one_deadline_per_verification
+[no_shared_deadline] 1 failed, 683 passed, 1 skipped in 19.72s
+[shared_cache] FAILED tests/mind/test_authority_review_r13.py::test_an_abandoned_fresh_thread_writes_into_nothing_the_verification_holds
+[shared_cache] 1 failed, 683 passed, 1 skipped in 18.34s
+[discard_at_compare_start] FAILED tests/mind/test_authority_review_r13.py::test_a_verification_interrupted_inside_its_comparison_makes_its_waiters_decide_on_nothing
+[discard_at_compare_start] 1 failed, 683 passed, 1 skipped in 18.30s
+[no_abandon] FAILED tests/mind/test_authority_review_r11.py::test_a_verification_waited_for_that_leaves_uncompared_makes_the_waiter_decide_on_nothing
+[no_abandon] FAILED tests/mind/test_authority_review_r13.py::test_a_verification_interrupted_inside_its_comparison_makes_its_waiters_decide_on_nothing
+[no_abandon] 2 failed, 682 passed, 1 skipped in 18.33s
+[handed_never_set] FAILED tests/mind/test_authority_review_r11.py::test_a_verification_waited_for_that_leaves_uncompared_makes_the_waiter_decide_on_nothing
+[handed_never_set] FAILED tests/mind/test_authority_review_r13.py::test_a_verification_interrupted_inside_its_comparison_makes_its_waiters_decide_on_nothing
+[handed_never_set] 2 failed, 682 passed, 1 skipped in 17.93s
+[render_raw] FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_failure_cannot_be_rendered_is_refused_and_never_redispatched[exception]
+[render_raw] FAILED tests/mind/test_authority_review_r12.py::test_a_spend_whose_failure_cannot_be_rendered_is_refused_and_never_redispatched[argument]
+[render_raw] FAILED tests/mind/test_authority_review_r12.py::test_an_unrenderable_account_no_world_reads_refuses_no_admission[exception]
+[render_raw] FAILED tests/mind/test_authority_review_r12.py::test_an_unrenderable_account_no_world_reads_refuses_no_admission[argument]
+[render_raw] FAILED tests/mind/test_authority_review_r13.py::test_content_raising_a_base_exception_is_refused_and_never_redispatched[rendering_raises_base_exception]
+[render_raw] 5 failed, 679 passed, 1 skipped in 18.08s
+[no_spelled_check] FAILED tests/mind/test_authority_review_r12.py::test_two_entries_spelling_one_id_never_hide_a_spend[True]
+[no_spelled_check] FAILED tests/mind/test_authority_review_r12.py::test_two_entries_spelling_one_id_never_hide_a_spend[False]
+[no_spelled_check] 2 failed, 682 passed, 1 skipped in 17.87s
+[ctor_no_spelling_check] FAILED tests/mind/test_authority_review_r12.py::test_the_strict_constructor_refuses_two_ids_spelling_one
+[ctor_no_spelling_check] 1 failed, 683 passed, 1 skipped in 17.15s
+[recursion_direct_only] FAILED tests/mind/test_authority_review_r12.py::test_a_recursion_failure_an_owner_wraps_is_retried_on_a_fresh_thread
+[recursion_direct_only] 1 failed, 683 passed, 1 skipped in 17.67s
+[fresh_single_attempt] FAILED tests/mind/test_authority_review_r12.py::test_a_torn_fresh_thread_read_back_is_retried_not_refused_for_good
+[fresh_single_attempt] 1 failed, 683 passed, 1 skipped in 17.08s
+[join_unbounded] FAILED tests/mind/test_authority_review_r12.py::test_a_fresh_thread_read_back_blocked_by_the_verifiers_own_lock_is_refused_within_the_wait
+[join_unbounded] FAILED tests/mind/test_authority_review_r13.py::test_a_fresh_thread_completing_after_the_wait_is_read_not_refused_for_good
+[join_unbounded] FAILED tests/mind/test_authority_review_r13.py::test_fresh_thread_waits_share_one_deadline_per_verification
+[join_unbounded] FAILED tests/mind/test_authority_review_r13.py::test_an_abandoned_fresh_thread_writes_into_nothing_the_verification_holds
+[join_unbounded] 4 failed, 680 passed, 1 skipped in 60.79s (0:01:00)
+[timeout_for_good] FAILED tests/mind/test_authority_review_r12.py::test_a_fresh_thread_read_back_blocked_by_the_verifiers_own_lock_is_refused_within_the_wait
+[timeout_for_good] 1 failed, 683 passed, 1 skipped in 17.19s
+[id_str_call] FAILED tests/mind/test_authority_review_r12.py::test_a_str_subclass_id_is_read_under_its_spelling_and_runs_no_code
+[id_str_call] 1 failed, 683 passed, 1 skipped in 17.06s
+[differ_not_moving] FAILED tests/mind/test_authority_review_r12.py::test_three_read_backs_torn_by_honest_records_refuse_once_then_read
+[differ_not_moving] 1 failed, 683 passed, 1 skipped in 18.02s
+[why_only] FAILED tests/mind/test_authority_review_r12.py::test_three_read_backs_torn_by_honest_records_refuse_once_then_read
+[why_only] 1 failed, 683 passed, 1 skipped in 17.60s
+[alias_not_recorded2] FAILED tests/mind/test_authority_review_r12.py::test_a_spend_handed_under_two_ids_is_recorded_and_its_rollback_never_redispatches
+[alias_not_recorded2] 1 failed, 683 passed, 1 skipped in 17.82s
+[fresh_thread_no_flag] FAILED tests/mind/test_authority_review_r12.py::test_a_read_through_from_the_fresh_thread_read_back_is_refused_at_once
+[fresh_thread_no_flag] 1 failed, 683 passed, 1 skipped in 18.54s
+DONE

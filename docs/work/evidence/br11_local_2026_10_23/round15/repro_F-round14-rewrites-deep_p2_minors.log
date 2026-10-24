@@ -1,0 +1,23 @@
+(a straddle=False) read of the moving account: read back; known-content shortcut set: True
+   read again (no move): read back; shortcut set now: True
+   transient failure (no new entry): REFUSED: budget ledger 'synthetic.battery.pulse-cell.solver'; recorded: False
+   after an unchanged checkpoint resume: read back
+   refused for good: False
+(a straddle=True) read of the moving account: read back; known-content shortcut set: False
+   read again (no move): read back; shortcut set now: True
+   transient failure (no new entry): REFUSED: budget ledger 'synthetic.battery.pulse-cell.solver'; recorded: False
+   after an unchanged checkpoint resume: read back
+   refused for good: False
+(a2) straddling read: read back; transient failure (no new entry since that read): REFUSED: budget ledger 'synthetic.battery.pulse-ce; recorded: True
+   after an unchanged checkpoint resume: REFUSED: budget ledger 'synthetic.battery.pulse-cell.solver' rewrote the entries of a state of it a verification was handed and could not read back (its owner'
+   refused for good: True
+(b) read: read back
+   transient failure on the resumed object (no new entry): REFUSED: budget ledger 'synthetic.battery.pulse-cell.solver'; recorded: True
+   after a second unchanged checkpoint resume: REFUSED: budget ledger 'synthetic.battery.pulse-cell.solver' rewrote the entries of a state of it a verification was handed and could not read back (its owner'
+   refused for good: True
+(c undo=False) spend not read back: REFUSED: budget ledger 'synthetic.battery.pulse-cell.solver' was not r; unread recorded: True
+   re-dispatch of the executed authorization: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE); executor calls = 1; unread record cleared: False
+(c undo=True) spend not read back: REFUSED: budget ledger 'synthetic.battery.pulse-cell.solver' was not r; unread recorded: True
+   re-dispatch of the executed authorization: DISPATCHED AGAIN; executor calls = 2; unread record cleared: True
+(d) a ctrl-C while a well-formed pair of dicts is walked: KeyboardInterrupt re-raised; sealed: the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not observed and any of them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)
+   next verification (nothing wrong handed): REFUSED: the execution side handed over what is not a pair of account dicts (KeyboardInter

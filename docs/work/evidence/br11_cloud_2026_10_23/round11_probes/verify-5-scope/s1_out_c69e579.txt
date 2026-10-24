@@ -1,0 +1,7 @@
+[control] after the run: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[no verification] after the run: (no verification) | after restore: DISPATCHED AGAIN | executor ran 2
+[raise] after the run: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | executor ran 2
+[subclass value] after the run: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | executor ran 2
+[ledger as dict] after the run: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | executor ran 2
+[alias] after the run: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | executor ran 2
+[numpy str_ id] after the run: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1

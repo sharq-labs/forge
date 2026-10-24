@@ -1,0 +1,21 @@
+{
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/pt-failing-first-corrected",
+    "tests/mind/test_authority_review_r17.py"
+  ],
+  "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "exit_code": 1,
+  "log": "/home/dev_kaeem/br11-review/r17/REPAIR/failing-first-corrected.log",
+  "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb",
+  "test_sha256": "83cf992ff9da6dca16fff55c5431c5b4be73cb245f52e58c1809bcf135e0388a"
+}

@@ -1,0 +1,7 @@
+   775  admitted
+   105  control: world refused at bind
+   396  fixed: bind/check agree (ok)
+    30  fixed: bind/check agree (refused)
+   105  fixed: placeholder refused at bind
+     3  levels refused
+    48  refused ['LEVEL_NOT_DECLARED']

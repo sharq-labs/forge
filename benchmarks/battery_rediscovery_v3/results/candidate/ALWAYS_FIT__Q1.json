@@ -1,0 +1,249 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "SUPPORTED",
+   "reason": "never refuses"
+  }
+ },
+ "arm": "ALWAYS_FIT",
+ "problem_id": "Q1",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1",
+ "v1_record": {
+  "answers": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "SUPPORTED",
+    "reason": "never refuses"
+   }
+  },
+  "applicability": {
+   "checked": false
+  },
+  "arm": "ALWAYS_FIT",
+  "eliminated": [],
+  "fit": {
+   "calibration": {
+    "bias_mV": 1.2258203561643368e-11,
+    "lag1": 0.9354210213067957,
+    "mae_mV": 26.482711577922682,
+    "max_abs_mV": 537.7228341638962,
+    "p95_abs_mV": 66.54877890475308,
+    "rmse_mV": 46.24839797979938,
+    "samples": 3708
+   },
+   "converged_starts": 8,
+   "forward_hold_sse_ratio": 1.011911753848424,
+   "ocv_knots_on_bound": 0,
+   "parameters": {
+    "C1": 5164.96956679044,
+    "R0": 0.13509279692617493,
+    "R1": 1.0,
+    "tau": 5164.96956679044
+   },
+   "per_parameter": {
+    "C1": {
+     "estimate": 5164.96956679044,
+     "forward_hold_shift": 0.00422030701478171,
+     "max_abs_corr": 0.9939387957520295,
+     "multistart_spread_ln": 1.3665214737557108e-08,
+     "on_bound": false,
+     "sd_ln": 0.5414471046114684
+    },
+    "R0": {
+     "estimate": 0.13509279692617493,
+     "forward_hold_shift": 0.03273875568642848,
+     "max_abs_corr": 0.7170108075463787,
+     "multistart_spread_ln": 1.0985913068140007e-08,
+     "on_bound": false,
+     "sd_ln": 0.10547728025112216
+    },
+    "R1": {
+     "estimate": 1.0,
+     "forward_hold_shift": 0.0,
+     "max_abs_corr": 0.9988895657007021,
+     "multistart_spread_ln": 3.650704793241422e-18,
+     "on_bound": true,
+     "sd_ln": 1.6022010854947641
+    }
+   },
+   "rint_rmse_mV": 58.1380037041416,
+   "starts": [
+    {
+     "sse": 7.931094282607914,
+     "start": 0,
+     "status": 2,
+     "theta": [
+      -2.0017933484876567,
+      -3.6509002445679884e-18,
+      8.549654493763171,
+      3.4311005650448823,
+      4.1281188815268575,
+      4.323610140778805,
+      4.294487531048151,
+      4.238226492537522,
+      4.184018332085158,
+      4.163744018352353
+     ]
+    },
+    {
+     "sse": 7.931094282607893,
+     "start": 1,
+     "status": 2,
+     "theta": [
+      -2.001793359084588,
+      -1.9545132656655727e-22,
+      8.549654480581829,
+      3.431100568819,
+      4.1281188859334375,
+      4.323610144799942,
+      4.294487534827771,
+      4.238226495643478,
+      4.184018333487834,
+      4.163744016694738
+     ]
+    },
+    {
+     "sse": 7.9310942826078525,
+     "start": 2,
+     "status": 2,
+     "theta": [
+      -2.0017933520459885,
+      -5.5434784370865404e-21,
+      8.549654489337046,
+      3.4311005663121814,
+      4.12811888300653,
+      4.323610142129051,
+      4.294487532317299,
+      4.238226493580463,
+      4.184018332556159,
+      4.163744017795746
+     ]
+    },
+    {
+     "sse": 7.9310942826078845,
+     "start": 3,
+     "status": 2,
+     "theta": [
+      -2.0017933491413715,
+      -2.0996900222954093e-18,
+      8.549654492950028,
+      3.431100565277702,
+      4.128118881798693,
+      4.3236101410268635,
+      4.294487531281311,
+      4.238226492729125,
+      4.184018332171688,
+      4.163744018250097
+     ]
+    },
+    {
+     "sse": 7.931094282607873,
+     "start": 4,
+     "status": 2,
+     "theta": [
+      -2.00179334909779,
+      -3.082271450433215e-18,
+      8.549654493004235,
+      3.431100565262181,
+      4.128118881780571,
+      4.3236101410103265,
+      4.294487531265767,
+      4.238226492716351,
+      4.184018332165919,
+      4.163744018256914
+     ]
+    },
+    {
+     "sse": 7.9310942826078605,
+     "start": 5,
+     "status": 2,
+     "theta": [
+      -2.0017933594735697,
+      -1.6644130959628245e-21,
+      8.549654480097956,
+      3.431100568957545,
+      4.128118886095199,
+      4.323610144947555,
+      4.294487534966517,
+      4.2382264957574955,
+      4.184018333539326,
+      4.163744016633892
+     ]
+    },
+    {
+     "sse": 7.931094282607854,
+     "start": 6,
+     "status": 2,
+     "theta": [
+      -2.0017933535136554,
+      -7.815298528803062e-21,
+      8.549654487511406,
+      3.4311005668349055,
+      4.128118883616851,
+      4.323610142685989,
+      4.294487532840787,
+      4.2382264940106475,
+      4.184018332750436,
+      4.163744017566168
+     ]
+    },
+    {
+     "sse": 7.9310942826078605,
+     "start": 7,
+     "status": 2,
+     "theta": [
+      -2.0017933554366443,
+      -4.2533441919281715e-21,
+      8.549654485119426,
+      3.431100567519785,
+      4.128118884416502,
+      4.323610143415695,
+      4.294487533526665,
+      4.238226494574278,
+      4.184018333004977,
+      4.163744017265366
+     ]
+    }
+   ],
+   "theta_digest": "998c897b29bce81577c22870ad7c5951cfc2cb6cb7ec88fb92d8622092200eaa"
+  },
+  "hypotheses": [
+   "thevenin_1rc"
+  ],
+  "observations_used": 3708,
+  "problem_id": "Q1",
+  "refusal_reasons": [],
+  "schema": "forge.battery_rediscovery.arm_output/1"
+ }
+}

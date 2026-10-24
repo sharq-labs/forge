@@ -1,0 +1,6 @@
+FAILED tests/mind/test_authority_review_r8.py::test_a_budget_free_worlds_verification_through_the_desk_observes_a_spend
+FAILED tests/mind/test_authority_review_r9.py::test_a_rollback_read_while_an_earlier_verification_holds_the_spend_never_redispatches
+FAILED tests/mind/test_world_contract.py::test_admission_yields_a_closed_record_of_the_canonical_proposal
+FAILED tests/mind/test_world_contract.py::test_a_record_is_never_built_from_a_view_the_check_did_not_see
+FAILED tests/mind/test_world_contract.py::test_two_worlds_that_differ_in_a_read_state_give_different_records
+28 failed, 620 passed, 1 skipped in 25.32s

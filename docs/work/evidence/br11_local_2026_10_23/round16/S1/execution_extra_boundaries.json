@@ -1,0 +1,5 @@
+{
+  "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.py",
+  "exit": 0,
+  "log_path": "/home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.log"
+}

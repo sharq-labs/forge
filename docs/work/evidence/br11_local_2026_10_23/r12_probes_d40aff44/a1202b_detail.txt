@@ -1,0 +1,13 @@
+k 972 caller headroom (frames below the limit) 26 GWb | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 973 caller headroom (frames below the limit) 25 TWb | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 974 caller headroom (frames below the limit) 24 PWb | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 975 caller headroom (frames below the limit) 23 EWb | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 976 caller headroom (frames below the limit) 22 ZWb | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 977 caller headroom (frames below the limit) 21 YWb | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 978 caller headroom (frames below the limit) 20 yC | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 979 caller headroom (frames below the limit) 19 zC | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 980 caller headroom (frames below the limit) 18 aC | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 981 caller headroom (frames below the limit) 17 fC | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 982 caller headroom (frames below the limit) 16 pC | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+k 983 caller headroom (frames below the limit) 15 nC | shallow read by the same reader: REFUSED FOR GOOD | new reader reads revision 4
+refused for good at 12 of 58 depths

@@ -1,0 +1,81 @@
+bringing up nodes...
+bringing up nodes...
+
+........................................................................ [  9%]
+........................................................................ [ 18%]
+........................................................................ [ 27%]
+........................................................................ [ 36%]
+........................................................................ [ 46%]
+........................................................................ [ 55%]
+........................................................................ [ 64%]
+........................................................................ [ 73%]
+..................................FF.................................... [ 82%]
+........................................................................ [ 92%]
+.............................................................            [100%]
+=================================== FAILURES ===================================
+________ test_a_dict_subclass_never_hides_a_handed_account[says_empty] _________
+[gw0] linux -- Python 3.12.3 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python
+
+kind = 'says_empty'
+
+    @pytest.mark.parametrize("kind", ["says_empty", "skips_the_solver"])
+    def test_a_dict_subclass_never_hides_a_handed_account(kind):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        state = {"spent": False}
+        stale = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        lying = _lying(kind, lid)
+    
+        def accounts():
+            return (lying(o.ledgers) if state["spent"] else dict(o.ledgers)), dict(o.experiments)
+    
+        calls = []
+    
+        def executor(authorization):
+            calls.append(1)
+            o.ledgers[lid].settle(charge_id="run.1", action_id="simulate_pulse", iteration=1, family=ActionFamily.EXPLORE,
+                                  realized=1.0)
+            state["spent"] = True
+    
+        reader, authorities, gateway, r = _desk(o, accounts, executor)
+        gateway.dispatch(r.admitted)
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(o.ledgers[lid].revision)   # the spent one
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'revision'
+
+tests/mind/test_authority_review_r13.py:245: AttributeError
+_____ test_a_dict_subclass_never_hides_a_handed_account[skips_the_solver] ______
+[gw0] linux -- Python 3.12.3 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python
+
+kind = 'skips_the_solver'
+
+    @pytest.mark.parametrize("kind", ["says_empty", "skips_the_solver"])
+    def test_a_dict_subclass_never_hides_a_handed_account(kind):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        state = {"spent": False}
+        stale = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        lying = _lying(kind, lid)
+    
+        def accounts():
+            return (lying(o.ledgers) if state["spent"] else dict(o.ledgers)), dict(o.experiments)
+    
+        calls = []
+    
+        def executor(authorization):
+            calls.append(1)
+            o.ledgers[lid].settle(charge_id="run.1", action_id="simulate_pulse", iteration=1, family=ActionFamily.EXPLORE,
+                                  realized=1.0)
+            state["spent"] = True
+    
+        reader, authorities, gateway, r = _desk(o, accounts, executor)
+        gateway.dispatch(r.admitted)
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, lid).revision == str(o.ledgers[lid].revision)   # the spent one
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'revision'
+
+tests/mind/test_authority_review_r13.py:245: AttributeError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[says_empty]
+FAILED tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account[skips_the_solver]
+2 failed, 779 passed in 17.51s

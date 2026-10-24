@@ -1,0 +1,104 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "A authority/currentness",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R17-A-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Known pre-capture information loss still permits duplicate dispatch after native resource failure and checkpoint restore",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1000,
+      "related_lines": [
+        905,
+        921,
+        1024,
+        1025,
+        1026
+      ],
+      "classification": "KNOWN_UNRESOLVED_R16_NATIVE_CAPTURE_FAMILY; not a new defect",
+      "smallest_reproduction": "probe_native.py: create following desk; save original ledger; dispatch and settle run.1; call reader.pinned through deep(994) or deep(995) at default recursion limit 1000; native RecursionError leaves pending raw tuple, no retained unread entries; replace execution-owned mapping value with saved BudgetLedger.from_dict checkpoint; dispatch same admitted action.",
+      "actual_result": "Native CPython 3.12.3 depths 994/995: pending [(4, tuple)], unread {}, redispatch_refused false, executor calls 2, sealed null. No method patching or private object mutation is used. Depth 993 retained _RetainedHanding and correctly refused rollback.",
+      "expected_result": "Handed post-execution spend cannot disappear on restoration; redispatch must be refused and executor calls remain 1.",
+      "proof": "native.log records exact source identity and 22 deterministic native stack depths. The script is observational and exits 0 even when counterexample occurs; exit 0 is not a successful invariant check.",
+      "threat_families": [
+        "native capture/recovery both interrupted",
+        "live handed container replacement",
+        "forgotten spend/redispatch"
+      ],
+      "trust_boundary": "Uses public following callback, execution-side ledger replacement with owner-normalized checkpoint, and native stack exhaustion. It does not introspect/mutate execution-side private data, forge an authorization, or bypass admission. Execution owner is permitted to state a replacement checkpoint; reader promises forward-only observation.",
+      "proposed_correction": "Select an explicit owner-to-reader retention/lifetime or publication/acknowledgement contract guaranteeing that handed content remains available until authoritative capture. Implement acknowledgement only after stable native snapshot storage is retained. Alternative purely reader-local permanent refusal would violate the no-honest-poisoning invariant; bounded retries or fresh-stack capture can reduce this trigger but cannot guarantee recovery under repeat interruption plus mutable replacement."
+    }
+  ],
+  "architecture_decision_analysis": {
+    "conclusion": "Genuine handoff contract blocker for the full all-handed-spend guarantee under the stated interruption model, not proof that every bounded trigger needs architecture work.",
+    "reason": "After mutable mapping replacement and loss of every stable entry reference, recovered state is observationally identical to an unchanged honest account. Accepting it forgets spend; permanent retirement poisons the honest indistinguishable case; indefinite pending violates useful recovery. A reader implementation cannot reconstruct erased information. Fresh-stack retry can repair native stack exhaustion specifically but leaves asynchronous repeated pre-capture failure. Freezing/copying in the callback or requiring immutable transferred records is itself a selected lifetime/publication contract.",
+    "exact_decision_required": "Who retains each handed account version, until what explicit capture/compare acknowledgement, and which authority resolves recovery after interrupted publication? This can be a narrow execution-owner integration protocol rather than a second budget ledger or a new scientific authority."
+  },
+  "tested_transitions": [
+    "16 repository R16 controls: canonical normalization, single post-return interruption recovery, detached repeated handings, rollback/conflict, malformed retained reconciliation, barrier identity race, experiments",
+    "13 additional independent controls: all six orders of three detached compatible histories, all six orders of three conflicting histories, absent account reconciliation followed by rollback",
+    "22 native recursion depths 975 through 996; native duplicate capture counterexample at 994/995; successful retained refusal at 993"
+  ],
+  "missing_coverage": [
+    "No exhaustive async interruption-at-every-bytecode proof",
+    "No unbounded number of detached observations/resource exhaustion measurement",
+    "No fresh broad Q1/Q2/Q3/Q5/Q6/Q7 integration execution; NO means no defect identified by this changed-code authority lens",
+    "No certification, formal proof or scientific validation",
+    "Depth 996 has no retained pending handing and was not separately classified because callback-return completion at that depth was not traced"
+  ],
+  "reviewed_changes": "Diff b8a65bb9..98d72b2e owners.py and R16 tests. Canonical owner normalization is reused; multi-history longest compatible prefix is checked against every observation; exact barrier identity prevents stale reconciliation disposal. Additional permutations and absent-account probe found no new discrepancy.",
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "tests/mind/test_authority_review_r16.py",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/A/pt",
+        "-n",
+        "1"
+      ],
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/A/controls.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r17/A/probe_native.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/A/native.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "/home/dev_kaeem/br11-review/r17/A/test_transitions.py",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/A/pt_more",
+        "-n",
+        "1"
+      ],
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/A/transitions.log"
+    }
+  ],
+  "identity_log": "/home/dev_kaeem/br11-review/r17/A/identity.log",
+  "summary": "Q4 YES due to independently reproduced known open MAJOR. New repairs pass bounded controls; no new defect demonstrated. Independent software review, not certification."
+}

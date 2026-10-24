@@ -1,0 +1,9 @@
+(a) while B blocks: re-dispatch refused: (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)
+(a) while B blocks: fresh admission ('AUTHORITY_OWNER_UNAVAILABLE',)
+(a) after B compared the spend: re-dispatch refused: (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+(b) later verification: decided
+(b) re-dispatch while B in flight: refused: (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)
+(b) after B read the rollback: re-dispatch refused: (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+(c) E: OwnerUnavailable: the execution side could not state its budget accounts: exec | in flight after: [] | next verification reads ledger rev 2
+(d) while F blocks: 20/20 later verifications refused 'earlier ... in flight' (0.00s)
+(d) after F returns: ledger rev 2

@@ -1,0 +1,17 @@
+{
+  "command": [
+    ".venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "/home/dev_kaeem/br11-review/r20/D_E/test_independent.py",
+    "tests/mind/test_authority_lifetime.py",
+    "tests/mind/test_authority_publication_currency_r19.py",
+    "tests/mind/test_authority_review_r16.py"
+  ],
+  "exit": 0,
+  "sha": "b4bbee0f6df40b7dd0de9b0739beef392dab6be5",
+  "sourcehash": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3"
+}

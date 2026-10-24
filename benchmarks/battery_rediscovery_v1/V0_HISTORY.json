@@ -1,0 +1,76 @@
+{
+ "CONFIRMED_RESULT": "NONE",
+ "POST_SEAL_AMENDMENT_RESULT": "REPRESENTATION_BOTTLENECK",
+ "PREREGISTERED_RESULT": "LEAKAGE_INVALIDATED",
+ "commits": {
+  "amendment_01": "dbf1794c",
+  "evaluation": "986cc43c",
+  "freeze": "085d9a7c",
+  "seal": "e1be5910"
+ },
+ "experiment": "battery_rediscovery_v0",
+ "files": {
+  "amendment_01": {
+   "results/AMENDMENT_01.json": "02356c677f8102fed226349287e7b7be20e2e6a71bd8efc34efc31b5829b03e4",
+   "results/EVALUATION_AMENDMENT_01.json": "acaf295a123f7ef37083b163fbe54ef8dc85164ee5524be0d05a04f47fd503f6",
+   "results/EVALUATION_AMENDMENT_01.md": "802fb24d184212baf16d46b22c228c99a48213eee953337cb429e74bf2e59965",
+   "results/LEAKAGE_POST_SEAL_AMENDMENT_01.json": "835ba09325556d89a44cb33979c90355a5221d70bb79754d4fd1ea88c0e9238e"
+  },
+  "candidate_code_and_pack": {
+   "candidate/__init__.py": "8a0fa5142993065b6d88798e43ffb2a61d30cdb9165a3b4f97417ed36ebe184b",
+   "candidate/baselines.py": "6d71600c3c1b1eaf577798e7fac44bf37ef0a51aef874337633d099bec42541f",
+   "candidate/common.py": "2b2163f9e1f1eb4088763ccbbf7982dbd16882ca2b7adfa7d87f187fc811226d",
+   "candidate/mind_arm.py": "959182aa04ca85f50daf8d8aa00ceafa5cbef657477ce3286bd0b224b3a83f1b",
+   "candidate/model.py": "9dfcdd33495fae1d1eaa2be2feea5b2da94d4e7d1f7e2aeb2c9bd988f59055a6",
+   "candidate/pack/MANIFEST.json": "1beb70c48b91399e8fb7e05149f2397008dddbccb80c22440b376c0f1bb3839e",
+   "candidate/pack/P1.json": "2fb15f7f39a52635e8e6fe741c38dbcdec5df9f6868fa664ec7cd34c48466657",
+   "candidate/pack/P2.json": "864eea4de4e5977d20ee76ba146aa0f711cfc3d34ae343ff8d6ae8d0abeffd2d",
+   "candidate/run.py": "3ca0b531adb90416732c2c3562577c620cd257ad1fbc3c55e65525164ee6134d"
+  },
+  "candidate_outputs_and_traces": {
+   "results/candidate/ALWAYS_FIT__P1.json": "5032f81e2e117401999b81f9cf55f8bd02b54b6fe15b53451569e0dff5ed23f5",
+   "results/candidate/ALWAYS_FIT__P2.json": "a317ae04aad0a5a6fd16775e8ab536afeed070f23102c7ac8cb44dcbd19774d2",
+   "results/candidate/ALWAYS_REFUSE__P1.json": "ce05c3d5e3aeb2faacb9af02a8c6af69c5a0610fc89075f28afe5b0aed51c6e0",
+   "results/candidate/ALWAYS_REFUSE__P2.json": "2e73e7c618492ec07591b4ac3eb0dfbbf710e8eeb3a3eb5be6f93f5176ab408a",
+   "results/candidate/CAREFUL_BASELINE__P1.json": "1d6f8c90669f7e11dc02000e23b08189af2ab6a70307c13a8df7ea4544dcc4ee",
+   "results/candidate/CAREFUL_BASELINE__P2.json": "faa2e61e2d355330a78a173b69cac2560d852529487a4c8a672616e0a08dbfe1",
+   "results/candidate/FIXED_FIT__P1.json": "70f5832665f2c809fe92bbfaba65263b8c425bd821b9181bc507fa05b5f2d698",
+   "results/candidate/FIXED_FIT__P2.json": "31be4752fff392577f92363bf895e9c33458e6d6f3613399b5001d76411ecf9f",
+   "results/candidate/MIND_TRACES__P1.json": "33ae21d23628294ab64d76c9d474b3c4fea56ee5c1ccd6ac0ae0b248a29cf2aa",
+   "results/candidate/MIND_TRACES__P2.json": "76ea124539586617f2bc450faa0df52468f533847e571601841cfc77833dad48",
+   "results/candidate/MIND__P1.json": "9b9d29cfda619dc6d145f5769665b992d66e3d784c5c4e447fe165d50a62e092",
+   "results/candidate/MIND__P2.json": "cd61594cbb8a52b32057fb242a762251c2e90fafc9c2f994298f63644eb5c3ac",
+   "results/candidate/TIMINGS.json": "786e01ad030dda2e33f9bdb232655e160d8e1f52ea0f0afb9008821977763cb1"
+  },
+  "leakage_audits": {
+   "results/LEAKAGE_POST_SEAL.json": "3aaa98527bc1eecd9bd3015e59371acafcdaff24c572f88919a8c9d02ac069cd",
+   "results/LEAKAGE_PRE_SEAL.json": "33d2849e8c697db36ee0428730ab8217266457a3bbb990adcb6efabdaf5bb8fd"
+  },
+  "leakage_scanner": {
+   "leakage.py": "f6ddd25aad6eb3ab93a8bb3e25dd9574a69c95d479ac4ae4d1b8741d0f0bb2c1"
+  },
+  "plan": {
+   "PLAN.json": "adc3a30f5966892885cd3fc4ea3a49871adea2ad489becee189dd52dafc3c1bf",
+   "PLAN.sha256": "72bd3da1b59f42b19c975da5b52910442e484d5aacf4d65fde1b7b7afcb25a01"
+  },
+  "preregistered_evaluation": {
+   "results/EVALUATION.json": "02131f27ada52f8854bbbd1630dfe0adb2146282445d31c144f718198a9234d8",
+   "results/EVALUATION.md": "a2126c57387e89a148c084a3ce7e99aaf73e9eeaeed61592c0cde161a5f1313b"
+  },
+  "replay": {
+   "results/ACCESS_LOG_REPLAY.json": "a5bfd45762eb035548fc6f5c84361e4091e5f799d9a32750e4fa741161eedb48",
+   "results/replay/REPLAY.json": "463b01c0f0dc11f42cd96aaa163a856d40634696c08aebef3a347a8a11517ddc"
+  },
+  "scoring_and_baselines": {
+   "candidate/baselines.py": "6d71600c3c1b1eaf577798e7fac44bf37ef0a51aef874337633d099bec42541f",
+   "evaluator/score.py": "6d4b6f687a7ecab7aab09dd1e42aa0ce889bc2132126a973cad56871a48f8c9d",
+   "evaluator/truth.py": "5dc4a7d95cf84d10cc2abe9310544b3ff0403a418069a7dba7f577c94445674c"
+  },
+  "seal": {
+   "results/ACCESS_LOG.json": "4cfb1e1a466dcc649194618061e6fbd04a6f7e92a03d95cc6a8dc71f4ecc5f23",
+   "results/SEAL.json": "6d37cffb6ccb6b40595be2c62728f329a62b488ec9a88f7733aa76fee860b1d7"
+  }
+ },
+ "note": "AMENDMENT_01 is exploratory post-seal evidence only; v1 treats REPRESENTATION_BOTTLENECK as a hypothesis (H1), never as a result. v0's leakage.py digest is its AMENDED bytes; its frozen bytes are named in v0 results/AMENDMENT_01.json.",
+ "schema": "forge.battery_rediscovery.v0_history/1"
+}

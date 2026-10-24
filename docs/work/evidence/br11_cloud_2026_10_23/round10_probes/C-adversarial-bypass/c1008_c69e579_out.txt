@@ -1,0 +1,6 @@
+no metadata (control)              | the owner reads the spend back: 4 evaluations | follower on the spend: read revision 4
+                                   | after the restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+metadata {'seeds': [1, 2]}         | the owner reads the spend back: 4 evaluations | follower on the spend: refused: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads 
+                                   | after the restore: DISPATCHED AGAIN | executor ran 2
+metadata {'run': {'host': 'a'}}    | the owner reads the spend back: 4 evaluations | follower on the spend: refused: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads 
+                                   | after the restore: DISPATCHED AGAIN | executor ran 2

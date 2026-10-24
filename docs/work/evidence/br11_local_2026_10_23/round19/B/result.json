@@ -1,0 +1,110 @@
+{
+  "reviewed_sha": "0b605b43416d575b60f87ca57eea7a1d646489d5",
+  "lens": "B concurrency/interruption/publication lifecycle",
+  "environment": "WSL Ubuntu-24.04, repository .venv/bin/python, PYTHONPATH=repo/src:repo, PYTHONDONTWRITEBYTECODE=1",
+  "import_path": "/home/dev_kaeem/forge-gen2-authority-v1/src/engcore/mind/world/owners.py",
+  "questions": {
+    "Q1": {
+      "answer": "No second state authority identified in the examined publication change.",
+      "basis": "AccountPublication retains canonical account references and reader observations; owner histories/readback remain decisive. System state adapter remains a projection.",
+      "scope": "Lifetime implementation reviewed; no exhaustive system-runtime audit."
+    },
+    "Q2": {
+      "answer": "No new applicability authority identified.",
+      "basis": "Changed owners.py lifetime paths do not select models or decide applicability; admission verifies owner-bound facts before feasibility.",
+      "scope": "Static boundary inspection only; applicability algorithm not independently retested in this lens."
+    },
+    "Q3": {
+      "answer": "No duplicate units engine identified.",
+      "basis": "Owners import canonical units registry fingerprint/verification; world and feasibility use scientific.Quantity.",
+      "scope": "Static import and callsite inspection, not a full unit conversion test campaign."
+    },
+    "Q4": {
+      "answer": "No new design/search/budget authority identified in the lifetime delta.",
+      "basis": "Retained generations are process lifetime bookkeeping over BudgetLedger/ScientificExperiment, not a parallel spend ledger. WorldBudget delegates ledger affordability to BudgetLedger.",
+      "scope": "Broader pre-existing design/search concepts not exhaustively reviewed; experiment accounting checks remain pre-existing."
+    },
+    "Q5": {
+      "answer": "No scientific verdict issued by this change.",
+      "basis": "Feasibility and admission explicitly classify action feasibility/admission, not scientific support; publication status is availability/lifetime only.",
+      "scope": "Static boundary inspection; synthetic tests are not physical validation."
+    },
+    "Q6": {
+      "answer": "No proposer-forging bypass found; B-F1 demonstrates a disputed cross-reader publication-currency admission gap.",
+      "basis": "Following requires exact publication/source types; raw callback and source subclass controls execute in lifetime suite; close and historical spend refuse subsequent reader authority.",
+      "scope": "In-process private mutation and arbitrary monkeypatching as attacks are excluded; patches used only as deterministic checkpoints."
+    },
+    "Q7": {
+      "answer": "No direct unadmitted provider invocation found. B-F1 permits second admitted executor invocation after a completed spend when its replacement publication arrives during another reader pin; scope disputed.",
+      "basis": "Publication invokes no providers; ExecutionDesk contract reauthorizes before executor invocation; 36 lifetime traces include actual executor call counts and spent refusal.",
+      "scope": "No provider integration run. Concurrent executor reservation/at-most-once dispatch is explicitly not claimed."
+    }
+  },
+  "findings": [
+    {
+      "id": "B-F1",
+      "location": "src/engcore/mind/world/owners.py:1041,1163-1165",
+      "severity": "Potential MAJOR; publication currency contract interpretation disputed",
+      "mechanism": "First actual dispatch completes, replacing/spending a new ledger never published. R2 callback captures spent ledger but stalls before publish. Owner restores original unspent object. R1 dispatch starts and completes canonical readback. R2 commits spent publication and refuses own dispatch. R1 completes old comparison/open check and executes second time. Later fresh pins on both readers refuse.",
+      "reproducer": "test_late_publication_probe.py, parameter prepublish=False",
+      "control": "prepublish=True commits spent replacement before first dispatch returns; identical subsequent schedule refuses second dispatch and executor count stays one. Both parameter controls executed.",
+      "impact": "Completed execution before R1 start can be duplicated when its account replacement was never source-published before R1 observation. Distinct from simultaneous executor reservation. Retained published spend is not erased.",
+      "disposition": "Parent flags owners.py:537-538 and 1033-1041 promise to reconcile all source generations before serving authority: spent generation commits before R1 comparison, but final check only verifies open. Reviewer caveat: absent at R1 acquisition/readback; prepublication control refuses. Independent skeptic must determine whether guarantee linearizes at early read or requires source generation currency at comparison. Do not mark resolved or dismissed.",
+      "status": "SUBSTANTIVE DISPUTED FINDING \u2014 independent skeptic disposition pending"
+    }
+  ],
+  "disposition": "B-F1 substantive disputed late-publication finding pending independent skeptic review; no implementation edits. Ordinary overlapping-dispatch residual is separate.",
+  "commands_results": [
+    {
+      "command": "repo/.venv/bin/python -m pytest -q -p no:cacheprovider /home/dev_kaeem/br11-review/r19/B/test_lifecycle_probe.py",
+      "result": "10 passed in 1.40s",
+      "log": "probes-final.log"
+    },
+    {
+      "command": "repo/.venv/bin/python -m pytest -q -p no:cacheprovider tests/mind/test_authority_lifetime.py tests/mind/test_authority_lifetime_state_machine.py",
+      "result": "57 passed in 4.08s",
+      "log": "lifetime.log"
+    },
+    {
+      "command": "repo/.venv/bin/python -m pytest -q -s -p no:cacheprovider /home/dev_kaeem/br11-review/r19/B/test_overlap_probe.py",
+      "result": "2 passed in 2.06s; both restore and no-restore overlapping dispatches executed twice, subsequent dispatches refused",
+      "log": "overlap.log"
+    },
+    {
+      "command": "repo/.venv/bin/python -m pytest -q -s -p no:cacheprovider /home/dev_kaeem/br11-review/r19/B/test_late_publication_probe.py",
+      "result": "2 passed in 1.69s; unpublished replacement spent before R1 acquisition executes twice; matched published-before-acquisition control executes once",
+      "log": "late-publication-final.log"
+    }
+  ],
+  "coverage_limitations": [
+    "Finite deterministic schedules, not every Python bytecode interruption or concurrent interleaving.",
+    "No generic callback capture safety: only committed publications and previously published canonical append-only accounts.",
+    "No process-crash persistence, cross-process lifetime, memory/performance bound, private-state tampering guarantee, or physical validation.",
+    "Source check is acceptance linearization point; close after it is not an atomic executor reservation violation.",
+    "FAST delegated to parent; not executed by lens B.",
+    "Repeated hostile interrupts may deny service; no absence-of-evidence acceptance claimed.",
+    "Executed late first-publication trace can duplicate a completed action: uncommitted callback-local spent bindings are not source authority at the delayed reader observation. Report B-LATE-PUBLICATION separately from reservation overlap."
+  ],
+  "repository_status": "HEAD unchanged at reviewed_sha; git status --short empty after execution.",
+  "observed_residuals": [
+    {
+      "id": "B-OVERLAP",
+      "location": "src/engcore/mind/world/owners.py:863,1033-1043,1163-1165; admission.py:28-35,469-471",
+      "severity": "Documented executor-reservation residual, not classified as a lost-publication blocker",
+      "mechanism": "Two independent readers share a source. R1 finishes canonical readback of unspent account and stalls before comparison; R2 dispatches and settles, optionally restores/publishes, and subsequent R2 dispatch refuses. R1 resumes and dispatches from its pre-spend snapshot. Both readers subsequently refuse redispatch.",
+      "reproducer": "test_overlap_probe.py::test_overlap_control (restore False and True)",
+      "impact": "Two overlapping executions can occur. Matched no-restore control demonstrates no publication-history erasure is required. The delayed read observed before spend; it can linearize before R2. Publication check does not reserve execution or make the owner read/executor transaction atomic.",
+      "disposition": "Out of bounded executor reservation contract; report explicitly, do not claim concurrent at-most-once execution. If owner intends a final-comparison current-generation guarantee beyond existing linearization semantics, that is a stronger contract requiring a design decision."
+    },
+    {
+      "id": "B-LATE-PUBLICATION",
+      "location": "src/engcore/mind/world/owners.py:1041,1163-1165",
+      "severity": "Scope-dependent authority freshness gap; potential MAJOR if final-comparison publication freshness is required, otherwise unpublished-owner-state residual",
+      "mechanism": "First actual dispatch completes, replacing/spending a new ledger never published. R2 callback captures spent ledger but stalls before publish. Owner restores original unspent object. R1 dispatch starts and completes canonical readback. R2 commits spent publication and refuses own dispatch. R1 completes old comparison/open check and executes second time. Later fresh pins on both readers refuse.",
+      "reproducer": "test_late_publication_probe.py, parameter prepublish=False",
+      "control": "prepublish=True commits spent replacement before first dispatch returns; identical subsequent schedule refuses second dispatch and executor count stays one. Both parameter controls executed.",
+      "impact": "Completed execution before R1 start can be duplicated when its account replacement was never source-published before R1 observation. Distinct from simultaneous executor reservation. Retained published spend is not erased.",
+      "disposition": "Explicit residual under publish-before-handoff/lifetime contract, not proof of generic callback-capture safety. Parent must not hide the demonstrated duplicate behind simultaneous-reservation wording. Stronger final-publication-freshness contract would make this blocking; matched control supports no lost published authority under approved prepublication invariant."
+    }
+  ]
+}

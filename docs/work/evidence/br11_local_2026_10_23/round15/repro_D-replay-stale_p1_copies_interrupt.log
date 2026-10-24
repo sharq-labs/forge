@@ -1,0 +1,16 @@
+copies=False
+  [before] FEASIBLE []
+  [before-2] FEASIBLE []
+  [interrupted] KeyboardInterrupt re-raised to the caller (caught, as an interactive session does)
+  [after-0] FEASIBLE []
+  [after-1] FEASIBLE []
+  [after-2] FEASIBLE []
+  diverged: {}
+copies=True
+  [before] FEASIBLE []
+  [before-2] FEASIBLE []
+  [interrupted] KeyboardInterrupt re-raised to the caller (caught, as an interactive session does)
+  [after-0] projection refused: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote the entries of a state of it a verification was handed and could not read back (it
+  [after-1] projection refused: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote the entries of a state of it a verification was handed and could not read back (it
+  [after-2] projection refused: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote the entries of a state of it a verification was handed and could not read back (it
+  diverged: {('ledger', 'synthetic.battery.pulse-cell.solver'): "budget ledger 'synthetic.battery.pulse-cell.solver' rewrote the entries of a sta", ('experiment', 'synthetic.battery.pulse-cell.experiment'): "budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote the entries "}

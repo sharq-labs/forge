@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-s",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp=/home/dev_kaeem/br11-review/r18/E/pt",
+    "/home/dev_kaeem/br11-review/r18/E/test_e.py",
+    "tests/mind/test_authority_review_r17.py",
+    "tests/mind/test_authority_review_r16.py"
+  ],
+  "cwd": "/home/dev_kaeem/forge-r18-review",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "exit_code": 0,
+  "log": "/home/dev_kaeem/br11-review/r18/E/tests.log"
+}

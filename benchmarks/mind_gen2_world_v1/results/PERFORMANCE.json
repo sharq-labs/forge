@@ -1,0 +1,49 @@
+{
+ "ACTIONSPACE_BUILD_MS": 0.256,
+ "ACTIONSPACE_BUILD_MS_median_by_world": {
+  "battery": 0.292,
+  "drone": 0.244,
+  "hvac_chamber": 0.26,
+  "hvac_field": 0.256,
+  "motor": 0.217
+ },
+ "FEASIBILITY_MAX_MS": 0.7638,
+ "FEASIBILITY_P50_MS": 0.1398,
+ "FEASIBILITY_P95_MS": 0.2626,
+ "FEASIBILITY_samples": 2575,
+ "REFERENCE_SOLVER_MS": {
+  "median": 88.235,
+  "what": "one Gen1 repsem judgment (scipy least-squares model fit) on the synthetic mind_repsem_v1 IDENTIFIABLE fixture, seed 0: an in-repo solver execution"
+ },
+ "SERIALIZED_WORLD_BYTES_by_world": {
+  "battery": 22647,
+  "drone": 18330,
+  "hvac_chamber": 18267,
+  "hvac_field": 17894,
+  "motor": 17559
+ },
+ "SERIALIZED_WORLD_BYTES_max": 22647,
+ "WORLD_BUILD_MS": 0.856,
+ "WORLD_BUILD_MS_median_by_world": {
+  "battery": 1.057,
+  "drone": 0.837,
+  "hvac_chamber": 0.867,
+  "hvac_field": 0.832,
+  "motor": 0.856
+ },
+ "WORLD_FROM_DICT_MS_median_by_world": {
+  "battery": 1.12,
+  "drone": 0.962,
+  "hvac_chamber": 0.926,
+  "hvac_field": 0.916,
+  "motor": 0.94
+ },
+ "host": {
+  "bytecode_writing_disabled": true,
+  "cpu_count": 24,
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.2"
+ },
+ "repeats": 25,
+ "schema": "forge.mind.gen2_world.performance/1"
+}

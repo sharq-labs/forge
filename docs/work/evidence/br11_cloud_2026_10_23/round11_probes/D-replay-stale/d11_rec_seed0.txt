@@ -1,0 +1,17 @@
+experiment meta none: FEASIBLE () | replay reproduced | sha c157dc7abf2a2260
+experiment meta none, JSON-restored: FEASIBLE () | replay reproduced | sha c157dc7abf2a2260
+experiment meta nested: FEASIBLE () | replay reproduced | sha 3d85053df449eb4f
+experiment meta nested, JSON-restored: FEASIBLE () | replay reproduced | sha 3d85053df449eb4f
+experiment meta tuple: FEASIBLE () | replay reproduced | sha 20b07a11ecb63890
+experiment meta tuple, JSON-restored: FEASIBLE () | replay reproduced | sha 20b07a11ecb63890
+experiment meta bigint/unicode: FEASIBLE () | replay reproduced | sha 9181f43e87dc69c2
+experiment meta bigint/unicode, JSON-restored: FEASIBLE () | replay reproduced | sha 9181f43e87dc69c2
+experiment meta float-int: FEASIBLE () | replay reproduced | sha 8b6854f6c5bc2c34
+experiment meta float-int, JSON-restored: FEASIBLE () | replay reproduced | sha 8b6854f6c5bc2c34
+ledger with a charge: FEASIBLE () | replay reproduced | sha 0965f531fe5f97f3
+ledger with a charge, JSON-restored: FEASIBLE () | replay reproduced | sha 0965f531fe5f97f3
+ledger behind: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | replay reproduced | sha 120122579fa25d95
+ledger rewrite: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | replay reproduced | sha f543bf3798fc3a59
+in flight (earlier verification paused): MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | replay reproduced | sha c31ce8752d246137
+after the earlier verification completed: FEASIBLE () | replay reproduced | sha 025cb8751a961de1
+older-revision world: MISSING_INFORMATION ('AUTHORITY_STALE',) | replay reproduced | sha d8dae2a2ff2e96b8

@@ -1,0 +1,109 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "authority": "review coverage only",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "counts": {
+    "major_aliases": 6,
+    "unique_major_families": 1,
+    "minor_aliases": 0,
+    "unique_minor_families": 0,
+    "blocker_defects": 0
+  },
+  "rows": [
+    {
+      "id": "R18-A-1",
+      "lens": "A",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Native pre-capture resource failure still forgets handed spend after owner mapping replacement and permits duplicate dispatch",
+      "source": "A/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION",
+      "family": "pre-capture mutable handing information loss"
+    },
+    {
+      "id": "R18-B-1",
+      "lens": "B",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted pre-capture handing still loses executed spend and permits old authorization redispatch after live-map checkpoint replacement",
+      "source": "B/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION",
+      "family": "pre-capture mutable handing information loss"
+    },
+    {
+      "id": "R18-C-1",
+      "lens": "C",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Native pre-capture resource exhaustion still loses handed spend and permits duplicate dispatch after checkpoint replacement",
+      "source": "C/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION",
+      "family": "pre-capture mutable handing information loss"
+    },
+    {
+      "id": "R18-D-1",
+      "lens": "D",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Live owner mapping still loses handed spend after native pre-capture interruption and checkpoint replacement",
+      "source": "D/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION",
+      "family": "pre-capture mutable handing information loss"
+    },
+    {
+      "id": "R18-E-1",
+      "lens": "E",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted capture of reused mutable handing loses spend on checkpoint replacement",
+      "source": "E/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION",
+      "family": "pre-capture mutable handing information loss"
+    },
+    {
+      "id": "R18-F-1",
+      "lens": "F",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Pre-capture interruption still loses handed spend when live mapping entries are replaced",
+      "source": "F/result.json",
+      "skeptics": [
+        "S1/result.json",
+        "S2/result.json"
+      ],
+      "disposition": "OPEN_OWNER_PUBLICATION_LIFETIME_DECISION",
+      "family": "pre-capture mutable handing information loss"
+    }
+  ],
+  "closure": "NOT CLOSED",
+  "critic_status": "COMPLETE",
+  "disposition": "PRECISE_ARCHITECTURAL_BLOCKER: stable owner publication/recoverable history decision required; no new separable defect"
+}

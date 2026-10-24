@@ -1,0 +1,5 @@
+set              to_json raises TypeError     | on spend: ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | ran 2
+datetime         to_json raises TypeError     | on spend: ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | ran 2
+decimal          to_json raises TypeError     | on spend: ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | ran 2
+bytes            to_json raises TypeError     | on spend: ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | ran 2
+int key          to_json ok                   | on spend: ('AUTHORITY_OWNER_UNAVAILABLE',) | after restore: DISPATCHED AGAIN | ran 2

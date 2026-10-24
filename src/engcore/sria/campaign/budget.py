@@ -247,6 +247,29 @@ class BudgetLedger:
     def has_charge(self, charge_id: str) -> bool:
         return any(c.charge_id == charge_id for c in self.charges)
 
+    # -- read-only identity (GEN2-BR1.1) ------------------------------------
+    @property
+    def revision(self) -> int:
+        """How many charges the ledger has recorded. It only grows: ``settle``
+        appends and is idempotent per charge id, and the history cannot be
+        reassigned (``BudgetHistoryViolation``)."""
+        return len(self.charges)
+
+    @property
+    def digest(self) -> str:
+        """The ledger as it stands now: the canonical digest of :meth:`to_dict`
+        (every declaration, every charge, and the derived totals they imply),
+        taken in the form :meth:`from_dict` reads it back, so a ledger and its
+        own round trip (a checkpoint restore) are one identity.
+
+        A read, never a write. Any settled charge, and any change to the
+        declared budget, reservation, unit or cap, gives another digest, so a
+        record that cites this ledger can be checked against it later instead
+        of trusted."""
+        from ..decision.replay import canonical_digest
+
+        return canonical_digest(BudgetLedger.from_dict(self.to_dict()).to_dict())
+
     def settle(
         self,
         *,

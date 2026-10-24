@@ -1,0 +1,32 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_retired_account_never_reruns_retained_content ______________
+
+    def test_retired_account_never_reruns_retained_content():
+        account, held, mode, reader = _simple()
+        class Moving:
+            calls = 0
+            def __str__(self):
+                self.calls += 1
+                raise RuntimeError("dictionary changed size during iteration")
+        note = Moving()
+        _settle(account, "unread", note)
+        with pytest.raises(OwnerUnavailable):
+            reader.read(K, "a")
+        different = BudgetLedger(total_budget=100.)
+        _settle(different, "different-history")
+        held["a"] = different
+        with pytest.raises(OwnerUnavailable):
+            reader.read(K, "a")
+        assert ("ledger", "a") in reader._diverged
+        calls = note.calls
+        with pytest.raises(OwnerUnavailable):
+            reader.read(K, "a")
+>       assert note.calls == calls
+E       assert 5 == 4
+E        +  where 5 = <tests.mind.test_authority_review_r15.test_retired_account_never_reruns_retained_content.<locals>.Moving object at 0x7f1f80553c20>.calls
+
+tests/mind/test_authority_review_r15.py:380: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_retired_account_never_reruns_retained_content
+1 failed in 1.40s

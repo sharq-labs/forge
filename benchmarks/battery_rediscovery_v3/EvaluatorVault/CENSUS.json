@@ -1,0 +1,2936 @@
+{
+ "counts": {
+  "ELIGIBLE_PRIMARY_V3": 20,
+  "ELIGIBLE_SECONDARY_ONLY": 27,
+  "INELIGIBLE": 23
+ },
+ "note": "written before any v3 truth exists; no fit and no model comparison was made to classify a unit",
+ "rows": [
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V0",
+    "USED_IN_V1"
+   ],
+   "condition": "1. BatteryAgingARC-FY08Q4",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/1. BatteryAgingARC-FY08Q4/B0005.mat",
+    "pinned_sha256": "0eae4585baf3f200c09fe24c5ab884f1889679fc75206ca1aa19da704104f0b0",
+    "sha256": "0eae4585baf3f200c09fe24c5ab884f1889679fc75206ca1aa19da704104f0b0"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_closure split (v0/v1 P1); closure results (calibration NOT_IDENTIFIABLE, cross-cell FAIL) and Sprint 3 voltage results are in the evaluator context",
+   "protocol": {
+    "charge_termination_A_median": 0.001682344521086255,
+    "cutoff_V": 2.7,
+    "discharges": 168,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 2.012510035420975,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 9.375
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     23.214801785728056,
+     41.45023191903855
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0005"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V0",
+    "USED_IN_V1"
+   ],
+   "condition": "1. BatteryAgingARC-FY08Q4",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/1. BatteryAgingARC-FY08Q4/B0006.mat",
+    "pinned_sha256": "fa818ab4db5db8ab21e910b6dd6c3e20d3761bb9672089e1a4de8f96074616c5",
+    "sha256": "fa818ab4db5db8ab21e910b6dd6c3e20d3761bb9672089e1a4de8f96074616c5"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_closure split (v0/v1 P1); closure results (calibration NOT_IDENTIFIABLE, cross-cell FAIL) and Sprint 3 voltage results are in the evaluator context",
+   "protocol": {
+    "charge_termination_A_median": 0.019463820740572943,
+    "cutoff_V": 2.5,
+    "discharges": 168,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 2.010350757110476,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 9.375
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     23.20127236203539,
+     42.0075404495327
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0006"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V0",
+    "USED_IN_V1"
+   ],
+   "condition": "1. BatteryAgingARC-FY08Q4",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/1. BatteryAgingARC-FY08Q4/B0007.mat",
+    "pinned_sha256": "d022afa086efaf54ab5b63f05220f5be178c8027e2fa8d68589db0e85a441a3b",
+    "sha256": "d022afa086efaf54ab5b63f05220f5be178c8027e2fa8d68589db0e85a441a3b"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_closure split (v0/v1 P1); closure results (calibration NOT_IDENTIFIABLE, cross-cell FAIL) and Sprint 3 voltage results are in the evaluator context",
+   "protocol": {
+    "charge_termination_A_median": 0.002477749621646801,
+    "cutoff_V": 2.2,
+    "discharges": 168,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.9894884155384351,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 9.375
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     22.969922978716898,
+     42.33252236723314
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0007"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V0",
+    "USED_IN_V1"
+   ],
+   "condition": "1. BatteryAgingARC-FY08Q4",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/1. BatteryAgingARC-FY08Q4/B0018.mat",
+    "pinned_sha256": "d1e6c923a43ea1c9666b3a90bbb521757a067fd60b4d17dbfaa49c50b179da69",
+    "sha256": "d1e6c923a43ea1c9666b3a90bbb521757a067fd60b4d17dbfaa49c50b179da69"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_closure split (v0/v1 P1); closure results (calibration NOT_IDENTIFIABLE, cross-cell FAIL) and Sprint 3 voltage results are in the evaluator context",
+   "protocol": {
+    "charge_termination_A_median": 0.0017999556531837768,
+    "cutoff_V": 2.5,
+    "discharges": 132,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 2.008502549846616,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.859250000000031
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     22.35025648802666,
+     38.878687997701746
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0018"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0025.mat",
+    "pinned_sha256": "38894747a9c79d719e95a2e6c42be18017e29c522b760056b680a65105d1a15f",
+    "sha256": "38894747a9c79d719e95a2e6c42be18017e29c522b760056b680a65105d1a15f"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no FORGE 1RC study",
+   "protocol": {
+    "charge_termination_A_median": 0.0023536962199011214,
+    "cutoff_V": 2.0,
+    "discharges": 28,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 4.024883422099743,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.88300000000001
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: 0.05 Hz square-wave load sampled at ~10 s cannot be reconstructed between samples"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     26.14548341054868,
+     41.82908827830225
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0025"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0026.mat",
+    "pinned_sha256": "ca5eee0b33d8070e3a6c254696444a0c65a12f40587fcfc8db858640b2e6e36c",
+    "sha256": "ca5eee0b33d8070e3a6c254696444a0c65a12f40587fcfc8db858640b2e6e36c"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no FORGE 1RC study",
+   "protocol": {
+    "charge_termination_A_median": 0.0017205618864567613,
+    "cutoff_V": 2.2,
+    "discharges": 28,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 4.025066847597615,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.88300000000001
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: 0.05 Hz square-wave load sampled at ~10 s cannot be reconstructed between samples"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     26.055865754438425,
+     40.90407080657346
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0026"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0027.mat",
+    "pinned_sha256": "de2b4045ef20a6900885e169f3540664bb637f5f94b41fb4333c31d759237209",
+    "sha256": "de2b4045ef20a6900885e169f3540664bb637f5f94b41fb4333c31d759237209"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no FORGE 1RC study",
+   "protocol": {
+    "charge_termination_A_median": 0.010375699353995276,
+    "cutoff_V": 2.5,
+    "discharges": 28,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 3.9728992098425606,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.88300000000001
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: 0.05 Hz square-wave load sampled at ~10 s cannot be reconstructed between samples"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     25.907382263131502,
+     43.208685492251035
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0027"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0028.mat",
+    "pinned_sha256": "050c377e85a2c41165f2e2e0d22bf9575385dd8c835a713c27edb65af6bb25e8",
+    "sha256": "050c377e85a2c41165f2e2e0d22bf9575385dd8c835a713c27edb65af6bb25e8"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no FORGE 1RC study",
+   "protocol": {
+    "charge_termination_A_median": 0.0041881107944289255,
+    "cutoff_V": 2.7,
+    "discharges": 28,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.996064453563552,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.88300000000001
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: 0.05 Hz square-wave load sampled at ~10 s cannot be reconstructed between samples"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     26.073901766341304,
+     32.50607956309833
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0028"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0029.mat",
+    "pinned_sha256": "da9c63ac7b8a10d2354ff53fec9be23f4194352e667de5c503b069f7d267ebb2",
+    "sha256": "da9c63ac7b8a10d2354ff53fec9be23f4194352e667de5c503b069f7d267ebb2"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "no repository record names these cells; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.0009727812660324185,
+    "cutoff_V": 2.0,
+    "discharges": 40,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 4.023832963638837,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.30499999999995
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     43
+    ],
+    "recorded_cell_C_range": [
+     43.40626577176862,
+     60.33243416075105
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0029"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0030.mat",
+    "pinned_sha256": "c29a910256812449aa6090031471a57440e2e7bc827bd2c822b0d3135485cc99",
+    "sha256": "c29a910256812449aa6090031471a57440e2e7bc827bd2c822b0d3135485cc99"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "no repository record names these cells; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.001343706494586236,
+    "cutoff_V": 2.2,
+    "discharges": 40,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 4.024804468803302,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.30499999999995
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     43
+    ],
+    "recorded_cell_C_range": [
+     43.15149833518289,
+     63.0242156686281
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0030"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0031.mat",
+    "pinned_sha256": "c47cb3a5ef47ef4de26fcc80c2173fec24a139f6c305852fccee603cd6c4bcec",
+    "sha256": "c47cb3a5ef47ef4de26fcc80c2173fec24a139f6c305852fccee603cd6c4bcec"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "no repository record names these cells; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.0014301935843045782,
+    "cutoff_V": 2.5,
+    "discharges": 40,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 3.974624353852705,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.30499999999995
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     43
+    ],
+    "recorded_cell_C_range": [
+     42.830036312976034,
+     62.099570509363424
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0031"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0032.mat",
+    "pinned_sha256": "bd146cad3a18f9e8d42d05014c90e7bcde7abc7ccc89bdd46e5655604c61bc0f",
+    "sha256": "bd146cad3a18f9e8d42d05014c90e7bcde7abc7ccc89bdd46e5655604c61bc0f"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "no repository record names these cells; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.00974919377400291,
+    "cutoff_V": 2.7,
+    "discharges": 40,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 3.9903440369174565,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.30499999999995
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     43
+    ],
+    "recorded_cell_C_range": [
+     43.25683175903665,
+     62.96996562520999
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0032"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0033.mat",
+    "pinned_sha256": "3f6b44d7e123b9e9e4a26c3651acd0b9f38ca4d21aac3930bd9197ccf8b04426",
+    "sha256": "3f6b44d7e123b9e9e4a26c3651acd0b9f38ca4d21aac3930bd9197ccf8b04426"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "Sprint 3 consumed every 20-30 C cell (non-Mind); B0036's temperature-channel defect and the 24 C 4 A capacity-basis break are known",
+   "protocol": {
+    "charge_termination_A_median": 0.019359914798981536,
+    "cutoff_V": 2.0,
+    "discharges": 197,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 4.027751428434282,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 13.547000000000025
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     22.959689226191127,
+     61.13715999731606
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0033"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0034.mat",
+    "pinned_sha256": "d8cd5faff49f0d5672736327c5cd16913e0a0f08fb2817f672f52a67184cb885",
+    "sha256": "d8cd5faff49f0d5672736327c5cd16913e0a0f08fb2817f672f52a67184cb885"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "Sprint 3 consumed every 20-30 C cell (non-Mind); B0036's temperature-channel defect and the 24 C 4 A capacity-basis break are known",
+   "protocol": {
+    "charge_termination_A_median": 0.004501394592938757,
+    "cutoff_V": 2.2,
+    "discharges": 197,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 4.028648587298962,
+    "nominal_level_A": 4.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 13.547000000000025
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     22.908599756234555,
+     61.43732341776916
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0034"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0036.mat",
+    "pinned_sha256": "40511cccf0262d61b8345fdfe6c4e0a67ccc42e7f5e869ec32c7f33619e7dc15",
+    "sha256": "40511cccf0262d61b8345fdfe6c4e0a67ccc42e7f5e869ec32c7f33619e7dc15"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "Sprint 3 consumed every 20-30 C cell (non-Mind); B0036's temperature-channel defect and the 24 C 4 A capacity-basis break are known",
+   "protocol": {
+    "charge_termination_A_median": 0.007049384163684348,
+    "cutoff_V": 2.7,
+    "discharges": 197,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.9962482628776599,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 13.547000000000025
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     24
+    ],
+    "recorded_cell_C_range": [
+     22.97359506516038,
+     39.35953919640877
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0036"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V2"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0038.mat",
+    "pinned_sha256": "41d4a6977e3f3a46623f80ad8f6e5ba6ad83a2746403f71966c88a4722ffd409",
+    "sha256": "41d4a6977e3f3a46623f80ad8f6e5ba6ad83a2746403f71966c88a4722ffd409"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "v2 Q1 (44 C runs); v2 truth is known; 24 C runs consumed by Sprint 3",
+   "protocol": {
+    "charge_termination_A_median": 0.004007793071651037,
+    "cutoff_V": 2.2,
+    "discharges": 47,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.0071703430804573,
+    "nominal_level_A": [
+     1.0,
+     2.0,
+     4.0
+    ],
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.547000000000025
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: mixed ambient labels [24, 44] within one cell"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     24,
+     44
+    ],
+    "recorded_cell_C_range": [
+     25.045828878659496,
+     69.86974573152932
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0038"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V2"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0039.mat",
+    "pinned_sha256": "0ea0a44622b61f13306cfc9c7080c7a6a8eb187da38607bfdc776974fcb5f000",
+    "sha256": "0ea0a44622b61f13306cfc9c7080c7a6a8eb187da38607bfdc776974fcb5f000"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "v2 Q1 (44 C runs); v2 truth is known; 24 C runs consumed by Sprint 3",
+   "protocol": {
+    "charge_termination_A_median": 0.0027819640000191666,
+    "cutoff_V": 2.5,
+    "discharges": 47,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 0.9965950368029172,
+    "nominal_level_A": [
+     1.0,
+     2.0,
+     4.0
+    ],
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.547000000000025
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: mixed ambient labels [24, 44] within one cell"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     24,
+     44
+    ],
+    "recorded_cell_C_range": [
+     24.62407997958134,
+     64.14381595669508
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0039"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V2"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0040.mat",
+    "pinned_sha256": "1d7eb3dbf82bda46837831756999d911211b9ed0cc892c7e2e8d7f9059a5e013",
+    "sha256": "1d7eb3dbf82bda46837831756999d911211b9ed0cc892c7e2e8d7f9059a5e013"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "v2 Q1 (44 C runs); v2 truth is known; 24 C runs consumed by Sprint 3",
+   "protocol": {
+    "charge_termination_A_median": 0.004587323039824898,
+    "cutoff_V": 2.7,
+    "discharges": 47,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 0.9988642056785182,
+    "nominal_level_A": [
+     1.0,
+     2.0,
+     4.0
+    ],
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.547000000000025
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: mixed ambient labels [24, 44] within one cell"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     24,
+     44
+    ],
+    "recorded_cell_C_range": [
+     24.62082872256712,
+     55.67880428959517
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0040"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0041.mat",
+    "pinned_sha256": "a5440bfb8a141a123ed255ddccaec736b7e04028bce266f04da44c99d53c1eaf",
+    "sha256": "a5440bfb8a141a123ed255ddccaec736b7e04028bce266f04da44c99d53c1eaf"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "Sprint 3 holdout B0044 failed at 99.7 mV and B0041 failed at +128 mV bias in the recovery (project memory)",
+   "protocol": {
+    "charge_termination_A_median": 0.0034051996836826125,
+    "cutoff_V": 2.0,
+    "discharges": 67,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 4.0256015518207855,
+    "nominal_level_A": [
+     1.0,
+     4.0
+    ],
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 12.328000000000003
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.6403690820883403,
+     14.838581695723233
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0041"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0042.mat",
+    "pinned_sha256": "4c39701508278c7a4f14e8af299f2510403dca30f2627fcf30c0ad7dc9f33675",
+    "sha256": "4c39701508278c7a4f14e8af299f2510403dca30f2627fcf30c0ad7dc9f33675"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "Sprint 3 holdout B0044 failed at 99.7 mV and B0041 failed at +128 mV bias in the recovery (project memory)",
+   "protocol": {
+    "charge_termination_A_median": 0.030467653930448688,
+    "cutoff_V": 2.2,
+    "discharges": 112,
+    "fraction_at_level": 0.6339285714285714,
+    "load_level_A_median": 2.0127646729956545,
+    "nominal_level_A": [
+     1.0,
+     4.0
+    ],
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.843999999999987
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 30.5 mA > 30 mA: the protocol's full charge is not attained",
+    "protocol_roles: only 63% of discharges run at the declared load level (< 90%; README: anomalous low-capacity runs)",
+    "protocol_roles: mixed ambient labels [4, 22] within one cell"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4,
+     22
+    ],
+    "recorded_cell_C_range": [
+     3.445726070155866,
+     41.67057172451578
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0042"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0043.mat",
+    "pinned_sha256": "3e937018342628667a0b1cf30ce804aebed9a1d79577de372d5232ad4bf96034",
+    "sha256": "3e937018342628667a0b1cf30ce804aebed9a1d79577de372d5232ad4bf96034"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "Sprint 3 holdout B0044 failed at 99.7 mV and B0041 failed at +128 mV bias in the recovery (project memory)",
+   "protocol": {
+    "charge_termination_A_median": 0.0019163920403061899,
+    "cutoff_V": 2.5,
+    "discharges": 112,
+    "fraction_at_level": 0.6339285714285714,
+    "load_level_A_median": 1.9889448040638855,
+    "nominal_level_A": [
+     1.0,
+     4.0
+    ],
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.843999999999987
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: only 63% of discharges run at the declared load level (< 90%; README: anomalous low-capacity runs)",
+    "protocol_roles: mixed ambient labels [4, 22] within one cell"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4,
+     22
+    ],
+    "recorded_cell_C_range": [
+     3.3754160017304455,
+     38.06717620893625
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0043"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "3. BatteryAgingARC_25-44",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/3. BatteryAgingARC_25-44/B0044.mat",
+    "pinned_sha256": "e66d3620de32f134619eaf9692a41d2ab70fa3f8c49211c2b303261504974f30",
+    "sha256": "e66d3620de32f134619eaf9692a41d2ab70fa3f8c49211c2b303261504974f30"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "Sprint 3 holdout B0044 failed at 99.7 mV and B0041 failed at +128 mV bias in the recovery (project memory)",
+   "protocol": {
+    "charge_termination_A_median": 0.0019434004890012879,
+    "cutoff_V": 2.7,
+    "discharges": 112,
+    "fraction_at_level": 0.6339285714285714,
+    "load_level_A_median": 1.9935927385626224,
+    "nominal_level_A": [
+     1.0,
+     4.0
+    ],
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.843999999999987
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: only 63% of discharges run at the declared load level (< 90%; README: anomalous low-capacity runs)",
+    "protocol_roles: mixed ambient labels [4, 22] within one cell"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4,
+     22
+    ],
+    "recorded_cell_C_range": [
+     2.90475616543561,
+     39.13185799913766
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0044"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "4. BatteryAgingARC_45_46_47_48",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/4. BatteryAgingARC_45_46_47_48/B0045.mat",
+    "pinned_sha256": "dc8e4cc149fe87f4ff855f30f0d31155ada6f467d06f5365550bab9370670fe3",
+    "sha256": "dc8e4cc149fe87f4ff855f30f0d31155ada6f467d06f5365550bab9370670fe3"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.03975433273307231,
+    "cutoff_V": 2.0,
+    "discharges": 72,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.0056766469688232,
+    "nominal_level_A": 1.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 14.202999999999975
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 39.8 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     4.279272155722539,
+     16.878888140585346
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0045"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "4. BatteryAgingARC_45_46_47_48",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/4. BatteryAgingARC_45_46_47_48/B0046.mat",
+    "pinned_sha256": "fe62dffc7079f6131e591415c740f6863364b23e728fe2aa7286a9c749dcdebc",
+    "sha256": "fe62dffc7079f6131e591415c740f6863364b23e728fe2aa7286a9c749dcdebc"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.07133028646271247,
+    "cutoff_V": 2.2,
+    "discharges": 72,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.0066309099360673,
+    "nominal_level_A": 1.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 14.202999999999975
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 71.3 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     4.207894279260447,
+     15.36587842843583
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0046"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "4. BatteryAgingARC_45_46_47_48",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/4. BatteryAgingARC_45_46_47_48/B0047.mat",
+    "pinned_sha256": "8089a9180cf353704642c457c844d83dd2e83aa2fc43fe4f7c05322f86fd0648",
+    "sha256": "8089a9180cf353704642c457c844d83dd2e83aa2fc43fe4f7c05322f86fd0648"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.06030282506105059,
+    "cutoff_V": 2.5,
+    "discharges": 72,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 0.9948596057809893,
+    "nominal_level_A": 1.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 14.202999999999975
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 60.3 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.882513023508471,
+     13.249368019025939
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0047"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "4. BatteryAgingARC_45_46_47_48",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/4. BatteryAgingARC_45_46_47_48/B0048.mat",
+    "pinned_sha256": "341219d38d8531e0a89ecaa18736b79e1547d22edea4a1d45357bb5bfeb7757d",
+    "sha256": "341219d38d8531e0a89ecaa18736b79e1547d22edea4a1d45357bb5bfeb7757d"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.05860244412374479,
+    "cutoff_V": 2.7,
+    "discharges": 72,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 0.9968627346651868,
+    "nominal_level_A": 1.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 14.202999999999975
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 58.6 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.6358068711620457,
+     11.59325762914515
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0048"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "5. BatteryAgingARC_49_50_51_52",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/5. BatteryAgingARC_49_50_51_52/B0049.mat",
+    "pinned_sha256": "bf56a4362287c8489dbeda27b823432f1e587473a7bf7096deec057c5a44d895",
+    "sha256": "bf56a4362287c8489dbeda27b823432f1e587473a7bf7096deec057c5a44d895"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.048472161883356395,
+    "cutoff_V": 2.0,
+    "discharges": 25,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 2.0129427173275993,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.155999999999949
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 48.5 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     4.032381358513863,
+     22.607671167433093
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0049"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "5. BatteryAgingARC_49_50_51_52",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/5. BatteryAgingARC_49_50_51_52/B0050.mat",
+    "pinned_sha256": "4dcb2475a8e689d54ac231832b40be0bf081805f28f69524e1c46f4c1d153d4e",
+    "sha256": "4dcb2475a8e689d54ac231832b40be0bf081805f28f69524e1c46f4c1d153d4e"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.002998752759099859,
+    "cutoff_V": 2.2,
+    "discharges": 25,
+    "fraction_at_level": 0.84,
+    "load_level_A_median": 2.01196297465751,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.155999999999949
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: only 84% of discharges run at the declared load level (< 90%; README: anomalous low-capacity runs)"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     4.128248041576162,
+     24.962762102598134
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0050"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "5. BatteryAgingARC_49_50_51_52",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/5. BatteryAgingARC_49_50_51_52/B0051.mat",
+    "pinned_sha256": "37c247607dc7e5384fae4ef595d8b2f9072a2107ce1112fe0a460b4f48c8894b",
+    "sha256": "37c247607dc7e5384fae4ef595d8b2f9072a2107ce1112fe0a460b4f48c8894b"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.029858705786794875,
+    "cutoff_V": 2.5,
+    "discharges": 25,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.9877286063511939,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.155999999999949
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.957976104923049,
+     20.74350641722436
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0051"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "5. BatteryAgingARC_49_50_51_52",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/5. BatteryAgingARC_49_50_51_52/B0052.mat",
+    "pinned_sha256": "640d86ac187b223c2edf83715b0f95ba5faeaaf5402a51dc81fc5f6275d4edd8",
+    "sha256": "640d86ac187b223c2edf83715b0f95ba5faeaaf5402a51dc81fc5f6275d4edd8"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.00218345897363661,
+    "cutoff_V": 2.7,
+    "discharges": 25,
+    "fraction_at_level": 0.0,
+    "load_level_A_median": 0.0,
+    "nominal_level_A": 1.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 10.155999999999949
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "protocol_roles: only 0% of discharges run at the declared load level (< 90%; README: anomalous low-capacity runs)"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.8635535255180384,
+     16.429874854641657
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0052"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "6. BatteryAgingARC_53_54_55_56",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/6. BatteryAgingARC_53_54_55_56/B0053.mat",
+    "pinned_sha256": "5ae945704d75f9865608c1bf585c80b62ba8e6a98c555840735c1f64fa5513f9",
+    "sha256": "5ae945704d75f9865608c1bf585c80b62ba8e6a98c555840735c1f64fa5513f9"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.0503205175105859,
+    "cutoff_V": 2.0,
+    "discharges": 56,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 2.0125590297976803,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.977
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 50.3 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.8100701431339856,
+     22.11367611975276
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0053"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "6. BatteryAgingARC_53_54_55_56",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/6. BatteryAgingARC_53_54_55_56/B0054.mat",
+    "pinned_sha256": "02ececa6edf2ab1febdfa31daccaaff59b090e627b9403a59060157c9488712a",
+    "sha256": "02ececa6edf2ab1febdfa31daccaaff59b090e627b9403a59060157c9488712a"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.04921530985380976,
+    "cutoff_V": 2.2,
+    "discharges": 103,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 2.011658924857768,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.327999999999975
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 49.2 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     4.062685213629907,
+     25.399130245059563
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0054"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "6. BatteryAgingARC_53_54_55_56",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/6. BatteryAgingARC_53_54_55_56/B0055.mat",
+    "pinned_sha256": "8405c13378ced0894019a74f343057b0151f58c417fed45a5e068c4e372ea039",
+    "sha256": "8405c13378ced0894019a74f343057b0151f58c417fed45a5e068c4e372ea039"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.03369058243422238,
+    "cutoff_V": 2.5,
+    "discharges": 102,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.988134555316345,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.312500000002956
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 33.7 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.8800548728711344,
+     20.334330441428275
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0055"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage_measured",
+    "Current_measured",
+    "Temperature_measured",
+    "Capacity (to 2.7 V)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "6. BatteryAgingARC_53_54_55_56",
+   "dataset": "NASA PCoE Li-ion battery aging (18650, 2 Ah rated)",
+   "identity": {
+    "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+    "file": "extracted/6. BatteryAgingARC_53_54_55_56/B0056.mat",
+    "pinned_sha256": "e894d92938c6fb09b6455bcc49330902c0e3ea8ee65129f664f1718a4843e709",
+    "sha256": "e894d92938c6fb09b6455bcc49330902c0e3ea8ee65129f664f1718a4843e709"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "no repository record; project memory says Sprint 3 splits touched every cell but B0041 (non-Mind; no outcome for these cells is known in the evaluator context)",
+   "protocol": {
+    "charge_termination_A_median": 0.033571861194815165,
+    "cutoff_V": 2.7,
+    "discharges": 102,
+    "fraction_at_level": 1.0,
+    "load_level_A_median": 1.9934690689170569,
+    "nominal_level_A": 2.0,
+    "protocol_termination_A": 0.02,
+    "sampling_s_median": 11.312500000002956
+   },
+   "provenance": "https://phm-datasets.s3.amazonaws.com/NASA/5.+Battery+Data+Set.zip, archive sha256 82302a7d\u2026, owner-approved download (2026-10-14)",
+   "structural_screen_failures": [
+    "initial_state: median preceding-charge end current 33.6 mA > 30 mA: the protocol's full charge is not attained"
+   ],
+   "temperature": {
+    "ambient_labels_C": [
+     4
+    ],
+    "recorded_cell_C_range": [
+     3.424938930685151,
+     15.737541036017063
+    ]
+   },
+   "uncertainty": "UNKNOWN: no logger accuracy statement is published",
+   "unit": "B0056"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage",
+    "Current",
+    "Temperature",
+    "Capacity"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V0",
+    "USED_IN_V1",
+    "USED_IN_V2"
+   ],
+   "condition": "549_HPPC.csv",
+   "dataset": "LG 18650HG2 (McMaster, Mendeley cp3473x7xv.3), 25 C",
+   "identity": {
+    "file": "lg_hg2/raw/549_HPPC.csv",
+    "sha256": "70ffb357511dd77e7c6bc14c642a095ddd51d6918b547987247100a3bd2ea29d"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "v0/v1 P2 and v2 Q2 pulse windows; identifiability study result (IDENTIFIABLE, 2C/4C pulses 12.6 mV) known",
+   "protocol": {
+    "file": "549_HPPC.csv"
+   },
+   "provenance": "Mendeley-published sha256 per file (MENDELEY_MANIFEST.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_label_C": 25
+   },
+   "uncertainty": "DECLARED_TYPE_B: publisher accuracy 0.1 % of 5 V full scale (independence not declared)",
+   "unit": "one cell"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage",
+    "Current",
+    "Temperature",
+    "Capacity"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "USED_IN_V0",
+    "USED_IN_V1"
+   ],
+   "condition": "551_Cap_1C.csv",
+   "dataset": "LG 18650HG2 (McMaster, Mendeley cp3473x7xv.3), 25 C",
+   "identity": {
+    "file": "lg_hg2/raw/551_Cap_1C.csv",
+    "sha256": "d9b9dd9b9b842ee6ba91f79a85512d2306527103d2f1cef5ecec4f962a75d83e"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "v0/v1 held-out constant-current test; FAILS at 28.7 mV in the identifiability study (known)",
+   "protocol": {
+    "file": "551_Cap_1C.csv"
+   },
+   "provenance": "Mendeley-published sha256 per file (MENDELEY_MANIFEST.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_label_C": 25
+   },
+   "uncertainty": "DECLARED_TYPE_B: publisher accuracy 0.1 % of 5 V full scale (independence not declared)",
+   "unit": "one cell"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage",
+    "Current",
+    "Temperature",
+    "Capacity"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "549_C20DisCh.csv",
+   "dataset": "LG 18650HG2 (McMaster, Mendeley cp3473x7xv.3), 25 C",
+   "identity": {
+    "file": "lg_hg2/raw/549_C20DisCh.csv",
+    "sha256": "52eff1a8d273f353d557af8172139c2f23709499d36130ac24ffbbb820e8f232"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "not in a Mind pack; same cell and session as the exposed HPPC/1C results, whose constant-current failure predicts its direction",
+   "protocol": {
+    "file": "549_C20DisCh.csv"
+   },
+   "provenance": "Mendeley-published sha256 per file (MENDELEY_MANIFEST.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_label_C": 25
+   },
+   "uncertainty": "DECLARED_TYPE_B: publisher accuracy 0.1 % of 5 V full scale (independence not declared)",
+   "unit": "one cell"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage",
+    "Current",
+    "Temperature",
+    "Capacity"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "549_Dis_0p5C.csv",
+   "dataset": "LG 18650HG2 (McMaster, Mendeley cp3473x7xv.3), 25 C",
+   "identity": {
+    "file": "lg_hg2/raw/549_Dis_0p5C.csv",
+    "sha256": "85f6147f9bc21157e777a547229af5f252360c308a753672ef3eb1144b57fa75"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "as above",
+   "protocol": {
+    "file": "549_Dis_0p5C.csv"
+   },
+   "provenance": "Mendeley-published sha256 per file (MENDELEY_MANIFEST.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_label_C": 25
+   },
+   "uncertainty": "DECLARED_TYPE_B: publisher accuracy 0.1 % of 5 V full scale (independence not declared)",
+   "unit": "one cell"
+  },
+  {
+   "channels": [
+    "Time",
+    "Voltage",
+    "Current",
+    "Temperature",
+    "Capacity"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "549_Dis_2C.csv",
+   "dataset": "LG 18650HG2 (McMaster, Mendeley cp3473x7xv.3), 25 C",
+   "identity": {
+    "file": "lg_hg2/raw/549_Dis_2C.csv",
+    "sha256": "87b77c00e18242b177bd7a2eac8faa46ad2139c15aa94c146388ae13eba92a06"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "as above",
+   "protocol": {
+    "file": "549_Dis_2C.csv"
+   },
+   "provenance": "Mendeley-published sha256 per file (MENDELEY_MANIFEST.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ambient_label_C": 25
+   },
+   "uncertainty": "DECLARED_TYPE_B: publisher accuracy 0.1 % of 5 V full scale (independence not declared)",
+   "unit": "one cell"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "not downloaded",
+   "dataset": "LG 18650HG2, other temperatures (-20..40 C)",
+   "identity": {
+    "manifest": "lg_hg2/MENDELEY_MANIFEST.json"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "none",
+   "protocol": null,
+   "provenance": "published, not local",
+   "structural_screen_failures": [
+    "not available locally: a download needs the owner's approval"
+   ],
+   "temperature": null,
+   "uncertainty": "as above",
+   "unit": "416 files"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {
+     "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "e5fe1cf6e0e2afa56d35f0edd0937e231312800aa71e5ace8755cbb89a471367",
+     "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "aaede6c61c41dcd5fd17affd706aee99e23f7f6b51cb02bb27939c82ef284f14"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CC1",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 10,
+    "rpt_recorded_cell_C_range": {
+     "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      24.155287,
+      29.537802
+     ],
+     "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv": [
+      22.11384,
+      26.936378
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell A"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {
+     "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "a31a282dbed7c31d84ac843b1962a67d8f9a5db2917781f642f2ba7c996b7603",
+     "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "5a9f0d2c69f33286cb1b7512e1805083933491c64732ed0ae590e6a1360e6a6d"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CC2",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 10,
+    "rpt_recorded_cell_C_range": {
+     "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      23.818737,
+      28.41057
+     ],
+     "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv": [
+      16.444738,
+      22.343506
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell B"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {
+     "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "ac07430eaf0753ae1a3256a2400b0079ad36dfd473bfd7ea66d20e2221e9eacc",
+     "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "9a3eaa2585ba7d82afd347e7e679e2183a2f801cd5fa1bdb41e226f0ce3fbf00"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CC3",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 10,
+    "rpt_recorded_cell_C_range": {
+     "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      24.17741,
+      29.394342
+     ],
+     "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv": [
+      24.193033,
+      28.593451
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell C"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (used by the cross-cell 1RC study)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {}
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell calibration cell (RPT0 GITT/0.1C; IDENTIFIABILITY_SUPPORTED known)",
+   "protocol": {
+    "channel": "CE1",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 25,
+    "rpt_recorded_cell_C_range": {}
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell D"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (used by the cross-cell 1RC study)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {}
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell calibration cell (RPT0 GITT/0.1C; IDENTIFIABILITY_SUPPORTED known)",
+   "protocol": {
+    "channel": "CE2",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 25,
+    "rpt_recorded_cell_C_range": {}
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell E"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {
+     "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "85f0eac9f6662f5cd93e75ca60c659bbf20dc4c050bda39f65f56f4740a8dcc1",
+     "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "d8cd4b54d1e7b003a1e556e803595e18a213fbcff913bfdc61fa1df3399cc0f1"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CE3",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 40,
+    "rpt_recorded_cell_C_range": {
+     "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      22.07284,
+      28.860306
+     ],
+     "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv": [
+      24.114622,
+      28.739868
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell F"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {
+     "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "26b9198747deb7dcc56cd4b6cd19c95213c55df68f45f03b928530c5a988fe71",
+     "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "f5568471e5e05075375975376be84f1e1fd1a6dee4163dd3f521ee22453551a8"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CE4",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 40,
+    "rpt_recorded_cell_C_range": {
+     "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      23.851032,
+      29.008057
+     ],
+     "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv": [
+      25.046709,
+      29.073839
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell G"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 4 - Drive Cycle Aging (Control).zip",
+    "archive_md5": "99083707bc7a24e72d9865abac19ce50",
+    "members": {
+     "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "4aa20de2d13c4714cc192b757a7138ae44a603196efd17d0b41892ee152f584b",
+     "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "988d75d4008ac16b8093ac0436eeb6e9e7fb4f98426b4127ed87d3880f8a0d3d"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CE5",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 40,
+    "rpt_recorded_cell_C_range": {
+     "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      -2.4797328,
+      28.466454
+     ],
+     "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv": [
+      24.557713,
+      29.08835
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 4 cell H"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {
+     "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "8aa8bdd1af2aa68e56243db3738e56590858393861acf276d1a4a9cc36816825",
+     "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "8f2f65f7d5c101bcb5ec0331be25de56c588cf1a97251da004863048f9ccffed"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CC4",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 10,
+    "rpt_recorded_cell_C_range": {
+     "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      20.131773000000003,
+      26.590567
+     ],
+     "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv": [
+      22.717819,
+      28.567644
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell A"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {
+     "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "09abd771d44fca5ad9b186b93ebba8e789bc62e541210da361a96f36a21cd238",
+     "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "340132eee83a5a26b17843bbf697c28f6226c9a3759cc005f9552e36646d4c72"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CC5",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 10,
+    "rpt_recorded_cell_C_range": {
+     "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      -2.0643051,
+      28.360353000000003
+     ],
+     "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv": [
+      22.599115,
+      27.930796
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell B"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {
+     "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "1ea9a6ae7a8255967a5f766f702a4b5bd72b11204c875c13ffe4756ea284637b",
+     "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "d0a65c5ab60afda16797f5c39d520463eabde2d3c904f8a06c58f445779a354e"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CC6",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 10,
+    "rpt_recorded_cell_C_range": {
+     "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      -2.3596716,
+      28.464659
+     ],
+     "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv": [
+      22.287668,
+      27.509579
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell C"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (used by the cross-cell 1RC study)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {}
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell calibration cell (RPT0 GITT/0.1C; IDENTIFIABILITY_SUPPORTED known)",
+   "protocol": {
+    "channel": "CC7",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 25,
+    "rpt_recorded_cell_C_range": {}
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell D"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (used by the cross-cell 1RC study)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {}
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell calibration cell (RPT0 GITT/0.1C; IDENTIFIABILITY_SUPPORTED known)",
+   "protocol": {
+    "channel": "CC8",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 2
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 25,
+    "rpt_recorded_cell_C_range": {}
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell E"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {
+     "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "1965b729b4c7fb31d169268d17ce984ba43b84b3c2f70637cc1354cc19903e47",
+     "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "237af38d95633f9fb2f1939300f7047368aeefa0c216f096735fa203c0bf3692"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CE6",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 40,
+    "rpt_recorded_cell_C_range": {
+     "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      -2.1893978,
+      28.271105
+     ],
+     "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv": [
+      25.11351,
+      29.044914000000002
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell F"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {
+     "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "d8d9f984764896b9efe2cd35c1e3b28a7ebcf164c87c4e33885a01349e4aa8e6",
+     "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "f031393b508a8d166e131b6f58f07881d4cdde0d7390ee46ee35dd84d744c129"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CE7",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 40,
+    "rpt_recorded_cell_C_range": {
+     "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      -2.7048674,
+      29.478873999999998
+     ],
+     "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv": [
+      25.097723000000002,
+      29.591238
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell G"
+  },
+  {
+   "channels": [
+    "Time (s)",
+    "Voltage (V)",
+    "Current (mA)",
+    "Charge (mA.h)",
+    "Temperature (degC)"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "RPT GITT (25-pulse, 0.5C) at RPT0 and the latest common RPT",
+   "dataset": "Kirkaldy et al. 2024 LG M50T 21700 degradation (Zenodo 10637534, CC-BY-4.0)",
+   "identity": {
+    "archive": "Expt 5 - Standard Cycle Aging (Control).zip",
+    "archive_md5": "298aa767e4e14acdb348f5832e0cbae9",
+    "members": {
+     "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "69a877d790142461e148eddf97adfac480ac6c1385828e8b1ff2464949b379ae",
+     "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "cabd8505157b0b9c314f1a7dc039601a9e00db5da160d2ec7420dfebe1dbefb2"
+    }
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG14 fade study used this cell's per-cycle summary capacity only (an ageing-law question, outcome NOT MET known); no voltage/1RC use",
+   "protocol": {
+    "channel": "CE8",
+    "gitt": "CC-CV top-up, ~2 h rest, 25 x 288 s pulses at 2.5 A (0.1 s sampling) each followed by a 3660 s rest (1 s sampling), last pulse ends at the cutoff, 6 h final rest",
+    "rig": 5
+   },
+   "provenance": "Zenodo md5 per archive (verified by extract.py --verify-archives), sha256 per extracted member",
+   "structural_screen_failures": [],
+   "temperature": {
+    "ageing_C": 40,
+    "rpt_recorded_cell_C_range": {
+     "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": [
+      22.748144,
+      29.440579999999997
+     ],
+     "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv": [
+      24.249610999999998,
+      28.890755
+     ]
+    }
+   },
+   "uncertainty": "UNKNOWN: the record does not state the BioLogic cycler's accuracy (the cross-cell 1RC preregistration also declared UNKNOWN)",
+   "unit": "Expt 5 cell H"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 1 cell D"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 1 cell E"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 1 cell F"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 2,2 cell C"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 2,2 cell D"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 3 cell D"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 3 cell E"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "HISTORICAL_TRUTH_EXPOSED",
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "BoL RPT (D:/forge-data/kirkaldy2024/bol25)",
+   "dataset": "Kirkaldy et al. 2024 LG M50T",
+   "identity": {
+    "manifest": "kirkaldy2024/bol25.sha256"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "battery_1rc_crosscell (calibration or held-out); held-out cells no longer blind",
+   "protocol": null,
+   "provenance": "bol25.sha256",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "Expt 3 cell F"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "-",
+   "dataset": "Kirkaldy et al. 2024, Expt 1, 2,2, 3 other cells and later RPTs",
+   "identity": {
+    "zenodo": "10637534"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "INELIGIBLE",
+   "prior_forge_use": "none",
+   "protocol": null,
+   "provenance": "published, not local",
+   "structural_screen_failures": [
+    "not available locally: a download needs the owner's approval"
+   ],
+   "temperature": null,
+   "uncertainty": "UNKNOWN",
+   "unit": "archives not local"
+  },
+  {
+   "channels": [
+    "Test Time",
+    "Current",
+    "Voltage",
+    "Capacity",
+    "Temperature Cell",
+    "Temperature Chamber"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "CC discharges at 0.5, 2.5, 5 and 7.5 A to 2.5 V after CC-CV charge to 4.2 V (C/100 termination) and 2 h rest; 30 s sampling",
+   "dataset": "Chen et al. 2020 LG M50 validation discharges (Zenodo 4032561, CC-BY-4.0)",
+   "identity": {
+    "file": "chen2020_lgm50/LGM50_cell02.csv",
+    "matches_pin": true,
+    "pinned_sha256": "650e7f9ac5217b4db158047e50b6b464100b13f4859002421114edebca629b35",
+    "sha256": "650e7f9ac5217b4db158047e50b6b464100b13f4859002421114edebca629b35"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG 14 model-measurement validation (PyBaMM, non-Mind); no outcome is known in the evaluator context (not read)",
+   "protocol": {
+    "rates_A": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ],
+    "termination_A": 0.05,
+    "tester": "Maccor #3"
+   },
+   "provenance": "Zenodo md5 equals the record (benchmarks/measurements/chen2020_lgm50/manifest.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "cell": "26-58 C (self-heating at 7.5 A)",
+    "chamber_C": "~26.6-28"
+   },
+   "uncertainty": "UNKNOWN: no tester accuracy is stated in the record",
+   "unit": "LGM50_cell02"
+  },
+  {
+   "channels": [
+    "Test Time",
+    "Current",
+    "Voltage",
+    "Capacity",
+    "Temperature Cell",
+    "Temperature Chamber"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "CC discharges at 0.5, 2.5, 5 and 7.5 A to 2.5 V after CC-CV charge to 4.2 V (C/100 termination) and 2 h rest; 30 s sampling",
+   "dataset": "Chen et al. 2020 LG M50 validation discharges (Zenodo 4032561, CC-BY-4.0)",
+   "identity": {
+    "file": "chen2020_lgm50/LGM50_cell03.csv",
+    "matches_pin": true,
+    "pinned_sha256": "fcc13423786d6044f3ec41b1b278fb1d42ff55018666be743243f7c34b1b98cb",
+    "sha256": "fcc13423786d6044f3ec41b1b278fb1d42ff55018666be743243f7c34b1b98cb"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG 14 model-measurement validation (PyBaMM, non-Mind); no outcome is known in the evaluator context (not read)",
+   "protocol": {
+    "rates_A": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ],
+    "termination_A": 0.05,
+    "tester": "Maccor #3"
+   },
+   "provenance": "Zenodo md5 equals the record (benchmarks/measurements/chen2020_lgm50/manifest.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "cell": "26-58 C (self-heating at 7.5 A)",
+    "chamber_C": "~26.6-28"
+   },
+   "uncertainty": "UNKNOWN: no tester accuracy is stated in the record",
+   "unit": "LGM50_cell03"
+  },
+  {
+   "channels": [
+    "Test Time",
+    "Current",
+    "Voltage",
+    "Capacity",
+    "Temperature Cell",
+    "Temperature Chamber"
+   ],
+   "classes": [
+    "UNUSED_BY_MIND"
+   ],
+   "condition": "CC discharges at 0.5, 2.5, 5 and 7.5 A to 2.5 V after CC-CV charge to 4.2 V (C/100 termination) and 2 h rest; 30 s sampling",
+   "dataset": "Chen et al. 2020 LG M50 validation discharges (Zenodo 4032561, CC-BY-4.0)",
+   "identity": {
+    "file": "chen2020_lgm50/LGM50_cell04.csv",
+    "matches_pin": true,
+    "pinned_sha256": "e1cbb60e79911824d5559f12db8e8ecdd4781d077a45f5b1ecbcf103aa271d9e",
+    "sha256": "e1cbb60e79911824d5559f12db8e8ecdd4781d077a45f5b1ecbcf103aa271d9e"
+   },
+   "outcome_known_in_evaluator_context": false,
+   "primary_class": "ELIGIBLE_PRIMARY_V3",
+   "prior_forge_use": "BIG 14 model-measurement validation (PyBaMM, non-Mind); no outcome is known in the evaluator context (not read)",
+   "protocol": {
+    "rates_A": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ],
+    "termination_A": 0.05,
+    "tester": "Maccor #3"
+   },
+   "provenance": "Zenodo md5 equals the record (benchmarks/measurements/chen2020_lgm50/manifest.json)",
+   "structural_screen_failures": [],
+   "temperature": {
+    "cell": "26-58 C (self-heating at 7.5 A)",
+    "chamber_C": "~26.6-28"
+   },
+   "uncertainty": "UNKNOWN: no tester accuracy is stated in the record",
+   "unit": "LGM50_cell04"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "USED_IN_V2",
+    "HISTORICAL_TRUTH_EXPOSED"
+   ],
+   "condition": "exact v2 candidate-visible problem",
+   "dataset": "battery_rediscovery_v2 pack",
+   "identity": {
+    "file": "benchmarks/battery_rediscovery_v2/candidate/pack/Q1.json",
+    "sha256": "dc8f7f3ea7e5cfb590d1fde34600872d99e3de0627cd7ce53f399f524e005d2f"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "v2 (sealed, evaluated)",
+   "protocol": null,
+   "provenance": "v2 SEAL.json",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "as declared in the pack",
+   "unit": "Q1",
+   "use": "SECONDARY_BRIDGE_SET: re-run under the v3 harness to show the GEN1 outputs reproduce; never counted in the primary conclusion"
+  },
+  {
+   "channels": null,
+   "classes": [
+    "USED_IN_V2",
+    "HISTORICAL_TRUTH_EXPOSED"
+   ],
+   "condition": "exact v2 candidate-visible problem",
+   "dataset": "battery_rediscovery_v2 pack",
+   "identity": {
+    "file": "benchmarks/battery_rediscovery_v2/candidate/pack/Q2.json",
+    "sha256": "1a03ba0587f97f7c4e57b6c60e264179963e63c18e30e6ab3a4732cee236a022"
+   },
+   "outcome_known_in_evaluator_context": true,
+   "primary_class": "ELIGIBLE_SECONDARY_ONLY",
+   "prior_forge_use": "v2 (sealed, evaluated)",
+   "protocol": null,
+   "provenance": "v2 SEAL.json",
+   "structural_screen_failures": [],
+   "temperature": null,
+   "uncertainty": "as declared in the pack",
+   "unit": "Q2",
+   "use": "SECONDARY_BRIDGE_SET: re-run under the v3 harness to show the GEN1 outputs reproduce; never counted in the primary conclusion"
+  }
+ ],
+ "schema": "forge.battery_rediscovery_v3.census/1",
+ "screen": {
+  "channels": "time, terminal voltage, current and cell temperature recorded for every sample; finite; time strictly increasing",
+  "identity": "one physical cell per file with a published identity",
+  "initial_state": "the protocol's declared initial state is attained: the preceding charge ends in CV at the protocol termination current plus the declared 10 mA current band (NASA: 20 mA + 10 mA; Chen 2020: C/100 = 50 mA + 10 mA), or the run starts from a declared rest whose state is fixed by the run's own protocol (Kirkaldy GITT: charge state 1 at the end of the pre-GITT rest by convention)",
+  "model_family": "a declared Thevenin 1RC family exists for the run kind: measured OCV (rest-ended GITT) or fitted piecewise-linear OCV (constant-current discharges)",
+  "protocol_roles": "the run kind is one the Gen1 families can pose (constant-current discharge then rest, or rest-pulse-rest) and the controlled current is a constant protocol level within each loaded segment",
+  "provenance": "publisher checksum or pinned sha256 for every raw file",
+  "sample_density": "loaded segments sampled at <= 30 s and rests at <= 30 s",
+  "separable_windows": "calibration and held-out trajectories are disjoint in time",
+  "uncertainty": "a voltage accuracy statement is used only if the publisher states one; otherwise UNKNOWN (never invented, never zero)",
+  "units": "known from the publisher's file header or README"
+ }
+}

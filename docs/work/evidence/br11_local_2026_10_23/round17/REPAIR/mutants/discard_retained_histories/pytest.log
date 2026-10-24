@@ -1,0 +1,246 @@
+........FFFF..........FFFF....FF                                         [100%]
+=================================== FAILURES ===================================
+_______ test_owner_json_true_history_difference_refuses[rollback-ledger] _______
+
+kind = 'ledger', change = 'rollback'
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    @pytest.mark.parametrize("change", ["rollback", "rewrite"])
+    def test_owner_json_true_history_difference_refuses(kind, change):
+        account, held, _, reader, owner_kind = _fixture(kind)
+        old = _checkpoint(account, kind)
+        _append(account, kind, {2: "a", 10: "b"})
+        _interrupt_handing(reader)
+        if change == "rewrite":
+            _append(old, kind, {2: "CHANGED", 10: "b"})
+        held[0] = _checkpoint(old, kind)
+        for _ in range(2):
+>           with pytest.raises(OwnerUnavailable):
+E           Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r17.py:94: Failed
+_____ test_owner_json_true_history_difference_refuses[rollback-experiment] _____
+
+kind = 'experiment', change = 'rollback'
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    @pytest.mark.parametrize("change", ["rollback", "rewrite"])
+    def test_owner_json_true_history_difference_refuses(kind, change):
+        account, held, _, reader, owner_kind = _fixture(kind)
+        old = _checkpoint(account, kind)
+        _append(account, kind, {2: "a", 10: "b"})
+        _interrupt_handing(reader)
+        if change == "rewrite":
+            _append(old, kind, {2: "CHANGED", 10: "b"})
+        held[0] = _checkpoint(old, kind)
+        for _ in range(2):
+>           with pytest.raises(OwnerUnavailable):
+E           Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r17.py:94: Failed
+_______ test_owner_json_true_history_difference_refuses[rewrite-ledger] ________
+
+kind = 'ledger', change = 'rewrite'
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    @pytest.mark.parametrize("change", ["rollback", "rewrite"])
+    def test_owner_json_true_history_difference_refuses(kind, change):
+        account, held, _, reader, owner_kind = _fixture(kind)
+        old = _checkpoint(account, kind)
+        _append(account, kind, {2: "a", 10: "b"})
+        _interrupt_handing(reader)
+        if change == "rewrite":
+            _append(old, kind, {2: "CHANGED", 10: "b"})
+        held[0] = _checkpoint(old, kind)
+        for _ in range(2):
+>           with pytest.raises(OwnerUnavailable):
+E           Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r17.py:94: Failed
+_____ test_owner_json_true_history_difference_refuses[rewrite-experiment] ______
+
+kind = 'experiment', change = 'rewrite'
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    @pytest.mark.parametrize("change", ["rollback", "rewrite"])
+    def test_owner_json_true_history_difference_refuses(kind, change):
+        account, held, _, reader, owner_kind = _fixture(kind)
+        old = _checkpoint(account, kind)
+        _append(account, kind, {2: "a", 10: "b"})
+        _interrupt_handing(reader)
+        if change == "rewrite":
+            _append(old, kind, {2: "CHANGED", 10: "b"})
+        held[0] = _checkpoint(old, kind)
+        for _ in range(2):
+>           with pytest.raises(OwnerUnavailable):
+E           Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r17.py:94: Failed
+________ test_post_return_single_interrupt_retains_spend[handed = True] ________
+
+checkpoint = 'handed = True'
+
+    @pytest.mark.parametrize("checkpoint", ["handed = True", "self._uncompared[ticket] = mapping"])
+    def test_post_return_single_interrupt_retains_spend(checkpoint):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def execute(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, _, gateway, admitted = _desk(o, lambda: (o.ledgers, o.experiments), execute)
+        saved = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(admitted.admitted)
+        lines, start = inspect.getsourcelines(BudgetReader.pinned)
+        line = next(start + i for i, text in enumerate(lines) if text.strip() == checkpoint)
+        hits = []
+        def trace(frame, event, arg):
+            if event == "line" and frame.f_code is BudgetReader.pinned.__code__ and frame.f_lineno == line:
+                hits.append(line)
+                raise KeyboardInterrupt()
+            return trace
+        sys.settrace(trace)
+        try:
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+        finally:
+            sys.settrace(None)
+        assert hits == [line]
+        o.ledgers[lid] = saved
+>       assert _refused(gateway, admitted.admitted)
+E       AssertionError: assert False
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7bd2320e1f30>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r16.py:81: AssertionError
+_ test_post_return_single_interrupt_retains_spend[self._uncompared[ticket] = mapping] _
+
+checkpoint = 'self._uncompared[ticket] = mapping'
+
+    @pytest.mark.parametrize("checkpoint", ["handed = True", "self._uncompared[ticket] = mapping"])
+    def test_post_return_single_interrupt_retains_spend(checkpoint):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def execute(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, _, gateway, admitted = _desk(o, lambda: (o.ledgers, o.experiments), execute)
+        saved = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(admitted.admitted)
+        lines, start = inspect.getsourcelines(BudgetReader.pinned)
+        line = next(start + i for i, text in enumerate(lines) if text.strip() == checkpoint)
+        hits = []
+        def trace(frame, event, arg):
+            if event == "line" and frame.f_code is BudgetReader.pinned.__code__ and frame.f_lineno == line:
+                hits.append(line)
+                raise KeyboardInterrupt()
+            return trace
+        sys.settrace(trace)
+        try:
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+        finally:
+            sys.settrace(None)
+        assert hits == [line]
+        o.ledgers[lid] = saved
+>       assert _refused(gateway, admitted.admitted)
+E       AssertionError: assert False
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7bd231f83220>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r16.py:81: AssertionError
+____________ test_detached_pending_spend_never_disappears[rollback] ____________
+
+kind = 'rollback'
+
+    @pytest.mark.parametrize("kind", ["rollback", "different"])
+    def test_detached_pending_spend_never_disappears(kind):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = [account]
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+        saved = BudgetLedger.from_dict(account.to_dict())
+        _settle(account, "new")
+        _interrupt_handing(reader)
+        if kind == "different":
+            _settle(saved, "different")
+        held[0] = saved
+        _interrupt_handing(reader)
+>       with pytest.raises(OwnerUnavailable):
+E       Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r16.py:98: Failed
+___________ test_detached_pending_spend_never_disappears[different] ____________
+
+kind = 'different'
+
+    @pytest.mark.parametrize("kind", ["rollback", "different"])
+    def test_detached_pending_spend_never_disappears(kind):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = [account]
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+        saved = BudgetLedger.from_dict(account.to_dict())
+        _settle(account, "new")
+        _interrupt_handing(reader)
+        if kind == "different":
+            _settle(saved, "different")
+        held[0] = saved
+        _interrupt_handing(reader)
+>       with pytest.raises(OwnerUnavailable):
+E       Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r16.py:98: Failed
+__ test_experiment_detached_histories_reconcile_without_losing_attempts[True] __
+
+rollback = True
+
+    @pytest.mark.parametrize("rollback", [False, True])
+    def test_experiment_detached_histories_reconcile_without_losing_attempts(rollback):
+        from engcore.scientific.experiments.experiment import ScientificExperiment
+        from engcore.scientific.experiments.evaluation import ScientificEvaluation, EvaluationStatus
+        o = ax.owned("battery")
+        eid, account = next(iter(o.experiments.items()))
+        held = [account]
+        reader = BudgetReader.following(lambda: ({}, {eid: ScientificExperiment.from_dict(held[0].to_dict())}))
+        checkpoint = ScientificExperiment.from_dict(account.to_dict())
+        account.record(ScientificEvaluation("new", {}, status=EvaluationStatus.NOT_CONVERGED))
+        _interrupt_handing(reader)
+        _interrupt_handing(reader)
+        if rollback:
+            held[0] = checkpoint
+>           with pytest.raises(OwnerUnavailable):
+E           Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r16.py:212: Failed
+_____ test_retained_conflict_cannot_be_erased_by_returning_to_first_branch _____
+
+    def test_retained_conflict_cannot_be_erased_by_returning_to_first_branch():
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        held = [account]
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())}, {}))
+        other = BudgetLedger.from_dict(account.to_dict())
+        _settle(account, "first-branch")
+        _settle(other, "other-branch")
+        _interrupt_handing(reader)
+        held[0] = other
+        _interrupt_handing(reader)
+        held[0] = account
+>       with pytest.raises(OwnerUnavailable):
+E       Failed: DID NOT RAISE OwnerUnavailable
+
+tests/mind/test_authority_review_r16.py:231: Failed
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-ledger]
+FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-experiment]
+FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-ledger]
+FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-experiment]
+FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[handed = True]
+FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[self._uncompared[ticket] = mapping]
+FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[rollback]
+FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[different]
+FAILED tests/mind/test_authority_review_r16.py::test_experiment_detached_histories_reconcile_without_losing_attempts[True]
+FAILED tests/mind/test_authority_review_r16.py::test_retained_conflict_cannot_be_erased_by_returning_to_first_branch
+10 failed, 22 passed in 1.65s

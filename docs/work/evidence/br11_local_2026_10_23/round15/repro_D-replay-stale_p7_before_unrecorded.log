@@ -1,0 +1,4 @@
+first admission: FEASIBLE
+executor ran 1 ; charges now 2
+SAME admitted action dispatched AGAIN; executor ran 2
+charges after: ['synthetic.battery.pulse-cell.solver.spent', 'run.2'] diverged: {} unread: {}

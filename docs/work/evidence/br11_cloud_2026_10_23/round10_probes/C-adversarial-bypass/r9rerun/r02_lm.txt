@@ -1,0 +1,4 @@
+{'cases': 16, 'suggestions': 728, 'intake_refused': 0, 'admitted': 212, 'refused': 516, 'raised': 0}
+problems: 0
+
+exit 0

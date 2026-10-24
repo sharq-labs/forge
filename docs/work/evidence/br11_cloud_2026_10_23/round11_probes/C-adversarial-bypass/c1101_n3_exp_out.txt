@@ -1,0 +1,2 @@
+800 orders, 3 verifications
+[exp] orders with a rollback decided after a handed spend: 0; accepts 1838, refusals 562 (24.9 s)

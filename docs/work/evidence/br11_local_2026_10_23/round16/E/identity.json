@@ -1,0 +1,8 @@
+{
+  "sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "owners_file": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+  "python": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+  "python_version": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+  "PYTHONPATH": "/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review",
+  "PYTHONDONTWRITEBYTECODE": "1"
+}

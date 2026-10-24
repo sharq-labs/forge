@@ -1,0 +1,124 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "partner_cell_pulses: insufficient_evidence"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "REVIEW",
+   "reason": "relaxation probe: insufficient_evidence"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "pulses_alternate_soc: insufficient_evidence"
+  }
+ },
+ "answers_by_seed": {
+  "0": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "partner_cell_pulses: insufficient_evidence"
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "REVIEW",
+    "reason": "relaxation probe: insufficient_evidence"
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "pulses_alternate_soc: insufficient_evidence"
+   }
+  },
+  "1": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "partner_cell_pulses: insufficient_evidence"
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "NOT_SUPPORTED",
+    "reason": "relaxation probe: no_dependence"
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "pulses_alternate_soc: insufficient_evidence"
+   }
+  },
+  "2": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "partner_cell_pulses: insufficient_evidence"
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "REVIEW",
+    "reason": "relaxation probe: insufficient_evidence"
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "pulses_alternate_soc: insufficient_evidence"
+   }
+  }
+ },
+ "arm": "SEMANTIC_ROLES_ONLY",
+ "disposition_by_seed": {
+  "0": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "REVIEW",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  },
+  "1": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "NOT_SUPPORTED",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  },
+  "2": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "REVIEW",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  }
+ },
+ "primary_seed": 0,
+ "problem_id": "P09",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1",
+ "seeds": [
+  0,
+  1,
+  2
+ ]
+}

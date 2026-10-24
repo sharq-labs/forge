@@ -1,0 +1,3 @@
+OK evaluation                      read rev 1; cold-cache identical: True; read-back fixed point: True; spend observed rev 2; restore: refused: budget experiment 'exp-1' is behind the history this reader 
+OK evaluation, validity assessed   read rev 1; cold-cache identical: True; read-back fixed point: True; spend observed rev 2; restore: refused: budget experiment 'exp-1' is behind the history this reader 
+NOT_CONVERGED-style (no result)    read rev 1; cold-cache identical: True; read-back fixed point: True; spend observed rev 2; restore: refused: budget experiment 'exp-1' is behind the history this reader 

@@ -1,0 +1,2419 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "cross_cell_heldout/partner_cell_intermediate_rates -> insufficient_evidence (NOT_ASSESSABLE)"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "NOT_SUPPORTED",
+   "reason": "RELAXATION -> no_dependence (NOT_SUPPORTED)"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "NOT_ASSESSABLE",
+   "reason": "within_cell_heldout/intermediate_rates -> insufficient_evidence (NOT_ASSESSABLE)"
+  }
+ },
+ "arm": "OLD_MIND",
+ "disposition_by_seed": {
+  "0": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "NOT_SUPPORTED",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  },
+  "1": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "NOT_SUPPORTED",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  },
+  "2": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "NOT_SUPPORTED",
+   "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+  }
+ },
+ "primary_seed": 0,
+ "problem_id": "P26",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1",
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "v1_record": {
+  "adapter": {
+   "budget_max": 40,
+   "tolerance_ln": 0.05,
+   "translation": {
+    "PREDICTION": {
+     "empty_region": "NOT_ASSESSABLE",
+     "indistinguishable": "NOT_ASSESSABLE",
+     "insufficient_evidence": "NOT_ASSESSABLE",
+     "law": "compare to the declared bar",
+     "no_dependence": "NOT_ASSESSABLE",
+     "problem_refused": "REFUSED",
+     "refused": "REFUSED",
+     "unidentifiable_passive_association": "NOT_ASSESSABLE"
+    },
+    "RELAXATION": {
+     "indistinguishable": "REVIEW",
+     "insufficient_evidence": "REVIEW",
+     "law_linear_only": "REVIEW",
+     "law_with_curvature": "SUPPORTED",
+     "law_without_input": "REVIEW",
+     "no_dependence": "NOT_SUPPORTED",
+     "problem_refused": "REFUSED",
+     "refused": "REFUSED",
+     "unidentifiable_passive_association": "REVIEW"
+    }
+   }
+  },
+  "answers": {
+   "CROSS_CELL_TRANSFER": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "cross_cell_heldout/partner_cell_intermediate_rates -> insufficient_evidence (NOT_ASSESSABLE)",
+    "sub": {
+     "cross_cell_heldout/partner_cell_intermediate_rates": "NOT_ASSESSABLE"
+    }
+   },
+   "IDENTIFIABILITY": {
+    "disposition": "NOT_SUPPORTED",
+    "reason": "RELAXATION -> no_dependence (NOT_SUPPORTED)",
+    "sub": {
+     "RELAXATION": "NOT_SUPPORTED"
+    }
+   },
+   "MODEL_ADEQUACY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "MODEL_DISCREPANCY": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "disposition": "NOT_ASSESSABLE",
+    "reason": "within_cell_heldout/intermediate_rates -> insufficient_evidence (NOT_ASSESSABLE)",
+    "sub": {
+     "within_cell_heldout/intermediate_rates": "NOT_ASSESSABLE"
+    }
+   }
+  },
+  "arm": "MIND",
+  "detail": {
+   "pools": {
+    "PREDICTION": 1338,
+    "RELAXATION": 509
+   },
+   "prediction": {
+    "cross_cell_heldout/partner_cell_intermediate_rates": {
+     "heldout_pool_size": 461,
+     "per_seed": {
+      "0": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": false,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 35646.77003999999,
+          "low": 600.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 7.50317,
+          "low": 0.499275,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P26:PREDICTION[cross_cell_heldout/partner_cell_intermediate_rates]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          2.49943,
+          5.00175
+         ],
+         "t_on_s": [
+          600.0,
+          7096.349979999999
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "ca2e4cac4e3974ae098868f303cf9d65f3ba86762a72301854ebc1dc92e864e0",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.606052,
+         "query_ref": "mind-000-1666574738c1",
+         "requested": {
+          "I_A": 4.09089757593,
+          "t_on_s": 789.223561241
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 0,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "87b68854f35bfd727951fef90d675cfc019bcb6a7d94b3a8b955b8ddee07d7f3",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      },
+      "1": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": false,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 35646.77003999999,
+          "low": 600.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 7.50317,
+          "low": 0.499275,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P26:PREDICTION[cross_cell_heldout/partner_cell_intermediate_rates]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          2.49943,
+          5.00175
+         ],
+         "t_on_s": [
+          600.0,
+          7096.349979999999
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "ca2e4cac4e3974ae098868f303cf9d65f3ba86762a72301854ebc1dc92e864e0",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.108194,
+         "query_ref": "mind-000-04925ea07a44",
+         "requested": {
+          "I_A": 0.557684732331,
+          "t_on_s": 5894.70851015
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 1,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "95e16e4cfa0d8f8b243771566900bafd76caffcb707c42d6ae44ce7c59551e6e",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      },
+      "2": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": false,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 35646.77003999999,
+          "low": 600.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 7.50317,
+          "low": 0.499275,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P26:PREDICTION[cross_cell_heldout/partner_cell_intermediate_rates]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          2.49943,
+          5.00175
+         ],
+         "t_on_s": [
+          600.0,
+          7096.349979999999
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "ca2e4cac4e3974ae098868f303cf9d65f3ba86762a72301854ebc1dc92e864e0",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.647479,
+         "query_ref": "mind-000-8cc0922e4267",
+         "requested": {
+          "I_A": 0.956888996202,
+          "t_on_s": 16458.1957288
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 2,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "6416dcd21c08f6550fc264b6a1af83d8bd4d82069a1ad1882c819818a9c51cb9",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      }
+     },
+     "region": {
+      "I_A": [
+       2.49943,
+       5.00175
+      ],
+      "t_on_s": [
+       600.0,
+       7096.349979999999
+      ]
+     },
+     "set": "cross_cell_heldout",
+     "subset": "partner_cell_intermediate_rates"
+    },
+    "within_cell_heldout/intermediate_rates": {
+     "heldout_pool_size": 460,
+     "per_seed": {
+      "0": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": false,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 35646.77003999999,
+          "low": 600.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 7.50317,
+          "low": 0.499275,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P26:PREDICTION[within_cell_heldout/intermediate_rates]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          2.49928,
+          5.00404
+         ],
+         "t_on_s": [
+          600.0,
+          7090.340020000003
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "32c49cffda1c0f5d02c02ccef85beecf56f5132ff9190331c140b3bf705b2744",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.108081,
+         "query_ref": "mind-000-22a9c188803e",
+         "requested": {
+          "I_A": 0.55762140118,
+          "t_on_s": 972.588087821
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 0,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "697ace2d559d8ae8cbe9df3ca4b8ba578edd9172b6111d88ee4e48879b50f028",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      },
+      "1": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": false,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 35646.77003999999,
+          "low": 600.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 7.50317,
+          "low": 0.499275,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P26:PREDICTION[within_cell_heldout/intermediate_rates]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          2.49928,
+          5.00404
+         ],
+         "t_on_s": [
+          600.0,
+          7090.340020000003
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "32c49cffda1c0f5d02c02ccef85beecf56f5132ff9190331c140b3bf705b2744",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.525995,
+         "query_ref": "mind-000-faf64ddddcc5",
+         "requested": {
+          "I_A": 0.846910546656,
+          "t_on_s": 4056.35960313
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 1,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "156a5d08b97646c77ef9f64780094ead309669001131360658cd6a2ead0e2f2e",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      },
+      "2": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 0,
+         "extrapolates": false,
+         "noise": {
+          "basis": [],
+          "dof": 0,
+          "kind": "UNKNOWN",
+          "sd_ln": null,
+          "upper95_ln": null
+         },
+         "refuted": []
+        },
+        "kind": "insufficient_evidence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "no rival is both fitted and unrefuted",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [],
+       "final_stop": {
+        "budget_remaining": 40,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[u1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[]",
+         "status": "proposed",
+         "weight": null
+        },
+        {
+         "hypothesis_id": "mind:L[x1]Q[x1]",
+         "status": "proposed",
+         "weight": null
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K",
+         "z"
+        ],
+        "inputs": [
+         {
+          "high": 35646.77003999999,
+          "low": 600.0,
+          "name": "t_on_s",
+          "unit": "s"
+         },
+         {
+          "high": 7.50317,
+          "low": 0.499275,
+          "name": "I_A",
+          "unit": "A"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "V",
+        "problem_id": "P26:PREDICTION[within_cell_heldout/intermediate_rates]",
+        "query_cost": 1.0,
+        "region": {
+         "I_A": [
+          2.49928,
+          5.00404
+         ],
+         "t_on_s": [
+          600.0,
+          7090.340020000003
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "32c49cffda1c0f5d02c02ccef85beecf56f5132ff9190331c140b3bf705b2744",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 1.318934,
+         "query_ref": "mind-000-70cbcdaf678f",
+         "requested": {
+          "I_A": 2.00547710077,
+          "t_on_s": 2425.00158792
+         }
+        }
+       ],
+       "queries_served": 0,
+       "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+       "sealed_pre_result_predictions": 0,
+       "seed": 2,
+       "served": [],
+       "steps": 0,
+       "trace_digest": "a8aabae0a3591f8bfef146400abfb508d0458162165e6634cd9f1daab88afb5e",
+       "translation": {
+        "disposition": "NOT_ASSESSABLE",
+        "key": "insufficient_evidence"
+       }
+      }
+     },
+     "region": {
+      "I_A": [
+       2.49928,
+       5.00404
+      ],
+      "t_on_s": [
+       600.0,
+       7090.340020000003
+      ]
+     },
+     "set": "within_cell_heldout",
+     "subset": "intermediate_rates"
+    }
+   },
+   "probes": {
+    "RELAXATION": {
+     "per_seed": {
+      "0": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 24,
+         "extrapolates": false,
+         "inclusion:T_K": 0.250301333,
+         "noise": {
+          "basis": [
+           "mind-000-62519f8d7f01",
+           "mind-001-edd2d23d32c6",
+           "mind-002-60146786cc27",
+           "mind-003-e8e4fa360651",
+           "mind-010-62519f8d7f01",
+           "mind-011-edd2d23d32c6",
+           "mind-012-60146786cc27",
+           "mind-013-e8e4fa360651",
+           "mind-015-0dac5368cf90",
+           "mind-016-3fff36ab1e38",
+           "mind-017-a7412171a965",
+           "mind-018-f68e473dee5e"
+          ],
+          "dof": 6,
+          "kind": "ESTIMATED_FROM_REPLICATES",
+          "sd_ln": 1.624410141,
+          "upper95_ln": 3.111441054
+         },
+         "p_null": 0.791023644,
+         "refuted": [],
+         "settable_r2:T_K": 0.447779157
+        },
+        "kind": "no_dependence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "rivals using no settable input hold 0.791 of the posterior",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [
+        "552d31ca5beb86c10f8dbe9929cf6c09f5a9801804198c18a6ed44e681cd984c",
+        "7dabbdd54704b1bf63b59a87d21805e27c7789988c4b5a23a38c53afe48ffb86",
+        "350e2097f52f2075e7f169bc2fac8ab52625821cc7df68df12e3ecf0854b5b93",
+        "605f1d150b541af17b47c68ded10de71553ba761589ddc570d8c8d297cb5fe41",
+        "651d1f8e2f354a558c9ec9897d4d53c603cd6d042b00078c1bb805793b596a84",
+        "d40e2fd3a2ef1ca7e2728a8d2ce458e590daaadfc12252cfe2f471af46a8a0e5",
+        "820a9aeead0bbc425bf1dd117ea3b32fb158a1a30f6ddedc1033b4ef56394248",
+        "43927b0df99cd79987c23088ed2d794a2d4cb3788540af56c701ed3a816a834c",
+        "ed5d5d8efb50f575ce65861919d141a4016aff3b85e7ccdc817b0e6aecfa79ba",
+        "af1a1c673c37b348551e4e2167e61df5e79c4927184e58a79ee4ac138243a5b4",
+        "52f9cf28c0c39152ac970d8a136fc692c34b4a748d360da1a6dceb78357fafac",
+        "1835cd0ffea5aaf2cd948ccf93cd65edea388dc6a4222139228d5d0536e8dfab",
+        "ac66dc81856eaafcd5c4ec2ad4315462fc12e74a9872df9209ea66eee3134964",
+        "c0768d6ae01b075fdc4456497dabfbb80c8c6e3461ea6981052df8d93ae77eb9",
+        "1f980f97e0163a38d155c649891e84a7e87db82b54a13ec258fd51d57c867636",
+        "21fccdcf46e77849c85b0801a7a55936b4690f579499561fb39ce586e32a4c92",
+        "e7487b2a24e46f0b40ca80d24760c8394210adba05f7f6231d0eb113f4a64daa",
+        "3f24b268a54905a4c3d1122fdca9add88af58cdd002686b88c9baab24b810c5a",
+        "220ce503ea55a07c2bf297108f6652093751faa8b9f7fcfc536130b61381f68c",
+        "2774f069ffb3431309833894d9adf2e4bf4685d24901176c3a6572d27faa767a",
+        "6f5e3ab919531ef54149b04eec92e4cf47c77ce0c54f42284b107b29dfb9caf3",
+        "390527e4dd1297149f4df1fbbf59c79d0a9442101471c8d28dafbb62bd9e400e",
+        "2603770e4e11b2c8cb1ae2cc4d7e53295c1c2ebde4063ff031636c215ee23d1e",
+        "e4696e72d8b4fa103c68822c0c1c6d4dd51f7286a5351e11ab46ecea6157d2a0"
+       ],
+       "final_stop": {
+        "budget_remaining": 16,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": 0.604822435
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": 0.057283467
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": 0.006816656
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": 0.186201209
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": 0.133650955
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": 0.011225277
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K"
+        ],
+        "inputs": [
+         {
+          "high": 7200.0,
+          "low": 600.0,
+          "name": "t_off_s",
+          "unit": "s"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "ohm",
+        "problem_id": "P26:RELAXATION",
+        "query_cost": 1.0,
+        "region": {
+         "t_off_s": [
+          600.0,
+          7200.0
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "7f33d2f60d730f42858f6e55197f363ed20e98cafcda818891ea269eedfbd8d3",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.08282,
+         "query_ref": "mind-024-1d21a561c0bc",
+         "requested": {
+          "t_off_s": 615.556073379
+         }
+        }
+       ],
+       "queries_served": 24,
+       "registry_head": "408a5a31863bd28fed220c4d493e4213f4f084632e261d16ba2abeddb7da44c5",
+       "sealed_pre_result_predictions": 111,
+       "seed": 0,
+       "served": [
+        {
+         "ln_distance": 0.001247,
+         "query_ref": "mind-000-62519f8d7f01",
+         "sample": "P26-c02#189"
+        },
+        {
+         "ln_distance": 0.002439,
+         "query_ref": "mind-001-edd2d23d32c6",
+         "sample": "P26-c01#1316"
+        },
+        {
+         "ln_distance": 0.002025,
+         "query_ref": "mind-002-60146786cc27",
+         "sample": "P26-c01#1366"
+        },
+        {
+         "ln_distance": 0.003695,
+         "query_ref": "mind-003-e8e4fa360651",
+         "sample": "P26-c01#1292"
+        },
+        {
+         "ln_distance": 0.002697,
+         "query_ref": "mind-004-ccb71ec34bd6",
+         "sample": "P26-c01#1276"
+        },
+        {
+         "ln_distance": 0.000397,
+         "query_ref": "mind-005-54274b7bf315",
+         "sample": "P26-c02#366"
+        },
+        {
+         "ln_distance": 0.005364,
+         "query_ref": "mind-006-bf64fa718746",
+         "sample": "P26-c02#199"
+        },
+        {
+         "ln_distance": 0.000909,
+         "query_ref": "mind-007-0e7b94568824",
+         "sample": "P26-c01#1393"
+        },
+        {
+         "ln_distance": 0.003829,
+         "query_ref": "mind-008-3fdb19aab375",
+         "sample": "P26-c01#1246"
+        },
+        {
+         "ln_distance": 0.002621,
+         "query_ref": "mind-009-636de9595bd1",
+         "sample": "P26-c01#1299"
+        },
+        {
+         "ln_distance": 0.016487,
+         "query_ref": "mind-010-62519f8d7f01",
+         "sample": "P26-c01#1252"
+        },
+        {
+         "ln_distance": 0.00414,
+         "query_ref": "mind-011-edd2d23d32c6",
+         "sample": "P26-c02#252"
+        },
+        {
+         "ln_distance": 0.002208,
+         "query_ref": "mind-012-60146786cc27",
+         "sample": "P26-c02#302"
+        },
+        {
+         "ln_distance": 0.00527,
+         "query_ref": "mind-013-e8e4fa360651",
+         "sample": "P26-c02#228"
+        },
+        {
+         "ln_distance": 0.0,
+         "query_ref": "mind-014-6c739e39ba7c",
+         "sample": "P26-c01#1468"
+        },
+        {
+         "ln_distance": 0.005632,
+         "query_ref": "mind-015-0dac5368cf90",
+         "sample": "P26-c02#182"
+        },
+        {
+         "ln_distance": 0.026293,
+         "query_ref": "mind-016-3fff36ab1e38",
+         "sample": "P26-c01#1245"
+        },
+        {
+         "ln_distance": 0.000377,
+         "query_ref": "mind-017-a7412171a965",
+         "sample": "P26-c02#391"
+        },
+        {
+         "ln_distance": 0.001569,
+         "query_ref": "mind-018-f68e473dee5e",
+         "sample": "P26-c01#1456"
+        },
+        {
+         "ln_distance": 0.004776,
+         "query_ref": "mind-019-22bc7f03505d",
+         "sample": "P26-c01#1247"
+        },
+        {
+         "ln_distance": 0.001425,
+         "query_ref": "mind-020-a45a7ee9bbf6",
+         "sample": "P26-c01#1465"
+        },
+        {
+         "ln_distance": 0.027189,
+         "query_ref": "mind-021-10c5771177bb",
+         "sample": "P26-c02#183"
+        },
+        {
+         "ln_distance": 0.00047,
+         "query_ref": "mind-022-186b049337ad",
+         "sample": "P26-c02#400"
+        },
+        {
+         "ln_distance": 0.023749,
+         "query_ref": "mind-023-42f0a961602b",
+         "sample": "P26-c02#184"
+        }
+       ],
+       "steps": 24,
+       "trace_digest": "aea2d25ccfa47418733b1b49e656e59d233300c713c5ef1f74c5e2cd033fc7c5",
+       "translation": {
+        "disposition": "NOT_SUPPORTED",
+        "key": "no_dependence"
+       }
+      },
+      "1": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 24,
+         "extrapolates": false,
+         "inclusion:T_K": 0.191652711,
+         "noise": {
+          "basis": [
+           "mind-000-d7762b73e7c5",
+           "mind-001-ac5b89e86a34",
+           "mind-002-dc854d15ac47",
+           "mind-003-7e003951d689",
+           "mind-010-d7762b73e7c5",
+           "mind-011-ac5b89e86a34",
+           "mind-012-dc854d15ac47",
+           "mind-013-7e003951d689",
+           "mind-022-2e0feea82b1e",
+           "mind-023-c95f022e8ba0"
+          ],
+          "dof": 5,
+          "kind": "ESTIMATED_FROM_REPLICATES",
+          "sd_ln": 1.645157679,
+          "upper95_ln": 3.437158298
+         },
+         "p_null": 0.769065854,
+         "refuted": [],
+         "settable_r2:T_K": 0.524518049
+        },
+        "kind": "no_dependence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "rivals using no settable input hold 0.769 of the posterior",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [
+        "1adb63013d727f77bdcdae84d6766f1e92340ebfe0ba408480a23cd26a92bdf0",
+        "8702679093114a8463be730cdc2aa50587ade092618f42ed315d9867c1403b2b",
+        "4e7f69b43cd20bda2ceae07cf7229f9af9dc33b18c631e346d94acd638d53356",
+        "ec4d4e111e9d8faae742d058c712d40446f246b9ca123304f747f894149e7249",
+        "b708f4cae92afc75dc47b844d44113643aaf9b51e55c8fe0aaa6439993fc3a5a",
+        "0b2e4070f2c39f9b6aae48a8ca12530d1eeb396be115dfdda0945df2cc33a5b2",
+        "4f46ba9c8713bca673ddc8d2bbf53ff02cb8d7836339cb26f742e12a995c0213",
+        "64b53e618dd0adb0d72ccf904e7dcea4ec8f770e58837c1c7aa4016478e1aec8",
+        "0458be33ddb4fbbd7fbdde9970a3ecd11ad3e8a0fc927bf6d4ede49bde457aef",
+        "017b17b1550713d2b1b28f7df10d9c43e366257607267fb6d4c6eee6d0ad2656",
+        "9698e85b2f462f24c713a0eba223a07409ccd4fc0622430cbd1e44b544a002ea",
+        "0be331441cbeaae797ef431b313afaa00ab2f3b274709b005012c740b7b53c75",
+        "fec4f7ae64f6905667060078e7ba8f96c05cee5b913a902d0ca06fbf8a58ddc5",
+        "dc7189da4e832c1824ad59e36a27493429c8beb7911b4795a4e7446c1f88cd0f",
+        "bd73de05bd3c372dd40e5a8557a9a2dc64139b4d80c6fb0f4953449ba4682bec",
+        "33560fcdf93adac45196193020dcc1be3090aef0a9baf0b3a66f2e93d1bd9563",
+        "d5688de377365cab771f6b2064a50c8043940bb57ebd6c7696adfaf44f84ab48",
+        "e98c34fed6a7dcef429410797f0a240bffcb90857f642587b5a977b30557df9f",
+        "00c5343443635d01f5f23bc977eda9efa4b3576cc9e4e15aa02ff185f1db0783",
+        "8fa31ec4f76b27afe7700ead9d1624ce36fa2ded9344206ff597d94d97ec3b7b",
+        "9e09a98ad887c345a8e2aa81c587df2c46b4bcafba613464b88aa43d2a54c83c",
+        "8ebf4422887ba4a29e25f647195a59d762e533773117a8156491b51fe1fe425b",
+        "2d02a789ea72e3dae9b7d1cec4065fe3b572dbad6b456a6625f1f14ee3740967",
+        "e936088b3d347e9fb5900185753d9b63d2c3e909f1cd059059869823c9fb33a4"
+       ],
+       "final_stop": {
+        "budget_remaining": 16,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": 0.634691147
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": 0.050480476
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": 0.006797529
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": 0.134374707
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": 0.158810583
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": 0.014845558
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K"
+        ],
+        "inputs": [
+         {
+          "high": 7200.0,
+          "low": 600.0,
+          "name": "t_off_s",
+          "unit": "s"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "ohm",
+        "problem_id": "P26:RELAXATION",
+        "query_cost": 1.0,
+        "region": {
+         "t_off_s": [
+          600.0,
+          7200.0
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "7f33d2f60d730f42858f6e55197f363ed20e98cafcda818891ea269eedfbd8d3",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.061448,
+         "query_ref": "mind-024-4f177e26af16",
+         "requested": {
+          "t_off_s": 606.023023844
+         }
+        }
+       ],
+       "queries_served": 24,
+       "registry_head": "408a5a31863bd28fed220c4d493e4213f4f084632e261d16ba2abeddb7da44c5",
+       "sealed_pre_result_predictions": 111,
+       "seed": 1,
+       "served": [
+        {
+         "ln_distance": 0.002575,
+         "query_ref": "mind-000-d7762b73e7c5",
+         "sample": "P26-c02#218"
+        },
+        {
+         "ln_distance": 0.001421,
+         "query_ref": "mind-001-ac5b89e86a34",
+         "sample": "P26-c01#1369"
+        },
+        {
+         "ln_distance": 6.9e-05,
+         "query_ref": "mind-002-dc854d15ac47",
+         "sample": "P26-c01#1253"
+        },
+        {
+         "ln_distance": 0.002505,
+         "query_ref": "mind-003-7e003951d689",
+         "sample": "P26-c02#250"
+        },
+        {
+         "ln_distance": 0.007861,
+         "query_ref": "mind-004-2ca0e5c6aaf4",
+         "sample": "P26-c02#196"
+        },
+        {
+         "ln_distance": 0.000166,
+         "query_ref": "mind-005-7288fbff8c1d",
+         "sample": "P26-c02#185"
+        },
+        {
+         "ln_distance": 0.000249,
+         "query_ref": "mind-006-955298c8ab5b",
+         "sample": "P26-c02#328"
+        },
+        {
+         "ln_distance": 0.002642,
+         "query_ref": "mind-007-dd92ae6e19f4",
+         "sample": "P26-c02#258"
+        },
+        {
+         "ln_distance": 0.003613,
+         "query_ref": "mind-008-8071b50f0b64",
+         "sample": "P26-c02#210"
+        },
+        {
+         "ln_distance": 0.000233,
+         "query_ref": "mind-009-d0f289d6490d",
+         "sample": "P26-c01#1422"
+        },
+        {
+         "ln_distance": 0.004728,
+         "query_ref": "mind-010-d7762b73e7c5",
+         "sample": "P26-c01#1281"
+        },
+        {
+         "ln_distance": 0.002722,
+         "query_ref": "mind-011-ac5b89e86a34",
+         "sample": "P26-c02#305"
+        },
+        {
+         "ln_distance": 0.01462,
+         "query_ref": "mind-012-dc854d15ac47",
+         "sample": "P26-c02#190"
+        },
+        {
+         "ln_distance": 0.004223,
+         "query_ref": "mind-013-7e003951d689",
+         "sample": "P26-c01#1314"
+        },
+        {
+         "ln_distance": 0.0,
+         "query_ref": "mind-014-6c739e39ba7c",
+         "sample": "P26-c01#1468"
+        },
+        {
+         "ln_distance": 0.005632,
+         "query_ref": "mind-015-0dac5368cf90",
+         "sample": "P26-c02#182"
+        },
+        {
+         "ln_distance": 0.001136,
+         "query_ref": "mind-016-74b5565ff2b9",
+         "sample": "P26-c02#394"
+        },
+        {
+         "ln_distance": 0.019611,
+         "query_ref": "mind-017-d0b710adc776",
+         "sample": "P26-c01#1246"
+        },
+        {
+         "ln_distance": 0.000917,
+         "query_ref": "mind-018-d8d22b47a03a",
+         "sample": "P26-c01#1456"
+        },
+        {
+         "ln_distance": 0.000552,
+         "query_ref": "mind-019-7d14ffa602d4",
+         "sample": "P26-c02#395"
+        },
+        {
+         "ln_distance": 0.013205,
+         "query_ref": "mind-020-126f7c54f2bd",
+         "sample": "P26-c02#183"
+        },
+        {
+         "ln_distance": 0.037925,
+         "query_ref": "mind-021-069c60c6270f",
+         "sample": "P26-c01#1245"
+        },
+        {
+         "ln_distance": 0.000838,
+         "query_ref": "mind-022-2e0feea82b1e",
+         "sample": "P26-c02#398"
+        },
+        {
+         "ln_distance": 0.001994,
+         "query_ref": "mind-023-c95f022e8ba0",
+         "sample": "P26-c01#1463"
+        }
+       ],
+       "steps": 24,
+       "trace_digest": "46243887498709fd85769178155867d5b1e9d74513c87d4f2c8deed645fd3c07",
+       "translation": {
+        "disposition": "NOT_SUPPORTED",
+        "key": "no_dependence"
+       }
+      },
+      "2": {
+       "conclusion": {
+        "diagnostics": {
+         "evidence": 21,
+         "extrapolates": false,
+         "inclusion:T_K": 0.899411737,
+         "noise": {
+          "basis": [
+           "mind-000-4d3b481dc191",
+           "mind-001-cba2c1c7f168",
+           "mind-002-868828b73398",
+           "mind-003-259c2fc923f5",
+           "mind-010-4d3b481dc191",
+           "mind-011-cba2c1c7f168",
+           "mind-012-868828b73398",
+           "mind-013-259c2fc923f5",
+           "mind-014-0dac5368cf90",
+           "mind-015-3fff36ab1e38"
+          ],
+          "dof": 5,
+          "kind": "ESTIMATED_FROM_REPLICATES",
+          "sd_ln": 1.589477157,
+          "upper95_ln": 3.32082734
+         },
+         "p_null": 0.501406161,
+         "refuted": [],
+         "settable_r2:T_K": 0.312393373
+        },
+        "kind": "no_dependence",
+        "laws": [],
+        "leading_status": "",
+        "reason": "rivals using no settable input hold 0.501 of the posterior",
+        "schema": "forge.mind.minimal.conclusion/1"
+       },
+       "eliminated": [],
+       "evidence_refs": [
+        "b37a0d79f942a79abd9b8dd3e7dff9d46e2cb56d9e96c416c8403124647d41a0",
+        "37a6f8ed91a056833b3aec3388e2e91023b1c827961be4f5907183f93fe51d59",
+        "4db85e762f4c2d40f97e091bca54f4e83aa7a4ae30817479db21e2ea8c2b2d0a",
+        "18e1be897edb8c11876d1586b3706431066f8aa1c1b7266a307c77a4242ac69e",
+        "43a737eb0c7aaf27a8313f1c16469ff339f29eeed4f4bf19bfd8302055c73ff9",
+        "e8efc7f85b2e0419e331f017531f5b3597a899e1849f6ffb92d53024376ee3a3",
+        "6db06e9f69598abc32f3cd67467a4c2a6862d4a681c57b1c921287ce134dfb20",
+        "9e4b858dc9751572876cd3853171bae2d434d5b953e7efbe4a5d9d2263de5acd",
+        "670f770faf6f8ab0be121e28e7c60ba562d56b08ee4daf2b6beeaf33daa2b5cc",
+        "f6d3c23e93562d73a6a22df7c1356579fdfa18f63a8f5ad35271cf789449f05c",
+        "735bc25f6a3a73328e7070a742660206f076a4270ff5d6ae69cdc9105d848950",
+        "327b523636d626b774d50fc3a13d8091d241a91a9866ca12657a4ccbf3d86c0e",
+        "b31d17b35f58bef8528f6eab29cd728aec6ba2b2651bb013b8edd949ac3e8a12",
+        "3d7adb28006d3a5cf2f161390914346339b72e071c4efdc7bc4a7716d1768ed1",
+        "1b95a5b0469fd2691d59587641ad905adb47b6df3fd9187725c91acba97d8539",
+        "07d5c75d9287ffd9fe99470232109c4707ce287c3afc7cb0a0fa873ab8d63a3d",
+        "14b122ca381254c86aec3aec6e32dbc541dc356c0e562e3c50ce873d1c24a790",
+        "cbffbdc15612dfa3ef5c5a68cd67e757ee2e97af3c72e8cd737a04695bb0bb02",
+        "a80b12984972be27b02d3b79a5e6838577c95e8dde6f02992fa23af734e86883",
+        "9d8877433d76099ef7dca5169705a7ac0035c0490330fc2fb64ee81b2a7d1cd6",
+        "e0d30788f91ce1a3186b68cfa46d954742681976997ea61eb8ae397e3a813adb"
+       ],
+       "final_stop": {
+        "budget_remaining": 19,
+        "kind": "refuse",
+        "leading_weight": null,
+        "max_utility": null,
+        "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+        "region_sd": null
+       },
+       "hypotheses": [
+        {
+         "hypothesis_id": "mind:L[]Q[]",
+         "status": "proposed",
+         "weight": 0.082612682
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[]",
+         "status": "proposed",
+         "weight": 0.264280769
+        },
+        {
+         "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+         "status": "proposed",
+         "weight": 0.216337488
+        },
+        {
+         "hypothesis_id": "mind:L[u0]Q[]",
+         "status": "proposed",
+         "weight": 0.41879348
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[]",
+         "status": "proposed",
+         "weight": 0.015713069
+        },
+        {
+         "hypothesis_id": "mind:L[x0]Q[x0]",
+         "status": "proposed",
+         "weight": 0.002262512
+        }
+       ],
+       "problem": {
+        "budget": 40,
+        "covariates": [
+         "T_K"
+        ],
+        "inputs": [
+         {
+          "high": 7200.0,
+          "low": 600.0,
+          "name": "t_off_s",
+          "unit": "s"
+         }
+        ],
+        "observable": "y",
+        "observable_unit": "ohm",
+        "problem_id": "P26:RELAXATION",
+        "query_cost": 1.0,
+        "region": {
+         "t_off_s": [
+          600.0,
+          7200.0
+         ]
+        },
+        "schema": "forge.mind.minimal.problem/1"
+       },
+       "problem_digest": "7f33d2f60d730f42858f6e55197f363ed20e98cafcda818891ea269eedfbd8d3",
+       "queries_refused": [
+        {
+         "nearest_ln_distance": 0.057911,
+         "query_ref": "mind-021-3cb71f9f33f6",
+         "requested": {
+          "t_off_s": 608.170261125
+         }
+        }
+       ],
+       "queries_served": 21,
+       "registry_head": "408a5a31863bd28fed220c4d493e4213f4f084632e261d16ba2abeddb7da44c5",
+       "sealed_pre_result_predictions": 93,
+       "seed": 2,
+       "served": [
+        {
+         "ln_distance": 0.000752,
+         "query_ref": "mind-000-4d3b481dc191",
+         "sample": "P26-c01#1250"
+        },
+        {
+         "ln_distance": 0.000593,
+         "query_ref": "mind-001-cba2c1c7f168",
+         "sample": "P26-c02#212"
+        },
+        {
+         "ln_distance": 0.001023,
+         "query_ref": "mind-002-868828b73398",
+         "sample": "P26-c01#1438"
+        },
+        {
+         "ln_distance": 0.002951,
+         "query_ref": "mind-003-259c2fc923f5",
+         "sample": "P26-c01#1260"
+        },
+        {
+         "ln_distance": 0.004724,
+         "query_ref": "mind-004-b27237d81fad",
+         "sample": "P26-c02#222"
+        },
+        {
+         "ln_distance": 0.002664,
+         "query_ref": "mind-005-4cb70928270e",
+         "sample": "P26-c02#247"
+        },
+        {
+         "ln_distance": 0.000299,
+         "query_ref": "mind-006-db020bf1d752",
+         "sample": "P26-c02#292"
+        },
+        {
+         "ln_distance": 0.00116,
+         "query_ref": "mind-007-a303273c7f27",
+         "sample": "P26-c02#327"
+        },
+        {
+         "ln_distance": 0.005261,
+         "query_ref": "mind-008-ce7f90ede742",
+         "sample": "P26-c01#1257"
+        },
+        {
+         "ln_distance": 0.000415,
+         "query_ref": "mind-009-fda144dfa96e",
+         "sample": "P26-c02#256"
+        },
+        {
+         "ln_distance": 0.017227,
+         "query_ref": "mind-010-4d3b481dc191",
+         "sample": "P26-c02#187"
+        },
+        {
+         "ln_distance": 0.007592,
+         "query_ref": "mind-011-cba2c1c7f168",
+         "sample": "P26-c01#1275"
+        },
+        {
+         "ln_distance": 0.002317,
+         "query_ref": "mind-012-868828b73398",
+         "sample": "P26-c02#373"
+        },
+        {
+         "ln_distance": 0.008774,
+         "query_ref": "mind-013-259c2fc923f5",
+         "sample": "P26-c02#197"
+        },
+        {
+         "ln_distance": 0.005632,
+         "query_ref": "mind-014-0dac5368cf90",
+         "sample": "P26-c02#182"
+        },
+        {
+         "ln_distance": 0.023765,
+         "query_ref": "mind-015-3fff36ab1e38",
+         "sample": "P26-c01#1246"
+        },
+        {
+         "ln_distance": 0.0,
+         "query_ref": "mind-016-6c739e39ba7c",
+         "sample": "P26-c01#1468"
+        },
+        {
+         "ln_distance": 0.008583,
+         "query_ref": "mind-017-3d5fd523122d",
+         "sample": "P26-c02#183"
+        },
+        {
+         "ln_distance": 0.001376,
+         "query_ref": "mind-018-1e12b5666796",
+         "sample": "P26-c01#1300"
+        },
+        {
+         "ln_distance": 0.000979,
+         "query_ref": "mind-019-224cf5653b5a",
+         "sample": "P26-c01#1456"
+        },
+        {
+         "ln_distance": 0.039818,
+         "query_ref": "mind-020-943c86ac9e32",
+         "sample": "P26-c01#1245"
+        }
+       ],
+       "steps": 21,
+       "trace_digest": "410b39027bb868a24515f10aa83fa3677c96ac416e7d6a1b9b1e7a6c2b13fe02",
+       "translation": {
+        "disposition": "NOT_SUPPORTED",
+        "key": "no_dependence"
+       }
+      }
+     },
+     "pool_size": 509
+    }
+   }
+  },
+  "disposition_by_seed": {
+   "0": {
+    "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+    "IDENTIFIABILITY": "NOT_SUPPORTED",
+    "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+    "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+    "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+   },
+   "1": {
+    "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+    "IDENTIFIABILITY": "NOT_SUPPORTED",
+    "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+    "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+    "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+   },
+   "2": {
+    "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+    "IDENTIFIABILITY": "NOT_SUPPORTED",
+    "MODEL_ADEQUACY": "NOT_ASSESSABLE",
+    "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+    "WITHIN_CELL_GENERALIZATION": "NOT_ASSESSABLE"
+   }
+  },
+  "dispositions_stable_across_seeds": true,
+  "eliminated": [],
+  "hypotheses": [
+   "mind:L[]Q[]",
+   "mind:L[u0,u1,x0,x1]Q[]",
+   "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+   "mind:L[u0,u1,x0]Q[]",
+   "mind:L[u0,u1,x0]Q[x0]",
+   "mind:L[u0,u1,x1]Q[]",
+   "mind:L[u0,u1,x1]Q[x1]",
+   "mind:L[u0,u1]Q[]",
+   "mind:L[u0,x0,x1]Q[]",
+   "mind:L[u0,x0,x1]Q[x0,x1]",
+   "mind:L[u0,x0]Q[]",
+   "mind:L[u0,x0]Q[x0]",
+   "mind:L[u0,x1]Q[]",
+   "mind:L[u0,x1]Q[x1]",
+   "mind:L[u0]Q[]",
+   "mind:L[u1,x0,x1]Q[]",
+   "mind:L[u1,x0,x1]Q[x0,x1]",
+   "mind:L[u1,x0]Q[]",
+   "mind:L[u1,x0]Q[x0]",
+   "mind:L[u1,x1]Q[]",
+   "mind:L[u1,x1]Q[x1]",
+   "mind:L[u1]Q[]",
+   "mind:L[x0,x1]Q[]",
+   "mind:L[x0,x1]Q[x0,x1]",
+   "mind:L[x0]Q[]",
+   "mind:L[x0]Q[x0]",
+   "mind:L[x1]Q[]",
+   "mind:L[x1]Q[x1]"
+  ],
+  "mind": "forge.mind.minimal@1.0.0",
+  "observations_used": 24,
+  "parameters": {
+   "C1": null,
+   "R0": null,
+   "R1": null,
+   "basis": "not representable: the Mind's laws are log-linear dependences of a probe observable, not 1RC parameters"
+  },
+  "primary_seed": 0,
+  "problem_id": "P26",
+  "refusal_reasons": [
+   "cross_cell_heldout/partner_cell_intermediate_rates -> insufficient_evidence (NOT_ASSESSABLE)",
+   "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it",
+   "within_cell_heldout/intermediate_rates -> insufficient_evidence (NOT_ASSESSABLE)"
+  ],
+  "schema": "forge.battery_rediscovery.arm_output/1",
+  "seeds": [
+   0,
+   1,
+   2
+  ]
+ }
+}

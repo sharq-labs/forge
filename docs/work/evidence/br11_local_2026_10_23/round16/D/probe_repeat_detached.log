@@ -1,0 +1,5 @@
+{"sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1", "owners": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py", "python": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python"}
+{"detached": false, "interruptions": 1, "outcome": "accepted", "diverged": {}, "sealed": null}
+{"detached": false, "interruptions": 2, "outcome": "accepted", "diverged": {}, "sealed": null}
+{"detached": true, "interruptions": 1, "outcome": "accepted", "diverged": {}, "sealed": null}
+{"detached": true, "interruptions": 2, "outcome": "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)", "diverged": {"('ledger', 'a')": "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"}, "sealed": null}

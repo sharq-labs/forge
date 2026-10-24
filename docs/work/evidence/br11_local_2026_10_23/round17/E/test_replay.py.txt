@@ -1,0 +1,97 @@
+import itertools, sys
+from unittest.mock import patch
+import pytest
+from engcore.mind.world import BudgetReader, OwnerKind
+from engcore.mind.world import owners
+from engcore.mind.world.authority import OwnerUnavailable
+from engcore.sria.campaign.budget import BudgetLedger
+from tests.mind.test_authority_review_r14 import _desk, _solver, _settle, _refused, ax
+from tests.mind.test_authority_review_r16 import _interrupt_handing
+
+@pytest.mark.parametrize("order", list(itertools.permutations([0,1,2])))
+def test_three_retained_prefixes_in_any_order(order):
+    account=BudgetLedger(total_budget=100.)
+    _settle(account,"initial")
+    versions=[BudgetLedger.from_dict(account.to_dict())]
+    for i in range(2):
+        _settle(account, str(i))
+        versions.append(BudgetLedger.from_dict(account.to_dict()))
+    held=[versions[0]]
+    reader=BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())},{}))
+    for i in order:
+        held[0]=versions[i]
+        _interrupt_handing(reader)
+    held[0]=versions[1]
+    with pytest.raises(OwnerUnavailable): reader.read(OwnerKind.BUDGET_LEDGER,"a")
+    held[0]=versions[2]
+    assert reader.read(OwnerKind.BUDGET_LEDGER,"a") is not None
+    assert not reader._diverged
+
+@pytest.mark.parametrize("order", list(itertools.permutations([0,1,2])))
+def test_hidden_conflicting_middle_history_is_never_lost(order):
+    account=BudgetLedger(total_budget=100.)
+    _settle(account,"initial")
+    versions=[BudgetLedger.from_dict(account.to_dict()) for _ in range(3)]
+    _settle(versions[0],"left")
+    _settle(versions[1],"right")
+    _settle(versions[2],"left")
+    _settle(versions[2],"left_extension")
+    held=[account]
+    reader=BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(held[0].to_dict())},{}))
+    for i in order:
+        held[0]=versions[i]; _interrupt_handing(reader)
+    for version in versions:
+        held[0]=version
+        with pytest.raises(OwnerUnavailable): reader.read(OwnerKind.BUDGET_LEDGER,"a")
+    assert reader._diverged
+
+def test_omission_and_interrupted_reconcile_cannot_erase_spend():
+    account=BudgetLedger(total_budget=100.)
+    _settle(account,"initial")
+    held={"a":account}
+    reader=BudgetReader.following(lambda: ({k:BudgetLedger.from_dict(v.to_dict()) for k,v in held.items()},{}))
+    saved=BudgetLedger.from_dict(account.to_dict())
+    _settle(account,"spend")
+    _interrupt_handing(reader); _interrupt_handing(reader)
+    held.clear()
+    with patch.object(owners.BudgetCharge,"from_dict",side_effect=KeyboardInterrupt):
+        assert reader.read(OwnerKind.BUDGET_LEDGER,"a") is None
+    assert reader._unread_entries
+    held["a"]=saved
+    with pytest.raises(OwnerUnavailable): reader.read(OwnerKind.BUDGET_LEDGER,"a")
+    held["a"]=account
+    assert reader.read(OwnerKind.BUDGET_LEDGER,"a") is not None
+    assert not reader._diverged
+
+@pytest.mark.parametrize("capture_map", ["ledgers", "experiments"])
+def test_open_native_two_interrupts_preserve_spend(capture_map):
+    o=ax.owned("battery"); lid=_solver(o); calls=[]
+    def execute(authorization):
+        calls.append(1); _settle(o.ledgers[lid],f"run.{len(calls)}")
+    reader,_,gateway,admitted=_desk(o,lambda:(o.ledgers,o.experiments),execute)
+    saved=BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+    gateway.dispatch(admitted.admitted)
+    injections=[]
+    def recovery(frame):
+        while frame:
+            if frame.f_code is BudgetReader._recover_handing.__code__: return True
+            frame=frame.f_back
+        return False
+    def trace(frame,event,arg):
+        if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is getattr(o,capture_map) and not injections:
+            injections.append("initial native capture"); raise KeyboardInterrupt()
+        return trace
+    def profile(frame,event,arg):
+        if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is getattr(o,capture_map) and len(injections)==1 and recovery(frame):
+            injections.append("native recovery"); raise KeyboardInterrupt()
+    sys.setprofile(profile); sys.settrace(trace)
+    try:
+        with pytest.raises(KeyboardInterrupt): reader.pinned()
+    finally:
+        sys.settrace(None); sys.setprofile(None)
+    assert len(injections)==2
+    print("injections",injections,"pending",[type(v).__name__ for v in reader._uncompared.values()],"sealed",reader._sealed)
+    o.ledgers[lid]=saved
+    refused=_refused(gateway,admitted.admitted)
+    print("refused",refused,"calls",len(calls))
+    assert refused and len(calls)==1

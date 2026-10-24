@@ -1,0 +1,9 @@
+[control   ] [none] re-dispatch after the restore: DISPATCHED | executor ran 2
+[control   ] [seq ] verification on the spend: MISSING_INFORMATION AUTHORITY_STALE | re-dispatch after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[control   ] [wait] D waited for P: True | P (handed the spend): DISPATCHED | D (handed the restore): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[moving-key] [none] re-dispatch after the restore: DISPATCHED | executor ran 2
+[moving-key] [seq ] verification on the spend: MISSING_INFORMATION AUTHORITY_OWNER_UNAVAILABLE | re-dispatch after the restore: DISPATCHED | executor ran 2
+[moving-key] [wait] D waited for P: True | P (handed the spend): DISPATCHED | D (handed the restore): DISPATCHED | executor ran 2
+[deep      ] [none] re-dispatch after the restore: DISPATCHED | executor ran 2
+[deep      ] [seq ] verification on the spend: RAISED RecursionError | re-dispatch after the restore: DISPATCHED | executor ran 2
+[deep      ] [wait] D waited for P: True | P (handed the spend): RAISED RecursionError | D (handed the restore): DISPATCHED | executor ran 2

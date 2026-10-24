@@ -1,0 +1,33 @@
+[race] in flight when BAD started: [4]; after BAD: [4]
+[race] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accoun
+[race] sealed: True
+[race] log: [('BAD handed charges', 2), ('GOOD handed charges', 1, 'sealed', True)]
+[race] GOOD: DISPATCHED AGAIN
+[race] executor calls = 2
+
+[race] in flight when BAD started: [4]; after BAD: [4]
+[race] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accoun
+[race] sealed: True
+[race] log: [('BAD handed charges', 2), ('GOOD handed charges', 1, 'sealed', True)]
+[race] GOOD: DISPATCHED AGAIN
+[race] executor calls = 2
+
+[race] in flight when BAD started: [4]; after BAD: [4]
+[race] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accoun
+[race] sealed: True
+[race] log: [('BAD handed charges', 2), ('GOOD handed charges', 1, 'sealed', True)]
+[race] GOOD: DISPATCHED AGAIN
+[race] executor calls = 2
+
+[seq] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accoun
+[seq] sealed: True
+[seq] log: [('BAD handed charges', 2)]
+[seq] GOOD: refused DispatchRefused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)
+[seq] executor calls = 1
+
+[dict] BAD: pinned
+[dict] sealed: False
+[dict] log: [('BAD handed charges', 2), ('GOOD handed charges', 1, 'sealed', False)]
+[dict] GOOD: refused DispatchRefused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)
+[dict] executor calls = 1
+

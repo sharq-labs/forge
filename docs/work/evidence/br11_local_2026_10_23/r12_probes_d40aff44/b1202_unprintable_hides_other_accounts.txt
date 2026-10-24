@@ -1,0 +1,6 @@
+(1) [unrenderable failure] unbound side ledger; admission of a world that never reads it -> RAISED LookupError
+(1) [control: renderable failure] unbound side ledger; admission of a world that never reads it -> FEASIBLE ()
+(1) [control: str note] unbound side ledger; admission of a world that never reads it -> FEASIBLE ()
+(2) [unrenderable failure] admissions on the spent state: ['RAISED LookupError', 'RAISED LookupError']; experiment history recorded: 3 evaluations (the spent state handed: 4); re-dispatch after the restore: DISPATCHED AGAIN; executor ran 2
+(2) [control: renderable failure] admissions on the spent state: ["MISSING_INFORMATION ('AUTHORITY_STALE',)", "MISSING_INFORMATION ('AUTHORITY_STALE',)"]; experiment history recorded: 4 evaluations (the spent state handed: 4); re-dispatch after the restore: refused: admission now refuses this action (MISSING_INFORMATION: AUTH; executor ran 1
+(2) [control: str note] admissions on the spent state: ["MISSING_INFORMATION ('AUTHORITY_STALE',)", "MISSING_INFORMATION ('AUTHORITY_STALE',)"]; experiment history recorded: 4 evaluations (the spent state handed: 4); re-dispatch after the restore: refused: admission now refuses this action (MISSING_INFORMATION: AUTH; executor ran 1

@@ -1,0 +1,464 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "REFUSED",
+   "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+   "refusal_reason": "REPRESENTATION_UNAVAILABLE"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "REFUSED",
+   "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+   "refusal_reason": "REPRESENTATION_UNAVAILABLE"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "REFUSED",
+   "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+   "refusal_reason": "REPRESENTATION_UNAVAILABLE"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "REFUSED",
+   "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+   "refusal_reason": "REPRESENTATION_UNAVAILABLE"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "REFUSED",
+   "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+   "refusal_reason": "REPRESENTATION_UNAVAILABLE"
+  }
+ },
+ "arm": "REPRESENTATION_ONLY",
+ "assessment": {
+  "binding": {
+   "refused": {
+    "candidates": [],
+    "family": "rc1_measured_ocv/1",
+    "legacy_roles": true,
+    "roles": [
+     "CONTROLLED_INPUT"
+    ],
+    "slot": "driver",
+    "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+   }
+  },
+  "claim_types": {
+   "CROSS_CELL_TRANSFER": {
+    "applicability_scope": "units disjoint from calibration, inside the declared applicability domain",
+    "axis": "CROSS_CELL_TRANSFER",
+    "meaning": "the family calibrated on some units predicts held-out data of OTHER units within the declared bar",
+    "negative": "CROSS_CELL_NOT_SUPPORTED",
+    "positive": "CROSS_CELL_SUPPORTED",
+    "refusal_condition": "as within-cell; OUT_OF_DOMAIN also when a held-out unit was a calibration unit",
+    "required_evidence": "as within-cell, for a held-out set whose units are disjoint from the calibration units"
+   },
+   "IDENTIFIABILITY": {
+    "applicability_scope": "the declared family, the calibration set's design, and the declared parameter bounds",
+    "axis": "IDENTIFIABILITY",
+    "meaning": "every requested LATENT_PARAMETER of the declared family is determined by the calibration observations (IDENTIFIABLE), or at least one is not (NOT_IDENTIFIABLE)",
+    "negative": "NOT_IDENTIFIABLE",
+    "positive": "IDENTIFIABLE",
+    "refusal_condition": "REPRESENTATION_UNAVAILABLE: the family cannot be bound to declared roles or a requested parameter is not a declared LATENT_PARAMETER; INSUFFICIENT_EVIDENCE: full rank but no declared noise, or a weakly identified ridge (REVIEW)",
+    "required_evidence": "the residual Jacobian of the bound family at the calibrated estimate; IDENTIFIABLE also needs a declared measurement noise, from which the local covariance is classified by the frozen V1 identifiability rule (engcore.hybrid_uq.identifiability); a rank-deficient Jacobian decides NOT_IDENTIFIABLE without one"
+   },
+   "MODEL_ADEQUACY": {
+    "applicability_scope": "the declared family on the calibration set",
+    "axis": "MODEL_ADEQUACY",
+    "meaning": "the calibrated declared family describes the calibration data within the declared adequacy bar (or, with no bar, within the declared measurement noise)",
+    "negative": "MODEL_INADEQUATE",
+    "positive": "MODEL_ADEQUATE",
+    "refusal_condition": "REPRESENTATION_UNAVAILABLE: the family cannot be bound; INSUFFICIENT_EVIDENCE: neither a bar nor a noise is declared, or the fit fails",
+    "required_evidence": "calibration residuals of the best fit, compared with a declared bar (rmse and p95) or with a declared noise (chi-square at 0.999)"
+   },
+   "MODEL_DISCREPANCY": {
+    "applicability_scope": "the declared family on the calibration set, at the stated resolution",
+    "axis": "MODEL_DISCREPANCY",
+    "meaning": "the calibrated family's residuals show structured model-form error beyond the declared measurement noise (PRESENT), or no discrepancy is resolved above it (UNRESOLVED; never 'zero')",
+    "negative": "MODEL_DISCREPANCY_PRESENT",
+    "positive": "MODEL_DISCREPANCY_UNRESOLVED",
+    "refusal_condition": "REPRESENTATION_UNAVAILABLE: the family cannot be bound; INSUFFICIENT_EVIDENCE: no declared noise and no structure resolved (compatibility cannot be shown without a declared noise)",
+    "required_evidence": "residual chi-square against a declared noise and/or lag-1 residual autocorrelation against a declared independence of the measurement noise"
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "applicability_scope": "calibration units only, inside the declared applicability domain",
+    "axis": "WITHIN_CELL_GENERALIZATION",
+    "meaning": "the calibrated family predicts held-out data of the SAME unit(s) within the declared acceptance bar",
+    "negative": "WITHIN_CELL_NOT_SUPPORTED",
+    "positive": "WITHIN_CELL_SUPPORTED",
+    "refusal_condition": "INSUFFICIENT_EVIDENCE: no such set or no bar; OUT_OF_DOMAIN: a held-out trajectory leaves the declared domain or belongs to another unit; REPRESENTATION_UNAVAILABLE: the family cannot be bound",
+    "required_evidence": "held-out prediction error of the calibrated family against the declared bar, after every held-out trajectory is shown inside the declared applicability domain"
+   }
+  },
+  "claims": {
+   "CROSS_CELL_TRANSFER": {
+    "axis": "CROSS_CELL_TRANSFER",
+    "disposition": "REFUSED",
+    "evidence": [],
+    "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+    "refusal": {
+     "condition": {
+      "candidates": [],
+      "family": "rc1_measured_ocv/1",
+      "legacy_roles": true,
+      "roles": [
+       "CONTROLLED_INPUT"
+      ],
+      "slot": "driver",
+      "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+     },
+     "reason": "REPRESENTATION_UNAVAILABLE"
+    },
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {},
+    "state": null
+   },
+   "IDENTIFIABILITY": {
+    "axis": "IDENTIFIABILITY",
+    "disposition": "REFUSED",
+    "evidence": [],
+    "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+    "refusal": {
+     "condition": {
+      "candidates": [],
+      "family": "rc1_measured_ocv/1",
+      "legacy_roles": true,
+      "roles": [
+       "CONTROLLED_INPUT"
+      ],
+      "slot": "driver",
+      "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+     },
+     "reason": "REPRESENTATION_UNAVAILABLE"
+    },
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {},
+    "state": null
+   },
+   "MODEL_ADEQUACY": {
+    "axis": "MODEL_ADEQUACY",
+    "disposition": "REFUSED",
+    "evidence": [],
+    "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+    "refusal": {
+     "condition": {
+      "candidates": [],
+      "family": "rc1_measured_ocv/1",
+      "legacy_roles": true,
+      "roles": [
+       "CONTROLLED_INPUT"
+      ],
+      "slot": "driver",
+      "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+     },
+     "reason": "REPRESENTATION_UNAVAILABLE"
+    },
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {},
+    "state": null
+   },
+   "MODEL_DISCREPANCY": {
+    "axis": "MODEL_DISCREPANCY",
+    "disposition": "REFUSED",
+    "evidence": [],
+    "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+    "refusal": {
+     "condition": {
+      "candidates": [],
+      "family": "rc1_measured_ocv/1",
+      "legacy_roles": true,
+      "roles": [
+       "CONTROLLED_INPUT"
+      ],
+      "slot": "driver",
+      "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+     },
+     "reason": "REPRESENTATION_UNAVAILABLE"
+    },
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {},
+    "state": null
+   },
+   "WITHIN_CELL_GENERALIZATION": {
+    "axis": "WITHIN_CELL_GENERALIZATION",
+    "disposition": "REFUSED",
+    "evidence": [],
+    "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+    "refusal": {
+     "condition": {
+      "candidates": [],
+      "family": "rc1_measured_ocv/1",
+      "legacy_roles": true,
+      "roles": [
+       "CONTROLLED_INPUT"
+      ],
+      "slot": "driver",
+      "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+     },
+     "reason": "REPRESENTATION_UNAVAILABLE"
+    },
+    "schema": "forge.mind.repsem.scoped_claim/1",
+    "scope": {},
+    "state": null
+   }
+  },
+  "engine": "forge.mind.repsem@1.0.0",
+  "evidence": {},
+  "hypothesis": {
+   "applicability_domain": {},
+   "claims": [
+    {
+     "axis": "IDENTIFIABILITY",
+     "disposition": "REFUSED",
+     "evidence": [],
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal": {
+      "condition": {
+       "candidates": [],
+       "family": "rc1_measured_ocv/1",
+       "legacy_roles": true,
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "slot": "driver",
+       "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+      },
+      "reason": "REPRESENTATION_UNAVAILABLE"
+     },
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {},
+     "state": null
+    },
+    {
+     "axis": "MODEL_ADEQUACY",
+     "disposition": "REFUSED",
+     "evidence": [],
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal": {
+      "condition": {
+       "candidates": [],
+       "family": "rc1_measured_ocv/1",
+       "legacy_roles": true,
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "slot": "driver",
+       "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+      },
+      "reason": "REPRESENTATION_UNAVAILABLE"
+     },
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {},
+     "state": null
+    },
+    {
+     "axis": "MODEL_DISCREPANCY",
+     "disposition": "REFUSED",
+     "evidence": [],
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal": {
+      "condition": {
+       "candidates": [],
+       "family": "rc1_measured_ocv/1",
+       "legacy_roles": true,
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "slot": "driver",
+       "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+      },
+      "reason": "REPRESENTATION_UNAVAILABLE"
+     },
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {},
+     "state": null
+    },
+    {
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "disposition": "REFUSED",
+     "evidence": [],
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal": {
+      "condition": {
+       "candidates": [],
+       "family": "rc1_measured_ocv/1",
+       "legacy_roles": true,
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "slot": "driver",
+       "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+      },
+      "reason": "REPRESENTATION_UNAVAILABLE"
+     },
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {},
+     "state": null
+    },
+    {
+     "axis": "CROSS_CELL_TRANSFER",
+     "disposition": "REFUSED",
+     "evidence": [],
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal": {
+      "condition": {
+       "candidates": [],
+       "family": "rc1_measured_ocv/1",
+       "legacy_roles": true,
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "slot": "driver",
+       "why": "family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []"
+      },
+      "reason": "REPRESENTATION_UNAVAILABLE"
+     },
+     "schema": "forge.mind.repsem.scoped_claim/1",
+     "scope": {},
+     "state": null
+    }
+   ],
+   "competing_alternatives": [],
+   "evidence_against": [],
+   "evidence_for": [],
+   "hypothesis_id": "repsem:rc1_measured_ocv/1:4c4b83c0920c22d3",
+   "model_family": {
+    "bound": false,
+    "description": "Thevenin 1RC, measured fixed OCV table. V = OCV(z) - I*R0 - v1;  dv1/dt = I/C1 - v1/(R1*C1);  dz/dt = -I/Q.  Positive I is discharge.  Rint (R1 = 0) is the declared rival.",
+    "family_id": "rc1_measured_ocv/1",
+    "parameters": [
+     "R0",
+     "R1",
+     "C1"
+    ],
+    "required_conditions": [
+     "initial_polarization",
+     "capacity_As"
+    ],
+    "slots": [
+     {
+      "name": "driver",
+      "roles": [
+       "CONTROLLED_INPUT"
+      ],
+      "state_of": null
+     },
+     {
+      "name": "charge_state",
+      "roles": [
+       "STATE_VARIABLE"
+      ],
+      "state_of": "driver"
+     }
+    ]
+   },
+   "parameter_set": [],
+   "schema": "forge.mind.repsem.hypothesis/1",
+   "unresolved_discriminators": [
+    "the family is not bound, so nothing about it was discriminated"
+   ],
+   "variable_roles": {
+    "declarations": [
+     {
+      "basis": "v1 adapter two-class rule",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "current_A",
+      "role": "NUISANCE_VARIABLE",
+      "source": "legacy_adapter_default",
+      "unit": "1"
+     },
+     {
+      "basis": "v1 adapter two-class rule",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "level_A",
+      "role": "NUISANCE_VARIABLE",
+      "source": "legacy_adapter_default",
+      "unit": "1"
+     },
+     {
+      "basis": "v1 adapter two-class rule",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "t_s",
+      "role": "CONTROLLED_INPUT",
+      "source": "legacy_adapter_default",
+      "unit": "1"
+     },
+     {
+      "basis": "v1 adapter two-class rule",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "temperature_C",
+      "role": "NUISANCE_VARIABLE",
+      "source": "legacy_adapter_default",
+      "unit": "1"
+     },
+     {
+      "basis": "v1 adapter two-class rule",
+      "derived_from": [],
+      "driven_by": [],
+      "name": "voltage_V",
+      "role": "MEASUREMENT",
+      "source": "legacy_adapter_default",
+      "unit": "1"
+     }
+    ],
+    "schema": "forge.mind.repsem.role_table/1"
+   }
+  },
+  "problem_digest": "4c4b83c0920c22d3b334dac4bd6f521f28c1cae6187e622016549c1a2afcdbb1",
+  "roles": {
+   "declarations": [
+    {
+     "basis": "v1 adapter two-class rule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "current_A",
+     "role": "NUISANCE_VARIABLE",
+     "source": "legacy_adapter_default",
+     "unit": "1"
+    },
+    {
+     "basis": "v1 adapter two-class rule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "level_A",
+     "role": "NUISANCE_VARIABLE",
+     "source": "legacy_adapter_default",
+     "unit": "1"
+    },
+    {
+     "basis": "v1 adapter two-class rule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "t_s",
+     "role": "CONTROLLED_INPUT",
+     "source": "legacy_adapter_default",
+     "unit": "1"
+    },
+    {
+     "basis": "v1 adapter two-class rule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "temperature_C",
+     "role": "NUISANCE_VARIABLE",
+     "source": "legacy_adapter_default",
+     "unit": "1"
+    },
+    {
+     "basis": "v1 adapter two-class rule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "voltage_V",
+     "role": "MEASUREMENT",
+     "source": "legacy_adapter_default",
+     "unit": "1"
+    }
+   ],
+   "schema": "forge.mind.repsem.role_table/1"
+  },
+  "schema": "forge.mind.repsem.assessment/1"
+ },
+ "problem_id": "P17",
+ "roles": "legacy",
+ "schema": "forge.battery_rediscovery_v2.arm_output/1"
+}

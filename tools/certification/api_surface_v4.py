@@ -149,6 +149,54 @@ def digest(surface: dict[str, Any] | None = None) -> str:
     return hashlib.sha256(canonical_bytes(surface)).hexdigest()
 
 
+def historical_surface_problems(stored_bytes: bytes, candidate_bytes: bytes, expected_sha256: str) -> list[str]:
+    """Authenticate the preserved surface against its candidate commit and manifest pin."""
+    problems = []
+    if stored_bytes != candidate_bytes:
+        problems.append("stored deep surface differs from the candidate's committed bytes")
+    if hashlib.sha256(stored_bytes).hexdigest() != expected_sha256:
+        problems.append("stored deep surface differs from its manifest digest")
+    return problems
+
+
+def additive_method_problems(stored: dict[str, Any], live: dict[str, Any]) -> list[str]:
+    """Descendants may add methods; every recorded existing contract stays exact.
+
+    This deliberately does not generalize signature, enum or field compatibility.
+    Historical bytes must be authenticated separately by the freeze verifier.
+    """
+    problems = []
+    for label, value in (("stored", stored), ("live", live)):
+        symbols = value.get("symbols", [])
+        if (value.get("schema") != SCHEMA or value.get("symbol_count") != len(symbols)
+                or value.get("method_count") != sum(len(e.get("methods", {})) for e in symbols)
+                or len({(e.get("module"), e.get("name")) for e in symbols}) != len(symbols)):
+            problems.append(label + " inconsistent surface metadata")
+    if {k: v for k, v in stored.items() if k not in ("symbols", "method_count")} != {
+            k: v for k, v in live.items() if k not in ("symbols", "method_count")}:
+        problems.append("surface schema, modules or symbol count changed")
+    before = {(e["module"], e["name"]): e for e in stored.get("symbols", [])}
+    after = {(e["module"], e["name"]): e for e in live.get("symbols", [])}
+    if before.keys() != after.keys():
+        problems.append("frozen symbol identities changed")
+    for key in before.keys() & after.keys():
+        old, new = before[key], after[key]
+        if {k: v for k, v in old.items() if k != "methods"} != {k: v for k, v in new.items() if k != "methods"}:
+            problems.append(str(key) + " kind, enum positions, fields or metadata changed")
+        if ("methods" in old) != ("methods" in new):
+            problems.append(str(key) + " method surface presence changed")
+        for name, entry in old.get("methods", {}).items():
+            if new.get("methods", {}).get(name) != entry:
+                problems.append(str(key) + "." + name + " removed or changed role/signature")
+    return problems
+
+
+def compatibility_problems(stored: dict[str, Any], live: dict[str, Any], *, descendant: bool) -> list[str]:
+    if not descendant:
+        return [] if canonical_bytes(stored) == canonical_bytes(live) else ["exact freeze surface changed"]
+    return additive_method_problems(stored, live)
+
+
 if __name__ == "__main__":  # pragma: no cover - a tool entry point
     import sys
 

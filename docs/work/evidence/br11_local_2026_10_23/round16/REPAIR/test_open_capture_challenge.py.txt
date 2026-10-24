@@ -1,0 +1,23 @@
+"""Known OPEN R16 MAJOR: expected refusal assertion currently FAILS; separate evidence, not gate success."""
+import pytest
+from unittest.mock import patch
+from engcore.mind.world import BudgetReader
+from engcore.sria.campaign.budget import BudgetLedger
+from tests.mind.test_authority_review_r14 import _desk, _solver, _settle, _refused, ax
+
+def test_open_double_capture_interruption_cannot_recover_lost_live_mapping():
+    o = ax.owned("battery")
+    lid = _solver(o)
+    calls = []
+    def execute(authorization):
+        calls.append(1)
+        _settle(o.ledgers[lid], f"run.{len(calls)}")
+    reader, _, gateway, admitted = _desk(o, lambda: (o.ledgers, o.experiments), execute)
+    saved = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+    gateway.dispatch(admitted.admitted)
+    with patch.object(BudgetReader, "_retain_handing", side_effect=KeyboardInterrupt):
+        with pytest.raises(KeyboardInterrupt):
+            reader.pinned()
+    o.ledgers[lid] = saved
+    assert _refused(gateway, admitted.admitted)
+    assert calls == [1]

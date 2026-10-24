@@ -1,0 +1,2015 @@
+{
+ "conclusion": {
+  "combined_failure_attribution": {
+   "OTHER": [],
+   "REPRESENTATION": [],
+   "ROLES": []
+  },
+  "decided_instances": 5,
+  "hypotheses": {
+   "H1": {
+    "FR_combined": 0,
+    "FR_old": 5,
+    "FS_combined": 0,
+    "FS_old": 0,
+    "holds": true,
+    "min_reduction": 2
+   },
+   "H2": {
+    "holds": true,
+    "parts": {
+     "REPRESENTATION_ONLY": {
+      "correct_decided_arm": 0,
+      "correct_decided_combined": 5,
+      "fs_decided_arm": 0,
+      "fs_decided_combined": 0,
+      "holds": true
+     },
+     "SEMANTIC_ROLES_ONLY": {
+      "correct_decided_arm": 0,
+      "correct_decided_combined": 5,
+      "fs_decided_arm": 0,
+      "fs_decided_combined": 0,
+      "holds": true
+     }
+    }
+   },
+   "H3": {
+    "FS_heldout_combined": 0,
+    "FS_heldout_old": 0,
+    "gap_combined": 0,
+    "gap_old": 2,
+    "heldout_correct": {
+     "CAREFUL_BASELINE": 2,
+     "OLD_MIND": 0,
+     "REPRESENTATION_PLUS_ROLES": 2
+    },
+    "heldout_scored": {
+     "CAREFUL_BASELINE": 2,
+     "OLD_MIND": 2,
+     "REPRESENTATION_PLUS_ROLES": 2
+    },
+    "holds": true
+   }
+  },
+  "thresholds": {
+   "MIN_DECIDED": 4,
+   "MIN_FR_REDUCTION": 2,
+   "false_support_materiality": "any increase of FALSE_SUPPORT over OLD_MIND is material"
+  },
+  "verdict": "REAL_DATA_IMPROVEMENT_CONFIRMED",
+  "why": "H1, H2 and H3 hold"
+ },
+ "leakage": {
+  "post_seal_audit": "PASS",
+  "post_seal_mutation": {
+   "benign_controls": 219,
+   "benign_triggered": 0,
+   "leak_mutations": 434,
+   "leaks_caught": 434,
+   "status": "PASS"
+  }
+ },
+ "replay": {
+  "exact": true,
+  "non_identical": [],
+  "old_mind_traces": 4,
+  "old_mind_traces_verified": 4,
+  "per_arm": {
+   "ALWAYS_FIT": {
+    "identical": 2,
+    "outputs": 2
+   },
+   "ALWAYS_REFUSE": {
+    "identical": 2,
+    "outputs": 2
+   },
+   "CAREFUL_BASELINE": {
+    "identical": 2,
+    "outputs": 2
+   },
+   "FIXED_FIT": {
+    "identical": 2,
+    "outputs": 2
+   },
+   "OLD_MIND": {
+    "identical": 2,
+    "outputs": 2
+   },
+   "REPRESENTATION_ONLY": {
+    "identical": 2,
+    "outputs": 2
+   },
+   "REPRESENTATION_PLUS_ROLES": {
+    "identical": 2,
+    "outputs": 2
+   },
+   "SEMANTIC_ROLES_ONLY": {
+    "identical": 2,
+    "outputs": 2
+   }
+  },
+  "repsem_exact": 4,
+  "repsem_total": 4,
+  "trace_files": 2,
+  "trace_files_identical": 2
+ },
+ "schema": "forge.battery_rediscovery_v2.evaluation/1",
+ "scores": {
+  "ALWAYS_FIT": {
+   "all": {
+    "correct": 3,
+    "counts": {
+     "CORRECT": 3,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 5,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 8,
+    "wrong_decisions": 5
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 2,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 2
+    },
+    "IDENTIFIABILITY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 1,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 1
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 2,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 2
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 3,
+    "counts": {
+     "CORRECT": 3,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 2,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 2
+   },
+   "heldout": {
+    "correct": 1,
+    "counts": {
+     "CORRECT": 1,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 1,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 1
+   },
+   "rows": [
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q1",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q1",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q1",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q2",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q2",
+     "reason": "never refuses",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  },
+  "ALWAYS_REFUSE": {
+   "all": {
+    "correct": 3,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 3,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 8,
+    "wrong_decisions": 0
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "IDENTIFIABILITY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 0
+   },
+   "heldout": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 2,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 0
+   },
+   "rows": [
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q1",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q2",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "refuses every scientific conclusion",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  },
+  "CAREFUL_BASELINE": {
+   "all": {
+    "correct": 6,
+    "counts": {
+     "CORRECT": 4,
+     "CORRECT_REFUSAL": 2,
+     "FALSE_REFUSE": 1,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 1
+    },
+    "scored": 8,
+    "wrong_decisions": 1
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 2,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "IDENTIFIABILITY": {
+     "correct": 2,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 1
+     },
+     "scored": 2,
+     "wrong_decisions": 1
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 4,
+    "counts": {
+     "CORRECT": 4,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 1,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 0
+   },
+   "heldout": {
+    "correct": 2,
+    "counts": {
+     "CORRECT": 2,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 0
+   },
+   "rows": [
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "the calibration fit or an assessable held-out set fails the declared bar",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "REVIEW",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "1/3 requested parameters pass the basic checks",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "declared set rule: a failing set is NOT_SUPPORTED; a passing set holding an out-of-domain trajectory is NOT_ASSESSABLE",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "CORRECT",
+     "problem": "Q1",
+     "reason": "declared set rule: a failing set is NOT_SUPPORTED; a passing set holding an out-of-domain trajectory is NOT_ASSESSABLE",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSUPPORTED_DECISION",
+     "problem": "Q1",
+     "reason": "calibration residual lag-1 autocorrelation 0.94 > 0.5: structured",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "REVIEW",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "nothing fails, but support is incomplete (out-of-domain sets or structured/unknown residuals)",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "3/3 requested parameters pass the basic checks",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "declared set rule: a failing set is NOT_SUPPORTED; a passing set holding an out-of-domain trajectory is NOT_ASSESSABLE",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q2",
+     "reason": "no held-out set of this kind is supplied",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "calibration residual lag-1 autocorrelation 0.91 > 0.5: structured",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  },
+  "FIXED_FIT": {
+   "all": {
+    "correct": 5,
+    "counts": {
+     "CORRECT": 4,
+     "CORRECT_REFUSAL": 1,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 3,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 8,
+    "wrong_decisions": 3
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 2,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "IDENTIFIABILITY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 1,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 1
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 2,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 2
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 4,
+    "counts": {
+     "CORRECT": 4,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 1,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 1
+   },
+   "heldout": {
+    "correct": 2,
+    "counts": {
+     "CORRECT": 2,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 0
+   },
+   "rows": [
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "calibration fit against the strictest declared bar",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q1",
+     "reason": "point estimates reported; not checked",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "held-out predictions against the declared bar",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "CORRECT",
+     "problem": "Q1",
+     "reason": "held-out predictions against the declared bar",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q1",
+     "reason": "residuals taken as noise when the fit meets the bar; structure not checked",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "calibration fit against the strictest declared bar",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "point estimates reported; not checked",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "held-out predictions against the declared bar",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q2",
+     "reason": "no held-out set of this kind is supplied",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_SUPPORT",
+     "problem": "Q2",
+     "reason": "residuals taken as noise when the fit meets the bar; structure not checked",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  },
+  "OLD_MIND": {
+   "all": {
+    "correct": 3,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 3,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 8,
+    "wrong_decisions": 0
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "IDENTIFIABILITY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 0
+   },
+   "heldout": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 2,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 0
+   },
+   "rows": [
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "RELAXATION -> problem_refused (REFUSED)",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "within_cell_heldout/later_cycles -> insufficient_evidence (NOT_ASSESSABLE)",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q1",
+     "reason": "cross_cell_heldout/other_cell -> insufficient_evidence (NOT_ASSESSABLE)",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "REVIEW",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "RELAXATION -> law_linear_only (REVIEW)",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "within_cell_heldout/pulses_alternate_soc -> unidentifiable_passive_association (NOT_ASSESSABLE)",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q2",
+     "reason": "no held-out set of this kind is supplied",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  },
+  "REPRESENTATION_ONLY": {
+   "all": {
+    "correct": 3,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 3,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 8,
+    "wrong_decisions": 0
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "IDENTIFIABILITY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 0
+   },
+   "heldout": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 2,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 0
+   },
+   "rows": [
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_fitted_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": null
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_fitted_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_fitted_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": null
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q1",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_fitted_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_fitted_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q2",
+     "reason": "no cross_unit_heldout set is supplied",
+     "refusal_reason": "INSUFFICIENT_EVIDENCE",
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "the declared family cannot be bound through the declared roles: family rc1_measured_ocv/1: slot 'driver' needs exactly one variable declared ['CONTROLLED_INPUT']; the role table offers []",
+     "refusal_reason": "REPRESENTATION_UNAVAILABLE",
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  },
+  "REPRESENTATION_PLUS_ROLES": {
+   "all": {
+    "correct": 8,
+    "counts": {
+     "CORRECT": 5,
+     "CORRECT_REFUSAL": 3,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 8,
+    "wrong_decisions": 0
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 2,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "IDENTIFIABILITY": {
+     "correct": 2,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 2,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 1,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 0,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 5,
+    "counts": {
+     "CORRECT": 5,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 0
+   },
+   "heldout": {
+    "correct": 2,
+    "counts": {
+     "CORRECT": 2,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 0,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 0
+   },
+   "rows": [
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "calibration rmse 0.04625 / p95 0.06655 against the declared bar 0.05 / 0.09",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "full rank, but practical identifiability needs a declared measurement noise, and none is declared (a residual estimate is not substituted)",
+     "refusal_reason": "INSUFFICIENT_EVIDENCE",
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "in-domain held-out subsets ['later_cycles'] fail the declared bar",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "CORRECT",
+     "problem": "Q1",
+     "reason": "in-domain held-out subsets ['other_cell'] fail the declared bar",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "no structure is resolved, and compatibility with noise cannot be shown without a declared noise and a declared independence",
+     "refusal_reason": "INSUFFICIENT_EVIDENCE",
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "calibration rmse 0.0121 / p95 0.02497 against the declared bar 0.015 / 0.03",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "every parameter's 95% interval is small relative to its own value (widest 0.00631, threshold 1), and neither the correlation (0.6021) nor the conditioning (4.6) reaches its threshold. Relative widths are measured against each parameter's declared zero; a parameterization with another origin can reach another verdict",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "SUPPORTED",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "every held-out subset ['pulses_alternate_soc'] meets its declared bar",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q2",
+     "reason": "no cross_unit_heldout set is supplied",
+     "refusal_reason": "INSUFFICIENT_EVIDENCE",
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_SUPPORTED",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "CORRECT",
+     "problem": "Q2",
+     "reason": "structured model-form error resolved above the declared noise: excess residual variance",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  },
+  "SEMANTIC_ROLES_ONLY": {
+   "all": {
+    "correct": 3,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 3,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 8,
+    "wrong_decisions": 0
+   },
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "IDENTIFIABILITY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 1,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 1,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 2,
+     "wrong_decisions": 0
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 0,
+     "counts": {
+      "CORRECT": 0,
+      "CORRECT_REFUSAL": 0,
+      "FALSE_REFUSE": 1,
+      "FALSE_REJECT": 0,
+      "FALSE_SUPPORT": 0,
+      "UNSUPPORTED_DECISION": 0
+     },
+     "scored": 1,
+     "wrong_decisions": 0
+    }
+   },
+   "decided": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 5,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 5,
+    "wrong_decisions": 0
+   },
+   "heldout": {
+    "correct": 0,
+    "counts": {
+     "CORRECT": 0,
+     "CORRECT_REFUSAL": 0,
+     "FALSE_REFUSE": 2,
+     "FALSE_REJECT": 0,
+     "FALSE_SUPPORT": 0,
+     "UNSUPPORTED_DECISION": 0
+    },
+    "scored": 2,
+    "wrong_decisions": 0
+   },
+   "rows": [
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_ADEQUACY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "REFUSED",
+     "axis": "IDENTIFIABILITY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "the relaxation probe is refused by the Mind's problem constructor",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": false,
+     "heldout": true,
+     "outcome": "UNSCORED",
+     "problem": "Q1",
+     "reason": "later_cycles: insufficient_evidence",
+     "refusal_reason": null,
+     "truth": null
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q1",
+     "reason": "other_cell: insufficient_evidence",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q1",
+     "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_ADEQUACY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "REVIEW",
+     "axis": "IDENTIFIABILITY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "relaxation probe: law_linear_only",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "WITHIN_CELL_GENERALIZATION",
+     "decided": true,
+     "heldout": true,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "pulses_alternate_soc: insufficient_evidence",
+     "refusal_reason": null,
+     "truth": "SUPPORTED"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "CROSS_CELL_TRANSFER",
+     "decided": false,
+     "heldout": false,
+     "outcome": "CORRECT_REFUSAL",
+     "problem": "Q2",
+     "reason": "no held-out set of this kind is supplied",
+     "refusal_reason": null,
+     "truth": "NOT_ASSESSABLE"
+    },
+    {
+     "answer": "NOT_ASSESSABLE",
+     "axis": "MODEL_DISCREPANCY",
+     "decided": true,
+     "heldout": false,
+     "outcome": "FALSE_REFUSE",
+     "problem": "Q2",
+     "reason": "not representable: the v1 answer vocabulary has no judgment of the declared family",
+     "refusal_reason": null,
+     "truth": "NOT_SUPPORTED"
+    }
+   ],
+   "unscored": [
+    "Q1/MODEL_ADEQUACY",
+    "Q1/WITHIN_CELL_GENERALIZATION"
+   ]
+  }
+ },
+ "seal": {
+  "files_bound": 20,
+  "seal_commit": "ee3a6946e302c0fa56d55a1b3314e99f70aff65d",
+  "seal_sha256": "843c6e142eb5cb45c9751baedd4655c5df2b8337f8c52761f750a8d3e9d09f4e"
+ },
+ "table": [
+  [
+   "Axis",
+   "Old Mind",
+   "Representation",
+   "Roles",
+   "Combined",
+   "Careful"
+  ],
+  [
+   "MODEL_ADEQUACY",
+   "0/1",
+   "0/1",
+   "0/1",
+   "1/1",
+   "0/1"
+  ],
+  [
+   "IDENTIFIABILITY",
+   "1/2",
+   "1/2",
+   "1/2",
+   "2/2",
+   "2/2"
+  ],
+  [
+   "WITHIN_CELL",
+   "0/1",
+   "0/1",
+   "0/1",
+   "1/1",
+   "1/1"
+  ],
+  [
+   "CROSS_CELL",
+   "1/2",
+   "1/2",
+   "1/2",
+   "2/2",
+   "2/2"
+  ],
+  [
+   "MODEL_DISCREPANCY",
+   "1/2",
+   "1/2",
+   "1/2",
+   "2/2",
+   "1/2"
+  ],
+  [
+   "CORRECT_REFUSAL",
+   "3",
+   "3",
+   "3",
+   "3",
+   "2"
+  ],
+  [
+   "FALSE_SUPPORT",
+   "0",
+   "0",
+   "0",
+   "0",
+   "0"
+  ],
+  [
+   "FALSE_REFUSE",
+   "5",
+   "5",
+   "5",
+   "0",
+   "1"
+  ],
+  [
+   "REPLAY",
+   "2/2 EXACT",
+   "2/2 EXACT",
+   "2/2 EXACT",
+   "2/2 EXACT",
+   "2/2 EXACT"
+  ]
+ ],
+ "truth_summary": {
+  "Q1": {
+   "CROSS_CELL_TRANSFER": "NOT_SUPPORTED",
+   "IDENTIFIABILITY": "NOT_ASSESSABLE",
+   "MODEL_ADEQUACY": null,
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE",
+   "WITHIN_CELL_GENERALIZATION": null
+  },
+  "Q2": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE",
+   "IDENTIFIABILITY": "SUPPORTED",
+   "MODEL_ADEQUACY": "SUPPORTED",
+   "MODEL_DISCREPANCY": "NOT_SUPPORTED",
+   "WITHIN_CELL_GENERALIZATION": "SUPPORTED"
+  }
+ }
+}

@@ -1,0 +1,13 @@
+[seal_race] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accoun | sealed=True
+[seal_race] GOOD: DISPATCHED AGAIN
+[seal_race] executor calls = 2
+[seal_race_norestore] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accoun | sealed=True
+[seal_race_norestore] GOOD: refused: DispatchRefused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_STALE)
+[seal_race_norestore] executor calls = 1
+[raise_race] BAD: refused: the execution side could not state its budget accounts: RuntimeError: cannot state | sealed=False
+[raise_race] GOOD: DISPATCHED AGAIN
+[raise_race] executor calls = 2
+[seq_seal] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accoun | sealed=True
+[seq_seal] GOOD: refused: DispatchRefused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)
+[seq_seal] executor calls = 1
+seal_race redispatch in 20 of 20

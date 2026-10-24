@@ -1,0 +1,124 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____ test_native_pair_subclasses_preserve_the_dict_handing_contract[tuple] _____
+
+base = <class 'tuple'>
+
+    @pytest.mark.parametrize("base", [tuple, list])
+    def test_native_pair_subclasses_preserve_the_dict_handing_contract(base):
+        account, held, mode, reader = _simple()
+        class Pair(base):
+            pass  # an honest native-container subclass, e.g. a named tuple
+        reader._follow = lambda: Pair((held, {}))
+>       assert reader.read(K, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r15.py:389: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:957: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x732bb37a4350>
+
+    def pinned(self) -> "BudgetReader":
+        """One verification's snapshot: the accounts the execution side hands over now (asked with no lock held), read
+        back and compared with what this reader observed under its lock, and served only as observed (records taken at
+        the pin; the next verification observes any later move).  Never live."""
+        if self._follow is None:
+            return self
+        if getattr(self._in_follow, "active", False):
+            raise OwnerUnavailable("the execution side read through the budget reader it feeds while the reader was "
+                                   "asking for, or reading back, the accounts it would read (on this thread)")
+        if self._sealed is not None:
+            raise OwnerUnavailable(self._sealed)
+        ticket, handed = 0, False
+        try:
+            self._in_follow.active = True
+            with self._lock:                         # the ticket is named before it is in flight: a finally that
+                self._tickets += 1                   # runs at any point discards exactly what was taken
+                ticket = self._tickets
+                self._in_flight.add(ticket)
+                skip = frozenset(self._diverged)
+            try:
+                mapping = self._follow()
+            except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
+                raise OwnerUnavailable("the execution side could not state its budget accounts: "
+                                       f"{_described(exc)}") from None
+            handed = True
+            try:
+                current = BudgetReader._handed(mapping, self.owner_id, skip)
+            except _InvalidHanding as exc:  # structural evidence, never an asynchronous interruption
+                with self._lock:
+                    self._sealed = ("the execution side handed over what is not a pair of account dicts "
+                                    f"({_type_name(exc)}): the accounts in it were not observed and any of them may "
+                                    "hold a spend, so this reader refuses every account from then on (a new timeline "
+                                    "is stated with a new reader)")
+>               raise OwnerUnavailable(self._sealed) from None
+E               engcore.mind.world.authority.OwnerUnavailable: the execution side handed over what is not a pair of account dicts (_InvalidHanding): the accounts in it were not observed and any of them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:939: OwnerUnavailable
+_____ test_native_pair_subclasses_preserve_the_dict_handing_contract[list] _____
+
+base = <class 'list'>
+
+    @pytest.mark.parametrize("base", [tuple, list])
+    def test_native_pair_subclasses_preserve_the_dict_handing_contract(base):
+        account, held, mode, reader = _simple()
+        class Pair(base):
+            pass  # an honest native-container subclass, e.g. a named tuple
+        reader._follow = lambda: Pair((held, {}))
+>       assert reader.read(K, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r15.py:389: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:957: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x732bb3637e30>
+
+    def pinned(self) -> "BudgetReader":
+        """One verification's snapshot: the accounts the execution side hands over now (asked with no lock held), read
+        back and compared with what this reader observed under its lock, and served only as observed (records taken at
+        the pin; the next verification observes any later move).  Never live."""
+        if self._follow is None:
+            return self
+        if getattr(self._in_follow, "active", False):
+            raise OwnerUnavailable("the execution side read through the budget reader it feeds while the reader was "
+                                   "asking for, or reading back, the accounts it would read (on this thread)")
+        if self._sealed is not None:
+            raise OwnerUnavailable(self._sealed)
+        ticket, handed = 0, False
+        try:
+            self._in_follow.active = True
+            with self._lock:                         # the ticket is named before it is in flight: a finally that
+                self._tickets += 1                   # runs at any point discards exactly what was taken
+                ticket = self._tickets
+                self._in_flight.add(ticket)
+                skip = frozenset(self._diverged)
+            try:
+                mapping = self._follow()
+            except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
+                raise OwnerUnavailable("the execution side could not state its budget accounts: "
+                                       f"{_described(exc)}") from None
+            handed = True
+            try:
+                current = BudgetReader._handed(mapping, self.owner_id, skip)
+            except _InvalidHanding as exc:  # structural evidence, never an asynchronous interruption
+                with self._lock:
+                    self._sealed = ("the execution side handed over what is not a pair of account dicts "
+                                    f"({_type_name(exc)}): the accounts in it were not observed and any of them may "
+                                    "hold a spend, so this reader refuses every account from then on (a new timeline "
+                                    "is stated with a new reader)")
+>               raise OwnerUnavailable(self._sealed) from None
+E               engcore.mind.world.authority.OwnerUnavailable: the execution side handed over what is not a pair of account dicts (_InvalidHanding): the accounts in it were not observed and any of them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:939: OwnerUnavailable
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_native_pair_subclasses_preserve_the_dict_handing_contract[tuple]
+FAILED tests/mind/test_authority_review_r15.py::test_native_pair_subclasses_preserve_the_dict_handing_contract[list]
+2 failed in 1.35s

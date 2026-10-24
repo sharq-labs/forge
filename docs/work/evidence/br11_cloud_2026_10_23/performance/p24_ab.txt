@@ -1,0 +1,14 @@
+tree_aad K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 45, 'MISSING_INFORMATION in flight': 3} in 36.2s; latency p50 6055 ms, max 6988 ms
+forge K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 34.6s; latency p50 5793 ms, max 6729 ms
+tree_aad K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 32, 'MISSING_INFORMATION in flight': 16} in 36.7s; latency p50 5983 ms, max 8075 ms
+forge K=8 N=6 E=2500 period=0.1s: {'MISSING_INFORMATION in flight': 43, 'FEASIBLE': 5} in 33.8s; latency p50 5601 ms, max 9170 ms
+tree_aad K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 35.6s; latency p50 5828 ms, max 6848 ms
+forge K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 38, 'MISSING_INFORMATION in flight': 10} in 34.3s; latency p50 5520 ms, max 8258 ms
+tree_aad2 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 46, 'MISSING_INFORMATION in flight': 2} in 35.5s; latency p50 5997 ms, max 6456 ms
+forge K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 33.4s; latency p50 5468 ms, max 6181 ms
+tree_aad2 K=8 N=6 E=2500 period=0.1s: {'MISSING_INFORMATION in flight': 4, 'FEASIBLE': 44} in 35.8s; latency p50 5934 ms, max 6784 ms
+forge K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 38, 'MISSING_INFORMATION in flight': 10} in 34.7s; latency p50 5518 ms, max 9776 ms
+tree_aad2 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 35.5s; latency p50 5887 ms, max 6243 ms
+forge K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 26, 'MISSING_INFORMATION in flight': 22} in 33.1s; latency p50 5421 ms, max 6465 ms
+tree_aad2 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 43, 'MISSING_INFORMATION in flight': 5} in 34.6s; latency p50 5856 ms, max 7000 ms
+forge K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 32.7s; latency p50 5423 ms, max 5899 ms

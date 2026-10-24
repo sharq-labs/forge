@@ -1,0 +1,553 @@
+FF..F............F.............................................FF......F [ 80%]
+F......FF........                                                        [100%]
+=================================== FAILURES ===================================
+___ test_seal_before_authoritative_comparison_refuses_inflight_pin[accounts] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bcaecdad20>
+phase = 'accounts'
+
+    @pytest.mark.parametrize("phase", ["accounts", "read_back"])
+    def test_seal_before_authoritative_comparison_refuses_inflight_pin(monkeypatch, phase):
+        account, held, mode, reader = _simple()
+        reached, resume = threading.Event(), threading.Event()
+        if phase == "accounts":
+            original = reader._follow
+            def paused():
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return original()
+            reader._follow = paused
+        else:
+            original = BudgetReader._read_back
+            def paused(self):
+                result = original(self)
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return result
+            monkeypatch.setattr(BudgetReader, "_read_back", paused)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            _seal(reader, mode)
+        finally:
+            resume.set()
+            _join(thread)
+>       assert len(box) == 1 and isinstance(box[0], OwnerUnavailable)
+E       AssertionError: assert (1 == 1 and False)
+E        +  where 1 = len([OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', re...ool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}})])
+E        +  and   False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_review_r15.py:87: AssertionError
+__ test_seal_before_authoritative_comparison_refuses_inflight_pin[read_back] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc41bd3140>
+phase = 'read_back'
+
+    @pytest.mark.parametrize("phase", ["accounts", "read_back"])
+    def test_seal_before_authoritative_comparison_refuses_inflight_pin(monkeypatch, phase):
+        account, held, mode, reader = _simple()
+        reached, resume = threading.Event(), threading.Event()
+        if phase == "accounts":
+            original = reader._follow
+            def paused():
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return original()
+            reader._follow = paused
+        else:
+            original = BudgetReader._read_back
+            def paused(self):
+                result = original(self)
+                if threading.current_thread().name == "verification":
+                    reached.set()
+                    assert resume.wait(10)
+                return result
+            monkeypatch.setattr(BudgetReader, "_read_back", paused)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            _seal(reader, mode)
+        finally:
+            resume.set()
+            _join(thread)
+>       assert len(box) == 1 and isinstance(box[0], OwnerUnavailable)
+E       AssertionError: assert (1 == 1 and False)
+E        +  where 1 = len([OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', re...ool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}})])
+E        +  and   False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_review_r15.py:87: AssertionError
+______________ test_sealed_spend_then_restore_never_redispatches _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc41bd3800>
+
+    def test_sealed_spend_then_restore_never_redispatches(monkeypatch):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        reached, resume = threading.Event(), threading.Event()
+        mode = {"proxy": False}
+        calls = []
+        def accounts():
+            if threading.current_thread().name == "verification":
+                reached.set()
+                assert resume.wait(10)
+            return (types.MappingProxyType(o.ledgers) if mode["proxy"] else dict(o.ledgers)), dict(o.experiments)
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, accounts, executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        thread, box = _thread(lambda: _refused(gateway, result.admitted))
+        try:
+            assert reached.wait(10)
+            mode["proxy"] = True
+            with pytest.raises(OwnerUnavailable):
+                reader.pinned()
+            o.ledgers[lid] = checkpoint
+            mode["proxy"] = False
+        finally:
+            resume.set()
+            _join(thread)
+>       assert box == [True] and calls == [1]
+E       assert ([False] == [True]
+E         
+E         At index 0 diff: False != True
+E         Use -v to get more diff)
+
+tests/mind/test_authority_review_r15.py:166: AssertionError
+_________ test_seal_after_waited_verification_completes_still_refuses __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc4199f8f0>
+
+    def test_seal_after_waited_verification_completes_still_refuses(monkeypatch):
+        account, held, mode, reader = _simple()
+        handing, release, waiting = threading.Event(), threading.Event(), threading.Event()
+        original = reader._follow
+        def accounts():
+            if threading.current_thread().name == "other":
+                handing.set()
+                assert release.wait(10)
+            return original()
+        reader._follow = accounts
+        wait_for = reader._changed.wait_for
+        def checkpoint(predicate, timeout=None):
+            waiting.set()
+            result = wait_for(predicate, timeout)
+            # Exact boundary: the waited ticket has compared; a different ticket
+            # seals before this waiter finishes its authoritative recheck.
+            reader._changed.release()
+            try:
+                sealer, errors = _thread(lambda: _seal(reader, mode), "sealer")
+                _join(sealer)
+                assert errors == [None]
+            finally:
+                reader._changed.acquire()
+            return result
+        monkeypatch.setattr(reader._changed, "wait_for", checkpoint)
+        other, other_box = _thread(reader.pinned, "other")
+        assert handing.wait(10)
+        verifier, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert waiting.wait(10)
+        finally:
+            release.set()
+            _join(other)
+            _join(verifier)
+>       assert isinstance(box[0], OwnerUnavailable)
+E       AssertionError: assert False
+E        +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_review_r15.py:355: AssertionError
+_____________ test_generated_inflight_lifecycle[start-seal-False] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc418627b0>
+phase = 'start', event = 'seal', restore = False
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+>           assert isinstance(box[0], OwnerUnavailable)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_state_machine_r15.py:150: AssertionError
+______________ test_generated_inflight_lifecycle[start-seal-True] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc41a61a90>
+phase = 'start', event = 'seal', restore = True
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+>           assert isinstance(box[0], OwnerUnavailable)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_state_machine_r15.py:150: AssertionError
+____________ test_generated_inflight_lifecycle[handing-seal-False] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc41a63980>
+phase = 'handing', event = 'seal', restore = False
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+>           assert isinstance(box[0], OwnerUnavailable)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_state_machine_r15.py:150: AssertionError
+_____________ test_generated_inflight_lifecycle[handing-seal-True] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc41bd4770>
+phase = 'handing', event = 'seal', restore = True
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+>           assert isinstance(box[0], OwnerUnavailable)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_state_machine_r15.py:150: AssertionError
+______________ test_generated_inflight_lifecycle[read-seal-False] ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc41935550>
+phase = 'read', event = 'seal', restore = False
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+>           assert isinstance(box[0], OwnerUnavailable)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_state_machine_r15.py:150: AssertionError
+______________ test_generated_inflight_lifecycle[read-seal-True] _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71bc41bea9f0>
+phase = 'read', event = 'seal', restore = True
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+>           assert isinstance(box[0], OwnerUnavailable)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='1', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 0.5, 'spent_validation': 0.0, 'remaining': 99.5, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_state_machine_r15.py:150: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[accounts]
+FAILED tests/mind/test_authority_review_r15.py::test_seal_before_authoritative_comparison_refuses_inflight_pin[read_back]
+FAILED tests/mind/test_authority_review_r15.py::test_sealed_spend_then_restore_never_redispatches
+FAILED tests/mind/test_authority_review_r15.py::test_seal_after_waited_verification_completes_still_refuses
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-False]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[start-seal-True]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-False]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-seal-True]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-False]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[read-seal-True]
+10 failed, 79 passed in 3.07s

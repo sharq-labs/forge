@@ -1,0 +1,4254 @@
+{
+ "P01": {
+  "design": {
+   "cell": "A",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u02",
+   "pid": "P01",
+   "rpt": 0,
+   "unit": "u01"
+  },
+  "trajectories": {
+   "P01-c01": {
+    "pulse_start_s": 15631.993630537501,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c02": {
+    "pulse_start_s": 23528.668454216124,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c03": {
+    "pulse_start_s": 31425.33727789641,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c04": {
+    "pulse_start_s": 39322.01610157822,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c05": {
+    "pulse_start_s": 47218.700925261015,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c06": {
+    "pulse_start_s": 55115.38374894642,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c07": {
+    "pulse_start_s": 63012.06657262612,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c08": {
+    "pulse_start_s": 70908.75539631021,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c09": {
+    "pulse_start_s": 78805.4442199906,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c10": {
+    "pulse_start_s": 86702.12304367332,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c11": {
+    "pulse_start_s": 94598.80786735791,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-c12": {
+    "pulse_start_s": 102495.48669103722,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w01": {
+    "pulse_start_s": 19580.332042379305,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w02": {
+    "pulse_start_s": 27477.004866057017,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w03": {
+    "pulse_start_s": 35373.67168973663,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w04": {
+    "pulse_start_s": 43270.36051341792,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w05": {
+    "pulse_start_s": 51167.04133710402,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w06": {
+    "pulse_start_s": 59063.726160786115,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w07": {
+    "pulse_start_s": 66960.4049844676,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w08": {
+    "pulse_start_s": 74857.0998081509,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w09": {
+    "pulse_start_s": 82753.78263183031,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w10": {
+    "pulse_start_s": 90650.45945551433,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-w11": {
+    "pulse_start_s": 98547.1542791996,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x01": {
+    "pulse_start_s": 19680.902052864403,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x02": {
+    "pulse_start_s": 27577.862876576808,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x03": {
+    "pulse_start_s": 35474.80970028599,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x04": {
+    "pulse_start_s": 43371.75052399721,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x05": {
+    "pulse_start_s": 51268.707347707095,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x06": {
+    "pulse_start_s": 59165.662171415286,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x07": {
+    "pulse_start_s": 67062.6089951238,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x08": {
+    "pulse_start_s": 74959.56981883291,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x09": {
+    "pulse_start_s": 82856.50664254089,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P01-x10": {
+    "pulse_start_s": 90753.45946624971,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P02": {
+  "design": {
+   "cell": "B",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u03",
+   "pid": "P02",
+   "rpt": 0,
+   "unit": "u02"
+  },
+  "trajectories": {
+   "P02-c01": {
+    "pulse_start_s": 15732.419641009503,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c02": {
+    "pulse_start_s": 23629.378464718786,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c03": {
+    "pulse_start_s": 31526.3332884314,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c04": {
+    "pulse_start_s": 39423.278112140484,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c05": {
+    "pulse_start_s": 47320.22493585129,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c06": {
+    "pulse_start_s": 55217.185759560205,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c07": {
+    "pulse_start_s": 63114.134583270206,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c08": {
+    "pulse_start_s": 71011.08740697801,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c09": {
+    "pulse_start_s": 78908.0422306862,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c10": {
+    "pulse_start_s": 86804.98905439788,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c11": {
+    "pulse_start_s": 94701.93787810559,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-c12": {
+    "pulse_start_s": 98650.40828995849,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w01": {
+    "pulse_start_s": 19680.902052864403,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w02": {
+    "pulse_start_s": 27577.862876576808,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w03": {
+    "pulse_start_s": 35474.80970028599,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w04": {
+    "pulse_start_s": 43371.75052399721,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w05": {
+    "pulse_start_s": 51268.707347707095,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w06": {
+    "pulse_start_s": 59165.662171415286,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w07": {
+    "pulse_start_s": 67062.6089951238,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w08": {
+    "pulse_start_s": 74959.56981883291,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w09": {
+    "pulse_start_s": 82856.50664254089,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-w10": {
+    "pulse_start_s": 90753.45946624971,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x01": {
+    "pulse_start_s": 19806.56006597652,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x02": {
+    "pulse_start_s": 27703.244889660215,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x03": {
+    "pulse_start_s": 35599.9137133373,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x04": {
+    "pulse_start_s": 43496.55253701421,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x05": {
+    "pulse_start_s": 51393.21536069311,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x06": {
+    "pulse_start_s": 59289.890184373624,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x07": {
+    "pulse_start_s": 67186.54700805241,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x08": {
+    "pulse_start_s": 75083.20383173131,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x09": {
+    "pulse_start_s": 82979.8446554066,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x10": {
+    "pulse_start_s": 90876.5054790838,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P02-x11": {
+    "pulse_start_s": 98773.16430276402,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P03": {
+  "design": {
+   "cell": "C",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u01",
+   "pid": "P03",
+   "rpt": 0,
+   "unit": "u03"
+  },
+  "trajectories": {
+   "P03-c01": {
+    "pulse_start_s": 15858.201654131699,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c02": {
+    "pulse_start_s": 23754.902477819007,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c03": {
+    "pulse_start_s": 31651.587301498716,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c04": {
+    "pulse_start_s": 39548.23212517632,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c05": {
+    "pulse_start_s": 47444.88494885291,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c06": {
+    "pulse_start_s": 55341.55377253282,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c07": {
+    "pulse_start_s": 63238.2225962136,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c08": {
+    "pulse_start_s": 71134.8754198933,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c09": {
+    "pulse_start_s": 79031.5242435676,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c10": {
+    "pulse_start_s": 86928.1770672439,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c11": {
+    "pulse_start_s": 94824.8358909231,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-c12": {
+    "pulse_start_s": 102721.50071460471,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w01": {
+    "pulse_start_s": 19806.56006597652,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w02": {
+    "pulse_start_s": 27703.244889660215,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w03": {
+    "pulse_start_s": 35599.9137133373,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w04": {
+    "pulse_start_s": 43496.55253701421,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w05": {
+    "pulse_start_s": 51393.21536069311,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w06": {
+    "pulse_start_s": 59289.890184373624,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w07": {
+    "pulse_start_s": 67186.54700805241,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w08": {
+    "pulse_start_s": 75083.20383173131,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w09": {
+    "pulse_start_s": 82979.8446554066,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w10": {
+    "pulse_start_s": 90876.5054790838,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-w11": {
+    "pulse_start_s": 98773.16430276402,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x01": {
+    "pulse_start_s": 19580.332042379305,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x02": {
+    "pulse_start_s": 27477.004866057017,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x03": {
+    "pulse_start_s": 35373.67168973663,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x04": {
+    "pulse_start_s": 43270.36051341792,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x05": {
+    "pulse_start_s": 51167.04133710402,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x06": {
+    "pulse_start_s": 59063.726160786115,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x07": {
+    "pulse_start_s": 66960.4049844676,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x08": {
+    "pulse_start_s": 74857.0998081509,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x09": {
+    "pulse_start_s": 82753.78263183031,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x10": {
+    "pulse_start_s": 90650.45945551433,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P03-x11": {
+    "pulse_start_s": 98547.1542791996,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P04": {
+  "design": {
+   "cell": "F",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u05",
+   "pid": "P04",
+   "rpt": 0,
+   "unit": "u04"
+  },
+  "trajectories": {
+   "P04-c01": {
+    "pulse_start_s": 12260.440582339652,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c02": {
+    "pulse_start_s": 20157.22095741657,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c03": {
+    "pulse_start_s": 28054.029332494832,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c04": {
+    "pulse_start_s": 35950.83770757308,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c05": {
+    "pulse_start_s": 43847.64808265143,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c06": {
+    "pulse_start_s": 51744.448457729304,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c07": {
+    "pulse_start_s": 59641.24683280708,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c08": {
+    "pulse_start_s": 67538.06121415063,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c09": {
+    "pulse_start_s": 75434.88561129826,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c10": {
+    "pulse_start_s": 83331.68400844466,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c11": {
+    "pulse_start_s": 91228.49440559022,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-c12": {
+    "pulse_start_s": 95176.89460416278,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w01": {
+    "pulse_start_s": 16208.82276987773,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w02": {
+    "pulse_start_s": 24105.625144955702,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w03": {
+    "pulse_start_s": 32002.433520033952,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w04": {
+    "pulse_start_s": 39899.239895112114,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w05": {
+    "pulse_start_s": 47796.04627019027,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w06": {
+    "pulse_start_s": 55692.84864526824,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w07": {
+    "pulse_start_s": 63589.65102034621,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w08": {
+    "pulse_start_s": 71486.46941272402,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w09": {
+    "pulse_start_s": 79383.27980987146,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-w10": {
+    "pulse_start_s": 87280.08420701674,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x01": {
+    "pulse_start_s": 16024.170761107232,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x02": {
+    "pulse_start_s": 23920.82713617827,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x03": {
+    "pulse_start_s": 31817.50551125035,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x04": {
+    "pulse_start_s": 39714.17188632185,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x05": {
+    "pulse_start_s": 47610.854261394124,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x06": {
+    "pulse_start_s": 55507.52263646573,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x07": {
+    "pulse_start_s": 63404.19501153752,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x08": {
+    "pulse_start_s": 71300.86940338905,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x09": {
+    "pulse_start_s": 79197.54380052909,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P04-x10": {
+    "pulse_start_s": 87094.21619766718,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P05": {
+  "design": {
+   "cell": "G",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u06",
+   "pid": "P05",
+   "rpt": 0,
+   "unit": "u05"
+  },
+  "trajectories": {
+   "P05-c01": {
+    "pulse_start_s": 12075.836573571432,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c02": {
+    "pulse_start_s": 19972.500948642843,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c03": {
+    "pulse_start_s": 27869.16932371445,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c04": {
+    "pulse_start_s": 35765.837698786054,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c05": {
+    "pulse_start_s": 43662.502073857475,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c06": {
+    "pulse_start_s": 51559.19244893011,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c07": {
+    "pulse_start_s": 59455.858824001625,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c08": {
+    "pulse_start_s": 67352.52920482005,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c09": {
+    "pulse_start_s": 75249.20760195842,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c10": {
+    "pulse_start_s": 83145.87799909827,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c11": {
+    "pulse_start_s": 91042.56039623707,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-c12": {
+    "pulse_start_s": 94990.90259480756,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w01": {
+    "pulse_start_s": 16024.170761107232,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w02": {
+    "pulse_start_s": 23920.82713617827,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w03": {
+    "pulse_start_s": 31817.50551125035,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w04": {
+    "pulse_start_s": 39714.17188632185,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w05": {
+    "pulse_start_s": 47610.854261394124,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w06": {
+    "pulse_start_s": 55507.52263646573,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w07": {
+    "pulse_start_s": 63404.19501153752,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w08": {
+    "pulse_start_s": 71300.86940338905,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w09": {
+    "pulse_start_s": 79197.54380052909,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-w10": {
+    "pulse_start_s": 87094.21619766718,
+    "samples": 330,
+    "source_file": "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x01": {
+    "pulse_start_s": 16229.346770852571,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x02": {
+    "pulse_start_s": 24126.05914592626,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x03": {
+    "pulse_start_s": 32022.793521001,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x04": {
+    "pulse_start_s": 39919.49989607441,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x05": {
+    "pulse_start_s": 47816.22627114877,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x06": {
+    "pulse_start_s": 55712.946646222845,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x07": {
+    "pulse_start_s": 63609.65702129644,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x08": {
+    "pulse_start_s": 71506.36941372533,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x09": {
+    "pulse_start_s": 79403.09381086612,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x10": {
+    "pulse_start_s": 87299.80620800867,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P05-x11": {
+    "pulse_start_s": 95196.52660514996,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P06": {
+  "design": {
+   "cell": "H",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u04",
+   "pid": "P06",
+   "rpt": 0,
+   "unit": "u06"
+  },
+  "trajectories": {
+   "P06-c01": {
+    "pulse_start_s": 12280.98658331553,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c02": {
+    "pulse_start_s": 20177.698958389232,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c03": {
+    "pulse_start_s": 28074.435333464062,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c04": {
+    "pulse_start_s": 35971.14770853775,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c05": {
+    "pulse_start_s": 43867.858083611354,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c06": {
+    "pulse_start_s": 51764.59245868609,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c07": {
+    "pulse_start_s": 59661.30283375969,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c08": {
+    "pulse_start_s": 67558.0172151553,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c09": {
+    "pulse_start_s": 75454.73561229557,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c10": {
+    "pulse_start_s": 83351.44600943755,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c11": {
+    "pulse_start_s": 91248.17640658002,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-c12": {
+    "pulse_start_s": 99144.88080372034,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w01": {
+    "pulse_start_s": 16229.346770852571,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w02": {
+    "pulse_start_s": 24126.05914592626,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w03": {
+    "pulse_start_s": 32022.793521001,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w04": {
+    "pulse_start_s": 39919.49989607441,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w05": {
+    "pulse_start_s": 47816.22627114877,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w06": {
+    "pulse_start_s": 55712.946646222845,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w07": {
+    "pulse_start_s": 63609.65702129644,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w08": {
+    "pulse_start_s": 71506.36941372533,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w09": {
+    "pulse_start_s": 79403.09381086612,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w10": {
+    "pulse_start_s": 87299.80620800867,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-w11": {
+    "pulse_start_s": 95196.52660514996,
+    "samples": 330,
+    "source_file": "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x01": {
+    "pulse_start_s": 16208.82276987773,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x02": {
+    "pulse_start_s": 24105.625144955702,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x03": {
+    "pulse_start_s": 32002.433520033952,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x04": {
+    "pulse_start_s": 39899.239895112114,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x05": {
+    "pulse_start_s": 47796.04627019027,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x06": {
+    "pulse_start_s": 55692.84864526824,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x07": {
+    "pulse_start_s": 63589.65102034621,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x08": {
+    "pulse_start_s": 71486.46941272402,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x09": {
+    "pulse_start_s": 79383.27980987146,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P06-x10": {
+    "pulse_start_s": 87280.08420701674,
+    "samples": 330,
+    "source_file": "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P07": {
+  "design": {
+   "cell": "A",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u02",
+   "pid": "P07",
+   "rpt": 8,
+   "unit": "u01"
+  },
+  "trajectories": {
+   "P07-c01": {
+    "pulse_start_s": 16241.623694132286,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c02": {
+    "pulse_start_s": 24138.608517849992,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c03": {
+    "pulse_start_s": 32035.585341566504,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c04": {
+    "pulse_start_s": 39932.570165285986,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c05": {
+    "pulse_start_s": 47829.5469890041,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c06": {
+    "pulse_start_s": 55726.53381272289,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c07": {
+    "pulse_start_s": 63623.50263643981,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c08": {
+    "pulse_start_s": 71520.49546016031,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c09": {
+    "pulse_start_s": 79417.45228387721,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c10": {
+    "pulse_start_s": 87314.42910759541,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-c11": {
+    "pulse_start_s": 91262.90751945111,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w01": {
+    "pulse_start_s": 20190.116105990688,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w02": {
+    "pulse_start_s": 28087.108929709502,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w03": {
+    "pulse_start_s": 35984.0797534266,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w04": {
+    "pulse_start_s": 43881.066577145306,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w05": {
+    "pulse_start_s": 51778.039400863694,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w06": {
+    "pulse_start_s": 59675.0242245823,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w07": {
+    "pulse_start_s": 67571.99304829931,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w08": {
+    "pulse_start_s": 75468.97587201861,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-w09": {
+    "pulse_start_s": 83365.94269573639,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-x01": {
+    "pulse_start_s": 23725.3804747432,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-x02": {
+    "pulse_start_s": 31621.95929841959,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-x03": {
+    "pulse_start_s": 39518.54612209651,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-x04": {
+    "pulse_start_s": 47415.13894577511,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-x05": {
+    "pulse_start_s": 55311.73976945391,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-x06": {
+    "pulse_start_s": 63208.318593130214,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P07-x07": {
+    "pulse_start_s": 71104.88741680421,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P08": {
+  "design": {
+   "cell": "B",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u03",
+   "pid": "P08",
+   "rpt": 8,
+   "unit": "u02"
+  },
+  "trajectories": {
+   "P08-c01": {
+    "pulse_start_s": 19777.078062904096,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c02": {
+    "pulse_start_s": 27673.656886579498,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c03": {
+    "pulse_start_s": 35570.25371025881,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c04": {
+    "pulse_start_s": 43466.83453393521,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c05": {
+    "pulse_start_s": 51363.45135761521,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c06": {
+    "pulse_start_s": 59260.0221812909,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c07": {
+    "pulse_start_s": 67156.6110049691,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c08": {
+    "pulse_start_s": 75053.16982864129,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-c09": {
+    "pulse_start_s": 79001.46224048009,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-w01": {
+    "pulse_start_s": 23725.3804747432,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-w02": {
+    "pulse_start_s": 31621.95929841959,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-w03": {
+    "pulse_start_s": 39518.54612209651,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-w04": {
+    "pulse_start_s": 47415.13894577511,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-w05": {
+    "pulse_start_s": 55311.73976945391,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-w06": {
+    "pulse_start_s": 63208.318593130214,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-w07": {
+    "pulse_start_s": 71104.88741680421,
+    "samples": 330,
+    "source_file": "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-x01": {
+    "pulse_start_s": 26529.402761714286,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-x02": {
+    "pulse_start_s": 34426.23558541828,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-x03": {
+    "pulse_start_s": 42323.06040912001,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-x04": {
+    "pulse_start_s": 50219.9072328254,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-x05": {
+    "pulse_start_s": 58116.7520565295,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-x06": {
+    "pulse_start_s": 66013.58088023278,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P08-x07": {
+    "pulse_start_s": 73910.38170393229,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P09": {
+  "design": {
+   "cell": "C",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u01",
+   "pid": "P09",
+   "rpt": 8,
+   "unit": "u03"
+  },
+  "trajectories": {
+   "P09-c01": {
+    "pulse_start_s": 22580.992349865104,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-c02": {
+    "pulse_start_s": 30477.815173566094,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-c03": {
+    "pulse_start_s": 38374.6459972686,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-c04": {
+    "pulse_start_s": 46271.482820972495,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-c05": {
+    "pulse_start_s": 54168.33164467728,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-c06": {
+    "pulse_start_s": 62065.16246838069,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-c07": {
+    "pulse_start_s": 69961.9732920823,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-c08": {
+    "pulse_start_s": 77858.7941157834,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-w01": {
+    "pulse_start_s": 26529.402761714286,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-w02": {
+    "pulse_start_s": 34426.23558541828,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-w03": {
+    "pulse_start_s": 42323.06040912001,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-w04": {
+    "pulse_start_s": 50219.9072328254,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-w05": {
+    "pulse_start_s": 58116.7520565295,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-w06": {
+    "pulse_start_s": 66013.58088023278,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-w07": {
+    "pulse_start_s": 73910.38170393229,
+    "samples": 330,
+    "source_file": "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x01": {
+    "pulse_start_s": 20190.116105990688,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x02": {
+    "pulse_start_s": 28087.108929709502,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x03": {
+    "pulse_start_s": 35984.0797534266,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x04": {
+    "pulse_start_s": 43881.066577145306,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x05": {
+    "pulse_start_s": 51778.039400863694,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x06": {
+    "pulse_start_s": 59675.0242245823,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x07": {
+    "pulse_start_s": 67571.99304829931,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x08": {
+    "pulse_start_s": 75468.97587201861,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P09-x09": {
+    "pulse_start_s": 83365.94269573639,
+    "samples": 330,
+    "source_file": "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P10": {
+  "design": {
+   "cell": "F",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u05",
+   "pid": "P10",
+   "rpt": 8,
+   "unit": "u04"
+  },
+  "trajectories": {
+   "P10-c01": {
+    "pulse_start_s": 18090.671887003788,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c02": {
+    "pulse_start_s": 25986.768710628792,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c03": {
+    "pulse_start_s": 33882.857534255076,
+    "samples": 280,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c04": {
+    "pulse_start_s": 41779.00235788408,
+    "samples": 324,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c05": {
+    "pulse_start_s": 49675.145181511296,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c06": {
+    "pulse_start_s": 57571.290005140676,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c07": {
+    "pulse_start_s": 65467.448828770284,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c08": {
+    "pulse_start_s": 73363.6036523979,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c09": {
+    "pulse_start_s": 81259.78047602618,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-c10": {
+    "pulse_start_s": 89155.94129965428,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w01": {
+    "pulse_start_s": 22038.722298817476,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w02": {
+    "pulse_start_s": 29934.819122442685,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w03": {
+    "pulse_start_s": 37830.94194607128,
+    "samples": 318,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w04": {
+    "pulse_start_s": 45727.07476969829,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w05": {
+    "pulse_start_s": 53623.2175933253,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w06": {
+    "pulse_start_s": 61519.36641695417,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w07": {
+    "pulse_start_s": 69415.52324058369,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w08": {
+    "pulse_start_s": 77311.6940642127,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-w09": {
+    "pulse_start_s": 85207.8588878419,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x01": {
+    "pulse_start_s": 21556.61024852941,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x02": {
+    "pulse_start_s": 29452.593072144606,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x03": {
+    "pulse_start_s": 37348.57989575999,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x04": {
+    "pulse_start_s": 45244.56871937591,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x05": {
+    "pulse_start_s": 53140.5515429909,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x06": {
+    "pulse_start_s": 61036.54036660679,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x07": {
+    "pulse_start_s": 68932.53319022249,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x08": {
+    "pulse_start_s": 76828.52401383879,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P10-x09": {
+    "pulse_start_s": 84724.5148374543,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P11": {
+  "design": {
+   "cell": "G",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u06",
+   "pid": "P11",
+   "rpt": 8,
+   "unit": "u05"
+  },
+  "trajectories": {
+   "P11-c01": {
+    "pulse_start_s": 17608.603836720606,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c02": {
+    "pulse_start_s": 25504.602660337492,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c03": {
+    "pulse_start_s": 33400.58748395261,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c04": {
+    "pulse_start_s": 41296.576307568,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c05": {
+    "pulse_start_s": 49192.563131183386,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c06": {
+    "pulse_start_s": 57088.543954798486,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c07": {
+    "pulse_start_s": 64984.532778413995,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c08": {
+    "pulse_start_s": 72880.53160203071,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c09": {
+    "pulse_start_s": 80776.5184256463,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-c10": {
+    "pulse_start_s": 88672.50924926231,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w01": {
+    "pulse_start_s": 21556.61024852941,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w02": {
+    "pulse_start_s": 29452.593072144606,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w03": {
+    "pulse_start_s": 37348.57989575999,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w04": {
+    "pulse_start_s": 45244.56871937591,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w05": {
+    "pulse_start_s": 53140.5515429909,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w06": {
+    "pulse_start_s": 61036.54036660679,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w07": {
+    "pulse_start_s": 68932.53319022249,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w08": {
+    "pulse_start_s": 76828.52401383879,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-w09": {
+    "pulse_start_s": 84724.5148374543,
+    "samples": 329,
+    "source_file": "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x01": {
+    "pulse_start_s": 21977.190292398504,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x02": {
+    "pulse_start_s": 29871.88511587822,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x03": {
+    "pulse_start_s": 37766.60793936072,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x04": {
+    "pulse_start_s": 45661.332762840204,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x05": {
+    "pulse_start_s": 53556.07758632401,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x06": {
+    "pulse_start_s": 61450.81840980431,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x07": {
+    "pulse_start_s": 69345.57523328811,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x08": {
+    "pulse_start_s": 77240.31205676962,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P11-x09": {
+    "pulse_start_s": 85135.0648802538,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P12": {
+  "design": {
+   "cell": "H",
+   "expt": 4,
+   "kind": "gitt",
+   "partner_unit": "u04",
+   "pid": "P12",
+   "rpt": 8,
+   "unit": "u06"
+  },
+  "trajectories": {
+   "P12-c01": {
+    "pulse_start_s": 18029.839880657615,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c02": {
+    "pulse_start_s": 25924.526704136515,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c03": {
+    "pulse_start_s": 33819.229527618096,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c04": {
+    "pulse_start_s": 41713.96435109922,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c05": {
+    "pulse_start_s": 49608.70717458241,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c06": {
+    "pulse_start_s": 57503.43799806392,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c07": {
+    "pulse_start_s": 65398.19482154661,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c08": {
+    "pulse_start_s": 73292.93564502712,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c09": {
+    "pulse_start_s": 81187.68646851182,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-c10": {
+    "pulse_start_s": 89082.4332919915,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w01": {
+    "pulse_start_s": 21977.190292398504,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w02": {
+    "pulse_start_s": 29871.88511587822,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w03": {
+    "pulse_start_s": 37766.60793936072,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w04": {
+    "pulse_start_s": 45661.332762840204,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w05": {
+    "pulse_start_s": 53556.07758632401,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w06": {
+    "pulse_start_s": 61450.81840980431,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w07": {
+    "pulse_start_s": 69345.57523328811,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w08": {
+    "pulse_start_s": 77240.31205676962,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-w09": {
+    "pulse_start_s": 85135.0648802538,
+    "samples": 329,
+    "source_file": "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x01": {
+    "pulse_start_s": 22038.722298817476,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x02": {
+    "pulse_start_s": 29934.819122442685,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x03": {
+    "pulse_start_s": 37830.94194607128,
+    "samples": 318,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x04": {
+    "pulse_start_s": 45727.07476969829,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x05": {
+    "pulse_start_s": 53623.2175933253,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x06": {
+    "pulse_start_s": 61519.36641695417,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x07": {
+    "pulse_start_s": 69415.52324058369,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x08": {
+    "pulse_start_s": 77311.6940642127,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P12-x09": {
+    "pulse_start_s": 85207.8588878419,
+    "samples": 329,
+    "source_file": "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P13": {
+  "design": {
+   "cell": "A",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u08",
+   "pid": "P13",
+   "rpt": 0,
+   "unit": "u07"
+  },
+  "trajectories": {
+   "P13-c01": {
+    "pulse_start_s": 11925.349243902805,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c02": {
+    "pulse_start_s": 19821.90406756499,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c03": {
+    "pulse_start_s": 27718.448891233886,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c04": {
+    "pulse_start_s": 35614.98371489998,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c05": {
+    "pulse_start_s": 43511.518538569595,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c06": {
+    "pulse_start_s": 51408.061362232984,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c07": {
+    "pulse_start_s": 59304.594185900874,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c08": {
+    "pulse_start_s": 67201.1330095662,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c09": {
+    "pulse_start_s": 75097.673833234,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c10": {
+    "pulse_start_s": 82994.20865690272,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c11": {
+    "pulse_start_s": 90890.7514805726,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c12": {
+    "pulse_start_s": 98787.2803042373,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-c13": {
+    "pulse_start_s": 102735.54471607157,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w01": {
+    "pulse_start_s": 15873.62565573401,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w02": {
+    "pulse_start_s": 23770.18247940042,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w03": {
+    "pulse_start_s": 31666.717303067708,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w04": {
+    "pulse_start_s": 39563.24812673521,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w05": {
+    "pulse_start_s": 47459.78895040069,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w06": {
+    "pulse_start_s": 55356.32777406741,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w07": {
+    "pulse_start_s": 63252.866597734595,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w08": {
+    "pulse_start_s": 71149.40342139939,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w09": {
+    "pulse_start_s": 79045.93424506791,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w10": {
+    "pulse_start_s": 86942.47906873861,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-w11": {
+    "pulse_start_s": 94839.01589240407,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x01": {
+    "pulse_start_s": 15728.53964060481,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x02": {
+    "pulse_start_s": 23625.294464295992,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x03": {
+    "pulse_start_s": 31522.0212879779,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x04": {
+    "pulse_start_s": 39418.74211166453,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x05": {
+    "pulse_start_s": 47315.46893535182,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x06": {
+    "pulse_start_s": 55212.20175904152,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x07": {
+    "pulse_start_s": 63108.92458271663,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x08": {
+    "pulse_start_s": 71005.6594064045,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x09": {
+    "pulse_start_s": 78902.36623008759,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x10": {
+    "pulse_start_s": 86799.0850537701,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P13-x11": {
+    "pulse_start_s": 94695.80987745829,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P14": {
+  "design": {
+   "cell": "B",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u09",
+   "pid": "P14",
+   "rpt": 0,
+   "unit": "u08"
+  },
+  "trajectories": {
+   "P14-c01": {
+    "pulse_start_s": 11780.1652287592,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c02": {
+    "pulse_start_s": 19676.918052451016,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c03": {
+    "pulse_start_s": 27573.656876135617,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c04": {
+    "pulse_start_s": 35470.3856998219,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c05": {
+    "pulse_start_s": 43367.10652350754,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c06": {
+    "pulse_start_s": 51263.83334719509,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c07": {
+    "pulse_start_s": 59160.564170878235,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c08": {
+    "pulse_start_s": 67057.29099456253,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c09": {
+    "pulse_start_s": 74954.01781824772,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c10": {
+    "pulse_start_s": 82850.7286419303,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c11": {
+    "pulse_start_s": 90747.44746561279,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-c12": {
+    "pulse_start_s": 98644.17828930292,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w01": {
+    "pulse_start_s": 15728.53964060481,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w02": {
+    "pulse_start_s": 23625.294464295992,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w03": {
+    "pulse_start_s": 31522.0212879779,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w04": {
+    "pulse_start_s": 39418.74211166453,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w05": {
+    "pulse_start_s": 47315.46893535182,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w06": {
+    "pulse_start_s": 55212.20175904152,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w07": {
+    "pulse_start_s": 63108.92458271663,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w08": {
+    "pulse_start_s": 71005.6594064045,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w09": {
+    "pulse_start_s": 78902.36623008759,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w10": {
+    "pulse_start_s": 86799.0850537701,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-w11": {
+    "pulse_start_s": 94695.80987745829,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x01": {
+    "pulse_start_s": 15728.401640589786,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x02": {
+    "pulse_start_s": 23625.426464305725,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x03": {
+    "pulse_start_s": 31522.435288024397,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x04": {
+    "pulse_start_s": 39419.410111737,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x05": {
+    "pulse_start_s": 47316.402935454884,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x06": {
+    "pulse_start_s": 55213.393759165396,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x07": {
+    "pulse_start_s": 63110.39858288181,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x08": {
+    "pulse_start_s": 71007.38540659612,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x09": {
+    "pulse_start_s": 78904.36423030822,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x10": {
+    "pulse_start_s": 86801.35105402072,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P14-x11": {
+    "pulse_start_s": 94698.3398777326,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P15": {
+  "design": {
+   "cell": "C",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u07",
+   "pid": "P15",
+   "rpt": 0,
+   "unit": "u09"
+  },
+  "trajectories": {
+   "P15-c01": {
+    "pulse_start_s": 11779.889228731394,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c02": {
+    "pulse_start_s": 19676.916052448098,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c03": {
+    "pulse_start_s": 27573.932876164617,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c04": {
+    "pulse_start_s": 35470.92569987988,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c05": {
+    "pulse_start_s": 43367.89852359469,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c06": {
+    "pulse_start_s": 51264.89734730733,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c07": {
+    "pulse_start_s": 59161.89617102462,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c08": {
+    "pulse_start_s": 67058.8849947374,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c09": {
+    "pulse_start_s": 74955.88381845373,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c10": {
+    "pulse_start_s": 82852.85464216629,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c11": {
+    "pulse_start_s": 90749.8414658776,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c12": {
+    "pulse_start_s": 98646.84228958937,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-c13": {
+    "pulse_start_s": 102595.3467014493,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w01": {
+    "pulse_start_s": 15728.401640589786,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w02": {
+    "pulse_start_s": 23625.426464305725,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w03": {
+    "pulse_start_s": 31522.435288024397,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w04": {
+    "pulse_start_s": 39419.410111737,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w05": {
+    "pulse_start_s": 47316.402935454884,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w06": {
+    "pulse_start_s": 55213.393759165396,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w07": {
+    "pulse_start_s": 63110.39858288181,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w08": {
+    "pulse_start_s": 71007.38540659612,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w09": {
+    "pulse_start_s": 78904.36423030822,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w10": {
+    "pulse_start_s": 86801.35105402072,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-w11": {
+    "pulse_start_s": 94698.3398777326,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x01": {
+    "pulse_start_s": 15873.62565573401,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x02": {
+    "pulse_start_s": 23770.18247940042,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x03": {
+    "pulse_start_s": 31666.717303067708,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x04": {
+    "pulse_start_s": 39563.24812673521,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x05": {
+    "pulse_start_s": 47459.78895040069,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x06": {
+    "pulse_start_s": 55356.32777406741,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x07": {
+    "pulse_start_s": 63252.866597734595,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x08": {
+    "pulse_start_s": 71149.40342139939,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x09": {
+    "pulse_start_s": 79045.93424506791,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x10": {
+    "pulse_start_s": 86942.47906873861,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P15-x11": {
+    "pulse_start_s": 94839.01589240407,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P16": {
+  "design": {
+   "cell": "F",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u11",
+   "pid": "P16",
+   "rpt": 0,
+   "unit": "u10"
+  },
+  "trajectories": {
+   "P16-c01": {
+    "pulse_start_s": 8130.912386197597,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c02": {
+    "pulse_start_s": 16027.444761262743,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c03": {
+    "pulse_start_s": 23923.96513632731,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c04": {
+    "pulse_start_s": 31820.4815113917,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c05": {
+    "pulse_start_s": 39716.99388645589,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c06": {
+    "pulse_start_s": 47613.51826152066,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c07": {
+    "pulse_start_s": 55510.02863658476,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c08": {
+    "pulse_start_s": 63406.54701164923,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c09": {
+    "pulse_start_s": 71303.08540350036,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c10": {
+    "pulse_start_s": 79199.61780063156,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c11": {
+    "pulse_start_s": 87096.13819776196,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-c12": {
+    "pulse_start_s": 94992.68459489335,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w01": {
+    "pulse_start_s": 12079.176573730072,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w02": {
+    "pulse_start_s": 19975.70494879503,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w03": {
+    "pulse_start_s": 27872.229323859792,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w04": {
+    "pulse_start_s": 35768.7336989236,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w05": {
+    "pulse_start_s": 43665.25207398808,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w06": {
+    "pulse_start_s": 51561.77644905284,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w07": {
+    "pulse_start_s": 59458.280824116664,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w08": {
+    "pulse_start_s": 67354.81520493445,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w09": {
+    "pulse_start_s": 75251.353602065,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w10": {
+    "pulse_start_s": 83147.87999919662,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-w11": {
+    "pulse_start_s": 91044.41239632783,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x01": {
+    "pulse_start_s": 12141.448576687833,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x02": {
+    "pulse_start_s": 20038.610951782903,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x03": {
+    "pulse_start_s": 27935.75732687721,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x04": {
+    "pulse_start_s": 35832.90170197142,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x05": {
+    "pulse_start_s": 43730.04407706554,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x06": {
+    "pulse_start_s": 51627.174452159095,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x07": {
+    "pulse_start_s": 59524.308827252826,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x08": {
+    "pulse_start_s": 67421.47320828818,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x09": {
+    "pulse_start_s": 75318.63160545076,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x10": {
+    "pulse_start_s": 83215.80000261287,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P16-x11": {
+    "pulse_start_s": 91112.95439977433,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P17": {
+  "design": {
+   "cell": "G",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u12",
+   "pid": "P17",
+   "rpt": 0,
+   "unit": "u11"
+  },
+  "trajectories": {
+   "P17-c01": {
+    "pulse_start_s": 8192.878389140824,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c02": {
+    "pulse_start_s": 16090.038764235793,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c03": {
+    "pulse_start_s": 23987.18913933029,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c04": {
+    "pulse_start_s": 31884.32351442403,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c05": {
+    "pulse_start_s": 39781.471889518434,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c06": {
+    "pulse_start_s": 47678.610264612355,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c07": {
+    "pulse_start_s": 55575.738639705814,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c08": {
+    "pulse_start_s": 63472.88701480023,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c09": {
+    "pulse_start_s": 71370.05140686966,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c10": {
+    "pulse_start_s": 79267.21380403149,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c11": {
+    "pulse_start_s": 87164.37420119275,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-c12": {
+    "pulse_start_s": 95061.52859835466,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w01": {
+    "pulse_start_s": 12141.448576687833,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w02": {
+    "pulse_start_s": 20038.610951782903,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w03": {
+    "pulse_start_s": 27935.75732687721,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w04": {
+    "pulse_start_s": 35832.90170197142,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w05": {
+    "pulse_start_s": 43730.04407706554,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w06": {
+    "pulse_start_s": 51627.174452159095,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w07": {
+    "pulse_start_s": 59524.308827252826,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w08": {
+    "pulse_start_s": 67421.47320828818,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w09": {
+    "pulse_start_s": 75318.63160545076,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w10": {
+    "pulse_start_s": 83215.80000261287,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-w11": {
+    "pulse_start_s": 91112.95439977433,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x01": {
+    "pulse_start_s": 12176.33657834492,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x02": {
+    "pulse_start_s": 20073.174953424605,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x03": {
+    "pulse_start_s": 27970.025328504846,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x04": {
+    "pulse_start_s": 35866.88770358567,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x05": {
+    "pulse_start_s": 43763.72407866525,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x06": {
+    "pulse_start_s": 51660.5764537456,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x07": {
+    "pulse_start_s": 59557.434828826226,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x08": {
+    "pulse_start_s": 67454.28520993749,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x09": {
+    "pulse_start_s": 75351.13560708542,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x10": {
+    "pulse_start_s": 83247.98000423308,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P17-x11": {
+    "pulse_start_s": 91144.85240138136,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P18": {
+  "design": {
+   "cell": "H",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u10",
+   "pid": "P18",
+   "rpt": 0,
+   "unit": "u12"
+  },
+  "trajectories": {
+   "P18-c01": {
+    "pulse_start_s": 8227.92439080542,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c02": {
+    "pulse_start_s": 16124.75476588472,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c03": {
+    "pulse_start_s": 24021.593140964393,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c04": {
+    "pulse_start_s": 31918.453516045127,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c05": {
+    "pulse_start_s": 39815.30789112556,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c06": {
+    "pulse_start_s": 47712.150266205426,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c07": {
+    "pulse_start_s": 55609.00264128578,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c08": {
+    "pulse_start_s": 63505.8590163663,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c09": {
+    "pulse_start_s": 71402.71140851127,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c10": {
+    "pulse_start_s": 79299.54780565901,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c11": {
+    "pulse_start_s": 87196.41220280738,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-c12": {
+    "pulse_start_s": 95093.27259995393,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w01": {
+    "pulse_start_s": 12176.33657834492,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w02": {
+    "pulse_start_s": 20073.174953424605,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w03": {
+    "pulse_start_s": 27970.025328504846,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w04": {
+    "pulse_start_s": 35866.88770358567,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w05": {
+    "pulse_start_s": 43763.72407866525,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w06": {
+    "pulse_start_s": 51660.5764537456,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w07": {
+    "pulse_start_s": 59557.434828826226,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w08": {
+    "pulse_start_s": 67454.28520993749,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w09": {
+    "pulse_start_s": 75351.13560708542,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w10": {
+    "pulse_start_s": 83247.98000423308,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-w11": {
+    "pulse_start_s": 91144.85240138136,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x01": {
+    "pulse_start_s": 12079.176573730072,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x02": {
+    "pulse_start_s": 19975.70494879503,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x03": {
+    "pulse_start_s": 27872.229323859792,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x04": {
+    "pulse_start_s": 35768.7336989236,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x05": {
+    "pulse_start_s": 43665.25207398808,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x06": {
+    "pulse_start_s": 51561.77644905284,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x07": {
+    "pulse_start_s": 59458.280824116664,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x08": {
+    "pulse_start_s": 67354.81520493445,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x09": {
+    "pulse_start_s": 75251.353602065,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x10": {
+    "pulse_start_s": 83147.87999919662,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P18-x11": {
+    "pulse_start_s": 91044.41239632783,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P19": {
+  "design": {
+   "cell": "A",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u08",
+   "pid": "P19",
+   "rpt": 14,
+   "unit": "u07"
+  },
+  "trajectories": {
+   "P19-c01": {
+    "pulse_start_s": 19190.300001697615,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c02": {
+    "pulse_start_s": 27087.074825391115,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c03": {
+    "pulse_start_s": 34983.851649079734,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c04": {
+    "pulse_start_s": 42880.654472772905,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c05": {
+    "pulse_start_s": 50777.427296461305,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c06": {
+    "pulse_start_s": 58674.17612014784,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c07": {
+    "pulse_start_s": 66570.92494383169,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c08": {
+    "pulse_start_s": 74467.67576751919,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-c09": {
+    "pulse_start_s": 82364.42459120502,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w01": {
+    "pulse_start_s": 23138.68441354393,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w02": {
+    "pulse_start_s": 31035.4612372361,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w03": {
+    "pulse_start_s": 38932.25206092652,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w04": {
+    "pulse_start_s": 46829.0508846172,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w05": {
+    "pulse_start_s": 54725.81170830413,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w06": {
+    "pulse_start_s": 62622.54053198942,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w07": {
+    "pulse_start_s": 70519.3053556738,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-w08": {
+    "pulse_start_s": 78416.04817936194,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x01": {
+    "pulse_start_s": 20864.146176290204,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x02": {
+    "pulse_start_s": 28760.4909999347,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x03": {
+    "pulse_start_s": 36656.849823579716,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x04": {
+    "pulse_start_s": 44553.1766472203,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x05": {
+    "pulse_start_s": 52449.4834708611,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x06": {
+    "pulse_start_s": 60345.77029449539,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x07": {
+    "pulse_start_s": 68242.08111813731,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P19-x08": {
+    "pulse_start_s": 76138.355941772,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P20": {
+  "design": {
+   "cell": "B",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u09",
+   "pid": "P20",
+   "rpt": 14,
+   "unit": "u08"
+  },
+  "trajectories": {
+   "P20-c01": {
+    "pulse_start_s": 16915.98576446899,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c02": {
+    "pulse_start_s": 24812.32058811051,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c03": {
+    "pulse_start_s": 32708.67541175682,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c04": {
+    "pulse_start_s": 40605.014235397975,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c05": {
+    "pulse_start_s": 48501.33105904207,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c06": {
+    "pulse_start_s": 56397.621882678504,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c07": {
+    "pulse_start_s": 64293.92870631578,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c08": {
+    "pulse_start_s": 72190.2135299533,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c09": {
+    "pulse_start_s": 80086.49635359412,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-c10": {
+    "pulse_start_s": 84034.64076541079,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w01": {
+    "pulse_start_s": 20864.146176290204,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w02": {
+    "pulse_start_s": 28760.4909999347,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w03": {
+    "pulse_start_s": 36656.849823579716,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w04": {
+    "pulse_start_s": 44553.1766472203,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w05": {
+    "pulse_start_s": 52449.4834708611,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w06": {
+    "pulse_start_s": 60345.77029449539,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w07": {
+    "pulse_start_s": 68242.08111813731,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-w08": {
+    "pulse_start_s": 76138.355941772,
+    "samples": 330,
+    "source_file": "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x01": {
+    "pulse_start_s": 20333.892120981385,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x02": {
+    "pulse_start_s": 28230.25894462969,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x03": {
+    "pulse_start_s": 36126.645768281305,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x04": {
+    "pulse_start_s": 44023.02859193459,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x05": {
+    "pulse_start_s": 51919.37541557569,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x06": {
+    "pulse_start_s": 59815.7122392217,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x07": {
+    "pulse_start_s": 67712.07306286972,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P20-x08": {
+    "pulse_start_s": 75608.42788652069,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P21": {
+  "design": {
+   "cell": "C",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u07",
+   "pid": "P21",
+   "rpt": 14,
+   "unit": "u09"
+  },
+  "trajectories": {
+   "P21-c01": {
+    "pulse_start_s": 16385.709709157178,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c02": {
+    "pulse_start_s": 24282.078532805695,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c03": {
+    "pulse_start_s": 32178.453356456914,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c04": {
+    "pulse_start_s": 40074.8341801076,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c05": {
+    "pulse_start_s": 47971.1950037526,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c06": {
+    "pulse_start_s": 55867.547827399074,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c07": {
+    "pulse_start_s": 63763.89865104671,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c08": {
+    "pulse_start_s": 71660.24947469679,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c09": {
+    "pulse_start_s": 79556.5982983422,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-c10": {
+    "pulse_start_s": 83504.76671016472,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w01": {
+    "pulse_start_s": 20333.892120981385,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w02": {
+    "pulse_start_s": 28230.25894462969,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w03": {
+    "pulse_start_s": 36126.645768281305,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w04": {
+    "pulse_start_s": 44023.02859193459,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w05": {
+    "pulse_start_s": 51919.37541557569,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w06": {
+    "pulse_start_s": 59815.7122392217,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w07": {
+    "pulse_start_s": 67712.07306286972,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-w08": {
+    "pulse_start_s": 75608.42788652069,
+    "samples": 330,
+    "source_file": "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x01": {
+    "pulse_start_s": 23138.68441354393,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x02": {
+    "pulse_start_s": 31035.4612372361,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x03": {
+    "pulse_start_s": 38932.25206092652,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x04": {
+    "pulse_start_s": 46829.0508846172,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x05": {
+    "pulse_start_s": 54725.81170830413,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x06": {
+    "pulse_start_s": 62622.54053198942,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x07": {
+    "pulse_start_s": 70519.3053556738,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P21-x08": {
+    "pulse_start_s": 78416.04817936194,
+    "samples": 330,
+    "source_file": "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P22": {
+  "design": {
+   "cell": "F",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u11",
+   "pid": "P22",
+   "rpt": 14,
+   "unit": "u10"
+  },
+  "trajectories": {
+   "P22-c01": {
+    "pulse_start_s": 18263.289905004523,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c02": {
+    "pulse_start_s": 26159.77472866632,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c03": {
+    "pulse_start_s": 34056.31955233062,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c04": {
+    "pulse_start_s": 41952.866375998914,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c05": {
+    "pulse_start_s": 49849.35519966512,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c06": {
+    "pulse_start_s": 57745.87402333159,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c07": {
+    "pulse_start_s": 65642.41284699671,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c08": {
+    "pulse_start_s": 73538.9316706679,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c09": {
+    "pulse_start_s": 81435.40649432884,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-c10": {
+    "pulse_start_s": 85383.65290616019,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w01": {
+    "pulse_start_s": 22211.530316837394,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w02": {
+    "pulse_start_s": 30108.04314049831,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w03": {
+    "pulse_start_s": 38004.605964167306,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w04": {
+    "pulse_start_s": 45901.11078783224,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w05": {
+    "pulse_start_s": 53797.6036114966,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w06": {
+    "pulse_start_s": 61694.148435164505,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w07": {
+    "pulse_start_s": 69590.67525883281,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-w08": {
+    "pulse_start_s": 77487.16608249518,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x01": {
+    "pulse_start_s": 22313.96632751939,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x02": {
+    "pulse_start_s": 30210.841151220084,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x03": {
+    "pulse_start_s": 38107.733974921604,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x04": {
+    "pulse_start_s": 46004.58079862199,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x05": {
+    "pulse_start_s": 53901.475622325,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x06": {
+    "pulse_start_s": 61798.334446023015,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x07": {
+    "pulse_start_s": 69695.19526972229,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P22-x08": {
+    "pulse_start_s": 77592.0280934202,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P23": {
+  "design": {
+   "cell": "G",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u12",
+   "pid": "P23",
+   "rpt": 14,
+   "unit": "u11"
+  },
+  "trajectories": {
+   "P23-c01": {
+    "pulse_start_s": 18365.515915664582,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c02": {
+    "pulse_start_s": 26262.396739370888,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c03": {
+    "pulse_start_s": 34159.287563072314,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c04": {
+    "pulse_start_s": 42056.17038677167,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c05": {
+    "pulse_start_s": 49953.0212104728,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c06": {
+    "pulse_start_s": 57849.91403417551,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c07": {
+    "pulse_start_s": 65746.7668578744,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c08": {
+    "pulse_start_s": 73643.60168156942,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c09": {
+    "pulse_start_s": 81540.47650527558,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-c10": {
+    "pulse_start_s": 85488.9229171293,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w01": {
+    "pulse_start_s": 22313.96632751939,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w02": {
+    "pulse_start_s": 30210.841151220084,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w03": {
+    "pulse_start_s": 38107.733974921604,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w04": {
+    "pulse_start_s": 46004.58079862199,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w05": {
+    "pulse_start_s": 53901.475622325,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w06": {
+    "pulse_start_s": 61798.334446023015,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w07": {
+    "pulse_start_s": 69695.19526972229,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-w08": {
+    "pulse_start_s": 77592.0280934202,
+    "samples": 330,
+    "source_file": "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x01": {
+    "pulse_start_s": 21904.930284855713,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x02": {
+    "pulse_start_s": 29801.475108524784,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x03": {
+    "pulse_start_s": 37698.00393219301,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x04": {
+    "pulse_start_s": 45594.51275585801,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x05": {
+    "pulse_start_s": 53491.04757952789,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x06": {
+    "pulse_start_s": 61387.614403199375,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x07": {
+    "pulse_start_s": 69284.13522686111,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P23-x08": {
+    "pulse_start_s": 77180.6420505252,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P24": {
+  "design": {
+   "cell": "H",
+   "expt": 5,
+   "kind": "gitt",
+   "partner_unit": "u10",
+   "pid": "P24",
+   "rpt": 14,
+   "unit": "u12"
+  },
+  "trajectories": {
+   "P24-c01": {
+    "pulse_start_s": 17956.667873020808,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c02": {
+    "pulse_start_s": 25853.2006966903,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c03": {
+    "pulse_start_s": 33749.739520359784,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c04": {
+    "pulse_start_s": 41646.256344026886,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c05": {
+    "pulse_start_s": 49542.77916769238,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c06": {
+    "pulse_start_s": 57439.339991362125,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c07": {
+    "pulse_start_s": 65335.87281503089,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c08": {
+    "pulse_start_s": 73232.3776386902,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c09": {
+    "pulse_start_s": 81128.91246236212,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-c10": {
+    "pulse_start_s": 85077.1868741969,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w01": {
+    "pulse_start_s": 21904.930284855713,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w02": {
+    "pulse_start_s": 29801.475108524784,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w03": {
+    "pulse_start_s": 37698.00393219301,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w04": {
+    "pulse_start_s": 45594.51275585801,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w05": {
+    "pulse_start_s": 53491.04757952789,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w06": {
+    "pulse_start_s": 61387.614403199375,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w07": {
+    "pulse_start_s": 69284.13522686111,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-w08": {
+    "pulse_start_s": 77180.6420505252,
+    "samples": 330,
+    "source_file": "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x01": {
+    "pulse_start_s": 22211.530316837394,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x02": {
+    "pulse_start_s": 30108.04314049831,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x03": {
+    "pulse_start_s": 38004.605964167306,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x04": {
+    "pulse_start_s": 45901.11078783224,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x05": {
+    "pulse_start_s": 53797.6036114966,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x06": {
+    "pulse_start_s": 61694.148435164505,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x07": {
+    "pulse_start_s": 69590.67525883281,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   },
+   "P24-x08": {
+    "pulse_start_s": 77487.16608249518,
+    "samples": 330,
+    "source_file": "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv"
+   }
+  }
+ },
+ "P25": {
+  "design": {
+   "cell": "LGM50_cell02",
+   "kind": "chen",
+   "partner_unit": "u14",
+   "pid": "P25",
+   "unit": "u13"
+  },
+  "trajectories": {
+   "P25-c01": {
+    "rate_A": 0.5,
+    "source_file": "LGM50_cell02.csv",
+    "start_s": 31471.81002
+   },
+   "P25-c02": {
+    "rate_A": 7.5,
+    "source_file": "LGM50_cell02.csv",
+    "start_s": 163891.23
+   },
+   "P25-w01": {
+    "rate_A": 2.5,
+    "source_file": "LGM50_cell02.csv",
+    "start_s": 96190.17
+   },
+   "P25-w02": {
+    "rate_A": 5.0,
+    "source_file": "LGM50_cell02.csv",
+    "start_s": 131811.12
+   },
+   "P25-x01": {
+    "rate_A": 2.5,
+    "source_file": "LGM50_cell03.csv",
+    "start_s": 96196.39998
+   },
+   "P25-x02": {
+    "rate_A": 5.0,
+    "source_file": "LGM50_cell03.csv",
+    "start_s": 131786.69
+   }
+  }
+ },
+ "P26": {
+  "design": {
+   "cell": "LGM50_cell03",
+   "kind": "chen",
+   "partner_unit": "u15",
+   "pid": "P26",
+   "unit": "u14"
+  },
+  "trajectories": {
+   "P26-c01": {
+    "rate_A": 0.5,
+    "source_file": "LGM50_cell03.csv",
+    "start_s": 31466.80998
+   },
+   "P26-c02": {
+    "rate_A": 7.5,
+    "source_file": "LGM50_cell03.csv",
+    "start_s": 163838.23
+   },
+   "P26-w01": {
+    "rate_A": 2.5,
+    "source_file": "LGM50_cell03.csv",
+    "start_s": 96196.39998
+   },
+   "P26-w02": {
+    "rate_A": 5.0,
+    "source_file": "LGM50_cell03.csv",
+    "start_s": 131786.69
+   },
+   "P26-x01": {
+    "rate_A": 2.5,
+    "source_file": "LGM50_cell04.csv",
+    "start_s": 96083.23002
+   },
+   "P26-x02": {
+    "rate_A": 5.0,
+    "source_file": "LGM50_cell04.csv",
+    "start_s": 131629.02
+   }
+  }
+ },
+ "P27": {
+  "design": {
+   "cell": "LGM50_cell04",
+   "kind": "chen",
+   "partner_unit": "u13",
+   "pid": "P27",
+   "unit": "u15"
+  },
+  "trajectories": {
+   "P27-c01": {
+    "rate_A": 0.5,
+    "source_file": "LGM50_cell04.csv",
+    "start_s": 31449.97002
+   },
+   "P27-c02": {
+    "rate_A": 7.5,
+    "source_file": "LGM50_cell04.csv",
+    "start_s": 163661.48
+   },
+   "P27-w01": {
+    "rate_A": 2.5,
+    "source_file": "LGM50_cell04.csv",
+    "start_s": 96083.23002
+   },
+   "P27-w02": {
+    "rate_A": 5.0,
+    "source_file": "LGM50_cell04.csv",
+    "start_s": 131629.02
+   },
+   "P27-x01": {
+    "rate_A": 2.5,
+    "source_file": "LGM50_cell02.csv",
+    "start_s": 96190.17
+   },
+   "P27-x02": {
+    "rate_A": 5.0,
+    "source_file": "LGM50_cell02.csv",
+    "start_s": 131811.12
+   }
+  }
+ },
+ "P28": {
+  "design": {
+   "cell": "B0029",
+   "kind": "nasa",
+   "pid": "P28",
+   "unit": "u16"
+  },
+  "trajectories": {
+   "P28-c01": {
+    "capacity_basis_Ah": 1.7466501130435477,
+    "cell": "B0029",
+    "discharge_ordinal": 1,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   },
+   "P28-c02": {
+    "capacity_basis_Ah": 1.8926457232499123,
+    "cell": "B0029",
+    "discharge_ordinal": 2,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   },
+   "P28-c03": {
+    "capacity_basis_Ah": 1.8926457232499123,
+    "cell": "B0029",
+    "discharge_ordinal": 3,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   },
+   "P28-c04": {
+    "capacity_basis_Ah": 1.8926457232499123,
+    "cell": "B0029",
+    "discharge_ordinal": 4,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   },
+   "P28-w01": {
+    "capacity_basis_Ah": 1.8926457232499123,
+    "cell": "B0029",
+    "discharge_ordinal": 20,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   },
+   "P28-w02": {
+    "capacity_basis_Ah": 1.8926457232499123,
+    "cell": "B0029",
+    "discharge_ordinal": 21,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   },
+   "P28-w03": {
+    "capacity_basis_Ah": 1.8926457232499123,
+    "cell": "B0029",
+    "discharge_ordinal": 22,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   },
+   "P28-w04": {
+    "capacity_basis_Ah": 1.8926457232499123,
+    "cell": "B0029",
+    "discharge_ordinal": 23,
+    "source_file": "3. BatteryAgingARC_25-44/B0029.mat"
+   }
+  }
+ },
+ "P29": {
+  "design": {
+   "cell": "B0030",
+   "kind": "nasa",
+   "pid": "P29",
+   "unit": "u17"
+  },
+  "trajectories": {
+   "P29-c01": {
+    "capacity_basis_Ah": 1.7034644982372211,
+    "cell": "B0030",
+    "discharge_ordinal": 1,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   },
+   "P29-c02": {
+    "capacity_basis_Ah": 1.8187475267737996,
+    "cell": "B0030",
+    "discharge_ordinal": 2,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   },
+   "P29-c03": {
+    "capacity_basis_Ah": 1.8187475267737996,
+    "cell": "B0030",
+    "discharge_ordinal": 3,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   },
+   "P29-c04": {
+    "capacity_basis_Ah": 1.8187475267737996,
+    "cell": "B0030",
+    "discharge_ordinal": 4,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   },
+   "P29-w01": {
+    "capacity_basis_Ah": 1.8187475267737996,
+    "cell": "B0030",
+    "discharge_ordinal": 20,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   },
+   "P29-w02": {
+    "capacity_basis_Ah": 1.8187475267737996,
+    "cell": "B0030",
+    "discharge_ordinal": 21,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   },
+   "P29-w03": {
+    "capacity_basis_Ah": 1.8187475267737996,
+    "cell": "B0030",
+    "discharge_ordinal": 22,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   },
+   "P29-w04": {
+    "capacity_basis_Ah": 1.8187475267737996,
+    "cell": "B0030",
+    "discharge_ordinal": 23,
+    "source_file": "3. BatteryAgingARC_25-44/B0030.mat"
+   }
+  }
+ },
+ "P31": {
+  "design": {
+   "cell": "B0032",
+   "kind": "nasa",
+   "pid": "P31",
+   "unit": "u19"
+  },
+  "trajectories": {
+   "P31-c01": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 11,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   },
+   "P31-c02": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 12,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   },
+   "P31-c03": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 13,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   },
+   "P31-c04": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 14,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   },
+   "P31-w01": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 20,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   },
+   "P31-w02": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 21,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   },
+   "P31-w03": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 22,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   },
+   "P31-w04": {
+    "capacity_basis_Ah": 1.8996592597634072,
+    "cell": "B0032",
+    "discharge_ordinal": 23,
+    "source_file": "3. BatteryAgingARC_25-44/B0032.mat"
+   }
+  }
+ },
+ "P32": {
+  "design": {
+   "cell": "B0051",
+   "kind": "nasa",
+   "pid": "P32",
+   "unit": "u20"
+  },
+  "trajectories": {
+   "P32-c01": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 11,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   },
+   "P32-c02": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 12,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   },
+   "P32-c03": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 15,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   },
+   "P32-c04": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 17,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   },
+   "P32-w01": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 18,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   },
+   "P32-w02": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 19,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   },
+   "P32-w03": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 20,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   },
+   "P32-w04": {
+    "capacity_basis_Ah": 2.4097543599633338,
+    "cell": "B0051",
+    "discharge_ordinal": 21,
+    "source_file": "5. BatteryAgingARC_49_50_51_52/B0051.mat"
+   }
+  }
+ }
+}

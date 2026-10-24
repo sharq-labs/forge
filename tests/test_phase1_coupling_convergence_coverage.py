@@ -171,11 +171,10 @@ def test_serial_with_relaxation_requires_every_edge():
     assert plan.required_convergence_edges(graph) == ("e_ab", "e_ba")
 
 
-def test_a_self_loop_is_a_lagged_edge():
+def test_a_self_loop_is_refused_before_convergence_planning():
     a = _spec("a", [_port("y", "input"), _port("x", "output")])
-    graph = PhysicsGraph("loop", (a,), (CouplingEdge("e_aa", PortRef("a", "x"), PortRef("a", "y")),))
-    plan = _implicit(IterationSemantics.SERIAL, [_criterion("e_aa")], order=("a",))
-    assert plan.required_convergence_edges(graph) == ("e_aa",)
+    with pytest.raises(InvalidScientificProblem, match="internal physics belongs inside the participant"):
+        PhysicsGraph("loop", (a,), (CouplingEdge("e_aa", PortRef("a", "x"), PortRef("a", "y")),))
 
 
 @pytest.mark.parametrize("semantics, criteria, relaxation, missing", [

@@ -1,0 +1,40 @@
+{
+  "round": 20,
+  "lenses": [
+    "A",
+    "F"
+  ],
+  "sha": "b4bbee0f6df40b7dd0de9b0739beef392dab6be5",
+  "owners_sha256": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
+  "verdict": "PASS",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "NO",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [],
+  "counts": {
+    "blocker": 0,
+    "major": 0,
+    "minor": 0
+  },
+  "executed": {
+    "tests": 87,
+    "passed": 87,
+    "failed": 0,
+    "seconds": 11.39,
+    "new_probes": 8
+  },
+  "scientific_validation": false,
+  "limits": [
+    "bounded interface review",
+    "no process isolation",
+    "no durable timeline migration",
+    "no executor reservation or exactly-once guarantee",
+    "no concurrency completeness proof"
+  ]
+}

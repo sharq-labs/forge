@@ -1,0 +1,36 @@
+{
+ "answers": {
+  "CROSS_CELL_TRANSFER": {
+   "disposition": "REFUSED",
+   "reason": "refuses every scientific conclusion"
+  },
+  "IDENTIFIABILITY": {
+   "disposition": "REFUSED",
+   "reason": "refuses every scientific conclusion"
+  },
+  "MODEL_ADEQUACY": {
+   "disposition": "REFUSED",
+   "reason": "refuses every scientific conclusion"
+  },
+  "MODEL_DISCREPANCY": {
+   "disposition": "REFUSED",
+   "reason": "refuses every scientific conclusion"
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "disposition": "REFUSED",
+   "reason": "refuses every scientific conclusion"
+  }
+ },
+ "applicability": {
+  "checked": false
+ },
+ "arm": "ALWAYS_REFUSE",
+ "eliminated": [],
+ "hypotheses": [],
+ "observations_used": 0,
+ "problem_id": "P1",
+ "refusal_reasons": [
+  "refuses every scientific conclusion"
+ ],
+ "schema": "forge.battery_rediscovery.arm_output/1"
+}

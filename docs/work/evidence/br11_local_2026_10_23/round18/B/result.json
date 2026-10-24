@@ -1,0 +1,83 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "B dispatch/effects/redispatch",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R18-B-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted pre-capture handing still loses executed spend and permits old authorization redispatch after live-map checkpoint replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1013,
+      "related_lines": [
+        932,
+        1038,
+        1041
+      ],
+      "smallest_reproduction": "B/probe.py run(\"rollback\", False, 2): create battery desk with live owner dict accounts; save initial solver ledger; gateway.dispatch(admitted) settles run.1; interrupt _retain_handing on native capture and recovery; replace live dict ledger with saved checkpoint; gateway.dispatch(original admitted). B/native.py additionally reproduces without monkeypatching production methods by invoking reader.pinned at recursion depths 994 and 995.",
+      "actual_result": "Deterministic probe: pending=1 raw handing, unread=0; old_refused=false, calls reaches 2 on original admitted and 3 after separately rebuilding/admitting fresh world. Native probe depths 994/995: RecursionError; pending raw tuple; unread empty; redispatch_refused=false; calls=2; seal remains None.",
+      "expected_result": "The previously handed spend must prevent original action redispatch after restore; incomplete capture must not become authoritative equality. Honest interruption must remain recoverable without permanent seal solely from resource failure.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r18/B/probe.log",
+        "/home/dev_kaeem/br11-review/r18/B/native.log"
+      ],
+      "threat_families": [
+        "pre-capture information loss",
+        "owner checkpoint replacement",
+        "hidden spend permitting redispatch"
+      ],
+      "trust_scope": "Within documented in-process boundary: native probe uses genuine BudgetLedger, public settle/from_dict and replacement in execution-owner map, genuine RecursionError. No private execution-side mutation/introspection required for the failure. Q7 remains NO in this lens because the dispatched object was admitted, with Q4 currentness incorrectly recovering after information loss.",
+      "proposed_correction": "An owner-lifetime/publication contract is a concrete unresolved boundary, not proof that every remedy is impossible. Keeping the handed dict contents stable until comparison acknowledgement (or publishing a detached handing) preserves this case. B control with fresh dict mapping refuses even after both capture interrupts. Moving/retrying capture again only narrows the interruption window; permanently retiring honest readers or blindly accepting a raw-map recovery violates one of the required invariants. Select and implement stable owner publication/acknowledgement or equivalent recovery-source semantics; local reader normalization does not recover content already erased from the sole raw reference.",
+      "classification_note": "Existing OPEN family independently reproduced, not a newly discovered family and not a BLOCKER prohibited-unadmitted-action claim."
+    }
+  ],
+  "repair_assessment": {
+    "owner_json_parity": "Bounded controls and actual gateway probe support repair: numeric-key retained ledger is equivalent to its owner JSON checkpoint; original stale authorization refuses, a newly projected current proposal dispatches; real rollback and rewrite still refuse. R16/R17 32 controls passed including experiment parity and invalid serializer refusal. No new semantic defect identified in changed helper.",
+    "lifecycle": "Live-mapping replacement fails with two interrupts; detached mapping replacement succeeds under otherwise same deterministic trace. Detached publication is evidence of a viable bounded remedy, not proof of arbitrary owner mutation safety or all-interruption robustness."
+  },
+  "tested_transitions": [
+    "Exact SHA and imported owners path checked in each standalone probe",
+    "Numeric-key executed spend -> interrupted retained capture -> JSON-equivalent checkpoint -> old dispatch refused and fresh admitted dispatch accepted",
+    "Numeric-key executed spend -> interrupted retention -> rollback -> old and fresh dispatch refused",
+    "Numeric-key executed spend -> interrupted retention -> rewritten equal-length history -> old and fresh dispatch refused",
+    "Single native-retention checkpoint interrupt -> cleanup recovery -> rollback refused",
+    "Double capture/recovery interrupt + live map replacement -> duplicate old dispatch demonstrated",
+    "Double capture/recovery interrupt + detached map replacement -> old/fresh dispatch refused",
+    "Native recursion depth sweep 975..996; raw pending tuple depths994/995 permit duplicate execution",
+    "Existing R16 detached reconciliation/concurrency/post-return controls and R17 JSON parity/invalid serializer controls:32 passed"
+  ],
+  "missing_coverage": [
+    "No full FAST, certification, physical validation or provider process invocation performed.",
+    "No exhaustive arbitrary asynchronous interruption proof; native depth outcomes depend on CPython call depth.",
+    "No new broad Q1/Q2/Q3/Q5/Q6 attack corpus; NO denotes absence of identified defect in this dispatch-focused lens.",
+    "Stable publication control only detaches mappings; preservation against later public mutation of referenced owners needs an explicit lifetime contract or stronger snapshot.",
+    "No permanent-seal race added; R16/R17 controls do not exhaust every seal/wait schedule."
+  ],
+  "executions": [
+    {
+      "command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/probe.py",
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/B/probe.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/native.py",
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/B/native.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/B/pt",
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/B/controls.log"
+    }
+  ],
+  "review_limits": "Bounded software evidence only; no scientific validation, certification or closure claim."
+}

@@ -1,0 +1,188 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "base_sha": "95f3869ed020b04c36c098f0c33050aa009212b6",
+  "lens": "C: Concurrency/seal lifecycle",
+  "review_status": "Completed from already collected evidence; no additional probes after parent stop instruction.",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_rationale": {
+    "Q1": "No second state authority demonstrated by this lifecycle lens.",
+    "Q2": "No second applicability authority demonstrated by this lifecycle lens.",
+    "Q3": "No duplicate units authority demonstrated by this lifecycle lens.",
+    "Q4": "YES: R16-C-1 demonstrates loss of handed simulated spend and repeat dispatch after restoration; R16-C-2 additionally demonstrates permanent false divergence of unchanged detached accounts.",
+    "Q5": "No scientific verdict or promotion of probabilistic evidence to deterministic truth demonstrated.",
+    "Q6": "No external proposer admission bypass demonstrated.",
+    "Q7": "No execution of an unadmitted action demonstrated. R16-C-1 repeats a previously admitted action after its simulated spend is lost; classified under Q4."
+  },
+  "source_identity": {
+    "checkout": "/home/dev_kaeem/forge-r16-review",
+    "interpreter": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "python": "CPython 3.12.3; GCC 13.3.0; native WSL2 Ubuntu-24.04",
+    "owners_file": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+    "identity_log": "/home/dev_kaeem/br11-review/r16/C/identity.log",
+    "identity_result": "HEAD=b8a65bb9d02b5a18e0a8b26779773c1552204dc1\n3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]\n/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py\n",
+    "identity_commands": [
+      "git -C /home/dev_kaeem/forge-r16-review rev-parse HEAD",
+      "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c \"import sys; from engcore.mind.world import owners; print(sys.version); print(owners.__file__)\""
+    ]
+  },
+  "findings": [
+    {
+      "id": "R16-C-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Interruption before native entry capture leaves a live mapping in the recovery buffer, allowing observed simulated spend to disappear on restoration and dispatch to repeat",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 977,
+      "related_locations": [
+        {
+          "file": "src/engcore/mind/world/owners.py",
+          "line": 883
+        },
+        {
+          "file": "src/engcore/mind/world/owners.py",
+          "line": 893
+        },
+        {
+          "file": "src/engcore/mind/world/owners.py",
+          "line": 963
+        }
+      ],
+      "evidence_type": "EXECUTED deterministic interruption checkpoints, independently corroborated by native recursion exhaustion without monkeypatching",
+      "smallest_reproduction": [
+        "Build the existing synthetic battery desk with accounts() returning the live native o.ledgers/o.experiments dictionaries. Save a BudgetLedger.from_dict checkpoint before execution.",
+        "Dispatch the admitted simulated action once, settling run.1 into its solver ledger.",
+        "At the next pin, raise KeyboardInterrupt at the first two _retain_handing calls: initial entry capture and immediate recovery. Both exceptions are propagated/refused; the unfinished buffer nevertheless retains a plain tuple containing live dictionaries.",
+        "Restore o.ledgers[lid] to the pre-spend checkpoint using ordinary dictionary entry replacement.",
+        "Dispatch the same admitted action. Recovery now reads the restored live mapping as though it were the interrupted handing; dispatch succeeds and the executor counter reaches 2."
+      ],
+      "actual_result": {
+        "checkpoint_probe": "_retain_handing: consumed_interruptions=2, pending_types=[tuple], redispatch_refused=false, executor_calls=2, sealed=null, diverged=[], in_flight=[]",
+        "matched_control": "_handed: consumed_interruptions=2, pending_types=[_RetainedHanding], redispatch_refused=true, executor_calls=1",
+        "native_corrobation": "With recursion limit 150, deep(145, reader) and deep(146, reader) raise native RecursionError, leave pending_types=[tuple], and permit redispatch after restoration (executor_calls=2). No monkeypatching is used in this probe.",
+        "native_neighbor_control": "depth 144 leaves [_RetainedHanding] and refuses redispatch; depths 130-143 also refuse redispatch."
+      },
+      "expected_result": "Once the execution side has handed the spent account, an interruption followed by detached restoration must not make the original action current again. Refuse redispatch while recovery cannot establish the retained original state; executor count remains 1.",
+      "threat_families": [
+        "interruption during handing",
+        "live mapping replacement",
+        "recovery lifecycle",
+        "hidden simulated spend",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "trust_boundary": "Crosses the documented follower guarantee without malicious owner serialization or private mutation. The native corroboration uses ordinary stack exhaustion, canonical ledger checkpoint restoration, and native dictionary entry replacement.",
+      "proposed_correction": "Do not resolve an unfinished handing by rereading a live mapping as if it were the original handoff. Preserve original native entries before treating later recovery as sufficient; where entry capture itself is interrupted, retain explicit unresolved state that cannot authorize restored data, with a recovery design that avoids permanently declaring an honest reader corrupt. Add controls at _retain_handing itself, including native stack exhaustion and immediate recovery failure.",
+      "proof_paths": [
+        "/home/dev_kaeem/br11-review/r16/C/probe_lifecycle.py",
+        "/home/dev_kaeem/br11-review/r16/C/probe_lifecycle.log",
+        "/home/dev_kaeem/br11-review/r16/C/probe_native_depth.py",
+        "/home/dev_kaeem/br11-review/r16/C/probe_native_depth.log"
+      ],
+      "limits": "This is bookkeeping of simulated actions in existing synthetic fixtures, not a physical or external execution claim. Native depths 147-148 leave no retained handing and are not used as proof because failure may precede the handoff. Native depth depends on interpreter/call-stack shape; the deterministic checkpoint probe isolates the transition."
+    },
+    {
+      "id": "R16-C-2",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Two independent interrupted handings permanently retire an unchanged honest detached account because recovery compares identities before canonical reconciliation",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 912,
+      "related_locations": [
+        {
+          "file": "src/engcore/mind/world/owners.py",
+          "line": 893
+        },
+        {
+          "file": "src/engcore/mind/world/owners.py",
+          "line": 677
+        }
+      ],
+      "evidence_type": "EXECUTED deterministic one-shot interruption at an explicit handing checkpoint",
+      "smallest_reproduction": [
+        "Create the existing _simple fixture with a settled baseline ledger. Make accounts() return fresh BudgetLedger.from_dict copies of the identical unchanged payload on every call.",
+        "In each of two successive pins, inject one KeyboardInterrupt at _handed, allowing the immediate recovery call to complete normally.",
+        "After the first interrupted pin the account is only in _unread_entries. After the second it is in _diverged, even though both handings serialize identically.",
+        "Restore normal execution and read the same ledger. It is refused permanently as having rewritten its entries."
+      ],
+      "actual_result": {
+        "first_interrupt": "KeyboardInterrupt; diverged=[]; unread=[[ledger,a]]",
+        "second_interrupt": "KeyboardInterrupt; diverged=[[ledger,a]]; unread=[[ledger,a]]",
+        "later_honest_read": "OwnerUnavailable: budget ledger a rewrote the entries of a state ... refused by this reader from then on",
+        "sealed": null
+      },
+      "expected_result": "Interruptions of unchanged canonical detached checkpoints should refuse those invocations and allow an ordinary later pin to reconcile their equal canonical history. They must not permanently poison the account without evidence of a changed history.",
+      "threat_families": [
+        "interrupted handing recovery",
+        "detached checkpoint identity",
+        "false permanent divergence",
+        "availability"
+      ],
+      "trust_boundary": "No owner private mutation or dishonest serialization. Each handing is a canonical unchanged detached checkpoint; only deterministic asynchronous interruption points are injected.",
+      "proposed_correction": "Keep incompatible retained identity observations unresolved until existing canonical history can reconcile them outside the comparison lock, and apply the result only to the still-pending observations. Recovery must not turn distinct detached identities alone into irreversible divergence before that reconciliation can run.",
+      "proof_paths": [
+        "/home/dev_kaeem/br11-review/r16/C/probe_lifecycle.py",
+        "/home/dev_kaeem/br11-review/r16/C/probe_lifecycle.log"
+      ],
+      "limits": "Fail-closed availability/correctness defect, not demonstrated false admission. Each pin has only one interruption and recovery completes; this differs from the documented repeated KeyboardInterrupt in current account content residual."
+    }
+  ],
+  "tested_transitions": [
+    {
+      "transition": "Spent live mapping -> two interruptions before _retain_handing capture -> restoration -> next recovery/dispatch",
+      "method": "Explicit deterministic checkpoints",
+      "outcome": "Duplicate simulated dispatch, counter 2; R16-C-1."
+    },
+    {
+      "transition": "Spent live mapping -> two interruptions after _RetainedHanding capture at _handed -> restoration -> next recovery/dispatch",
+      "method": "Matched deterministic control",
+      "outcome": "Dispatch refused, counter 1."
+    },
+    {
+      "transition": "Ordinary native stack exhaustion at 19 bounded depths -> restoration -> recovery/dispatch",
+      "method": "Real recursion depth, no hooks or sleeps",
+      "outcome": "Depths 145-146 reproduce R16-C-1 with raw tuple pending; 144 retained-entry control refuses. Details in probe_native_depth.log."
+    },
+    {
+      "transition": "Unchanged detached handing -> one interruption with immediate recovery -> same unchanged detached handing -> one interruption with immediate recovery -> normal read",
+      "method": "Explicit deterministic checkpoints",
+      "outcome": "Permanent false divergence; R16-C-2."
+    },
+    {
+      "transition": "Seal before comparison / seal during wait / post-wait seal recheck",
+      "method": "STATIC source and closest test inspection only",
+      "outcome": "Comparison and post-wait checks are under the shared condition lock; no new seal acceptance demonstrated. Existing controls were not rerun in this lens."
+    }
+  ],
+  "missing_coverage": [
+    "No further execution after the parent instruction to finish from collected evidence.",
+    "Existing 33 Round-15 controls and 54 generated traces were read, not rerun by this lens. No pytest, full FAST, changed gate, regression pack, certification or physical validation run.",
+    "No new executed Event/Barrier seal or concurrent waiting probe; source/test inspection only for those transitions.",
+    "No exhaustive asynchronous-instruction sweep, concurrent cleanup/finalizer attack, process crash, cross-process coordination, or independent free-threaded interpreter assessment.",
+    "No fresh execution of state/applicability/unit authority paths; Q1-Q3/Q5-Q7 are limited to absence of demonstrated defects in this lifecycle lens.",
+    "Durable execution-owner at-most-once/reservation and owner spend+rollback entirely between verifications remain explicit contract exclusions.",
+    "The two proposed findings have not yet received independent skeptical reproduction by this lens."
+  ],
+  "executions": [
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/C/probe_lifecycle.py",
+      "exit": 0,
+      "result": "{\"phase\": \"_retain_handing\", \"consumed_interruptions\": 2, \"pending_types\": [\"tuple\"], \"redispatch_refused\": false, \"executor_calls\": 2, \"sealed\": null, \"diverged\": [], \"in_flight\": []}\n{\"phase\": \"_handed\", \"consumed_interruptions\": 2, \"pending_types\": [\"_RetainedHanding\"], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": [], \"in_flight\": []}\n{\"case\": \"unchanged_detached_two_interruptions\", \"outcomes\": [\"KeyboardInterrupt\", {\"diverged\": [], \"unread\": [[\"ledger\", \"a\"]]}, \"KeyboardInterrupt\", {\"diverged\": [[\"ledger\", \"a\"]], \"unread\": [[\"ledger\", \"a\"]]}], \"final\": \"budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)\", \"sealed\": null}\n",
+      "log_path": "/home/dev_kaeem/br11-review/r16/C/probe_lifecycle.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/C/probe_native_depth.py",
+      "exit": 0,
+      "result": "{\"depth\": 130, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 131, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 132, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 133, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 134, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 135, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 136, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 137, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 138, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 139, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 140, \"limit\": 150, \"exception\": null, \"frames\": [], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 141, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"pinned\", \"_observe_all\", \"_read_back\", \"_account\", \"_attempts\", \"_read_once\", \"_described\"], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 142, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"pinned\", \"_observe_all\", \"_read_back\", \"_account\", \"_attempts\", \"_read_once\"], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 143, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"pinned\", \"_observe_all\", \"_read_back\", \"_unread\", \"_extends\"], \"pending_types\": [], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 144, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"pinned\", \"_leave\", \"notify_all\", \"notify\"], \"pending_types\": [\"_RetainedHanding\"], \"redispatch_refused\": true, \"executor_calls\": 1, \"sealed\": null, \"diverged\": []}\n{\"depth\": 145, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"pinned\", \"_leave\", \"notify_all\"], \"pending_types\": [\"tuple\"], \"redispatch_refused\": false, \"executor_calls\": 2, \"sealed\": null, \"diverged\": []}\n{\"depth\": 146, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"pinned\", \"_leave\"], \"pending_types\": [\"tuple\"], \"redispatch_refused\": false, \"executor_calls\": 2, \"sealed\": null, \"diverged\": []}\n{\"depth\": 147, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"pinned\"], \"pending_types\": [], \"redispatch_refused\": false, \"executor_calls\": 2, \"sealed\": null, \"diverged\": []}\n{\"depth\": 148, \"limit\": 150, \"exception\": \"RecursionError\", \"frames\": [\"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\", \"deep\"], \"pending_types\": [], \"redispatch_refused\": false, \"executor_calls\": 2, \"sealed\": null, \"diverged\": []}\n",
+      "log_path": "/home/dev_kaeem/br11-review/r16/C/probe_native_depth.log"
+    }
+  ],
+  "limits": "Independent bounded development review on the exact committed SHA. Source was read-only; only C scratch artifacts were written. No source implementation change, installation, Git mutation, remotes, external-target activity, certification, scientific validation or formal proof. Probe commands exited 0 because they report outcomes; that is not a claim that the intended lifecycle assertions passed."
+}

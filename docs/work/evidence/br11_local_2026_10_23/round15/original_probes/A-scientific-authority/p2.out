@@ -1,0 +1,11 @@
+owners: /home/dev_kaeem/forge-r15-review/src/engcore/mind/world/owners.py
+stable_read  read 1 served revision 4 | seen 4 | entries now 4 | seen_entries known: True
+  read 2 refused: budget experiment 'synthetic.battery.pulse-cell.experiment' was not read back to this veri
+  unread recorded: {}
+  read 3 after an unchanged resume: served revision 4
+  diverged: False
+moving_read read 1 served revision 4 | seen 4 | entries now 4 | seen_entries known: False
+  read 2 refused: budget experiment 'synthetic.battery.pulse-cell.experiment' was not read back to this veri
+  unread recorded: {('experiment', 'synthetic.battery.pulse-cell.experiment'): 4}
+  read 3 after an unchanged resume REFUSED: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote the entries of a state of it a verification was handed and could not rea
+  diverged: True

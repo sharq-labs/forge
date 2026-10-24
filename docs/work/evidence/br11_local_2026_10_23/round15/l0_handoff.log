@@ -1,0 +1,292 @@
+........................FFF...FFF....................................... [ 82%]
+..F............                                                          [100%]
+=================================== FAILURES ===================================
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7439d41e0e90>
+failure = <class 'KeyboardInterrupt'>, retry_later = True
+direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+>       assert bool(reader._uncompared) is retry_later
+E       assert False is True
+E        +  where False = bool({})
+E        +    where {} = <engcore.mind.world.owners.BudgetReader object at 0x7439d43f75f0>._uncompared
+
+tests/mind/test_authority_review_r15.py:417: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7439d42601a0>
+failure = <class 'RecursionError'>, retry_later = True, direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+>       assert bool(reader._uncompared) is retry_later
+E       assert False is True
+E        +  where False = bool({})
+E        +    where {} = <engcore.mind.world.owners.BudgetReader object at 0x7439d41c7830>._uncompared
+
+tests/mind/test_authority_review_r15.py:417: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x743a412cfa40>
+failure = <class 'MemoryError'>, retry_later = True, direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+>       assert bool(reader._uncompared) is retry_later
+E       assert False is True
+E        +  where False = bool({})
+E        +    where {} = <engcore.mind.world.owners.BudgetReader object at 0x7439d43f6d50>._uncompared
+
+tests/mind/test_authority_review_r15.py:417: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x743a412b6660>
+failure = <class 'KeyboardInterrupt'>, retry_later = True, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+>       assert bool(reader._uncompared) is retry_later
+E       assert False is True
+E        +  where False = bool({})
+E        +    where {} = <engcore.mind.world.owners.BudgetReader object at 0x7439d418e180>._uncompared
+
+tests/mind/test_authority_review_r15.py:417: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7439d41df2c0>
+failure = <class 'RecursionError'>, retry_later = True, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+>       assert bool(reader._uncompared) is retry_later
+E       assert False is True
+E        +  where False = bool({})
+E        +    where {} = <engcore.mind.world.owners.BudgetReader object at 0x7439d41ebad0>._uncompared
+
+tests/mind/test_authority_review_r15.py:417: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x743a412fe960>
+failure = <class 'MemoryError'>, retry_later = True, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+>       assert bool(reader._uncompared) is retry_later
+E       assert False is True
+E        +  where False = bool({})
+E        +    where {} = <engcore.mind.world.owners.BudgetReader object at 0x7439d4191c10>._uncompared
+
+tests/mind/test_authority_review_r15.py:417: AssertionError
+____________ test_generated_inflight_lifecycle[handing-spend-True] _____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7439d41b90d0>
+phase = 'handing', event = 'spend', restore = True
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (restore or phase == "read")):
+>           assert isinstance(box[0], OwnerUnavailable)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a', revision='2', rec...pool': 0.5, 'detail': 'observed'}], 'spent_general': 1.0, 'spent_validation': 0.0, 'remaining': 99.0, 'overrun': 0.0}}), OwnerUnavailable)
+
+tests/mind/test_authority_state_machine_r15.py:150: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-spend-True]
+7 failed, 80 passed in 2.87s

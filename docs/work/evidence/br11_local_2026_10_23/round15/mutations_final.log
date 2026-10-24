@@ -1,0 +1,15 @@
+reviewed_prefix 1 19 failed, 46 passed in 2.65s
+control 0 65 passed in 2.77s
+reread_retired_content 1 1 failed, 64 passed in 2.52s
+seal_entry_only 1 8 failed, 57 passed in 3.08s
+no_comparison_seal 1 7 failed, 58 passed in 2.87s
+no_post_wait_seal 1 1 failed, 64 passed in 2.50s
+interrupt_poison 1 3 failed, 62 passed in 2.73s
+no_reconciliation 1 4 failed, 61 passed in 2.58s
+no_history_count 1 2 failed, 63 passed in 2.57s
+drop_before_observation 1 2 failed, 63 passed in 2.95s
+comparison_outside_lock 1 1 failed, 64 passed in 2.53s
+no_retained_history_reconciliation 1 2 failed, 63 passed in 2.78s
+listing_outside_interrupt_guard 1 1 failed, 64 passed in 2.75s
+interrupt_implicit_success 1 3 failed, 62 passed in 2.59s
+12 correctness mutants deterministically killed

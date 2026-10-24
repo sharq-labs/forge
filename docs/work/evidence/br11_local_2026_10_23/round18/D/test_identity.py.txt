@@ -1,0 +1,41 @@
+import itertools
+from unittest.mock import patch
+import pytest
+from engcore.mind.world import BudgetReader
+from engcore.mind.world.authority import OwnerUnavailable
+from tests.mind.test_authority_review_r17 import _fixture, _append, _checkpoint
+from tests.mind.test_authority_review_r16 import _interrupt_handing
+
+@pytest.mark.parametrize("kind", ["ledger", "experiment"])
+@pytest.mark.parametrize("order", list(itertools.permutations(range(3))))
+@pytest.mark.parametrize("conflict", [False, True])
+def test_multi_observation_normalization(kind, order, conflict):
+    account, held, follow, reader, owner_kind = _fixture(kind)
+    states=[]
+    for i in range(3):
+        # Mixed JSON key normalization across independent histories.
+        account, _, _, _, _ = _fixture(kind)
+        _append(account, kind, {2: "different" if conflict and i==1 else "same", 10:(1,2)})
+        states.append(account if i==0 else _checkpoint(account, kind))
+    for i in order:
+        held[0]=states[i]
+        _interrupt_handing(reader)
+    held[0]=_checkpoint(states[2], kind)
+    if conflict:
+        with pytest.raises(OwnerUnavailable): reader.read(owner_kind,"a")
+        assert reader._diverged
+    else:
+        assert reader.read(owner_kind,"a") == BudgetReader.following(follow).read(owner_kind,"a")
+        assert not reader._diverged and not reader._unread_entries
+
+@pytest.mark.parametrize("kind", ["ledger", "experiment"])
+@pytest.mark.parametrize("failure", [KeyboardInterrupt, MemoryError, ValueError])
+def test_retained_normalization_exception_is_recoverable(kind, failure):
+    account, held, follow, reader, owner_kind = _fixture(kind)
+    _append(account, kind, {2:"a",10:(1,2)})
+    _interrupt_handing(reader)
+    held[0]=_checkpoint(account,kind)
+    with patch.object(BudgetReader,"_retained_entry",side_effect=failure):
+        with pytest.raises(OwnerUnavailable): reader.read(owner_kind,"a")
+    assert reader._unread_entries and not reader._diverged and reader._sealed is None
+    assert reader.read(owner_kind,"a") == BudgetReader.following(follow).read(owner_kind,"a")

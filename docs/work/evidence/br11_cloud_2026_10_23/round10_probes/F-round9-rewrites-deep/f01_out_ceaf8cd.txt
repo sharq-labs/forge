@@ -1,0 +1,7 @@
+engcore from /tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r10/F-round9-rewrites-deep/tree-ceaf8cd/src/engcore/__init__.py
+admitted: True
+spent revision 2 before revision 1
+T2 handed spent ledger: True
+D (re-dispatch, ticket earlier, read after the restore): DISPATCHED AGAIN | executor calls: 2
+T2: pinned; serves revision 2
+a later re-dispatch: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor calls: 2

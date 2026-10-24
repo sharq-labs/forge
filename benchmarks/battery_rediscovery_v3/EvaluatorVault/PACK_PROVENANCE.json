@@ -1,0 +1,223 @@
+{
+ "P01": {
+  "pack_sha256": "2b916d6169b388cc0f03e1c66bd71101901a654e5c80a246830762a31e5980b8",
+  "raw_sha256": {
+   "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "e5fe1cf6e0e2afa56d35f0edd0937e231312800aa71e5ace8755cbb89a471367",
+   "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "a31a282dbed7c31d84ac843b1962a67d8f9a5db2917781f642f2ba7c996b7603"
+  }
+ },
+ "P02": {
+  "pack_sha256": "77fac7a38a743e2621968e5d282e934374716aa5d51c0f98439aaf02e081d9f9",
+  "raw_sha256": {
+   "Expt 4 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "a31a282dbed7c31d84ac843b1962a67d8f9a5db2917781f642f2ba7c996b7603",
+   "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "ac07430eaf0753ae1a3256a2400b0079ad36dfd473bfd7ea66d20e2221e9eacc"
+  }
+ },
+ "P03": {
+  "pack_sha256": "b2590f1750cd9f713e864296a02d324c3992247ec1eefc4529c9b8fbe3c6ffc5",
+  "raw_sha256": {
+   "Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "e5fe1cf6e0e2afa56d35f0edd0937e231312800aa71e5ace8755cbb89a471367",
+   "Expt 4 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "ac07430eaf0753ae1a3256a2400b0079ad36dfd473bfd7ea66d20e2221e9eacc"
+  }
+ },
+ "P04": {
+  "pack_sha256": "98da5e7529ebabe9987d1cbc73e2c54b4c4b567e9b99132a6f035d7fa74cb07a",
+  "raw_sha256": {
+   "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "85f0eac9f6662f5cd93e75ca60c659bbf20dc4c050bda39f65f56f4740a8dcc1",
+   "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "26b9198747deb7dcc56cd4b6cd19c95213c55df68f45f03b928530c5a988fe71"
+  }
+ },
+ "P05": {
+  "pack_sha256": "0479fc0bc13a8fc32ab39237ffda90be67d73ed44eb258ffeb799b71ec3c895c",
+  "raw_sha256": {
+   "Expt 4 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "26b9198747deb7dcc56cd4b6cd19c95213c55df68f45f03b928530c5a988fe71",
+   "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "4aa20de2d13c4714cc192b757a7138ae44a603196efd17d0b41892ee152f584b"
+  }
+ },
+ "P06": {
+  "pack_sha256": "8252f69bc5731c5383a30fd98240b4df5b5e7af54c3e11f2de8a9f8db06c2f75",
+  "raw_sha256": {
+   "Expt 4 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "85f0eac9f6662f5cd93e75ca60c659bbf20dc4c050bda39f65f56f4740a8dcc1",
+   "Expt 4 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "4aa20de2d13c4714cc192b757a7138ae44a603196efd17d0b41892ee152f584b"
+  }
+ },
+ "P07": {
+  "pack_sha256": "735a967790d9e2b9742ce876a69fb4ed37a646177d3b207acfce47bf801d8032",
+  "raw_sha256": {
+   "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "aaede6c61c41dcd5fd17affd706aee99e23f7f6b51cb02bb27939c82ef284f14",
+   "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "5a9f0d2c69f33286cb1b7512e1805083933491c64732ed0ae590e6a1360e6a6d"
+  }
+ },
+ "P08": {
+  "pack_sha256": "b9c98b2e23f6f13c5d7835d13a04b003d322d32f7520815df449c335c0507a92",
+  "raw_sha256": {
+   "Expt 4 - cell B - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "5a9f0d2c69f33286cb1b7512e1805083933491c64732ed0ae590e6a1360e6a6d",
+   "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "9a3eaa2585ba7d82afd347e7e679e2183a2f801cd5fa1bdb41e226f0ce3fbf00"
+  }
+ },
+ "P09": {
+  "pack_sha256": "55659cea28cd574bc367fa2520affa9c982a45f613efa5b2017d3f484853fbe4",
+  "raw_sha256": {
+   "Expt 4 - cell A - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "aaede6c61c41dcd5fd17affd706aee99e23f7f6b51cb02bb27939c82ef284f14",
+   "Expt 4 - cell C - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "9a3eaa2585ba7d82afd347e7e679e2183a2f801cd5fa1bdb41e226f0ce3fbf00"
+  }
+ },
+ "P10": {
+  "pack_sha256": "1938bbf6b4a2489a232b1ef1e2c8f5b421d06a6438a61559fc98dd1c59d12c21",
+  "raw_sha256": {
+   "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "d8cd4b54d1e7b003a1e556e803595e18a213fbcff913bfdc61fa1df3399cc0f1",
+   "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "f5568471e5e05075375975376be84f1e1fd1a6dee4163dd3f521ee22453551a8"
+  }
+ },
+ "P11": {
+  "pack_sha256": "f2e8b9aa1b1a7ff1b1ed2dd90598e8e5592116f58518d8ff0eb605b34a46a60f",
+  "raw_sha256": {
+   "Expt 4 - cell G - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "f5568471e5e05075375975376be84f1e1fd1a6dee4163dd3f521ee22453551a8",
+   "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "988d75d4008ac16b8093ac0436eeb6e9e7fb4f98426b4127ed87d3880f8a0d3d"
+  }
+ },
+ "P12": {
+  "pack_sha256": "38f159ea0f3e971b4cdf5323485bc42a9ce9dc257fd37e13ccf00c168fb681e2",
+  "raw_sha256": {
+   "Expt 4 - cell F - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "d8cd4b54d1e7b003a1e556e803595e18a213fbcff913bfdc61fa1df3399cc0f1",
+   "Expt 4 - cell H - RPT8 - 25-pulse GITT 0.5C discharge data.csv": "988d75d4008ac16b8093ac0436eeb6e9e7fb4f98426b4127ed87d3880f8a0d3d"
+  }
+ },
+ "P13": {
+  "pack_sha256": "1a01e246504abd5b7f6345c640fde76fec5ca342434d302ed1ba06c067671523",
+  "raw_sha256": {
+   "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "8aa8bdd1af2aa68e56243db3738e56590858393861acf276d1a4a9cc36816825",
+   "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "09abd771d44fca5ad9b186b93ebba8e789bc62e541210da361a96f36a21cd238"
+  }
+ },
+ "P14": {
+  "pack_sha256": "d549c9f669584263e510be9684e5b29460c0f5fc68d517746cbbc5e9bfb00ccd",
+  "raw_sha256": {
+   "Expt 5 - cell B - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "09abd771d44fca5ad9b186b93ebba8e789bc62e541210da361a96f36a21cd238",
+   "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "1ea9a6ae7a8255967a5f766f702a4b5bd72b11204c875c13ffe4756ea284637b"
+  }
+ },
+ "P15": {
+  "pack_sha256": "5b4879b3209baf0d56111bf9efe8d420d7fa6deba0985fbba9eb079c0323247e",
+  "raw_sha256": {
+   "Expt 5 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "8aa8bdd1af2aa68e56243db3738e56590858393861acf276d1a4a9cc36816825",
+   "Expt 5 - cell C - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "1ea9a6ae7a8255967a5f766f702a4b5bd72b11204c875c13ffe4756ea284637b"
+  }
+ },
+ "P16": {
+  "pack_sha256": "8c82366dbc77d4ae78d1116ee65971917cb1e876b777c2dab9b41256fc96fd31",
+  "raw_sha256": {
+   "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "1965b729b4c7fb31d169268d17ce984ba43b84b3c2f70637cc1354cc19903e47",
+   "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "d8d9f984764896b9efe2cd35c1e3b28a7ebcf164c87c4e33885a01349e4aa8e6"
+  }
+ },
+ "P17": {
+  "pack_sha256": "89540e1837b034945d4f370f94576c56705baeac3468e0c0bb92b2b4fa606bd0",
+  "raw_sha256": {
+   "Expt 5 - cell G - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "d8d9f984764896b9efe2cd35c1e3b28a7ebcf164c87c4e33885a01349e4aa8e6",
+   "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "69a877d790142461e148eddf97adfac480ac6c1385828e8b1ff2464949b379ae"
+  }
+ },
+ "P18": {
+  "pack_sha256": "72fd641fbe824590b7e1f3abacbeeb574bd17f3d892a4bfe28475db8345f4d36",
+  "raw_sha256": {
+   "Expt 5 - cell F - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "1965b729b4c7fb31d169268d17ce984ba43b84b3c2f70637cc1354cc19903e47",
+   "Expt 5 - cell H - RPT0 - 25-pulse GITT 0.5C discharge data.csv": "69a877d790142461e148eddf97adfac480ac6c1385828e8b1ff2464949b379ae"
+  }
+ },
+ "P19": {
+  "pack_sha256": "42903f0a2f49ac1acc56d06045f01decf2793d7abdba263823f22a11d4d56b99",
+  "raw_sha256": {
+   "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "8f2f65f7d5c101bcb5ec0331be25de56c588cf1a97251da004863048f9ccffed",
+   "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "340132eee83a5a26b17843bbf697c28f6226c9a3759cc005f9552e36646d4c72"
+  }
+ },
+ "P20": {
+  "pack_sha256": "9e6704ebcb5465e1284f2dfd5ddd2fd416492764f3f722fb67f171e4cd2bf3b1",
+  "raw_sha256": {
+   "Expt 5 - cell B - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "340132eee83a5a26b17843bbf697c28f6226c9a3759cc005f9552e36646d4c72",
+   "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "d0a65c5ab60afda16797f5c39d520463eabde2d3c904f8a06c58f445779a354e"
+  }
+ },
+ "P21": {
+  "pack_sha256": "a571accdf6b2ad38ca3cfe2afdfdb8147dae683121ac700319aaaff2ee133dd8",
+  "raw_sha256": {
+   "Expt 5 - cell A - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "8f2f65f7d5c101bcb5ec0331be25de56c588cf1a97251da004863048f9ccffed",
+   "Expt 5 - cell C - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "d0a65c5ab60afda16797f5c39d520463eabde2d3c904f8a06c58f445779a354e"
+  }
+ },
+ "P22": {
+  "pack_sha256": "468feb4e2604051c8b7b77532499cb60448b629c1e919e144de50819e1e691e3",
+  "raw_sha256": {
+   "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "237af38d95633f9fb2f1939300f7047368aeefa0c216f096735fa203c0bf3692",
+   "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "f031393b508a8d166e131b6f58f07881d4cdde0d7390ee46ee35dd84d744c129"
+  }
+ },
+ "P23": {
+  "pack_sha256": "05109dea914477f67da01faf2b4db584a73ef2174ffb25b631ef3dfae37a467c",
+  "raw_sha256": {
+   "Expt 5 - cell G - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "f031393b508a8d166e131b6f58f07881d4cdde0d7390ee46ee35dd84d744c129",
+   "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "cabd8505157b0b9c314f1a7dc039601a9e00db5da160d2ec7420dfebe1dbefb2"
+  }
+ },
+ "P24": {
+  "pack_sha256": "d8cdaf616347139c1d772c7379a35176daac38d691663b01662686f280b4c34f",
+  "raw_sha256": {
+   "Expt 5 - cell F - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "237af38d95633f9fb2f1939300f7047368aeefa0c216f096735fa203c0bf3692",
+   "Expt 5 - cell H - RPT14 - 25-pulse GITT 0.5C discharge data.csv": "cabd8505157b0b9c314f1a7dc039601a9e00db5da160d2ec7420dfebe1dbefb2"
+  }
+ },
+ "P25": {
+  "pack_sha256": "ec9b97284d575aab6f94e642f3948c71b644e4530c4adbf04d387bb5f8e67bc2",
+  "raw_sha256": {
+   "LGM50_cell02.csv": "650e7f9ac5217b4db158047e50b6b464100b13f4859002421114edebca629b35",
+   "LGM50_cell03.csv": "fcc13423786d6044f3ec41b1b278fb1d42ff55018666be743243f7c34b1b98cb"
+  }
+ },
+ "P26": {
+  "pack_sha256": "355abcb5780de46605e020e35c10e19cf4c448bfea104be2b34fbd0ba31313f7",
+  "raw_sha256": {
+   "LGM50_cell03.csv": "fcc13423786d6044f3ec41b1b278fb1d42ff55018666be743243f7c34b1b98cb",
+   "LGM50_cell04.csv": "e1cbb60e79911824d5559f12db8e8ecdd4781d077a45f5b1ecbcf103aa271d9e"
+  }
+ },
+ "P27": {
+  "pack_sha256": "3099b4439213904fa9ce7375546144759199f7d69f076100f6571e9658cc3c92",
+  "raw_sha256": {
+   "LGM50_cell02.csv": "650e7f9ac5217b4db158047e50b6b464100b13f4859002421114edebca629b35",
+   "LGM50_cell04.csv": "e1cbb60e79911824d5559f12db8e8ecdd4781d077a45f5b1ecbcf103aa271d9e"
+  }
+ },
+ "P28": {
+  "pack_sha256": "c01554495911eb4e973ca42f5047a54245ede33d6314e16ba89867d992d4090a",
+  "raw_sha256": {
+   "3. BatteryAgingARC_25-44/B0029.mat": "da9c63ac7b8a10d2354ff53fec9be23f4194352e667de5c503b069f7d267ebb2"
+  }
+ },
+ "P29": {
+  "pack_sha256": "fbef4629e01a20ffc003d680967c33a6c2187b6a830e426ed08204b625fbcea6",
+  "raw_sha256": {
+   "3. BatteryAgingARC_25-44/B0030.mat": "c29a910256812449aa6090031471a57440e2e7bc827bd2c822b0d3135485cc99"
+  }
+ },
+ "P31": {
+  "pack_sha256": "0dde22055d817c7bc017b12164b9e7fde4246ff36835ea01a50f255c696a1476",
+  "raw_sha256": {
+   "3. BatteryAgingARC_25-44/B0032.mat": "bd146cad3a18f9e8d42d05014c90e7bcde7abc7ccc89bdd46e5655604c61bc0f"
+  }
+ },
+ "P32": {
+  "pack_sha256": "59e135cc8148a14c8791e63c81113f7022031658ce31fed441246bd209fbc6bd",
+  "raw_sha256": {
+   "5. BatteryAgingARC_49_50_51_52/B0051.mat": "37c247607dc7e5384fae4ef595d8b2f9072a2107ce1112fe0a460b4f48c8894b"
+  }
+ },
+ "Q1": {
+  "bridge_of": "benchmarks/battery_rediscovery_v2/candidate/pack/Q1.json",
+  "pack_sha256": "dc8f7f3ea7e5cfb590d1fde34600872d99e3de0627cd7ce53f399f524e005d2f"
+ },
+ "Q2": {
+  "bridge_of": "benchmarks/battery_rediscovery_v2/candidate/pack/Q2.json",
+  "pack_sha256": "1a03ba0587f97f7c4e57b6c60e264179963e63c18e30e6ab3a4732cee236a022"
+ }
+}

@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1209_p24_instrumented.py", line 22, in <module>
+    K = int(sys.argv[1]); N = int(sys.argv[2]); E = int(sys.argv[3]); PERIOD = float(sys.argv[4])
+            ~~~~~~~~^^^
+IndexError: list index out of range

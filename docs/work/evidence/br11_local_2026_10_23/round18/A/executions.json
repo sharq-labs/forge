@@ -1,0 +1,81 @@
+[
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-c",
+      "import subprocess; from engcore.mind.world import owners; print(owners.__file__); print(subprocess.check_output(['git','rev-parse','HEAD'],text=True)); assert owners.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'; assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == 'cc7ef06b0d08398173d9448ff47d8abb7e375d44'"
+    ],
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/A/identity.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt",
+      "tests/mind/test_authority_review_r16.py",
+      "tests/mind/test_authority_review_r17.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/A/controls.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r18/A/probe_native.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/A/native.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt_new",
+      "/home/dev_kaeem/br11-review/r18/A/test_new_transitions.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/A/new_transitions.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r18/A/probe_stable_mapping.py"
+    ],
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "cwd": "/home/dev_kaeem/forge-r18-review",
+    "exit": 0,
+    "log": "/home/dev_kaeem/br11-review/r18/A/stable_mapping.log"
+  }
+]

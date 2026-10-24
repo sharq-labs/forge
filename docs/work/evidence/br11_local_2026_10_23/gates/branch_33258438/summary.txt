@@ -1,0 +1,5 @@
+fast exit=1 wall=389s :: 67 failed, 12678 passed, 190 skipped, 2 warnings in 373.31s (0:06:13)
+regression exit=0 wall=10s :: 
+guards exit=1 wall=33s :: 2 failed, 1382 passed in 32.15s
+expensive exit=1 wall=36s :: 13 failed, 335 passed, 14 errors in 33.63s
+DONE

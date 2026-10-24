@@ -1,0 +1,27 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_open_double_capture_interruption_cannot_recover_lost_live_mapping ____
+
+    def test_open_double_capture_interruption_cannot_recover_lost_live_mapping():
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def execute(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, _, gateway, admitted = _desk(o, lambda: (o.ledgers, o.experiments), execute)
+        saved = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(admitted.admitted)
+        with patch.object(BudgetReader, "_retain_handing", side_effect=KeyboardInterrupt):
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+        o.ledgers[lid] = saved
+>       assert _refused(gateway, admitted.admitted)
+E       AssertionError: assert False
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x7ea61ecbbeb0>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+../br11-review/r17/D/test_open.py:22: AssertionError
+=========================== short test summary info ============================
+FAILED ../br11-review/r17/D/test_open.py::test_open_double_capture_interruption_cannot_recover_lost_live_mapping
+1 failed in 1.46s

@@ -1,0 +1,2 @@
+Initial 41 pass/3 fail: two cleanup assertions wrongly required sealed readers to clear unreachable pending handings; seal is permanent and no acceptance occurred. Third failure used duplicate experiment evaluation id new, owner correctly refused; replaced with next. Production unchanged.
+Second scratch attempt had indentation SyntaxError at line42; corrected nested else indentation, no source change.

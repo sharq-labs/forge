@@ -1,0 +1,164 @@
+Round-10 findings at c69e579 (all fixed or documented in d89dd3b / 4156c36; README section 9 lists the dispositions)
+
+[A10-F1] MINOR (A-scientific-authority) The round-9 ticket rule protects only a spend handed to an EARLIER-started verification; a verification that started earlier but reads the mapping after the restore still re-dispatches the executed action
+  skeptics: -
+  fix asked: Either refuse a verification (OWNER_UNAVAILABLE, for that verification only) while ANY other verification of the reader is in flight, earlier or later: the one that compares last still decides and nothing waits, which closes both interleavings. Or state in README §4 and owners.py:322-326 that a spend handed to a later-started verification does not protect against a rollback read by an earlier-started one whose accounts() runs after it (object-replacing restores). Add a1003 as a control of whichever outcome is chosen.
+
+[A10-F2] MINOR (A-scientific-authority) 'No code of the account's values runs' is overstated, and README §4 states the plain-data rule for experiments only, while ledgers are refused by it too
+  skeptics: -
+  fix asked: Reword README §4 and owners.py:330 to say: 'after the owner's own to_dict (a metadata key's comparison may run inside it, before the refusal), no code of the account's values runs'. State that ledgers and experiments both need plain data (exact dict with str keys, list, tuple, str, int, float, bool, None), and that a ledger whose charges carry numpy-typed fields is OWNER_UNAVAILABLE to a verification that reads it. Optionally walk `exp.metadata` with `_plain` before calling to_dict.
+
+[A10-F3] MINOR (A-scientific-authority) The restated owner question and README §4 say an action level's conversion lies 'an ulp either side' of other spellings, but the report's own example is 8 ulps off
+  skeptics: -
+  fix asked: In both places, say 'conversion rounding (one or several ulps; 8 for 95 degF in degC)'.
+
+[A10-F4] MINOR (A-scientific-authority) Two §8 figures do not match the files they cite: the 'paired' p50 increase is a ratio of medians, and the admission/solver ratio uses another file's solver
+  skeptics: -
+  fix asked: Write 'median of paired ratios +7 % (ratio of medians +14 %)' and '~7× less than PERFORMANCE.json's reference solver execution (121 ms)'.
+
+[A10-F5] MINOR (A-scientific-authority) README §9 lists A9-F7 and other record items as fixed, but those edits were not made, and round 9 left stale comments
+  skeptics: -
+  fix asked: Make the edits, or move these items from 'fixed' to 'not done (cosmetic)' in §9 and PROGRESS item 21.
+
+[A10-F6] MINOR (A-scientific-authority) Bind's new `_fixed_as_executed` is a second copy of `feasibility.as_executed`'s level rule, and only one example pins the two together
+  skeptics: -
+  fix asked: Have bind and the check call one shared helper (the matched level of the variable's own level set, in the variable's unit), or add a parametrized differential test of `_fixed_as_executed` against `fz.as_executed` driven by a1002's generator.
+
+[B10-1] MINOR (B-architecture) Round 9's shared read-back cache races. A verification handed a spend can crash in its locked prune after its ticket is gone, so a later verification decides on the rollback and the executed action is dispatched again.
+  skeptics: -
+  fix asked: Do not let unlocked writers share the dict the locked step iterates. Either give each snapshot its own cache (a copy taken at the pin) and adopt the pruned result under the lock, or prune from an atomic copy (self._readback.copy()). Record the observations (the comparison loop) before anything else in the locked step can raise, and keep the ticket in flight until the comparison has completed. Add p17 (settrace-forced) as a deterministic control and p10 as a stress control.
+
+[B10-2] MINOR (B-architecture) _plain has no cycle guard. A reference cycle in an unbound experiment's metadata makes every verification on the desk spin forever, where ceaf8cd refused only that account (which refuses nothing).
+  skeptics: -
+  fix asked: Track the ids of visited containers in _plain and treat a revisit as not plain (or bound the walk). Add a control: a cyclic unbound experiment refuses nothing, and a bound one is OWNER_UNAVAILABLE.
+
+[B10-3] MINOR (B-architecture) One verification that never returns from accounts() refuses every later verification of the reader indefinitely. Under 8-way concurrency about 16% of admissions are refused 'in flight'. Neither is stated (README §4 says 'nothing waits' and 'transiently'; §8 gives no contention number, which K9-F3 asked for).
+  skeptics: -
+  fix asked: State in README §4 and in the owners.py docstring that a verification which does not return keeps every later verification refused until it does. Give a contention number in §8 (or cite p18b). Optionally bound how long an earlier ticket can refuse later ones without reopening B8-m1, for example by refusing for good only the stuck ticket's own result.
+
+[B10-4] MINOR (B-architecture) Account-mapping keys are not type-checked, and the locked comparison hashes and compares them, so execution-side key code runs under the follower's lock and can block mutually with a verifying thread.
+  skeptics: -
+  fix asked: In BudgetReader.__init__ require `type(k) is str` for every ledger and experiment id (WorldRefused, which pinned() already turns into a per-verification OwnerUnavailable). Add a control.
+
+[B10-5] MINOR (B-architecture) _named_records' new STALE test uses str.isdigit() and int(). A world whose declaration binding revision contains a non-decimal digit makes gateway.admit raise ValueError, where ceaf8cd refused it with AUTHORITY_STALE.
+  skeptics: -
+  fix asked: Use isdecimal() (or isascii() and isdigit()), or wrap the int() in try/except and report MISMATCH. Add the '1²' case to the r8 declaration-mode control.
+
+[B10-6] MINOR (B-architecture) pinned() sets the re-entrancy flag and takes its ticket before entering the try whose finally resets them. A KeyboardInterrupt during _ticket()'s lock wait refuses that thread for good, with a false 'read through' message.
+  skeptics: -
+  fix asked: Initialise `ticket = None`, then set the flag and take the ticket inside the try. In the finally, discard the ticket if it is set and always reset the flag.
+
+[B10-7] MINOR (B-architecture) Four round-9 guarantees have no regression control. Each mutant passes the whole BR1.1 suite (569 not-expensive tests in a c69e579 tree copy).
+  skeptics: -
+  fix asked: Add p16 (accounts() raises once, then a read is served), p21 (same-thread read-through from the read-back is refused once), a control asserting the reader's lock is free during the read-back (e.g. a metadata key whose __lt__ records reader._lock.locked()), and a ledger plain-data control.
+
+[B10-8] MINOR (B-architecture) Round-9 records and wording: the B9-m2 and B9-m5 asks were left partly undone, the r7 comment is stale, and two §8 figures are not what they say.
+  skeptics: -
+  fix asked: (a) Say 'refused at once on the calling thread; a read-through on another thread is refused by the ticket rule after it recurses once per thread'. (b) Add STALE to the docstring. (c) Assert sim.secret's own status (mismatch) in r7 and fix the comment. (d) Say 'ratio of medians' or give the paired medians. (e) Use ~7× from PERFORMANCE.json. (f) Mark both superseded by round 9.
+
+[R10-C-F1] MAJOR (C-adversarial-bypass) Round 9's plain-data rule hides ordinary spends that the owner can read back, so after a restore the executed action is dispatched again (sequential, no concurrency, new in round 9)
+  skeptics: repro: MAJOR (confirmed=True); scope: MINOR (confirmed=True)
+  fix asked: (1) In `_plain`, walk the core's own immutable containers by exact type (`type(x) is FrozenMapping` as a mapping, `type(x) is FrozenList` as a sequence). They are owner code with no execution-side hooks. The scratch mutant closes c1008 and c1010 and keeps 569 tests passing.
+(2) For ledgers, take the plain check on the owner's read-back form (`BudgetLedger.from_dict(raw).to_dict()`), or normalize scalar numerics through the owner. Note that `predicted` stays numpy after from_dict.
+(3) Close the general class: when a handed account with an observed history cannot be read back, record it, and refuse any later state that does not strictly extend the observed history (a restore to the observed state is then refused) until a new reader adopts the timeline.
+(4) Add c1008 or c1010 (nested evaluation metadata) and c1007 (ledger with a numpy iteration or predicted) as controls, and state in README
+
+[R10-C-F2] MAJOR (C-adversarial-bypass) The ticket rule protects a spend only when the verification handed it STARTED first; in the mirror order R9-C-F4's re-dispatch still reproduces, while README §9 records R9-C-F4, F9-4 and K9-F1 as fixed and §4 narrowed the residual
+  skeptics: repro: MINOR (confirmed=True); scope: MINOR (confirmed=True)
+  fix asked: Either refuse a verification's decision while ANY other verification is in flight: after discarding its own ticket, use `earlier = bool(self._in_flight)`. The mutant closes both orders and passes 569 tests. Document the liveness cost: under continuous overlap, every verification except the last to compare can be refused, transiently.
+Or restate owners.py:321-324, README §4:158-161 and the §4 residual. Protection then holds only when the verification handed the spend started before the one that reads the rollback, R9-C-F4, F9-4 and K9-F1 stay a documented residual, and §9 says so.
+In either case, add the c1003 mirror order as a deterministic control.
+
+[R10-C-m1] MINOR (C-adversarial-bypass) Account-mapping keys still run execution-side code under the follower's lock, so 'no execution-side code ever runs under the reader's lock' is false for keys
+  skeptics: -
+  fix asked: In the constructor, require `type(record_id) is str` for every ledger and experiment id, failing closed (WorldRefused). Alternatively, rebuild the keys as `str.__str__(k)` before any comparison. Then narrow the README and docstring wording, or add a control.
+
+[R10-C-m2] MINOR (C-adversarial-bypass) An accounts() call that blocks refuses every later verification of that reader for as long as it blocks; README says these refusals are 'transient'
+  skeptics: -
+  fix asked: Reword README §4 and the docstring: 'for as long as an earlier verification is in flight, including one whose accounts() or read-back blocks'. Optionally refuse, for that verification only, a ticket older than a bound, so that one stuck call does not refuse every later verification.
+
+[R10-C-m3] MINOR (C-adversarial-bypass) A submitted world whose declaration revision is a non-ASCII digit string makes gateway.admit raise ValueError instead of returning a refusal (new in round 9)
+  skeptics: -
+  fix asked: Use `revision.isascii() and revision.isdigit()`, or wrap the int() in a try that falls back to MISMATCH. Add the '1²' case to the r8 declaration-mode control.
+
+[R10-D-F1] MINOR (D-replay-stale) The round-9 exact-type plain-data rule refuses JSON-valid ledgers that ceaf8cd read. A spend recorded that way is never observed, so a restore re-dispatches the executed action (single-threaded regression).
+  skeptics: -
+  fix asked: Canonicalize instead of refusing scalar subclasses. Walk containers by exact type (dict with str keys, list, tuple) and accept float/int/str subclasses; json's encoder serializes those with float.__repr__/int.__repr__/the str data and runs no code of theirs. Then take `json.loads(to_json(x))` as the form that is digested, read back and served, for ledgers as for experiments. Alternatively, state in README §4 that ledgers too must be exact plain data. Name numpy scalars and Enums, and state that a spend recorded in such a form is never observed, so a later restore re-authorizes the executed action. Add d14 as a control that pins the chosen outcome.
+
+[R10-D-F2] MINOR (D-replay-stale) `_plain` has no cycle guard: a self-containing value in any handed experiment's metadata hangs every verification of the following reader (ceaf8cd refused it in 0.4 ms)
+  skeptics: -
+  fix asked: Keep a set of ids of the containers visited in `_plain`, and return False (not plain) when a container is met again. Shared non-cyclic references may be refused too. Add a control: a list containing itself in an unbound experiment's metadata refuses that experiment with OWNER_UNAVAILABLE and admits a world that does not read it.
+
+[R10-D-F3] MINOR (D-replay-stale) Round 9's numeric STALE test lets a submitted world make admit() and the Mind port raise ValueError instead of returning a refusal
+  skeptics: -
+  fix asked: Decide 'older' only for ASCII decimal strings within a bounded length, for example `re.fullmatch(r"[1-9][0-9]{0,17}", rev)` for both revisions. Otherwise report MISMATCH. Or compare inside try/except ValueError and fall back to MISMATCH. Add the '²' and long-digit cases to the r8 declaration-mode control.
+
+[R10-D-F4] MINOR (D-replay-stale) Two round-9 fixes have no effective regression control: a read-back moved back under the lock, and B9-m1's aliasing read-back, each pass the whole Mind suite
+  skeptics: -
+  fix asked: Add d17 as a test: an equal-content replacement, then the old object's metadata moved; assert served == handed, rederive == record, replay REPRODUCED. Add d15 as a test: a str-subclass metadata key whose __lt__ records `reader._lock.locked()`; assert never True. Reword README §4:174 to 'no code of the account's values runs in the reader; the owner's to_dict may run key comparisons before the walk'.
+
+[R10-D-F5] MINOR (D-replay-stale) Stale test comments and docstrings, and superseded §9 dispositions still listed as fixed, after round 9
+  skeptics: -
+  fix asked: (a) In r7 assert `{c.status for c in r.verification.checks if c.record_id == 'sim.secret'} == {BindingStatus.MISMATCH}` and reword the comment. (b) Point the r6 docstring at r9's test. (c) Reword the r8 docstring: 'refused while T2 is in flight'. (d) Assert B == MISSING_INFORMATION, or say it is always refused there. (e) Mark those §9 entries superseded (by round 7 and round 9).
+
+[R10-D-F6] MINOR (D-replay-stale) README §8: '~9× less than one solver execution' takes the solver from another file, 'median +14 %' is a ratio of medians not a paired figure, and K9-F3's contention cost is unquantified
+  skeptics: -
+  fix asked: Write '~7× (PERFORMANCE.json's own solver reference)'. Write 'medians +14 % / +29 %; paired median +7 % / +30 %'. In §4 or §8, add that a verification started while another is in flight is refused. An execution side that verifies while holding a lock its accounts() takes is refused every time another verification waits on that lock. In a loop of pins, most are refused; under the measured admission loads, none were.
+
+[F10-1] MINOR (F-round9-rewrites-deep) The ticket rule orders verifications by when they START, not by when accounts() hands them a state: a re-dispatch with the earlier ticket that reads a restore after a later-ticket verification was handed the spend re-dispatches the executed action (R9-C-F4 / F9-4 / K9-F1 only narrowed, not closed)
+  skeptics: -
+  fix asked: At the compare, refuse (for that verification only) while ANY other verification of the reader is in flight, earlier or later, not only an earlier one (M3: one line at owners.py:420; it closes f01 and passes every BR1.1 test). Correctness argument: a verification that took a state before this one read its own was in flight from its ticket until its compare, so it is either still in flight (this one is refused) or already recorded the state (this one is behind). Add f01 as a deterministic control. Otherwise restore the residual in README section 4 and owners.py:319-324 ('a verification that started first but reads a restore after a later-started verification was handed the spend is not protected'), pin it with f01, and correct section 9 and PROGRESS item 19.
+
+[F10-2] MINOR (F-round9-rewrites-deep) Round 9's STALE rule calls int() on a proposer-supplied revision string: a submitted world whose declaration revision is '²' or a 5000-digit string makes gateway.admit raise ValueError; a forged '0' or Arabic-Indic '٠' revision is labelled 'an older revision'
+  skeptics: -
+  fix asked: Parse revisions defensively. Require `rev.isascii() and rev.isdigit()` and a bounded length, or wrap int() so that a failure means MISMATCH. Better, decide 'older' from the declaration owner's own record: the in-force payload's int revision, together with DeclarationReader's seen (revision -> digest) history, so that STALE requires a digest the owner actually held. Add '²', a 5000-digit string and '0' to the r8 declaration-mode control. Align the r8 comment with the rule.
+
+[F10-3] MINOR (F-round9-rewrites-deep) The round-9 detachment that closes B9-m1 / R9-C-F2 / F9-2 has no effective control, and README section 5 attributes the closure to the plain-data rule, which does not close it. The ledger plain-data check and the unlocked read-back have no control either.
+  skeptics: -
+  fix asked: Add B9-m1's p01 (and F9-2's g06) as a control. Replace the account with an equal-content copy, or a metadata value with an equal one, then edit the old object. Assert that the served payload equals the handed account's to_dict(), that rederive() gives the record digest, and that replay is REPRODUCED. Reword README section 5 to say the JSON detachment closes it. Optionally add a control for the ledger plain-data refusal.
+
+[F10-6] MINOR (F-round9-rewrites-deep) Under the ticket rule, one verification whose accounts() stalls refuses every later-started verification, on every account, for as long as it stalls. That is not 'transient' as section 4 states, and round 8 had no such coupling.
+  skeptics: -
+  fix asked: State in README section 4, in the K9-F3 disposition and in the owners.py:319-324 docstring that a verification in flight, including one whose accounts() or read-back stalls, refuses every other verification of that reader until it compares. The refusals last as long as it stays in flight. Optionally expose that as a distinct refusal reason.
+
+[F10-4] MINOR (F-round9-rewrites-deep) 'No execution-side code ever runs under the reader's lock' is false for non-str account ids: the locked comparison hashes every handed account key, and the constructor accepts any key, so a key's __hash__ runs under the lock (a lock-order deadlock is reproduced)
+  skeptics: -
+  fix asked: In BudgetReader.__init__, refuse (WorldRefused, for the whole reader, like the existing exact-type check) any ledger or experiment id that is not exactly a str. Or narrow the claim to 'no code of the account objects'.
+
+[F10-5] MINOR (F-round9-rewrites-deep) Ledger records are not detached: BudgetLedger.from_dict(raw) passes a charge's nested plain values through by reference, so a pinned snapshot's ledger record changes after the pin and no longer re-derives its digest
+  skeptics: -
+  fix asked: Detach ledgers as experiments are detached: `BudgetLedger.from_dict(json.loads(to_json(_Payload(raw))))`. Or narrow the 'detached copies' claim to experiments.
+
+[E10-F1] MINOR (E-forge-scientific) The ticket rule orders verifications by when they start, not by when they are handed their accounts. A verification that started earlier but is handed the rollback later still decides on the rollback while a later-started verification holding the spend is in flight. README §4 states the guarantee without that qualifier.
+  skeptics: -
+  fix asked: Either (a) take a hand-over mark right after accounts() returns (under the lock, `mark = self._tickets`) and refuse, for that verification only, while ANY other in-flight ticket <= mark exists. This covers every verification handed accounts before this one and subsumes the earlier-ticket rule. Or (b) qualify README §4:159-161, §9:449-450, owners.py:319-324 and the r9 test name with 'started earlier', and add this window to the §4 residual list. Either way, add the mirrored interleaving above as a deterministic control.
+
+[E10-F2] MINOR (E-forge-scientific) Introduced in round 9: `_plain` never terminates on a self-referencing container. Every verification reads back every handed account, so one unbound account with cyclic metadata or detail hangs every verification and the follower's constructor. Each hung verification's ticket also stays in flight, so later ones are refused 'still in flight'.
+  skeptics: -
+  fix asked: In `_plain`, keep `seen = set()` of id(x) for dict/list/tuple and return False when a container is revisited. This refuses cycles and shared sub-structures and calls no user code. Add the cyclic parameter to the r7 unbound-account control and to the r9 plain-data control. In README §4, state that a verification whose accounts() never returns keeps every later verification of that reader refused.
+
+[E10-F3] MINOR (E-forge-scientific) Introduced in round 9: `_named_records` parses a revision the world itself asserts with int(). A proposer-built world can make admission raise ValueError instead of returning a recorded AUTHORITY_* refusal.
+  skeptics: -
+  fix asked: Parse only `rev.isascii() and rev.isdecimal() and len(rev) <= 18` (or try/except ValueError, giving MISMATCH). Add a control with the revisions '²' and '1'*5000 that asserts an AdmissionResult with AUTHORITY_MISMATCH.
+
+[E10-F4] MINOR (E-forge-scientific) Introduced in round 9: the unlocked read-back writes into the shared read-back cache dict while another verification's locked prune iterates that same dict.
+  skeptics: -
+  fix asked: Prune over a snapshot of the items (`list(self._readback.items())`), or perform the cache write under `self._lock`.
+
+[E10-F5] MINOR (E-forge-scientific) The ledger read-back is not detached, so README §4's 'detached copies' does not hold for ledgers whose text fields hold JSON containers. Separately, the B9-m1 detachment fix for experiments has no effective regression control.
+  skeptics: -
+  fix asked: Read ledgers back as experiments are: `BudgetLedger.from_dict(json.loads(to_json(_Payload(raw))))`. Add the in-place ledger control above and B9-m1's equal-content-replacement control for experiments, asserting rederive and REPRODUCED.
+
+[E10-F6] MINOR (E-forge-scientific) In README §8, the p50 figure '(median +14 %)' in 'in paired rounds' is the ratio of medians. The median of the paired ratios is +6.7 %.
+  skeptics: -
+  fix asked: Write 'ratio of medians +14 % (median paired ratio +7 %)', or give the paired ratios.
+
+[E10-F7] MINOR (E-forge-scientific) Wording and records left stale by round 9
+  skeptics: -
+  fix asked: Reword the items as listed. No code change is needed except optionally renaming tests.
+
+[K10-F1] MINOR (critic) The forward-only rule protects states the reader observed, not states a verification was handed. README §4/§9/§11, the docstring, commit 17a1c31 and the r9 test name all claim the handed version, and three reproduced paths break it. Ruled MINOR, not MAJOR.
+  fix asked: 1. Restate README §4 (lines 159-161, 165-166, 182-184), §11 (line 475) and owners.py:311-312 / 322-324 in terms of states OBSERVED (read back as plain data and compared, in ticket order). Name the three paths: an unreadable or non-plain handed state; an earlier-started verification that reads the rollback after a later-started one was handed the spend; a verification that raises after its ticket is discarded. Also name the for-good consequence K9-F1 asked for. 2. Mark R9-C-F4 / F9-4 / K9-F1 in §9 as narrowed (one start order), not fixed. 3. Rename the r9 test. 4. Optionally: refuse a verification while ANY other verification is in flight (C's any-in-flight mutant); have _plain accept the owner's own FrozenMapping/FrozenList (see K10-F2); catch the prune RuntimeError as OwnerUnavailable. 5. Pin whichever outcome is chosen with c1001 as a deterministic control.
+
+[K10-F2] MINOR (critic) Round 9's exact-type rule refuses the experiment owner's own serialization of any evaluation with list- or dict-valued metadata (FrozenList/FrozenMapping). Such an experiment is OWNER_UNAVAILABLE to every verification that reads it for as long as that evaluation is recorded, which in practice is for good.
+  fix asked: In _plain, treat the exact owner types FrozenMapping and FrozenList as dict and tuple (no execution-side code runs: they are scientific-core types). Alternatively, detach in ScientificEvaluation.to_dict as ScientificResult does. That is an owner change requiring an owner decision, so record it as one rather than make it silently. State in README §4 which ledger and experiment value types are refused, numpy scalars included, and that a refused handed state is not observed. Add a control in which an experiment with a nested-metadata evaluation reads back, or is refused as documented.

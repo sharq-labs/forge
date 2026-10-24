@@ -1,0 +1,3 @@
+slow   | D: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) after 1.02 s | W: pinned | later: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+raises | D: DISPATCHED AGAIN after 0.22 s | W: OwnerUnavailable | later: DISPATCHED AGAIN | executor ran 3
+bad    | D: DISPATCHED AGAIN after 0.22 s | W: OwnerUnavailable | later: DISPATCHED AGAIN | executor ran 3

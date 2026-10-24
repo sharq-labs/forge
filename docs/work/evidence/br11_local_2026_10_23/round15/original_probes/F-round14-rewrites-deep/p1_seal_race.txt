@@ -1,0 +1,10 @@
+[redispatch] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accounts in it were not ob
+[redispatch] sealed: True
+[redispatch] GOOD (started before the seal, handed S0 after it): DISPATCHED AGAIN
+[redispatch] executor calls = 2
+[redispatch] a new verification after GOOD: refused (the execution side handed over what is not a pair of account...)
+[record] BAD: refused: the execution side handed over what is not a pair of account dicts (TypeError): the accounts in it were not ob
+[record] sealed: True
+[record] GOOD (started before the seal, handed S0 after it): AdmissionRecord.of ACCEPTED the original admission (S0) after the seal
+[record] executor calls = 1
+[record] a new verification after GOOD: refused (the execution side handed over what is not a pair of account...)

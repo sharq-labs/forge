@@ -1,0 +1,8 @@
+[replace] accounts() calls (thread, revision handed): [('MainThread', 1), ('MainThread', 1), ('MainThread', 1), ('T2', 2), ('T1', 1), ('MainThread', 1)]
+[replace] T1 (started first, read the restore): DISPATCHED AGAIN
+[replace] T2 (started second, was handed the spend): pinned
+[replace] executor ran 2 times; a later re-dispatch: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)
+[inplace] accounts() calls (thread, revision handed): [('MainThread', 1), ('MainThread', 1), ('MainThread', 1), ('T2', 2), ('T1', 1), ('MainThread', 1)]
+[inplace] T1 (started first, read the restore): DISPATCHED AGAIN
+[inplace] T2 (started second, was handed the spend): pinned
+[inplace] executor ran 2 times; a later re-dispatch: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)

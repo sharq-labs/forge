@@ -1,0 +1,12 @@
+r10:120: AssertionError: Regex pattern did not match.
+r10:120: AssertionError: Regex pattern did not match.
+r10:120: AssertionError: Regex pattern did not match.
+r10:175: AssertionError: assert (False)
+r10:214: AssertionError: Regex pattern did not match.
+r10:302: AssertionError: assert 'fc44797566ed...5a51fa188b5ad' == '836818aa4bb8...b586ab77e633a'
+r10:320: Failed: DID NOT RAISE WorldRefused
+projection:185: ValueError: invalid literal for int() with base 10: '²'
+projection:185: ValueError: invalid literal for int() with base 10: '1²'
+projection:185: ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 5000 digits; use sys.set_int_max_str_digits() to increase the limit
+r10:363: AssertionError: assert {'runs': ['r1...ter the pin']} == {'runs': ['r1']}
+20 failed, 9 passed, 1 deselected in 7.01s

@@ -1,0 +1,3 @@
+deep-stack verification (fresh-thread retry torn once) -> FOR GOOD: budget ledger 'synthetic.battery.pulse-cell.solver' is not one its owner writes down and reads back (it exceeds the interpreter's recursion limit on a fresh thr
+later verification at normal depth, account at rest -> FOR GOOD: budget ledger 'synthetic.battery.pulse-cell.solver' is not one its owner writes down and reads back (it exceeds the interpreter's recursion limit on a fresh thr
+owner reads the account back at rest: 1

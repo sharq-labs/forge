@@ -1,0 +1,6445 @@
+{
+ "benign_controls": 243,
+ "benign_triggered": 0,
+ "carrier_findings": [],
+ "cases": [
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760.0"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "+760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "7.60e+02"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760 F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "the historical estimate of brief_example_C1 was 760 F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "\"brief_example_C1\": 760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "brief_example_C1=760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760000 mF"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760.006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "1760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "76001"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "a760b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "x_760_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.03210"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "+0.0321"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "3.21e-02"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "the historical estimate of synthetic_R was 0.0321 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "\"synthetic_R\": 0.0321"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "synthetic_R=0.0321"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "32.1 mohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "10.0321"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.032101"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "a00321b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "x_0.0321_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.03217"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570.0"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "+4570"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4.57e+03"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570 s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "the historical estimate of synthetic_tau was 4570 s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "\"synthetic_tau\": 4570"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "synthetic_tau=4570"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4567"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4.57 ks"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570.006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "14570"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "457001"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "a4570b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "x_4570_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.30"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "+12.3"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "1.23e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "the historical estimate of synthetic_rmse was 12.3 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "\"synthetic_rmse\": 12.3"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "synthetic_rmse=12.3"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.34"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "112.3"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.301"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "a123b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "x_12.3_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.37"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.1320"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "+0.132"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "1.32e-01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "the historical estimate of P1.R0 was 0.132 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "\"P1.R0\": 0.132"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "R0=0.132"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.13167672569496283"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "132 mohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "10.132"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.13201"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "a0132b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "x_0.132_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.1327"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.2260"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "+0.226"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "2.26e-01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "the historical estimate of P1.R1 was 0.226 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "\"P1.R1\": 0.226"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "R1=0.226"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.22580625155747797"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "226 mohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "10.226"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.22601"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "a0226b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "x_0.226_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.2267"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760.0"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "+760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "7.60e+02"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760 F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "the historical estimate of P1.C1 was 760 F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "\"P1.C1\": 760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "C1=760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "759.8941120507851"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760000 mF"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760.006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "1760"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "76001"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "a760b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "x_760_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172.0"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "+172"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "1.72e+02"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172 s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "the historical estimate of P1.tau was 172 s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "\"P1.tau\": 172"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "tau=172"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "171.58884102278594"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "0.172 ks"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172.006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "1172"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "17201"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "a172b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "x_172_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.40"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "+48.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "4.84e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "the historical estimate of P1.calibration_rmse was 48.4 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "\"P1.calibration_rmse\": 48.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "calibration_rmse=48.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.38954222872905"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "148.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.401"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "a484b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "x_48.4_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.47"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.02070"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "+0.0207"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "2.07e-02"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "the historical estimate of P2.R0 was 0.0207 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "\"P2.R0\": 0.0207"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "R0=0.0207"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.02065143453238383"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "20.7 mohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "10.0207"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.020701"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "a00207b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "x_0.0207_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.02077"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.01560"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "+0.0156"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "1.56e-02"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "the historical estimate of P2.R1 was 0.0156 ohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "\"P2.R1\": 0.0156"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "R1=0.0156"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156145302692712"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "15.6 mohm"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "10.0156"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.015601"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "a00156b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "x_0.0156_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.01567"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590.0"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "+1590"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1.59e+03"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590 F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "the historical estimate of P2.C1 was 1590 F"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "\"P2.C1\": 1590"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "C1=1590"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1585.9009050828427"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590000 mF"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590.006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "11590"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "159001"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "a1590b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "x_1590_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.80"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "+24.8"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "2.48e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8 s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "the historical estimate of P2.tau was 24.8 s"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "\"P2.tau\": 24.8"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "tau=24.8"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.76309768648064"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "0.0248 ks"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "124.8"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.801"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "a248b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "x_24.8_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.87"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.40"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "+8.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.40e+00"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "the historical estimate of P2.calibration_rmse was 8.4 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "\"P2.calibration_rmse\": 8.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "calibration_rmse=8.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.40160566720805"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "18.4"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.401"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "a84b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "x_8.4_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.47"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.20"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "+89.2"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "8.92e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "the historical estimate of P1.cross_cell_validation_rmse was 89.2 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "\"P1.cross_cell_validation_rmse\": 89.2"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "cross_cell_validation_rmse=89.2"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.22796908828245"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "189.2"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.201"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "a892b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "x_89.2_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.27"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.70"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "+49.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "4.97e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "the historical estimate of P1.within_cell_holdout_rmse was 49.7 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "\"P1.within_cell_holdout_rmse\": 49.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "within_cell_holdout_rmse=49.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.74030725864969"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "149.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.701"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "a497b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "x_49.7_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.77"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.70"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "+28.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "2.87e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "the historical estimate of P2.heldout_cc_rmse was 28.7 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "\"P2.heldout_cc_rmse\": 28.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "heldout_cc_rmse=28.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.65103257319798"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "128.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.701"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "a287b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "x_28.7_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.77"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.50"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "+12.5"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "1.25e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "the historical estimate of P2.heldout_pulses_rmse was 12.5 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "\"P2.heldout_pulses_rmse\": 12.5"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "heldout_pulses_rmse=12.5"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.549846854128964"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "112.5"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.501"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "a125b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "x_12.5_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.57"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.70"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "+56.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "5.67e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "the historical estimate of P1.rint_calibration_rmse was 56.7 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "\"P1.rint_calibration_rmse\": 56.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "rint_calibration_rmse=56.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.69243865734304"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "156.7"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.701"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "a567b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "x_56.7_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.77"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.90"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "+31.9"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "3.19e+01"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "the historical estimate of P2.rint_calibration_rmse was 31.9 mV"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "\"P2.rint_calibration_rmse\": 31.9"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "rint_calibration_rmse=31.9"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.91135572182914"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "131.9"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.901"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "a319b"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "x_31.9_y"
+  },
+  {
+   "carrier": "common.py",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.97"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "NOT_IDENTIFIABLE",
+   "text": "NOT_IDENTIFIABLE"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "WEAKLY_IDENTIFIABLE",
+   "text": "WEAKLY_IDENTIFIABLE"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "IDENTIFIABILITY_SUPPORTED",
+   "text": "IDENTIFIABILITY_SUPPORTED"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "MODEL_REJECTED",
+   "text": "MODEL_REJECTED"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "MODEL_VALIDATION_SUPPORTED",
+   "text": "MODEL_VALIDATION_SUPPORTED"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "PARTIALLY_CLOSED",
+   "text": "PARTIALLY_CLOSED"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "INSUFFICIENT_MEASUREMENT_EVIDENCE",
+   "text": "INSUFFICIENT_MEASUREMENT_EVIDENCE"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "EVIDENCE_BACKED",
+   "text": "EVIDENCE_BACKED"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "LEAKAGE_INVALIDATED",
+   "text": "LEAKAGE_INVALIDATED"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "REPRESENTATION_BOTTLENECK",
+   "text": "REPRESENTATION_BOTTLENECK"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "NO_MEASURED_ADVANTAGE",
+   "text": "NO_MEASURED_ADVANTAGE"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "PROMISING_SIGNAL",
+   "text": "PROMISING_SIGNAL"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "B0006",
+   "text": "B0006"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "battery_1rc_closure",
+   "text": "battery_1rc_closure"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "70ffb357511d",
+   "text": "70ffb357511d"
+  },
+  {
+   "carrier": "common.py",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "CALIBRATION.json",
+   "text": "CALIBRATION.json"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760.0"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "+760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "7.60e+02"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760 F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "the historical estimate of brief_example_C1 was 760 F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "\"brief_example_C1\": 760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "brief_example_C1=760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760000 mF"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760.006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "1760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "76001"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "a760b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "x_760_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.03210"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "+0.0321"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "3.21e-02"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "the historical estimate of synthetic_R was 0.0321 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "\"synthetic_R\": 0.0321"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "synthetic_R=0.0321"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "32.1 mohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "10.0321"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.032101"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "a00321b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "x_0.0321_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.03217"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570.0"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "+4570"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4.57e+03"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570 s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "the historical estimate of synthetic_tau was 4570 s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "\"synthetic_tau\": 4570"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "synthetic_tau=4570"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4567"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4.57 ks"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570.006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "14570"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "457001"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "a4570b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "x_4570_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "synthetic_tau",
+   "text": "4570.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.30"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "+12.3"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "1.23e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "the historical estimate of synthetic_rmse was 12.3 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "\"synthetic_rmse\": 12.3"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "synthetic_rmse=12.3"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.34"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.3006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "112.3"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.301"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "a123b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "x_12.3_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "synthetic_rmse",
+   "text": "12.37"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.1320"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "+0.132"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "1.32e-01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "the historical estimate of P1.R0 was 0.132 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "\"P1.R0\": 0.132"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "R0=0.132"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.13167672569496283"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "132 mohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.132006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "10.132"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.13201"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "a0132b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "x_0.132_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.R0",
+   "text": "0.1327"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.2260"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "+0.226"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "2.26e-01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "the historical estimate of P1.R1 was 0.226 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "\"P1.R1\": 0.226"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "R1=0.226"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.22580625155747797"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "226 mohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.226006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "10.226"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.22601"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "a0226b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "x_0.226_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.R1",
+   "text": "0.2267"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760.0"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "+760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "7.60e+02"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760 F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "the historical estimate of P1.C1 was 760 F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "\"P1.C1\": 760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "C1=760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "759.8941120507851"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760000 mF"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760.006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "1760"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "76001"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "a760b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "x_760_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.C1",
+   "text": "760.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172.0"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "+172"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "1.72e+02"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172 s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "the historical estimate of P1.tau was 172 s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "\"P1.tau\": 172"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "tau=172"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "171.58884102278594"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "0.172 ks"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172.006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "1172"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "17201"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "a172b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "x_172_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.tau",
+   "text": "172.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.40"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "+48.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "4.84e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "the historical estimate of P1.calibration_rmse was 48.4 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "\"P1.calibration_rmse\": 48.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "calibration_rmse=48.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.38954222872905"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.4006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "148.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.401"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "a484b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "x_48.4_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.calibration_rmse",
+   "text": "48.47"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.02070"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "+0.0207"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "2.07e-02"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "the historical estimate of P2.R0 was 0.0207 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "\"P2.R0\": 0.0207"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "R0=0.0207"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.02065143453238383"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "20.7 mohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.0207006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "10.0207"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.020701"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "a00207b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "x_0.0207_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.R0",
+   "text": "0.02077"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.01560"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "+0.0156"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "1.56e-02"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "the historical estimate of P2.R1 was 0.0156 ohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "\"P2.R1\": 0.0156"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "R1=0.0156"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156145302692712"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "15.6 mohm"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.0156006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "10.0156"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.015601"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "a00156b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "x_0.0156_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.R1",
+   "text": "0.01567"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590.0"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "+1590"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1.59e+03"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590 F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "the historical estimate of P2.C1 was 1590 F"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "\"P2.C1\": 1590"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "C1=1590"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1585.9009050828427"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590000 mF"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590.006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "11590"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "159001"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "a1590b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "x_1590_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.C1",
+   "text": "1590.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.80"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "+24.8"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "2.48e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8 s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "the historical estimate of P2.tau was 24.8 s"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "\"P2.tau\": 24.8"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "tau=24.8"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.76309768648064"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "si_prefixed",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "0.0248 ks"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.8006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "124.8"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.801"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "a248b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "x_24.8_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.tau",
+   "text": "24.87"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.40"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "+8.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.40e+00"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "the historical estimate of P2.calibration_rmse was 8.4 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "\"P2.calibration_rmse\": 8.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "calibration_rmse=8.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.40160566720805"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.4006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "18.4"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.401"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "a84b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "x_8.4_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.calibration_rmse",
+   "text": "8.47"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.20"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "+89.2"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "8.92e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "the historical estimate of P1.cross_cell_validation_rmse was 89.2 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "\"P1.cross_cell_validation_rmse\": 89.2"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "cross_cell_validation_rmse=89.2"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.22796908828245"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.2006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "189.2"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.201"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "a892b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "x_89.2_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.cross_cell_validation_rmse",
+   "text": "89.27"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.70"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "+49.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "4.97e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "the historical estimate of P1.within_cell_holdout_rmse was 49.7 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "\"P1.within_cell_holdout_rmse\": 49.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "within_cell_holdout_rmse=49.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.74030725864969"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.7006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "149.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.701"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "a497b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "x_49.7_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.within_cell_holdout_rmse",
+   "text": "49.77"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.70"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "+28.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "2.87e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "the historical estimate of P2.heldout_cc_rmse was 28.7 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "\"P2.heldout_cc_rmse\": 28.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "heldout_cc_rmse=28.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.65103257319798"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.7006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "128.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.701"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "a287b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "x_28.7_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.heldout_cc_rmse",
+   "text": "28.77"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.50"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "+12.5"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "1.25e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "the historical estimate of P2.heldout_pulses_rmse was 12.5 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "\"P2.heldout_pulses_rmse\": 12.5"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "heldout_pulses_rmse=12.5"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.549846854128964"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.5006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "112.5"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.501"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "a125b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "x_12.5_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.heldout_pulses_rmse",
+   "text": "12.57"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.70"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "+56.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "5.67e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "the historical estimate of P1.rint_calibration_rmse was 56.7 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "\"P1.rint_calibration_rmse\": 56.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "rint_calibration_rmse=56.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.69243865734304"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.7006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "156.7"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.701"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "a567b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "x_56.7_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P1.rint_calibration_rmse",
+   "text": "56.77"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "integer_or_reported",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "decimal_equivalent",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.90"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "signed",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "+31.9"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "scientific",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "3.19e+01"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "value_plus_unit",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "unit_no_space",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "prose_label",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "the historical estimate of P2.rint_calibration_rmse was 31.9 mV"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "result_label",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "\"P2.rint_calibration_rmse\": 31.9"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "assignment",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "rint_calibration_rmse=31.9"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "full_precision",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.91135572182914"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_decimal",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.9006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "leading_digit",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "131.9"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "trailing_digits",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.901"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "inside_identifier",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "a319b"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "underscore_identifier",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "x_31.9_y"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "longer_trailing_zero_free",
+   "ok": true,
+   "protected": "P2.rint_calibration_rmse",
+   "text": "31.97"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "NOT_IDENTIFIABLE",
+   "text": "NOT_IDENTIFIABLE"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "WEAKLY_IDENTIFIABLE",
+   "text": "WEAKLY_IDENTIFIABLE"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "IDENTIFIABILITY_SUPPORTED",
+   "text": "IDENTIFIABILITY_SUPPORTED"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "MODEL_REJECTED",
+   "text": "MODEL_REJECTED"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "MODEL_VALIDATION_SUPPORTED",
+   "text": "MODEL_VALIDATION_SUPPORTED"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "PARTIALLY_CLOSED",
+   "text": "PARTIALLY_CLOSED"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "INSUFFICIENT_MEASUREMENT_EVIDENCE",
+   "text": "INSUFFICIENT_MEASUREMENT_EVIDENCE"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "EVIDENCE_BACKED",
+   "text": "EVIDENCE_BACKED"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "LEAKAGE_INVALIDATED",
+   "text": "LEAKAGE_INVALIDATED"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "REPRESENTATION_BOTTLENECK",
+   "text": "REPRESENTATION_BOTTLENECK"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "NO_MEASURED_ADVANTAGE",
+   "text": "NO_MEASURED_ADVANTAGE"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "PROMISING_SIGNAL",
+   "text": "PROMISING_SIGNAL"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "B0006",
+   "text": "B0006"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "battery_1rc_closure",
+   "text": "battery_1rc_closure"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "70ffb357511d",
+   "text": "70ffb357511d"
+  },
+  {
+   "carrier": "P1.json",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "text_token",
+   "ok": true,
+   "protected": "CALIBRATION.json",
+   "text": "CALIBRATION.json"
+  },
+  {
+   "carrier": "pack:P1/voltage_V",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "measurement_array",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760"
+  },
+  {
+   "carrier": "pack:P1/voltage_V",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "measurement_array",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321"
+  },
+  {
+   "carrier": "pack:P1/voltage_V",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "measurement_array_unaltered",
+   "ok": true,
+   "protected": null,
+   "text": null
+  },
+  {
+   "carrier": "pack:P2/t_s",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "measurement_array",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760"
+  },
+  {
+   "carrier": "pack:P2/t_s",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "measurement_array",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321"
+  },
+  {
+   "carrier": "pack:P2/t_s",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "measurement_array_unaltered",
+   "ok": true,
+   "protected": null,
+   "text": null
+  },
+  {
+   "carrier": "pack:P1/temperature_C",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "measurement_array",
+   "ok": true,
+   "protected": "brief_example_C1",
+   "text": "760"
+  },
+  {
+   "carrier": "pack:P1/temperature_C",
+   "caught": true,
+   "expected": "DETECT",
+   "kind": "measurement_array",
+   "ok": true,
+   "protected": "synthetic_R",
+   "text": "0.0321"
+  },
+  {
+   "carrier": "pack:P1/temperature_C",
+   "caught": false,
+   "expected": "NO_HIT",
+   "kind": "measurement_array_unaltered",
+   "ok": true,
+   "protected": null,
+   "text": null
+  }
+ ],
+ "failures": [],
+ "leak_mutations": 460,
+ "leaks_caught": 460,
+ "phase": "post_seal",
+ "protected_values": [
+  {
+   "name": "brief_example_C1",
+   "unit": "F",
+   "value": "760"
+  },
+  {
+   "name": "synthetic_R",
+   "unit": "ohm",
+   "value": "0.0321"
+  },
+  {
+   "name": "synthetic_tau",
+   "unit": "s",
+   "value": "4567"
+  },
+  {
+   "name": "synthetic_rmse",
+   "unit": "mV",
+   "value": "12.34"
+  },
+  {
+   "name": "P1.R0",
+   "unit": "ohm",
+   "value": "0.13167672569496283"
+  },
+  {
+   "name": "P1.R1",
+   "unit": "ohm",
+   "value": "0.22580625155747797"
+  },
+  {
+   "name": "P1.C1",
+   "unit": "F",
+   "value": "759.8941120507851"
+  },
+  {
+   "name": "P1.tau",
+   "unit": "s",
+   "value": "171.58884102278594"
+  },
+  {
+   "name": "P1.calibration_rmse",
+   "unit": "mV",
+   "value": "48.38954222872905"
+  },
+  {
+   "name": "P2.R0",
+   "unit": "ohm",
+   "value": "0.02065143453238383"
+  },
+  {
+   "name": "P2.R1",
+   "unit": "ohm",
+   "value": "0.0156145302692712"
+  },
+  {
+   "name": "P2.C1",
+   "unit": "F",
+   "value": "1585.9009050828427"
+  },
+  {
+   "name": "P2.tau",
+   "unit": "s",
+   "value": "24.76309768648064"
+  },
+  {
+   "name": "P2.calibration_rmse",
+   "unit": "mV",
+   "value": "8.40160566720805"
+  },
+  {
+   "name": "P1.cross_cell_validation_rmse",
+   "unit": "mV",
+   "value": "89.22796908828245"
+  },
+  {
+   "name": "P1.within_cell_holdout_rmse",
+   "unit": "mV",
+   "value": "49.74030725864969"
+  },
+  {
+   "name": "P2.heldout_cc_rmse",
+   "unit": "mV",
+   "value": "28.65103257319798"
+  },
+  {
+   "name": "P2.heldout_pulses_rmse",
+   "unit": "mV",
+   "value": "12.549846854128964"
+  },
+  {
+   "name": "P1.rint_calibration_rmse",
+   "unit": "mV",
+   "value": "56.69243865734304"
+  },
+  {
+   "name": "P2.rint_calibration_rmse",
+   "unit": "mV",
+   "value": "31.91135572182914"
+  }
+ ],
+ "scanner": "forge.battery_rediscovery.leakage_scanner@1.0.0",
+ "scanner_sha256": "1c52d53ef00270dc42e78328cd2950987992a91fa954f0d85a0c6491b1274dac",
+ "schema": "forge.battery_rediscovery.leakage_mutation/1",
+ "status": "PASS",
+ "unmutated_carriers_clean": true
+}

@@ -1,0 +1,323 @@
+{
+ "declared_levels_A": [
+  1.0,
+  2.0
+ ],
+ "gen1_initial_design": {
+  "gen1_role_only_found_feasible": 10,
+  "gen2_infeasible_protocol": 10,
+  "gen2_statuses": [
+   "INFEASIBLE_PROTOCOL"
+  ],
+  "requests": 10,
+  "requests_on_a_declared_level": 0,
+  "rows": [
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "4f7d58590db5953b59148d3c4cb364d38771414c3f2d1c131b3d2fd59064d4ec",
+    "gen1_request": {
+     "I_A": 1.6092477375115743,
+     "t_on_s": 50.63284984775847
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 0
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "92f8c4d859fece03f21a31b441e371725821991a81b69f6003fe91d28a735d97",
+    "gen1_request": {
+     "I_A": 1.216821717027902,
+     "t_on_s": 146.8190025058106
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 1
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "979fb8818d3e66a5581e316cda26b9ac569b5b37010acce77d1e15e3fa760989",
+    "gen1_request": {
+     "I_A": 1.097288525641392,
+     "t_on_s": 42.33243695144946
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 2
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "996e17875d4947bf99aebc179372fe7178470d0840f00cd0348b19dbd0b5044b",
+    "gen1_request": {
+     "I_A": 1.3209224430424609,
+     "t_on_s": 90.41846562451461
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 3
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "dd790b4948091f4757f00bd85452f74321a72259a2f44387d64c702bb0c7c654",
+    "gen1_request": {
+     "I_A": 1.5739706513434506,
+     "t_on_s": 92.88696452547993
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 4
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "c6993cc32c34fa2bcf7b663e382777e6ac9bee0ce61f4ecd12905add93687a16",
+    "gen1_request": {
+     "I_A": 1.9486013506143132,
+     "t_on_s": 26.77736398962403
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 5
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "4f7d58590db5953b59148d3c4cb364d38771414c3f2d1c131b3d2fd59064d4ec",
+    "gen1_request": {
+     "I_A": 1.6092477375115743,
+     "t_on_s": 50.63284984775847
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 6
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "92f8c4d859fece03f21a31b441e371725821991a81b69f6003fe91d28a735d97",
+    "gen1_request": {
+     "I_A": 1.216821717027902,
+     "t_on_s": 146.8190025058106
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 7
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "979fb8818d3e66a5581e316cda26b9ac569b5b37010acce77d1e15e3fa760989",
+    "gen1_request": {
+     "I_A": 1.097288525641392,
+     "t_on_s": 42.33243695144946
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 8
+   },
+   {
+    "alternatives_I_A": [
+     {
+      "magnitude": 1.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     },
+     {
+      "magnitude": 2.0,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    ],
+    "decision_digest": "996e17875d4947bf99aebc179372fe7178470d0840f00cd0348b19dbd0b5044b",
+    "gen1_request": {
+     "I_A": 1.3209224430424609,
+     "t_on_s": 90.41846562451461
+    },
+    "gen1_role_only": "FEASIBLE",
+    "gen2_codes": [
+     "LEVEL_NOT_DECLARED"
+    ],
+    "gen2_status": "INFEASIBLE_PROTOCOL",
+    "index": 9
+   }
+  ]
+ },
+ "gen1_problem_digest": "15f78953caceefadd6c3de0a49fca973e66dba8e70513ca59c37aa6894aaffa4",
+ "journal_entries": 11,
+ "literal_case": {
+  "GEN1_ROLE_ONLY": "FEASIBLE",
+  "GEN1_STYLE_PROPOSAL": "I_A = 1.15 A, t_on_s = 55.62 s",
+  "GEN2_WORLD_ACTIONSPACE": "INFEASIBLE_PROTOCOL",
+  "alternatives_label": "admissible options under the declared world, not recommendations",
+  "codes": [
+   "LEVEL_NOT_DECLARED"
+  ],
+  "feasible_alternatives_I_A": [
+   {
+    "magnitude": 1.0,
+    "schema": "quantity/1",
+    "units": "ampere"
+   },
+   {
+    "magnitude": 2.0,
+    "schema": "quantity/1",
+    "units": "ampere"
+   }
+  ],
+  "reason": [
+   {
+    "code": "LEVEL_NOT_DECLARED",
+    "detail": {
+     "declared_by": "protocol_metadata",
+     "declared_levels": [
+      {
+       "magnitude": 1.0,
+       "schema": "quantity/1",
+       "units": "ampere"
+      },
+      {
+       "magnitude": 2.0,
+       "schema": "quantity/1",
+       "units": "ampere"
+      }
+     ],
+     "proposed": {
+      "magnitude": 1.15,
+      "schema": "quantity/1",
+      "units": "ampere"
+     }
+    },
+    "family": "domain",
+    "message": "1.15 ampere is not one of the declared levels",
+    "status": "INFEASIBLE_PROTOCOL",
+    "subject": "I_A"
+   }
+  ]
+ },
+ "schema": "forge.mind.gen2_world.gen1_reproduction/1",
+ "seed": 0,
+ "space_id": "e6f18a65690ce5f564891a17c533913a85bcac412e1757d3531751ec31b78acf",
+ "world_revision": "0975a1ff0f9f4194ead237c528b5735efc09f3cb2bb5c885b3348a874e425803"
+}

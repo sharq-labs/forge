@@ -1,0 +1,9 @@
+{"depth": 138, "error": null, "raw_returned_mapping": false, "before": null, "after": null, "refused": true, "calls": 1, "sealed": null}
+{"depth": 139, "error": null, "raw_returned_mapping": false, "before": null, "after": null, "refused": true, "calls": 1, "sealed": null}
+{"depth": 140, "error": null, "raw_returned_mapping": false, "before": null, "after": null, "refused": true, "calls": 1, "sealed": null}
+{"depth": 141, "error": "RecursionError", "raw_returned_mapping": false, "before": null, "after": null, "refused": true, "calls": 1, "sealed": null}
+{"depth": 142, "error": "RecursionError", "raw_returned_mapping": false, "before": null, "after": null, "refused": true, "calls": 1, "sealed": null}
+{"depth": 143, "error": "RecursionError", "raw_returned_mapping": false, "before": null, "after": null, "refused": true, "calls": 1, "sealed": null}
+{"depth": 144, "error": "RecursionError", "raw_returned_mapping": false, "before": null, "after": null, "refused": true, "calls": 1, "sealed": null}
+{"depth": 145, "error": "RecursionError", "raw_returned_mapping": true, "before": 2, "after": 1, "refused": false, "calls": 2, "sealed": null}
+{"depth": 146, "error": "RecursionError", "raw_returned_mapping": true, "before": 2, "after": 1, "refused": false, "calls": 2, "sealed": null}

@@ -1,0 +1,23 @@
+python 3.13.16 recursion limit 1000
+(a) where it raises, and the threshold (baseline stack)
+  depth 400: FEASIBLE
+  depth 450: FEASIBLE
+  depth 500: FEASIBLE
+  first raising depth (step 10): None
+(a2) with the caller 300 frames deeper
+  depth 150: FEASIBLE
+  depth 200: FEASIBLE
+  depth 250: FEASIBLE
+  depth 300: FEASIBLE
+(b) the owner itself at depth 600 / 5000 / 20000: to_json, from_dict, to_json of rebuilt
+  depth 600: owner writes and reads back: True
+  depth 5000: owner writes and reads back: True
+  depth 20000: owner FAILS RecursionError
+(b2) unbound side experiment at depth 20000 (beyond the owner's own encoder): admission -> FEASIBLE
+(c) re-dispatch: with and without intermediate Mind requests
+  depth 3, 0 Mind requests on the spent state []: re-dispatch after restore: DISPATCHED AGAIN; executor ran 2
+  depth 3, 1 Mind requests on the spent state ['MISSING_INFORMATION']: re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTH); executor ran 1
+  depth 600, 0 Mind requests on the spent state []: re-dispatch after restore: DISPATCHED AGAIN; executor ran 2
+  depth 600, 1 Mind requests on the spent state ['MISSING_INFORMATION']: re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTH); executor ran 1
+  depth 20000, 0 Mind requests on the spent state []: re-dispatch after restore: DISPATCHED AGAIN; executor ran 2
+  depth 20000, 1 Mind requests on the spent state ['MISSING_INFORMATION']: re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTH); executor ran 1

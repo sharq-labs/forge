@@ -1,0 +1,149 @@
+[
+  {
+    "name": "baseline",
+    "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-baseline",
+      "-q",
+      "tests/mind/test_authority_review_r16.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-baseline.log"
+  },
+  {
+    "name": "raw_history",
+    "source_sha256": "5779d61c5aecf61cf91f12fdccc6a3ad08f3ee51ffd9f77a31035eef6177750a",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-raw_history",
+      "-q",
+      "tests/mind/test_authority_review_r16.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-raw_history.log"
+  },
+  {
+    "name": "identity_is_divergence",
+    "source_sha256": "c0596462c4209f686dba30dce9174cec6123e3fc5cc1e80ce6fea40e6821a868",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-identity_is_divergence",
+      "-q",
+      "tests/mind/test_authority_review_r16.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-identity_is_divergence.log"
+  },
+  {
+    "name": "discard_earlier",
+    "source_sha256": "027a0981a5e38f5d15cea978c909eca86749f9b61415b220e826562648549af1",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-discard_earlier",
+      "-q",
+      "tests/mind/test_authority_review_r16.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-discard_earlier.log"
+  },
+  {
+    "name": "unguarded_reconciliation",
+    "source_sha256": "9d9c7cd3725e18e4a42df3ad6ff8f28eae8dfbd674a13928fc6b5f4d676f6615",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-unguarded_reconciliation",
+      "-q",
+      "tests/mind/test_authority_review_r16.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-unguarded_reconciliation.log"
+  },
+  {
+    "name": "incompatible_is_prefix",
+    "source_sha256": "c20251f27105e7b8fdfa7a8d8096d08e827e0b9e59f41dccfef602520c1205d1",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-incompatible_is_prefix",
+      "-q",
+      "tests/mind/test_authority_review_r16.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-incompatible_is_prefix.log"
+  },
+  {
+    "name": "lose_post_return",
+    "source_sha256": "145a7a133ed52d15b708cd104405064b4ff94fb0ffe85b77cedd3b98d4048a60",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-lose_post_return",
+      "-q",
+      "tests/mind/test_authority_review_r16.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+    "env": {
+      "PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-lose_post_return.log"
+  }
+]

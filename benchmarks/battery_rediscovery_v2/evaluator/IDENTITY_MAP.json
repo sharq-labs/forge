@@ -1,0 +1,374 @@
+{
+ "Q1": {
+  "Q1-c01": {
+   "capacity_basis_Ah": 1.80122884917134,
+   "cell": "B0038",
+   "discharge_ordinal": 14,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-c02": {
+   "capacity_basis_Ah": 1.8032329056834422,
+   "cell": "B0038",
+   "discharge_ordinal": 15,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-c03": {
+   "capacity_basis_Ah": 1.8053076964905113,
+   "cell": "B0038",
+   "discharge_ordinal": 39,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-c04": {
+   "capacity_basis_Ah": 1.8053076964905113,
+   "cell": "B0038",
+   "discharge_ordinal": 40,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-c05": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 14,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-c06": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 15,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-c07": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 39,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-c08": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 40,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-w01": {
+   "capacity_basis_Ah": 1.8053076964905113,
+   "cell": "B0038",
+   "discharge_ordinal": 37,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-w02": {
+   "capacity_basis_Ah": 1.8053076964905113,
+   "cell": "B0038",
+   "discharge_ordinal": 38,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-w03": {
+   "capacity_basis_Ah": 1.8053076964905113,
+   "cell": "B0038",
+   "discharge_ordinal": 43,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-w04": {
+   "capacity_basis_Ah": 1.8053076964905113,
+   "cell": "B0038",
+   "discharge_ordinal": 44,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0038.mat"
+  },
+  "Q1-w05": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 37,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-w06": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 38,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-w07": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 43,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-w08": {
+   "capacity_basis_Ah": 1.7823244306979111,
+   "cell": "B0039",
+   "discharge_ordinal": 44,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0039.mat"
+  },
+  "Q1-x01": {
+   "capacity_basis_Ah": 1.732369494430394,
+   "cell": "B0040",
+   "discharge_ordinal": 14,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0040.mat"
+  },
+  "Q1-x02": {
+   "capacity_basis_Ah": 1.7343239605703866,
+   "cell": "B0040",
+   "discharge_ordinal": 15,
+   "level_A": 1.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0040.mat"
+  },
+  "Q1-x03": {
+   "capacity_basis_Ah": 1.7356433861320713,
+   "cell": "B0040",
+   "discharge_ordinal": 39,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0040.mat"
+  },
+  "Q1-x04": {
+   "capacity_basis_Ah": 1.7356433861320713,
+   "cell": "B0040",
+   "discharge_ordinal": 40,
+   "level_A": 2.0,
+   "source_file": "extracted/3. BatteryAgingARC_25-44/B0040.mat"
+  }
+ },
+ "Q2": {
+  "Q2-c01": {
+   "level_A": 6.0,
+   "soc_group_rank": 0,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-c02": {
+   "level_A": 12.0,
+   "soc_group_rank": 0,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-c03": {
+   "level_A": 18.0,
+   "soc_group_rank": 0,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-c04": {
+   "level_A": 3.0,
+   "soc_group_rank": 2,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-c05": {
+   "level_A": 6.0,
+   "soc_group_rank": 2,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-c06": {
+   "level_A": 12.0,
+   "soc_group_rank": 2,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-c07": {
+   "level_A": 18.0,
+   "soc_group_rank": 2,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-c08": {
+   "level_A": 3.0,
+   "soc_group_rank": 4,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-c09": {
+   "level_A": 6.0,
+   "soc_group_rank": 4,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-c10": {
+   "level_A": 12.0,
+   "soc_group_rank": 4,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-c11": {
+   "level_A": 18.0,
+   "soc_group_rank": 4,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-c12": {
+   "level_A": 3.0,
+   "soc_group_rank": 6,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-c13": {
+   "level_A": 6.0,
+   "soc_group_rank": 6,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-c14": {
+   "level_A": 12.0,
+   "soc_group_rank": 6,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-c15": {
+   "level_A": 18.0,
+   "soc_group_rank": 6,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-c16": {
+   "level_A": 3.0,
+   "soc_group_rank": 8,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-c17": {
+   "level_A": 6.0,
+   "soc_group_rank": 8,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-c18": {
+   "level_A": 12.0,
+   "soc_group_rank": 8,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-c19": {
+   "level_A": 18.0,
+   "soc_group_rank": 8,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-c20": {
+   "level_A": 3.0,
+   "soc_group_rank": 9,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-c21": {
+   "level_A": 6.0,
+   "soc_group_rank": 9,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-c22": {
+   "level_A": 12.0,
+   "soc_group_rank": 9,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-w01": {
+   "level_A": 3.0,
+   "soc_group_rank": 1,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-w02": {
+   "level_A": 6.0,
+   "soc_group_rank": 1,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-w03": {
+   "level_A": 12.0,
+   "soc_group_rank": 1,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-w04": {
+   "level_A": 18.0,
+   "soc_group_rank": 1,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-w05": {
+   "level_A": 3.0,
+   "soc_group_rank": 3,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-w06": {
+   "level_A": 6.0,
+   "soc_group_rank": 3,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-w07": {
+   "level_A": 12.0,
+   "soc_group_rank": 3,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-w08": {
+   "level_A": 18.0,
+   "soc_group_rank": 3,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-w09": {
+   "level_A": 3.0,
+   "soc_group_rank": 5,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-w10": {
+   "level_A": 6.0,
+   "soc_group_rank": 5,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-w11": {
+   "level_A": 12.0,
+   "soc_group_rank": 5,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-w12": {
+   "level_A": 18.0,
+   "soc_group_rank": 5,
+   "source_role": "calibration",
+   "step": 23
+  },
+  "Q2-w13": {
+   "level_A": 3.0,
+   "soc_group_rank": 7,
+   "source_role": "calibration",
+   "step": 2
+  },
+  "Q2-w14": {
+   "level_A": 6.0,
+   "soc_group_rank": 7,
+   "source_role": "heldout_pulses",
+   "step": 9
+  },
+  "Q2-w15": {
+   "level_A": 12.0,
+   "soc_group_rank": 7,
+   "source_role": "heldout_pulses",
+   "step": 16
+  },
+  "Q2-w16": {
+   "level_A": 18.0,
+   "soc_group_rank": 7,
+   "source_role": "calibration",
+   "step": 23
+  }
+ }
+}

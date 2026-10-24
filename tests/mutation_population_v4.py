@@ -6931,8 +6931,8 @@ POPULATION_V4: tuple[tuple, ...] = (
         "external independence requires a disjoint external authority boundary", (), 'verification_v2_round60',
     ),
     (
-        "N60d", "src/engcore/scientific/verification/planning.py::plan_verification", "        if level<policy.minimum_level:\n            rejected.append((candidate.route.route_id,f\"verification level V{int(level)} below required V{int(policy.minimum_level)}\"));continue\n", "        if False:\n            rejected.append((candidate.route.route_id,f\"verification level V{int(level)} below required V{int(policy.minimum_level)}\"));continue\n", "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence", 'KILLED',
-        "verification planning enforces minimum verification level", (), 'verification_v2_round60',
+        "N60d", "src/engcore/scientific/verification/planning.py::plan_verification", "        if not any(provides(candidate.route.kind,c) for c in policy.categories):\n", "        if False:\n", "tests/scientific/verification/test_phase1_typed_verification.py::test_a_legacy_v2_requirement_is_not_met_by_validation_model_form_or_reproduction", 'KILLED',
+        "verification planning enforces typed evidence categories (DV-41 replaces the obsolete ordinal minimum)", (), 'verification_v2_round60',
     ),
     (
         "N60e", "src/engcore/scientific/verification/planning.py::plan_verification", "        if _INDEPENDENCE_RANK[independence.level]<_INDEPENDENCE_RANK[policy.minimum_independence]:\n            rejected.append((candidate.route.route_id,f\"independence {independence.level.value} below required {policy.minimum_independence.value}\"));continue\n", "        if False:\n            rejected.append((candidate.route.route_id,f\"independence {independence.level.value} below required {policy.minimum_independence.value}\"));continue\n", "tests/scientific/verification/test_planning_v2.py::test_plan_rejects_low_verification_level_and_partial_independence", 'KILLED',

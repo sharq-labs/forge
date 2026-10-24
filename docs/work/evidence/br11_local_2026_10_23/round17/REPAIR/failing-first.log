@@ -1,0 +1,287 @@
+FF..........FF..                                                         [100%]
+=================================== FAILURES ===================================
+_____ test_owner_json_equivalent_detached_history_recovers[value0-ledger] ______
+
+kind = 'ledger', value = {2: 'a', 10: 'b'}
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    @pytest.mark.parametrize("value", [{2: "a", 10: "b"}, {"2": "a", "10": "b"}, (1, 2)])
+    def test_owner_json_equivalent_detached_history_recovers(kind, value):
+        account, held, follow, reader, owner_kind = _fixture(kind)
+        _append(account, kind, value)
+        _interrupt_handing(reader)
+        held[0] = _checkpoint(account, kind)
+        fresh = BudgetReader.following(follow)
+        expected = fresh.read(owner_kind, "a")
+        for _ in range(2):
+>           assert reader.read(owner_kind, "a") == expected
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r17.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7bc3bcaabe30>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+___ test_owner_json_equivalent_detached_history_recovers[value0-experiment] ____
+
+kind = 'experiment', value = {2: 'a', 10: 'b'}
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    @pytest.mark.parametrize("value", [{2: "a", 10: "b"}, {"2": "a", "10": "b"}, (1, 2)])
+    def test_owner_json_equivalent_detached_history_recovers(kind, value):
+        account, held, follow, reader, owner_kind = _fixture(kind)
+        _append(account, kind, value)
+        _interrupt_handing(reader)
+        held[0] = _checkpoint(account, kind)
+        fresh = BudgetReader.following(follow)
+        expected = fresh.read(owner_kind, "a")
+        for _ in range(2):
+>           assert reader.read(owner_kind, "a") == expected
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r17.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7bc3bcab1370>
+kind = <OwnerKind.EXPERIMENT: 'experiment'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget experiment 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+_ test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0] _
+
+kind = 'experiment'
+value = <tests.mind.test_authority_review_r17._Text object at 0x7bc3bcaa7fe0>
+
+    @pytest.mark.parametrize("kind,value", [
+        ("experiment", _Text()), ("experiment", float("nan")),
+        ("experiment", {2: "a", "10": "b"}), ("ledger", {2: "a", "10": "b"}),
+    ])
+    def test_owner_unserializable_retained_entry_stays_unresolved(kind, value):
+        account, held, _, reader, owner_kind = _fixture(kind)
+        old = _checkpoint(account, kind)
+        _append(account, kind, value)
+        with pytest.raises((TypeError, ValueError)):
+            _checkpoint(account, kind)
+        _interrupt_handing(reader)
+        held[0] = old
+        for _ in range(2):
+            with pytest.raises(OwnerUnavailable):
+                reader.read(owner_kind, "a")
+>       assert reader._unread_entries
+E       assert {}
+E        +  where {} = <engcore.mind.world.owners.BudgetReader object at 0x7bc3bcc35e80>._unread_entries
+
+tests/mind/test_authority_review_r17.py:113: AssertionError
+__ test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan] ___
+
+record = <engcore.scientific.experiments.experiment.ScientificExperiment object at 0x7bc3bc89f3e0>
+indent = None
+
+    def to_json(record: Any, *, indent: int | None = None) -> str:
+        """Deterministic JSON for any record exposing ``to_dict()``.
+    
+        ``allow_nan=False``, which is the whole of the fix and needs saying. Python's
+        ``json`` emits non-finite floats as the bare tokens ``NaN``, ``Infinity``
+        and ``-Infinity``, which **no conforming JSON reader accepts** -- they are
+        not in the grammar. So a record carrying one serialized without complaint
+        and produced a document that Python could read back and nothing else could.
+    
+        That is worse than failing to serialize, not better: a record whose
+        provenance cannot be read by the consumer it was written for has no
+        provenance, and the failure surfaces at the consumer rather than at the
+        producer, long after the run that could have explained it.
+    
+        ``unwritable`` already refuses non-finite floats in the free-form fields,
+        and ``Quantity`` refuses non-finite magnitudes. This closes the same rule
+        over every OTHER branch of a payload -- a residual, a tolerance, a
+        threshold -- in one place, on the way out, where no future record can miss
+        it by forgetting to call a validator.
+    
+        A ``ValueError`` from here names the record that could not be written down.
+        """
+        payload = record.to_dict() if hasattr(record, "to_dict") else encode(record)
+        try:
+>           return json.dumps(payload, sort_keys=True, indent=indent, allow_nan=False)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/engcore/scientific/serialization.py:264: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/json/__init__.py:238: in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+/usr/lib/python3.12/json/encoder.py:200: in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <json.encoder.JSONEncoder object at 0x7bc3bcab25d0>
+o = {'schema': 'scientific_experiment/1', 'experiment_id': 'synthetic.battery.pulse-cell.experiment', 'problem': {'schema'...xperiment.problem', 'name': '', 'description': '', ...}, 'budget': {'max_observations': 20, 'max_attempts': None}, ...}
+_one_shot = True
+
+    def iterencode(self, o, _one_shot=False):
+        """Encode the given object and yield each string
+        representation as available.
+    
+        For example::
+    
+            for chunk in JSONEncoder().iterencode(bigobject):
+                mysocket.write(chunk)
+    
+        """
+        if self.check_circular:
+            markers = {}
+        else:
+            markers = None
+        if self.ensure_ascii:
+            _encoder = encode_basestring_ascii
+        else:
+            _encoder = encode_basestring
+    
+        def floatstr(o, allow_nan=self.allow_nan,
+                _repr=float.__repr__, _inf=INFINITY, _neginf=-INFINITY):
+            # Check for specials.  Note that this type of test is processor
+            # and/or platform-specific, so do tests which don't depend on the
+            # internals.
+    
+            if o != o:
+                text = 'NaN'
+            elif o == _inf:
+                text = 'Infinity'
+            elif o == _neginf:
+                text = '-Infinity'
+            else:
+                return _repr(o)
+    
+            if not allow_nan:
+                raise ValueError(
+                    "Out of range float values are not JSON compliant: " +
+                    repr(o))
+    
+            return text
+    
+    
+        if (_one_shot and c_make_encoder is not None
+                and self.indent is None):
+            _iterencode = c_make_encoder(
+                markers, self.default, _encoder, self.indent,
+                self.key_separator, self.item_separator, self.sort_keys,
+                self.skipkeys, self.allow_nan)
+        else:
+            _iterencode = _make_iterencode(
+                markers, self.default, _encoder, self.indent, floatstr,
+                self.key_separator, self.item_separator, self.sort_keys,
+                self.skipkeys, _one_shot)
+>       return _iterencode(o, 0)
+               ^^^^^^^^^^^^^^^^^
+E       ValueError: Out of range float values are not JSON compliant: nan
+
+/usr/lib/python3.12/json/encoder.py:258: ValueError
+
+The above exception was the direct cause of the following exception:
+
+kind = 'experiment', value = nan
+
+    @pytest.mark.parametrize("kind,value", [
+        ("experiment", _Text()), ("experiment", float("nan")),
+        ("experiment", {2: "a", "10": "b"}), ("ledger", {2: "a", "10": "b"}),
+    ])
+    def test_owner_unserializable_retained_entry_stays_unresolved(kind, value):
+        account, held, _, reader, owner_kind = _fixture(kind)
+        old = _checkpoint(account, kind)
+        _append(account, kind, value)
+        with pytest.raises((TypeError, ValueError)):
+>           _checkpoint(account, kind)
+
+tests/mind/test_authority_review_r17.py:107: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/mind/test_authority_review_r17.py:56: in _checkpoint
+    return ScientificExperiment.from_dict(json.loads(to_json(account)))
+                                                     ^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+record = <engcore.scientific.experiments.experiment.ScientificExperiment object at 0x7bc3bc89f3e0>
+indent = None
+
+    def to_json(record: Any, *, indent: int | None = None) -> str:
+        """Deterministic JSON for any record exposing ``to_dict()``.
+    
+        ``allow_nan=False``, which is the whole of the fix and needs saying. Python's
+        ``json`` emits non-finite floats as the bare tokens ``NaN``, ``Infinity``
+        and ``-Infinity``, which **no conforming JSON reader accepts** -- they are
+        not in the grammar. So a record carrying one serialized without complaint
+        and produced a document that Python could read back and nothing else could.
+    
+        That is worse than failing to serialize, not better: a record whose
+        provenance cannot be read by the consumer it was written for has no
+        provenance, and the failure surfaces at the consumer rather than at the
+        producer, long after the run that could have explained it.
+    
+        ``unwritable`` already refuses non-finite floats in the free-form fields,
+        and ``Quantity`` refuses non-finite magnitudes. This closes the same rule
+        over every OTHER branch of a payload -- a residual, a tolerance, a
+        threshold -- in one place, on the way out, where no future record can miss
+        it by forgetting to call a validator.
+    
+        A ``ValueError`` from here names the record that could not be written down.
+        """
+        payload = record.to_dict() if hasattr(record, "to_dict") else encode(record)
+        try:
+            return json.dumps(payload, sort_keys=True, indent=indent, allow_nan=False)
+        except ValueError as exc:
+>           raise ScientificCoreError(
+                f"{type(record).__name__} cannot be serialized: {exc}. A non-finite "
+                f"float has no JSON representation -- Python emits the bare tokens "
+                f"NaN and Infinity, which no conforming reader accepts -- so a "
+                f"record carrying one would serialize here and be unreadable at "
+                f"the consumer it was written for"
+            ) from exc
+E           engcore.scientific.errors.ScientificCoreError: ScientificExperiment cannot be serialized: Out of range float values are not JSON compliant: nan. A non-finite float has no JSON representation -- Python emits the bare tokens NaN and Infinity, which no conforming reader accepts -- so a record carrying one would serialize here and be unreadable at the consumer it was written for
+
+src/engcore/scientific/serialization.py:266: ScientificCoreError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]
+FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-experiment]
+FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]
+FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]
+4 failed, 12 passed in 1.61s

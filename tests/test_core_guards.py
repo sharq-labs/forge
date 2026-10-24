@@ -1078,33 +1078,57 @@ def test_every_check_a_live_solve_produces_earns_its_level():
 _THRESHOLD_PARAMETER_MARKERS = ("_rel_tol", "_atol", "min_contraction")
 
 
-def _gates_taking_bare_float_thresholds():
-    """Every function in ``src`` with a float parameter that names a threshold.
+def _threshold_offenders(tree, module_name):
+    from tests.guard_ast_support import canonical_import_names
 
-    Crude on purpose. A guard that only looked at the two gates this round knew
-    about would be exactly the kind of list the round exists to stop writing.
-    """
+    # A unit-bearing numerical tolerance is not itself a validation award. Only
+    # exact unshadowed Quantity annotations in modules without known authority
+    # operations get this narrow distinction. Opaque helper behavior is outside
+    # this syntactic heuristic; runtime non-award controls remain necessary.
+    quantities = canonical_import_names(tree, module_name,
+                                        "engcore.scientific.units.quantity", "Quantity")
+    authority_names = {"ValidationLevel", "ValidationCheck", "ValidationReport", "ValidationOutcome",
+                       "VerificationThresholds", "award", "establishes", "validation_level", "attained_levels", "attained"}
+    from engcore.scientific.results.validation import ValidationLevel
+    authority_literals = authority_names | {"validation"} | {level.value for level in ValidationLevel}
+    authority = any(
+        (isinstance(node, ast.Name) and node.id in authority_names)
+        or (isinstance(node, ast.Attribute) and node.attr in authority_names)
+        or (isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in authority_literals)
+        or (isinstance(node, ast.ImportFrom) and ("validation" in (node.module or "").split(".")
+            or any(alias.name in authority_names for alias in node.names)))
+        or (isinstance(node, ast.Import) and any("validation" in alias.name.split(".") for alias in node.names))
+        for node in ast.walk(tree)
+    )
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            continue
+        offending = []
+        for arg in (*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs):
+            if not any(marker in arg.arg for marker in _THRESHOLD_PARAMETER_MARKERS):
+                continue
+            annotation = arg.annotation
+            if isinstance(annotation, ast.Constant) and isinstance(annotation.value, str):
+                try:
+                    annotation = ast.parse(annotation.value, mode="eval").body
+                except SyntaxError:
+                    annotation = None
+            if not authority and isinstance(annotation, ast.Name) and annotation.id in quantities:
+                continue
+            offending.append(arg.arg)
+        if offending:
+            yield node.name, offending
+
+
+def _gates_taking_bare_float_thresholds():
+    """Detect named caller thresholds, conservatively resolving numerical Quantities."""
     root = pathlib.Path(__file__).resolve().parent.parent / "src"
     for path in sorted(root.rglob("*.py")):
-        try:
-            tree = ast.parse(path.read_bytes().decode("utf-8"))
-        except SyntaxError:  # pragma: no cover
-            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"))
         relative = path.relative_to(root.parent).as_posix()
-        for node in ast.walk(tree):
-            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                continue
-            arguments = list(node.args.args) + list(node.args.kwonlyargs)
-            offending = [
-                argument.arg
-                for argument in arguments
-                if any(
-                    marker in argument.arg
-                    for marker in _THRESHOLD_PARAMETER_MARKERS
-                )
-            ]
-            if offending:
-                yield relative, node.name, offending
+        module_name = ".".join(path.relative_to(root).with_suffix("").parts)
+        for name, arguments in _threshold_offenders(tree, module_name):
+            yield relative, name, arguments
 
 
 def test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against():

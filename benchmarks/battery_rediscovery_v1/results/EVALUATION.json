@@ -1,0 +1,763 @@
+{
+ "analysis": {
+  "EXACT": [
+   "P2/CROSS_CELL_TRANSFER"
+  ],
+  "N": [
+   "P1/MODEL_ADEQUACY",
+   "P1/IDENTIFIABILITY",
+   "P1/MODEL_DISCREPANCY",
+   "P2/MODEL_ADEQUACY",
+   "P2/MODEL_DISCREPANCY"
+  ],
+  "R": [
+   "P1/WITHIN_CELL_GENERALIZATION",
+   "P1/CROSS_CELL_TRANSFER",
+   "P2/IDENTIFIABILITY",
+   "P2/WITHIN_CELL_GENERALIZATION",
+   "P2/CROSS_CELL_TRANSFER"
+  ],
+  "U": [],
+  "acc_EXACT_careful": 1.0,
+  "acc_EXACT_mind": 1.0,
+  "acc_N_careful": 0.8,
+  "acc_N_mind": 0.0,
+  "acc_R_careful": 1.0,
+  "acc_R_mind": 0.4,
+  "failures": [
+   "P1/MODEL_ADEQUACY",
+   "P1/IDENTIFIABILITY",
+   "P1/CROSS_CELL_TRANSFER",
+   "P1/MODEL_DISCREPANCY",
+   "P2/MODEL_ADEQUACY",
+   "P2/IDENTIFIABILITY",
+   "P2/WITHIN_CELL_GENERALIZATION",
+   "P2/MODEL_DISCREPANCY"
+  ],
+  "failures_in_N": [
+   "P1/MODEL_ADEQUACY",
+   "P1/IDENTIFIABILITY",
+   "P1/MODEL_DISCREPANCY",
+   "P2/MODEL_ADEQUACY",
+   "P2/MODEL_DISCREPANCY"
+  ],
+  "failures_in_R": [
+   "P1/CROSS_CELL_TRANSFER",
+   "P2/IDENTIFIABILITY",
+   "P2/WITHIN_CELL_GENERALIZATION"
+  ],
+  "share_N": 0.625
+ },
+ "arm_labels": {
+  "MIND": "MIND_V0_REPRESENTATION"
+ },
+ "conclusion": {
+  "checks": {
+   "acc_N_mind": 0.0,
+   "acc_R_careful": 1.0,
+   "acc_R_mind": 0.4,
+   "careful_total": 9,
+   "end_to_end": true,
+   "leakage_ok": true,
+   "majority_of_failures_in_N": true,
+   "materially_better_on_R": true,
+   "n_N": 5,
+   "n_R": 5,
+   "n_U": 0,
+   "not_poor_where_representable": false,
+   "replay_ok": true,
+   "share_N": 0.625,
+   "trivial_best": 2
+  },
+  "conclusion": "REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY"
+ },
+ "experiment": "battery_rediscovery_v1",
+ "instances": {
+  "P1/CROSS_CELL_TRANSFER": {
+   "careful_answer": "NOT_SUPPORTED",
+   "careful_outcome": "CORRECT",
+   "class": "REPRESENTABLE_APPROXIMATELY",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "SUPPORTED",
+    "NOT_SUPPORTED",
+    "NOT_ASSESSABLE",
+    "REFUSED"
+   ],
+   "semantics": "PROXY",
+   "truth": "NOT_SUPPORTED",
+   "why": "PREDICTION probe per held-out subset (same as within-cell; cell identity is not represented); as within-cell; transfer is judged only through prediction error of the Mind's own law"
+  },
+  "P1/IDENTIFIABILITY": {
+   "careful_answer": "SUPPORTED",
+   "careful_outcome": "FALSE_SUPPORT",
+   "class": "NOT_REPRESENTABLE",
+   "mind_answer": "REFUSED",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "REFUSED"
+   ],
+   "semantics": "PROXY",
+   "truth": "NOT_SUPPORTED",
+   "why": "the RELAXATION probe's problem is refused from the pack alone (empty box or pool): the arm can only refuse"
+  },
+  "P1/MODEL_ADEQUACY": {
+   "careful_answer": "NOT_SUPPORTED",
+   "careful_outcome": "CORRECT",
+   "class": "NOT_REPRESENTABLE",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "semantics": "NONE",
+   "truth": "NOT_SUPPORTED",
+   "why": "none: the declared 1RC family is not in the hypothesis space (log-linear structures)"
+  },
+  "P1/MODEL_DISCREPANCY": {
+   "careful_answer": "NOT_SUPPORTED",
+   "careful_outcome": "CORRECT",
+   "class": "NOT_REPRESENTABLE",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "semantics": "NONE",
+   "truth": "NOT_SUPPORTED",
+   "why": "none: residuals of the declared family are never computed by the arm"
+  },
+  "P1/WITHIN_CELL_GENERALIZATION": {
+   "careful_answer": "NOT_ASSESSABLE",
+   "careful_outcome": "CORRECT_REFUSAL",
+   "class": "REPRESENTABLE_APPROXIMATELY",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "CORRECT_REFUSAL",
+   "reachable": [
+    "SUPPORTED",
+    "NOT_SUPPORTED",
+    "NOT_ASSESSABLE",
+    "REFUSED"
+   ],
+   "semantics": "PROXY",
+   "truth": "NOT_ASSESSABLE",
+   "why": "PREDICTION probe per held-out subset: the Mind's own log-linear law, compared to the declared bar; scores loaded samples at t_on >= median(dt)/tolerance only; applicability is extrapolation of the settable inputs, not the declared temperature/current/SOC rule; a decisive answer requires the Mind to issue a LAW first"
+  },
+  "P2/CROSS_CELL_TRANSFER": {
+   "careful_answer": "NOT_ASSESSABLE",
+   "careful_outcome": "CORRECT_REFUSAL",
+   "class": "REPRESENTABLE_EXACTLY",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "CORRECT_REFUSAL",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "semantics": "EXACT",
+   "truth": "NOT_ASSESSABLE",
+   "why": "no held-out set of this kind is supplied; the arm answers NOT_ASSESSABLE, which is the question's own answer for an absent set"
+  },
+  "P2/IDENTIFIABILITY": {
+   "careful_answer": "SUPPORTED",
+   "careful_outcome": "CORRECT",
+   "class": "REPRESENTABLE_APPROXIMATELY",
+   "mind_answer": "REVIEW",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "NOT_SUPPORTED",
+    "REFUSED",
+    "REVIEW",
+    "SUPPORTED"
+   ],
+   "semantics": "PROXY",
+   "truth": "SUPPORTED",
+   "why": "RELAXATION probe: curvature in ln t of the relaxation impedance stands for an identifiable RC time scale; no judgment of R0-versus-OCV confounding, hold-convention sensitivity, bound activity or R0 alone"
+  },
+  "P2/MODEL_ADEQUACY": {
+   "careful_answer": "NOT_SUPPORTED",
+   "careful_outcome": "CORRECT",
+   "class": "NOT_REPRESENTABLE",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "semantics": "NONE",
+   "truth": "NOT_SUPPORTED",
+   "why": "none: the declared 1RC family is not in the hypothesis space (log-linear structures)"
+  },
+  "P2/MODEL_DISCREPANCY": {
+   "careful_answer": "NOT_SUPPORTED",
+   "careful_outcome": "CORRECT",
+   "class": "NOT_REPRESENTABLE",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "semantics": "NONE",
+   "truth": "NOT_SUPPORTED",
+   "why": "none: residuals of the declared family are never computed by the arm"
+  },
+  "P2/WITHIN_CELL_GENERALIZATION": {
+   "careful_answer": "NOT_SUPPORTED",
+   "careful_outcome": "CORRECT",
+   "class": "REPRESENTABLE_APPROXIMATELY",
+   "mind_answer": "NOT_ASSESSABLE",
+   "mind_outcome": "FALSE_REFUSE",
+   "reachable": [
+    "SUPPORTED",
+    "NOT_SUPPORTED",
+    "NOT_ASSESSABLE",
+    "REFUSED"
+   ],
+   "semantics": "PROXY",
+   "truth": "NOT_SUPPORTED",
+   "why": "PREDICTION probe per held-out subset: the Mind's own log-linear law, compared to the declared bar; scores loaded samples at t_on >= median(dt)/tolerance only; applicability is extrapolation of the settable inputs, not the declared temperature/current/SOC rule; a decisive answer requires the Mind to issue a LAW first"
+  }
+ },
+ "leakage": {
+  "mutation_post_seal": "PASS",
+  "mutation_pre_run": "PASS",
+  "post_seal": "PASS",
+  "post_seal_benign_triggered": "0/243",
+  "post_seal_leaks_caught": "460/460",
+  "pre_seal": "PASS",
+  "protected_values": {
+   "added_post_seal": [
+    "P1.rint_calibration_rmse",
+    "P2.rint_calibration_rmse"
+   ],
+   "pre_run_values_match_history_records": true
+  }
+ },
+ "maturity": {
+  "CERTIFIED": "NO",
+  "FORMAL": "NO",
+  "IMPLEMENTED": "YES",
+  "MEASURED": "YES (one sealed run)",
+  "SCIENTIFICALLY_VERIFIED": "NO",
+  "TESTED": "YES (synthetic-world, scanner and mutation tests)"
+ },
+ "replay": {
+  "mind_traces": 5,
+  "mind_traces_verified": 5,
+  "non_identical": [],
+  "outputs": 12,
+  "outputs_identical": 12,
+  "trace_status": {
+   "P1:PREDICTION[cross_cell_heldout/other_cell]": "VERIFIED",
+   "P1:PREDICTION[within_cell_heldout/later_cycles]": "VERIFIED",
+   "P2:PREDICTION[within_cell_heldout/cc]": "VERIFIED",
+   "P2:PREDICTION[within_cell_heldout/pulses]": "VERIFIED",
+   "P2:RELAXATION": "VERIFIED"
+  }
+ },
+ "schema": "forge.battery_rediscovery.evaluation/2",
+ "scores": {
+  "ALWAYS_FIT": {
+   "correct_total": 1,
+   "counts": {
+    "CORRECT": 1,
+    "CORRECT_REFUSAL": 0,
+    "FALSE_REFUSE": 0,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 9,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "ALWAYS_REFUSE": {
+   "correct_total": 2,
+   "counts": {
+    "CORRECT": 0,
+    "CORRECT_REFUSAL": 2,
+    "FALSE_REFUSE": 8,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 0,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "REFUSED",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "REFUSED",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "CAREFUL_BASELINE": {
+   "correct_total": 9,
+   "counts": {
+    "CORRECT": 7,
+    "CORRECT_REFUSAL": 2,
+    "FALSE_REFUSE": 0,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 1,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "FIXED_FIT": {
+   "correct_total": 4,
+   "counts": {
+    "CORRECT": 3,
+    "CORRECT_REFUSAL": 1,
+    "FALSE_REFUSE": 0,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 6,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "SUPPORTED",
+     "outcome": "FALSE_SUPPORT",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_SUPPORTED",
+     "outcome": "CORRECT",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  },
+  "MIND": {
+   "correct_total": 2,
+   "counts": {
+    "CORRECT": 0,
+    "CORRECT_REFUSAL": 2,
+    "FALSE_REFUSE": 8,
+    "FALSE_REJECT": 0,
+    "FALSE_SUPPORT": 0,
+    "UNSUPPORTED_DECISION": 0
+   },
+   "per_instance": {
+    "P1/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/IDENTIFIABILITY": {
+     "answer": "REFUSED",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_ADEQUACY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/MODEL_DISCREPANCY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P1/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/CROSS_CELL_TRANSFER": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "CORRECT_REFUSAL",
+     "truth": "NOT_ASSESSABLE"
+    },
+    "P2/IDENTIFIABILITY": {
+     "answer": "REVIEW",
+     "outcome": "FALSE_REFUSE",
+     "truth": "SUPPORTED"
+    },
+    "P2/MODEL_ADEQUACY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/MODEL_DISCREPANCY": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    },
+    "P2/WITHIN_CELL_GENERALIZATION": {
+     "answer": "NOT_ASSESSABLE",
+     "outcome": "FALSE_REFUSE",
+     "truth": "NOT_SUPPORTED"
+    }
+   },
+   "scored": 10
+  }
+ },
+ "truth": {
+  "historical_heldout_rmse_mV": {
+   "P1": {
+    "cross_cell_validation": 89.22796908828245,
+    "within_cell_holdout": 49.74030725864969
+   },
+   "P2": {
+    "heldout_cc": 28.65103257319798,
+    "heldout_pulses": 12.549846854128964
+   }
+  },
+  "historical_parameters": {
+   "P1": {
+    "1rc": {
+     "C1": 759.8941120507851,
+     "R0": 0.13167672569496283,
+     "R1": 0.22580625155747797,
+     "ocv": [
+      3.220106904517633,
+      3.414358626291687,
+      3.8503505629431336,
+      4.061479958968526,
+      4.153882012696887,
+      4.1927571333305576,
+      4.226209960965551,
+      4.267228343276488,
+      4.321712376342262,
+      4.384492621854831,
+      4.452828081433112,
+      4.499999999999999,
+      4.311308082731329
+     ]
+    },
+    "rmse_mV": 48.38954222872905,
+    "tau_s": 171.58884102278594
+   },
+   "P2": {
+    "1rc": {
+     "C1": 1585.9009050828427,
+     "R0": 0.02065143453238383,
+     "R1": 0.0156145302692712
+    },
+    "rmse_mV": 8.40160566720805,
+    "tau_s": 24.76309768648064
+   }
+  },
+  "record_sha256": {
+   "benchmarks/battery_1rc_closure/results/CALIBRATION.json": "a302989a9034fb5b169480bf1a1e031bca9706ed3d474bd17ce44a641b685530",
+   "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json": "7bcf51a4dbc80f0fc685a60a10e961d3936bb80dcffeb6b0c83b1c424dddbc61",
+   "benchmarks/battery_1rc_closure/results/VALIDATION.json": "ff6f19568a2e8f2e81133cd2aea907e296f5fc27c90d92657667e4052ae9d65c",
+   "benchmarks/battery_1rc_identifiability/results/CALIBRATION.json": "0bcec32d774ec3465bb86a9dc2254424c5a0524c9fbbd9fc74d2d3cab7b8bf9e",
+   "benchmarks/battery_1rc_identifiability/results/OUTCOME.json": "bfe1b6f39d31d284dfd4cc93b3c4f4658638336730c2e05de0f50e486d7a865c",
+   "benchmarks/battery_1rc_identifiability/results/VALIDATION.json": "90eb67f7897aad05fbe31a4fdfa77067d017555ce9e5375329eaf45b4335ff4a"
+  },
+  "schema": "forge.battery_rediscovery.truth/1",
+  "seal": {
+   "files_bound": 14,
+   "seal_commit": "c0613435f3af3d2979ffa5b4dfc26dfe3ac0f9a1",
+   "seal_sha256": "65f9600fcbeba956152ff265916dee1399fc5ffe3d9b62f2120d10124168bd7e"
+  },
+  "table": {
+   "P1": {
+    "CROSS_CELL_TRANSFER": {
+     "basis": "FAIL",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.cross_cell_validation.1rc.acceptance"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "IDENTIFIABILITY": {
+     "basis": "historical decision NOT_IDENTIFIABLE",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/CALIBRATION.json#identifiability.decision"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "MODEL_ADEQUACY": {
+     "basis": "held-out acceptance within=NOT_ASSESSABLE cross=NOT_SUPPORTED; derived discrepancy NOT_SUPPORTED",
+     "derived": true,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.*.1rc.acceptance"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "MODEL_DISCREPANCY": {
+     "basis": "held-out 1RC lag-1 {'within_cell_holdout': 0.7572372394984622, 'cross_cell_validation': 0.92435293979791}; model_form status NOT_QUANTIFIED_AS_ADMISSIBLE_UQ",
+     "derived": true,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.*.1rc.lag1_autocorrelation_mean",
+      "benchmarks/battery_1rc_closure/results/UNCERTAINTY_REPORT.json#components.model_form.status"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "basis": "NOT_ASSESSABLE (12 cycle(s) outside the validated domain)",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_closure/results/VALIDATION.json#roles.within_cell_holdout.1rc.acceptance"
+     ],
+     "truth": "NOT_ASSESSABLE"
+    }
+   },
+   "P2": {
+    "CROSS_CELL_TRANSFER": {
+     "basis": "one cell only: no cross-cell set exists (structural truth)",
+     "derived": false,
+     "history_class": "HISTORY_NOT_ASSESSABLE",
+     "sources": [],
+     "truth": "NOT_ASSESSABLE"
+    },
+    "IDENTIFIABILITY": {
+     "basis": "historical decision IDENTIFIABLE",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/OUTCOME.json#identifiability"
+     ],
+     "truth": "SUPPORTED"
+    },
+    "MODEL_ADEQUACY": {
+     "basis": "preregistered outcome MODEL_REJECTED",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/OUTCOME.json#outcome"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "MODEL_DISCREPANCY": {
+     "basis": "no historical model-form decision; derived from held-out 1RC lag-1 {'heldout_pulses': 0.940023305452447, 'heldout_cc': 0.9959380731567395}",
+     "derived": true,
+     "history_class": "HISTORY_NOT_ASSESSABLE",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/VALIDATION.json#roles.heldout_*.1rc.lag1_autocorrelation_mean"
+     ],
+     "truth": "NOT_SUPPORTED"
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "basis": "pulses PASS; cc FAIL",
+     "derived": false,
+     "history_class": "DECIDED",
+     "sources": [
+      "benchmarks/battery_1rc_identifiability/results/OUTCOME.json#held_out_acceptance_1rc"
+     ],
+     "sub": {
+      "within_cell_heldout/cc": "NOT_SUPPORTED",
+      "within_cell_heldout/pulses": "SUPPORTED"
+     },
+     "truth": "NOT_SUPPORTED"
+    }
+   }
+  }
+ },
+ "v0_history": {
+  "CONFIRMED_RESULT": "NONE",
+  "POST_SEAL_AMENDMENT_RESULT": "REPRESENTATION_BOTTLENECK",
+  "PREREGISTERED_RESULT": "LEAKAGE_INVALIDATED"
+ },
+ "v0_replication": {
+  "all_identical": true,
+  "compared": 12,
+  "files": {
+   "ALWAYS_FIT__P1.json": true,
+   "ALWAYS_FIT__P2.json": true,
+   "ALWAYS_REFUSE__P1.json": true,
+   "ALWAYS_REFUSE__P2.json": true,
+   "CAREFUL_BASELINE__P1.json": true,
+   "CAREFUL_BASELINE__P2.json": true,
+   "FIXED_FIT__P1.json": true,
+   "FIXED_FIT__P2.json": true,
+   "MIND_TRACES__P1.json": true,
+   "MIND_TRACES__P2.json": true,
+   "MIND__P1.json": true,
+   "MIND__P2.json": true
+  },
+  "identical": 12
+ }
+}

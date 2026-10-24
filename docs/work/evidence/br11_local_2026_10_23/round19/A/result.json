@@ -1,0 +1,108 @@
+{
+  "reviewed_sha": "0b605b43416d575b60f87ca57eea7a1d646489d5",
+  "lens": "Round19 A scientific authority/ownership/currentness",
+  "disposition": "No actionable finding established within bounded review",
+  "questions": [
+    {
+      "id": "Q1",
+      "answer": "No second state authority found in reviewed paths.",
+      "evidence": [
+        "src/engcore/mind/world/owners.py:243",
+        "src/engcore/mind/world/owners.py:255",
+        "src/engcore/mind/world/projection.py:108"
+      ],
+      "detail": "RunStateReader accepts exact SystemRunResult/SystemCheckpoint, obtains canonical head and digest, checks following heads for rollback/rewrite, and projection verification compares owner facts and exact declaration projection. A following callback is the execution-side currentness statement, not independent proof of currentness."
+    },
+    {
+      "id": "Q2",
+      "answer": "No second model-applicability authority found.",
+      "evidence": [
+        "src/engcore/mind/world/owners.py:316",
+        "src/engcore/mind/world/world.py:122",
+        "src/engcore/mind/world/feasibility.py:853"
+      ],
+      "detail": "Exact canonical model records are registry-read; ApplicabilityBinding delegates to ScientificModelDefinition.assess_validity. UNKNOWN and non-exact current inputs refuse model execution; non-model queries retain annotation-only applicability."
+    },
+    {
+      "id": "Q3",
+      "answer": "No duplicate unit authority found.",
+      "evidence": [
+        "src/engcore/mind/world/base.py:23",
+        "src/engcore/mind/world/owners.py:1347",
+        "src/engcore/mind/world/world.py:315"
+      ],
+      "detail": "Quantity, base-unit conversion and canonical magnitude come from scientific.units. UnitRegistryReader verifies the seal and binds the fingerprint. Budget amount conversion delegates to that owner. Local value encodings and domain checks do not constitute another unit registry."
+    },
+    {
+      "id": "Q4",
+      "answer": "No competing design/search or spend authority established; one explicitly documented rule mirror remains.",
+      "evidence": [
+        "src/engcore/mind/world/feasibility.py:460",
+        "src/engcore/mind/world/world.py:247",
+        "src/engcore/mind/world/world.py:339",
+        "src/engcore/mind/world/owners.py:392",
+        "src/engcore/mind/world/owners.py:1033"
+      ],
+      "detail": "FeasibleActionSpace checks and enumerates declared alternatives rather than ranking/searching/selecting. BudgetLedger.affordable owns ledger decisions; AccountPublication retains canonical account objects/history, not a second balance. Observation affordability mirrors ScientificExperiment.record because the owner has no affordability query; this is disclosed and is a maintenance coupling, not an independently writable accounting authority. Positive/negative public-lifetime probes below found no restore amplification."
+    },
+    {
+      "id": "Q5",
+      "answer": "No scientific-support verdict issued by reviewed world/admission paths.",
+      "evidence": [
+        "src/engcore/mind/world/feasibility.py:77",
+        "src/engcore/mind/world/feasibility.py:770",
+        "src/engcore/mind/world/admission.py:72"
+      ],
+      "detail": "Classification explicitly says feasibility/admission is not scientific support. Current uncertain state containment refuses with MISSING_INFORMATION. Requested configuration exactness is separately disclosed from realization uncertainty; no conversion into evidence, validation or physical truth was identified."
+    },
+    {
+      "id": "Q6",
+      "answer": "No external-proposer bypass established under the execution-side suggestions_only policy.",
+      "evidence": [
+        "src/engcore/mind/world/actions.py:586",
+        "src/engcore/mind/world/admission.py:519",
+        "src/engcore/mind/world/admission.py:537"
+      ],
+      "detail": "Typed suggestion intake rejects authority and unknown keys, binds revision/family, and admission reconstructs proposal/world. Desk and guarded executor apply suggestions_only independently of port. ProposerKind is caller-asserted; deployments must enable the policy for external proposers. This is not Python-process isolation."
+    },
+    {
+      "id": "Q7",
+      "answer": "No public desk path to provider/executor with an unadmitted action established.",
+      "evidence": [
+        "src/engcore/mind/world/admission.py:402",
+        "src/engcore/mind/world/admission.py:443",
+        "src/engcore/mind/world/admission.py:457"
+      ],
+      "detail": "Dispatch requires exact AdmittedAction, live shipped owner readers, fresh re-admission and matching digest. Guarded executor re-derives supplied authorization. Provider invocation/effects remain executor-owned; this review does not claim atomic reservation or at-most-once dispatch."
+    }
+  ],
+  "findings": [],
+  "tests": [
+    {
+      "command_log": "/home/dev_kaeem/br11-review/r19/A/lifetime-tests.log",
+      "result": "57 passed in 3.90s",
+      "exit_code": 0
+    },
+    {
+      "command_log": "/home/dev_kaeem/br11-review/r19/A/boundary-tests.log",
+      "result": "10 passed in 2.16s",
+      "exit_code": 0
+    },
+    {
+      "command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r19/A/probe_public_lifetime.py",
+      "result": "8 adversarial rollback attempts refused; 5 legitimate detached restores/topups readable",
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r19/A/probe_public_lifetime.log"
+    }
+  ],
+  "limits": [
+    "Read-only bounded review of SHA 0b605b43416d575b60f87ca57eea7a1d646489d5; no source, branch, worktree, or repository-doc changes. Native Ubuntu-24.04 CPython 3.12.3 and owners.__file__ confirmed.",
+    "Reviewed CLAUDE.md, architecture README, world owners/authority/projection/admission/feasibility/actions/port/base and relevant world budget/applicability code; checked canonical BudgetLedger behavior. Current lifetime evidence README read as claims/context, not authority or substitute for reruns.",
+    "67 focused pytest cases executed, not the broad FAST/regression suite. Independent public API probe covers eight serial lifetime variants and five positive restores/topups; not exhaustive concurrency or interruption-state exploration.",
+    "Existing lifecycle tests deliberately inject KeyboardInterrupt/patch internals as fault controls. Independent probe uses only public publication, settlement, restore, close and retirement operations; no private-state tampering.",
+    "Persistent source across ordinary restore is required by the approved contract. Deliberately replacing source states a new timeline; arbitrary private-member mutation, process-crash persistence, executor reservation/concurrency and at-most-once effects remain out of scope.",
+    "Following run/declaration callbacks are trusted execution-side currentness statements; provider status freshness follows refresh policy. A live reader mode does not establish environmental truth.",
+    "Source retains every distinct publication generation and may retain historical accounts indefinitely; no bounded-memory/performance claim. No physical validation, certification, universal correctness, or formal verification claimed."
+  ],
+  "git_status_at_finish": ""
+}
