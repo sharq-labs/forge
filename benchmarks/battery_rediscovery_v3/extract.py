@@ -22,9 +22,11 @@ import zipfile
 
 from benchmarks.battery_rediscovery_v2.candidate.common import write_json
 
+from .data_root import FORGE_DATA_ROOT
+
 HERE = pathlib.Path(__file__).resolve().parent
 VAULT = HERE / "EvaluatorVault"
-KIRKALDY = pathlib.Path("D:/forge-data/kirkaldy2024")
+KIRKALDY = FORGE_DATA_ROOT / "kirkaldy2024"
 OUT = KIRKALDY / "v3_rpt"
 ARCHIVES = {4: "Expt 4 - Drive Cycle Aging (Control).zip", 5: "Expt 5 - Standard Cycle Aging (Control).zip"}
 CELLS = ("A", "B", "C", "F", "G", "H")

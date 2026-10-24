@@ -59,12 +59,13 @@ from benchmarks.battery_rediscovery_v2.candidate.common import (
 from benchmarks.battery_rediscovery_v2.candidate.families import EQUATIONS, ocv_parameter_names
 
 from . import extract
+from .data_root import FORGE_DATA_ROOT
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 PACK = HERE / "CandidateBundle"
 VAULT = HERE / "EvaluatorVault"
-DATA = pathlib.Path("D:/forge-data")
+DATA = FORGE_DATA_ROOT
 V2_PACK = ROOT / "benchmarks" / "battery_rediscovery_v2" / "candidate" / "pack"
 BRIDGE = ("Q1", "Q2")
 

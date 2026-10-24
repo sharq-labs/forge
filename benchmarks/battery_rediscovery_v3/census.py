@@ -33,10 +33,12 @@ import numpy as np
 
 from benchmarks.battery_rediscovery_v2.candidate.common import write_json
 
+from .data_root import FORGE_DATA_ROOT
+
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 VAULT = HERE / "EvaluatorVault"
-DATA = pathlib.Path("D:/forge-data")
+DATA = FORGE_DATA_ROOT
 NASA_DIR = DATA / "nasa_pcoe_battery"
 
 SCREEN = {

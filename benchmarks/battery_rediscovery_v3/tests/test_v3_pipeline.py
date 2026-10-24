@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import math
 import pathlib
+import platform
 import subprocess
 import sys
 
@@ -27,7 +28,14 @@ from benchmarks.battery_rediscovery_v3.tests import synthetic_v3
 
 HERE = pathlib.Path(__file__).resolve().parents[1]
 ROOT = HERE.parents[1]
-REAL_DATA = pathlib.Path("D:/forge-data/kirkaldy2024/v3_rpt").exists()
+REAL_DATA = (build_pack.DATA / "kirkaldy2024" / "v3_rpt").exists()
+
+
+def test_data_root_uses_the_native_or_wsl_drive_mount():
+    expected = (pathlib.Path("/mnt/d/forge-data") if sys.platform == "linux"
+                and "microsoft" in platform.release().lower()
+                else pathlib.Path("D:/forge-data"))
+    assert build_pack.DATA == expected
 
 
 # ---- GEN1 and the bundle ----------------------------------------------------------------------------------------------
