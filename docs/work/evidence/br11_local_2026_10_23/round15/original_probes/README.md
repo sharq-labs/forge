@@ -1,0 +1,1 @@
+Copied original R15 probes and outputs from ~/br11-review/r15. The regenerable B-architecture/pt pytest basetemp was excluded; original files outside this evidence copy remain untouched. Journal results and labels remain the authority for which reviewers executed probes.

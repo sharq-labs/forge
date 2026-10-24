@@ -1,0 +1,223 @@
+{
+ "benchmark_files_scanned": 50,
+ "numeric": [],
+ "numeric_engine": "forge.battery_rediscovery.leakage_scanner@1.0.0",
+ "pack_schema": [],
+ "phase": "pre_seal",
+ "platform_files_scanned": 19,
+ "protected_values": [
+  {
+   "name": "brief_example_C1",
+   "unit": "F",
+   "value": "760"
+  },
+  {
+   "name": "synthetic_R",
+   "unit": "ohm",
+   "value": "0.0321"
+  },
+  {
+   "name": "synthetic_tau",
+   "unit": "s",
+   "value": "4567"
+  },
+  {
+   "name": "synthetic_rmse",
+   "unit": "mV",
+   "value": "12.34"
+  },
+  {
+   "name": "P1.R0",
+   "unit": "ohm",
+   "value": "0.13167672569496283"
+  },
+  {
+   "name": "P1.R1",
+   "unit": "ohm",
+   "value": "0.22580625155747797"
+  },
+  {
+   "name": "P1.C1",
+   "unit": "F",
+   "value": "759.8941120507851"
+  },
+  {
+   "name": "P1.tau",
+   "unit": "s",
+   "value": "171.58884102278594"
+  },
+  {
+   "name": "P1.calibration_rmse",
+   "unit": "mV",
+   "value": "48.38954222872905"
+  },
+  {
+   "name": "P2.R0",
+   "unit": "ohm",
+   "value": "0.02065143453238383"
+  },
+  {
+   "name": "P2.R1",
+   "unit": "ohm",
+   "value": "0.0156145302692712"
+  },
+  {
+   "name": "P2.C1",
+   "unit": "F",
+   "value": "1585.9009050828427"
+  },
+  {
+   "name": "P2.tau",
+   "unit": "s",
+   "value": "24.76309768648064"
+  },
+  {
+   "name": "P2.calibration_rmse",
+   "unit": "mV",
+   "value": "8.40160566720805"
+  },
+  {
+   "name": "P1.cross_cell_validation_rmse",
+   "unit": "mV",
+   "value": "89.22796908828245"
+  },
+  {
+   "name": "P1.within_cell_holdout_rmse",
+   "unit": "mV",
+   "value": "49.74030725864969"
+  },
+  {
+   "name": "P2.heldout_cc_rmse",
+   "unit": "mV",
+   "value": "28.65103257319798"
+  },
+  {
+   "name": "P2.heldout_pulses_rmse",
+   "unit": "mV",
+   "value": "12.549846854128964"
+  },
+  {
+   "name": "v2.Q1.adequacy_rmse",
+   "unit": "V",
+   "value": "0.0462483979798"
+  },
+  {
+   "name": "v2.Q1.C1",
+   "unit": "F",
+   "value": "5164.9694859"
+  },
+  {
+   "name": "v2.Q1.R0",
+   "unit": "ohm",
+   "value": "0.135092795225"
+  },
+  {
+   "name": "v2.Q1.cross_unit_heldout.other_cell.rmse",
+   "unit": "V",
+   "value": "0.0571202203065"
+  },
+  {
+   "name": "v2.Q1.within_unit_heldout.later_cycles.rmse",
+   "unit": "V",
+   "value": "0.0542503642111"
+  },
+  {
+   "name": "v2.Q2.adequacy_rmse",
+   "unit": "V",
+   "value": "0.0120956447271"
+  },
+  {
+   "name": "v2.Q2.C1",
+   "unit": "F",
+   "value": "1463.98577235"
+  },
+  {
+   "name": "v2.Q2.R0",
+   "unit": "ohm",
+   "value": "0.021017733172"
+  },
+  {
+   "name": "v2.Q2.R1",
+   "unit": "ohm",
+   "value": "0.0174052907143"
+  },
+  {
+   "name": "v2.Q2.within_unit_heldout.pulses_alternate_soc.rmse",
+   "unit": "V",
+   "value": "0.00793580864083"
+  },
+  {
+   "name": "sprint3.gateA_rmse",
+   "unit": "mV",
+   "value": "62.40"
+  },
+  {
+   "name": "sprint3.gateA_p95",
+   "unit": "mV",
+   "value": "108.13"
+  },
+  {
+   "name": "sprint3.B0044_rmse",
+   "unit": "mV",
+   "value": "99.74"
+  },
+  {
+   "name": "sprint3.recovery_before",
+   "unit": "mV",
+   "value": "116.4"
+  },
+  {
+   "name": "sprint3.recovery_after",
+   "unit": "mV",
+   "value": "38.4"
+  },
+  {
+   "name": "sprint3.B0041_bias",
+   "unit": "mV",
+   "value": "128"
+  },
+  {
+   "name": "lghg2.R0",
+   "unit": "mohm",
+   "value": "20.7"
+  },
+  {
+   "name": "lghg2.R1",
+   "unit": "mohm",
+   "value": "15.6"
+  },
+  {
+   "name": "lghg2.tau",
+   "unit": "s",
+   "value": "24.8"
+  },
+  {
+   "name": "lghg2.pulse_rmse",
+   "unit": "mV",
+   "value": "12.6"
+  },
+  {
+   "name": "lghg2.cc_rmse",
+   "unit": "mV",
+   "value": "28.7"
+  }
+ ],
+ "provenance": [],
+ "provenance_checked": true,
+ "runtime": {
+  "benchmarks/battery_rediscovery_v3/results/ACCESS_LOG.json": {
+   "engcore_files_opened": 197,
+   "exit": 0,
+   "forbidden_modules": [],
+   "forbidden_paths": [],
+   "outputs_read_during_run": [],
+   "paths_opened": 1661,
+   "paths_outside_roots": [],
+   "platform_identity_tokens": []
+  }
+ },
+ "scanner": "forge.battery_rediscovery_v3.leakage_firewall@3.0.0",
+ "schema": "forge.battery_rediscovery_v3.leakage_audit/1",
+ "status": "PASS",
+ "text": []
+}

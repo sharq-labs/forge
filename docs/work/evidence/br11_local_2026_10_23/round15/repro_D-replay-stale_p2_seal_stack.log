@@ -1,0 +1,10 @@
+recursion limit 1000
+  pin at depth -> RecursionError   then shallow read -> SEALED      : 2 depths (995..996)
+  pin at depth -> RecursionError   then shallow read -> readable    : 7 depths (991..999)
+  pin at depth -> ok               then shallow read -> readable    : 111 depths (880..990)
+  example sealed depth 995 -> the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not observed and any of them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)
+interrupt in _handed re-raised
+  later read 0: SEALED
+  later read 1: SEALED
+  later read 2: SEALED
+  sealed text: the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not observed and any of them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)

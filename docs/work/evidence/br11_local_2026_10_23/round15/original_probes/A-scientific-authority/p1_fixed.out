@@ -1,0 +1,15 @@
+owners: /home/dev_kaeem/br11-review/r15/A-scientific-authority/tree-fix/src/engcore/mind/world/owners.py
+proxy first dispatch, calls 1
+proxy VB read refused: the execution side handed over what is not a pair of account dicts (TypeError): the accounts in it were not observed and any of them may hold a spend,
+proxy sealed: True unread: {}
+proxy VA (the same admitted action, dispatch started before the seal): ['REFUSED: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)']
+proxy executor calls: 1
+proxy later dispatch: REFUSED: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) calls 1
+----
+unread_dict_control first dispatch, calls 1
+unread_dict_control VB read refused: budget ledger 'synthetic.battery.pulse-cell.solver' was not read back to this verification (3 read-back attempts failed, not alike or with the interpr
+unread_dict_control sealed: False unread: {('ledger', 'synthetic.battery.pulse-cell.solver'): 2}
+unread_dict_control VA (the same admitted action, dispatch started before the seal): ['REFUSED: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)']
+unread_dict_control executor calls: 1
+unread_dict_control later dispatch: REFUSED: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) calls 1
+----

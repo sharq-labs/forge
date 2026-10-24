@@ -1,0 +1,2 @@
+FAILED tests/mind/test_authority_review_r8.py::test_no_account_or_provider_outside_the_declaration_in_force_is_read[other_content]
+1 failed, 568 passed in 19.24s

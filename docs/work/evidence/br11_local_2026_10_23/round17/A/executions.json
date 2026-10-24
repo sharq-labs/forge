@@ -1,0 +1,42 @@
+[
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r16.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r17/A/pt",
+      "-n",
+      "1"
+    ],
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/A/controls.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r17/A/probe_native.py"
+    ],
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/A/native.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "/home/dev_kaeem/br11-review/r17/A/test_transitions.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r17/A/pt_more",
+      "-n",
+      "1"
+    ],
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/A/transitions.log"
+  }
+]

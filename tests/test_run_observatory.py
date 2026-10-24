@@ -772,3 +772,96 @@ def test_the_utc_stamps_are_iso_and_the_duration_is_not_their_difference(repo, r
     start = datetime.strptime(timing["started_utc"], "%Y-%m-%dT%H:%M:%S.%fZ")
     end = datetime.strptime(timing["ended_utc"], "%Y-%m-%dT%H:%M:%S.%fZ")
     assert abs((end - start) - timedelta(seconds=timing["wall_seconds"])) < timedelta(seconds=1)
+
+
+# PR #186: regressions for output framing, report identity and interrupt cleanup.
+@pytest.mark.parametrize("secret", [
+    b"-----BEGIN PRIVATE KEY-----\nprivate-material\n-----END PRIVATE KEY-----",
+    b"known-first-line\nknown-second-line",
+    b"ghp_" + b"a" * 36,
+])
+def test_stream_redaction_is_independent_of_chunk_boundary(secret):
+    known = redaction.Redactor((secret.decode(),)) if secret.startswith(b"known") else redaction.Redactor()
+    payload = b"safe before\n" + secret + b"\nsafe after\n"
+    expected = known.redact_bytes(payload)[0]
+    for split in range(len(payload) + 1):
+        stream = redaction.StreamRedactor(known)
+        actual = stream.feed(payload[:split])[0] + stream.feed(payload[split:])[0] + stream.feed(b"", final=True)[0]
+        assert actual == expected, split
+
+
+def test_pump_redacts_long_line_boundary_and_preserves_raw_hash(tmp_path):
+    import hashlib
+    import io
+    secret = b"ghp_" + b"a" * 36
+    payload = b"x" * 65530 + b" " + secret + b"\n"
+    target = tmp_path / "stored.log"
+    sink = io.BytesIO()
+    pump = runner._Pump(io.BytesIO(payload), sink, target, redaction.Redactor())
+    pump.run()
+    assert target.read_bytes() == redaction.Redactor().redact_bytes(payload)[0]
+    assert sink.getvalue() == payload
+    assert pump.raw.hexdigest() == hashlib.sha256(payload).hexdigest()
+    assert pump.stored.hexdigest() == hashlib.sha256(target.read_bytes()).hexdigest()
+
+
+def test_stream_redaction_fails_closed_on_incomplete_pem_and_oversized_record():
+    stream = redaction.StreamRedactor(redaction.Redactor())
+    assert stream.feed(b"-----BEGIN PRIVATE KEY-----\nsecret-material\n")[0] == b""
+    assert b"secret-material" not in stream.feed(b"", final=True)[0]
+    stream = redaction.StreamRedactor(redaction.Redactor())
+    stream.MAX_PENDING = 32
+    assert b"omitted" in stream.feed(b"x" * 33)[0]
+    assert stream.feed(b"never-persist-this\n")[0] == b""
+    assert stream.omitted
+
+
+@pytest.mark.parametrize("flag", ["--junitxml=custom.xml", "--junit-xml=custom.xml", "--junitxml", "--junit-xml"])
+def test_pytest_report_is_bound_to_child_cwd(repo, run_root, tmp_path, monkeypatch, flag):
+    observer = tmp_path / "observer"
+    observer.mkdir()
+    (observer / "custom.xml").write_text('<testsuite><testcase name="unrelated"><failure/></testcase></testsuite>')
+    monkeypatch.chdir(observer)
+    (repo / "test_local.py").write_text("def test_ok(): assert True\n")
+    args = [flag] if "=" in flag else [flag, "custom.xml"]
+    out = runner.execute(_request(run_root, repo, [PY, "-m", "pytest", "-q", *args], adapter="pytest"))
+    outcomes = out.receipt["result"]["adapter_outcomes"]
+    assert out.exit_code == 0
+    assert outcomes["passed"] == 1 and outcomes["failed"] == 0
+    assert Path(outcomes["report"]) == repo / "custom.xml"
+    assert Path(out.receipt["outputs"]["adapter_report"]) == repo / "custom.xml"
+
+
+@pytest.mark.skipif(os.name != "posix", reason="POSIX process-group interrupt contract")
+@pytest.mark.parametrize("parent_exits", [False, True])
+def test_interrupt_stops_descendants_even_when_parent_exits(repo, run_root, monkeypatch, parent_exits):
+    import signal
+    import time
+    pidfile = repo / "worker.pid"
+    worker = ("import os,signal,time,pathlib; signal.signal(signal.SIGINT,signal.SIG_IGN); "
+              f"pathlib.Path({str(pidfile)!r}).write_text(str(os.getpid())); time.sleep(60)")
+    handler = "lambda *a: exit(0)" if parent_exits else "signal.SIG_IGN"
+    parent = (f"import subprocess,sys,signal,time; signal.signal(signal.SIGINT,{handler}); "
+              f"subprocess.Popen([sys.executable,'-c',{worker!r}]); time.sleep(60)")
+    def interrupt_after_worker_ready(proc):
+        deadline = time.monotonic() + 10
+        while not pidfile.exists() and time.monotonic() < deadline:
+            time.sleep(.02)
+        assert pidfile.exists()
+        raise runner.Interrupted(signal.SIGINT)
+    monkeypatch.setattr(runner, "_wait", interrupt_after_worker_ready)
+    try:
+        out = runner.execute(_request(run_root, repo, [PY, "-c", parent], grace_seconds=.2))
+        pid = int(pidfile.read_text())
+        deadline = time.monotonic() + 3
+        while metrics.pid_alive(pid) and time.monotonic() < deadline:
+            time.sleep(.02)
+        assert not metrics.pid_alive(pid)
+        assert out.receipt["result"]["status"] == "RUN_INTERRUPTED"
+        assert out.receipt["outputs"]["stdout"]["capture_complete"]
+    finally:
+        if pidfile.exists():
+            try:
+                os.kill(int(pidfile.read_text()), signal.SIGKILL)
+            except ProcessLookupError:
+                pass

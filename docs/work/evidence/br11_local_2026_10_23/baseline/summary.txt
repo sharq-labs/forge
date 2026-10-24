@@ -1,0 +1,7 @@
+suite exit=0 wall=20s
+benchmarks.mind_gen2_authority_v1.rescore --check exit=0 wall=1s
+benchmarks.mind_gen2_authority_v1.run_benchmark --check exit=0 wall=4s
+benchmarks.battery_rediscovery_v3.gen1_reference --check exit=0 wall=1s
+.                                                                        [100%]
+649 passed in 19.15s
+DONE

@@ -1,0 +1,1450 @@
+{
+ "PREDICTION[cross_cell_heldout/other_cell]": {
+  "conclusion": {
+   "diagnostics": {
+    "evidence": 0,
+    "extrapolates": false,
+    "noise": {
+     "basis": [],
+     "dof": 0,
+     "kind": "UNKNOWN",
+     "sd_ln": null,
+     "upper95_ln": null
+    },
+    "refuted": []
+   },
+   "kind": "insufficient_evidence",
+   "laws": [],
+   "leading_status": "",
+   "reason": "no rival is both fitted and unrefuted",
+   "schema": "forge.mind.minimal.conclusion/1"
+  },
+  "config": {
+   "adaptive_selection": true,
+   "belief_update": true,
+   "falsifier": true,
+   "mind": "forge.mind.minimal@1.0.0",
+   "precision": 0.02,
+   "variant": "full"
+  },
+  "executions": [],
+  "final_state": {
+   "actions": [],
+   "budget": {
+    "remaining": 40,
+    "spent": 0,
+    "total": 40
+   },
+   "contradictions": [],
+   "evidence_count": 0,
+   "hypotheses": [
+    {
+     "claim_digest": "6d2309367fe81fe798725d46535cfeeb2048952077757bf51c195016bb59d1ad",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 0,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 0 features need >= 4",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "daed123a4e51f2fbd329191472493dfdf2c27678315ff7a714812c3740493199",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "d5375a6d3374f93bcecf6ea79fcb114ae1683874c5e3d7256a913130cd736baf",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 6,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 6 features need >= 10",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "123ae3d9cbaf83d3e82dab9152f8dc432a9a4e6c0a0cecb1ef612e63b07901a4",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "43e435923cce4c7b0bffa84871fa8b4362e26d1f7bb9dbe86eee35899a3a60f9",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "36dd8fa63ccf2de37ca451d4973cf2e2c559c48fe6c8670e664204f742b7d87f",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "bab874d3b352e0f54d3252e92c4aea8cd21ef2d27aa5190ecd3ddd47977abbbd",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "969e9003d6ecb5f8471c9a6fd729351691d1c349e2cbe281c8088a6624809d9e",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "1a7a4fef3b2df1bdbf5427083c62cc6f7739301369d0d2bdc6dafa2c95694649",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "203a27b5aa94b5c2e96eab42a3249f5ea0d659d8597c39cd812d2435cfda0e46",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 5,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 5 features need >= 9",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "f4f7b06e1d0142be493c8fc0c4ec674c5ab6f8f583de7a27e411f827948943c1",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "381b6a1f7a7744446a8ee279c65e65b0117c09eea14e968f69010e2307a3bcdc",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "10caa0149cd0425fe420d8b006335ba1448022dc5b486aa802821b8c17559617",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "2bbecb399dd6a96b2a06967abed1ef8a7fa96cb23822286b9ed541c407e8186e",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "aca2b9392e33a7a3f69459cb78632506983b0cafb8e72389f73ec7ec0f3b1a21",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "477d69e238fe0c47983d00efd780f4dc3ae1892aeaae2304930fb15871759469",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "2801f2712add437d449ce330b898b2d8a40b62716e6809769d17941904d811f6",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 5,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 5 features need >= 9",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "8ce13d8a6bc5db815513109b8d5f28a585564696a1cc8f5a22afc0b6d494d4ad",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "ccee3a40382488161cafd2f41d8db58ae5e64343fef683c64f51701ee8071f75",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "b06edbc04ff9bab30c318c58cbe894ee0a5f8604534e73c3b0b258e6b3f76fc1",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "2d223ed92b93babb92791e3f58e4b02c09d5243a90450f962be26b4b9e6eaaca",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "014ad72e6e0835ae294d78b141fb08acf4cf0b8b6e20c5991883631864df8727",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "90a1d56767a1f379ad8736fffa0c7098700dd4202b64b5ab75c9306ac1057b5c",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "f8b114e13390fc46616ddb8be31bae90c2034648dbc25a76436c181c653b52d0",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "5ca375ec106084fcb06fd41154d4bbe29c1d027fccf4412bf1c8cf31dd20924f",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "9af276443800ff2241f21bad7dc1d45fbf4c89df5c39793fcd09eff12aa23aa6",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "666dc1c12cfd64c8aee2f64bafe161b2c1557af83ab4e5ef50fd78cbb440a505",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "bc02fdf1502867a6c32dac7db0eeb51c1d6b7303128281dbf1a17b19533661a4",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    }
+   ],
+   "knowns": {
+    "admitted_evidence": [],
+    "noise": {
+     "basis": [],
+     "dof": 0,
+     "kind": "UNKNOWN",
+     "sd_ln": null,
+     "upper95_ln": null
+    }
+   },
+   "outcome_model": {
+    "estimation": "reference prior (least squares)",
+    "g": "hyper-g/n, a=3.0",
+    "intercept_prior": "flat",
+    "model": "forge.mind.minimal.bayes_loglinear_gprior",
+    "sigma_prior": "jeffreys",
+    "version": "3"
+   },
+   "prior": {
+    "covariate_prior_inclusion": 0.5,
+    "curvature_form": "squares of the log of every settable input in the structure",
+    "curvature_prior_mass": 0.2,
+    "family": "beta_binomial_1_1_over_settable_inputs"
+   },
+   "problem_digest": "79b58e80fa42f6bf9f19ab4f75c6e74b9c2a1fefe845303363e721dc90be03fe",
+   "proposals": [],
+   "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+   "schema": "forge.mind.minimal.state_view/1",
+   "unknowns": [
+    "observation uncertainty: UNKNOWN (no replicate degree of freedom yet)",
+    "28 rival(s) UNFIT: no standing can be computed for them yet",
+    "passive covariates at a planned query: predicted through a fitted submodel, never set"
+   ]
+  },
+  "final_stop": {
+   "budget_remaining": 40,
+   "kind": "refuse",
+   "leading_weight": null,
+   "max_utility": null,
+   "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+   "region_sd": null
+  },
+  "mind": "forge.mind.minimal@1.0.0",
+  "multiplicity": null,
+  "observations": [],
+  "problem": {
+   "budget": 40,
+   "covariates": [
+    "T_K",
+    "z"
+   ],
+   "inputs": [
+    {
+     "high": 6381.0779999999995,
+     "low": 203.4400000000005,
+     "name": "t_on_s",
+     "unit": "s"
+    },
+    {
+     "high": 2.0179602336684033,
+     "low": 0.991086414707011,
+     "name": "I_A",
+     "unit": "A"
+    }
+   ],
+   "observable": "y",
+   "observable_unit": "V",
+   "problem_id": "Q1:PREDICTION[cross_cell_heldout/other_cell]",
+   "query_cost": 1.0,
+   "region": {
+    "I_A": [
+     0.995222468438061,
+     1.9993456181076452
+    ],
+    "t_on_s": [
+     203.4400000000005,
+     6185.9529999999995
+    ]
+   },
+   "schema": "forge.mind.minimal.problem/1"
+  },
+  "problem_digest": "79b58e80fa42f6bf9f19ab4f75c6e74b9c2a1fefe845303363e721dc90be03fe",
+  "refusal": {
+   "budget": false,
+   "message": "no unused recorded sample within 0.05 ln of the requested settings",
+   "query_index": 0
+  },
+  "registry": {
+   "entries": 28,
+   "head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+   "verdicts": []
+  },
+  "schema": "forge.mind.minimal.trace/1",
+  "seed": 0,
+  "steps": []
+ },
+ "PREDICTION[within_cell_heldout/later_cycles]": {
+  "conclusion": {
+   "diagnostics": {
+    "evidence": 0,
+    "extrapolates": true,
+    "noise": {
+     "basis": [],
+     "dof": 0,
+     "kind": "UNKNOWN",
+     "sd_ln": null,
+     "upper95_ln": null
+    },
+    "refuted": []
+   },
+   "kind": "insufficient_evidence",
+   "laws": [],
+   "leading_status": "",
+   "reason": "no rival is both fitted and unrefuted",
+   "schema": "forge.mind.minimal.conclusion/1"
+  },
+  "config": {
+   "adaptive_selection": true,
+   "belief_update": true,
+   "falsifier": true,
+   "mind": "forge.mind.minimal@1.0.0",
+   "precision": 0.02,
+   "variant": "full"
+  },
+  "executions": [],
+  "final_state": {
+   "actions": [],
+   "budget": {
+    "remaining": 40,
+    "spent": 0,
+    "total": 40
+   },
+   "contradictions": [],
+   "evidence_count": 0,
+   "hypotheses": [
+    {
+     "claim_digest": "6d2309367fe81fe798725d46535cfeeb2048952077757bf51c195016bb59d1ad",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 0,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 0 features need >= 4",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "daed123a4e51f2fbd329191472493dfdf2c27678315ff7a714812c3740493199",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "d5375a6d3374f93bcecf6ea79fcb114ae1683874c5e3d7256a913130cd736baf",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 6,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 6 features need >= 10",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "123ae3d9cbaf83d3e82dab9152f8dc432a9a4e6c0a0cecb1ef612e63b07901a4",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "43e435923cce4c7b0bffa84871fa8b4362e26d1f7bb9dbe86eee35899a3a60f9",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "36dd8fa63ccf2de37ca451d4973cf2e2c559c48fe6c8670e664204f742b7d87f",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "bab874d3b352e0f54d3252e92c4aea8cd21ef2d27aa5190ecd3ddd47977abbbd",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1,x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1,x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "969e9003d6ecb5f8471c9a6fd729351691d1c349e2cbe281c8088a6624809d9e",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,u1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,u1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "1a7a4fef3b2df1bdbf5427083c62cc6f7739301369d0d2bdc6dafa2c95694649",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "203a27b5aa94b5c2e96eab42a3249f5ea0d659d8597c39cd812d2435cfda0e46",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 5,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 5 features need >= 9",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "f4f7b06e1d0142be493c8fc0c4ec674c5ab6f8f583de7a27e411f827948943c1",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "381b6a1f7a7744446a8ee279c65e65b0117c09eea14e968f69010e2307a3bcdc",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "10caa0149cd0425fe420d8b006335ba1448022dc5b486aa802821b8c17559617",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "2bbecb399dd6a96b2a06967abed1ef8a7fa96cb23822286b9ed541c407e8186e",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0,x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0,x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "aca2b9392e33a7a3f69459cb78632506983b0cafb8e72389f73ec7ec0f3b1a21",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "477d69e238fe0c47983d00efd780f4dc3ae1892aeaae2304930fb15871759469",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "2801f2712add437d449ce330b898b2d8a40b62716e6809769d17941904d811f6",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 5,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 5 features need >= 9",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "8ce13d8a6bc5db815513109b8d5f28a585564696a1cc8f5a22afc0b6d494d4ad",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "ccee3a40382488161cafd2f41d8db58ae5e64343fef683c64f51701ee8071f75",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "b06edbc04ff9bab30c318c58cbe894ee0a5f8604534e73c3b0b258e6b3f76fc1",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "2d223ed92b93babb92791e3f58e4b02c09d5243a90450f962be26b4b9e6eaaca",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1,x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 3,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 3 features need >= 7",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1,x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "014ad72e6e0835ae294d78b141fb08acf4cf0b8b6e20c5991883631864df8727",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[u1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[u1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "90a1d56767a1f379ad8736fffa0c7098700dd4202b64b5ab75c9306ac1057b5c",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0,x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0,x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "f8b114e13390fc46616ddb8be31bae90c2034648dbc25a76436c181c653b52d0",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0,x1]Q[x0,x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 4,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 4 features need >= 8",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0,x1]Q[x0,x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "5ca375ec106084fcb06fd41154d4bbe29c1d027fccf4412bf1c8cf31dd20924f",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "9af276443800ff2241f21bad7dc1d45fbf4c89df5c39793fcd09eff12aa23aa6",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x0]Q[x0]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x0]Q[x0]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "666dc1c12cfd64c8aee2f64bafe161b2c1557af83ab4e5ef50fd78cbb440a505",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x1]Q[]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 1,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 1 features need >= 5",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x1]Q[]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    },
+    {
+     "claim_digest": "bc02fdf1502867a6c32dac7db0eeb51c1d6b7303128281dbf1a17b19533661a4",
+     "falsifiers": 0,
+     "fit": {
+      "basis_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "coef": [],
+      "fit_ok": false,
+      "key": "mind:L[x1]Q[x1]",
+      "log_bf_null": null,
+      "n": 0,
+      "p": 2,
+      "r2": null,
+      "reason": "UNFIT: 0 observations, 2 features need >= 6",
+      "s": null
+     },
+     "hypothesis_id": "mind:L[x1]Q[x1]",
+     "proposer": "algorithm",
+     "status": "proposed",
+     "verdicts": [],
+     "weight": null
+    }
+   ],
+   "knowns": {
+    "admitted_evidence": [],
+    "noise": {
+     "basis": [],
+     "dof": 0,
+     "kind": "UNKNOWN",
+     "sd_ln": null,
+     "upper95_ln": null
+    }
+   },
+   "outcome_model": {
+    "estimation": "reference prior (least squares)",
+    "g": "hyper-g/n, a=3.0",
+    "intercept_prior": "flat",
+    "model": "forge.mind.minimal.bayes_loglinear_gprior",
+    "sigma_prior": "jeffreys",
+    "version": "3"
+   },
+   "prior": {
+    "covariate_prior_inclusion": 0.5,
+    "curvature_form": "squares of the log of every settable input in the structure",
+    "curvature_prior_mass": 0.2,
+    "family": "beta_binomial_1_1_over_settable_inputs"
+   },
+   "problem_digest": "48a198f1d35be65bc3095b28324bb7b5780bc809f9fd34213ae01982de400920",
+   "proposals": [],
+   "registry_head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+   "schema": "forge.mind.minimal.state_view/1",
+   "unknowns": [
+    "observation uncertainty: UNKNOWN (no replicate degree of freedom yet)",
+    "28 rival(s) UNFIT: no standing can be computed for them yet",
+    "passive covariates at a planned query: predicted through a fitted submodel, never set"
+   ]
+  },
+  "final_stop": {
+   "budget_remaining": 40,
+   "kind": "refuse",
+   "leading_weight": null,
+   "max_utility": null,
+   "reason": "inapplicable: the world refused the query: no unused recorded sample within 0.05 ln of the requested settings",
+   "region_sd": null
+  },
+  "mind": "forge.mind.minimal@1.0.0",
+  "multiplicity": null,
+  "observations": [],
+  "problem": {
+   "budget": 40,
+   "covariates": [
+    "T_K",
+    "z"
+   ],
+   "inputs": [
+    {
+     "high": 6381.0779999999995,
+     "low": 203.4400000000005,
+     "name": "t_on_s",
+     "unit": "s"
+    },
+    {
+     "high": 2.0179602336684033,
+     "low": 0.991086414707011,
+     "name": "I_A",
+     "unit": "A"
+    }
+   ],
+   "observable": "y",
+   "observable_unit": "V",
+   "problem_id": "Q1:PREDICTION[within_cell_heldout/later_cycles]",
+   "query_cost": 1.0,
+   "region": {
+    "I_A": [
+     0.990051913083744,
+     2.0167581638360677
+    ],
+    "t_on_s": [
+     224.699999999998,
+     6384.844
+    ]
+   },
+   "schema": "forge.mind.minimal.problem/1"
+  },
+  "problem_digest": "48a198f1d35be65bc3095b28324bb7b5780bc809f9fd34213ae01982de400920",
+  "refusal": {
+   "budget": false,
+   "message": "no unused recorded sample within 0.05 ln of the requested settings",
+   "query_index": 0
+  },
+  "registry": {
+   "entries": 28,
+   "head": "8d645ed7529670131e96883b7ff6c8878c4997eeef91b12c2f2fdfcc77f52a8b",
+   "verdicts": []
+  },
+  "schema": "forge.mind.minimal.trace/1",
+  "seed": 0,
+  "steps": []
+ }
+}

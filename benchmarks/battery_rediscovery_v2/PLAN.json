@@ -1,0 +1,850 @@
+{
+ "arm_roles": {
+  "compared": [
+   "OLD_MIND",
+   "REPRESENTATION_ONLY",
+   "SEMANTIC_ROLES_ONLY",
+   "REPRESENTATION_PLUS_ROLES",
+   "CAREFUL_BASELINE"
+  ],
+  "reference_only": [
+   "FIXED_FIT",
+   "ALWAYS_FIT",
+   "ALWAYS_REFUSE"
+  ]
+ },
+ "arms": {
+  "ALWAYS_FIT": "trivial (context only)",
+  "ALWAYS_REFUSE": "trivial (context only)",
+  "CAREFUL_BASELINE": "v1's careful baseline on the v1 view",
+  "FIXED_FIT": "v1 reference baseline (context only)",
+  "OLD_MIND": "v1's Minimal Mind arm (engcore.mind.minimal byte-exact from the Mind source commit) on the v1 view",
+  "REPRESENTATION_ONLY": "engcore.mind.repsem.assess under the v1 adapter's two-class legacy role table",
+  "REPRESENTATION_PLUS_ROLES": "engcore.mind.repsem.assess under the pack's declared roles",
+  "SEMANTIC_ROLES_ONLY": "the v1 Mind with its prediction probe posed by the declared roles (current settable, charge state never a free covariate, temperature passive); v1 answer vocabulary",
+  "module": "benchmarks/battery_rediscovery_v2/candidate/arms.py (docstring frozen with it)"
+ },
+ "candidate_visible": [
+  "candidate/",
+  "benchmarks/battery_rediscovery_v1/__init__.py",
+  "benchmarks/battery_rediscovery_v1/candidate/__init__.py",
+  "benchmarks/battery_rediscovery_v1/candidate/baselines.py",
+  "benchmarks/battery_rediscovery_v1/candidate/common.py",
+  "benchmarks/battery_rediscovery_v1/candidate/mind_arm.py",
+  "benchmarks/battery_rediscovery_v1/candidate/model.py",
+  "benchmarks/mind_repsem_v1/__init__.py",
+  "benchmarks/mind_repsem_v1/arms.py",
+  "benchmarks/mind_repsem_v1/fixtures.py",
+  "src/engcore/hybrid_uq/identifiability.py",
+  "src/engcore/mind/__init__.py",
+  "src/engcore/mind/minimal/__init__.py",
+  "src/engcore/mind/minimal/competition.py",
+  "src/engcore/mind/minimal/experiments.py",
+  "src/engcore/mind/minimal/falsifier.py",
+  "src/engcore/mind/minimal/outcome_model.py",
+  "src/engcore/mind/minimal/problem.py",
+  "src/engcore/mind/minimal/runner.py",
+  "src/engcore/mind/minimal/stopping.py",
+  "src/engcore/mind/minimal/structures.py",
+  "src/engcore/mind/minimal/trace.py",
+  "src/engcore/mind/repsem/__init__.py",
+  "src/engcore/mind/repsem/assess.py",
+  "src/engcore/mind/repsem/claims.py",
+  "src/engcore/mind/repsem/families.py",
+  "src/engcore/mind/repsem/hypothesis.py",
+  "src/engcore/mind/repsem/roles.py"
+ ],
+ "conclusion_rule": {
+  "amendments": "none: a post-seal defect invalidates v2 and requires v3",
+  "module": "benchmarks/battery_rediscovery_v2/evaluator/conclusion.py",
+  "verdicts": [
+   "REAL_DATA_IMPROVEMENT_CONFIRMED",
+   "PARTIAL_REAL_DATA_IMPROVEMENT",
+   "NO_REAL_DATA_IMPROVEMENT",
+   "REPRESENTATION_STILL_LIMITING",
+   "SEMANTIC_ROLES_STILL_LIMITING",
+   "LEAKAGE_INVALIDATED",
+   "INCONCLUSIVE"
+  ]
+ },
+ "data": {
+  "Q1": {
+   "archive_sha256": "82302a7db4fc1b34e0b6676326610438d43b816bdf11a69d1d012a464ef2f92e",
+   "pack_sha256": "dc8f7f3ea7e5cfb590d1fde34600872d99e3de0627cd7ce53f399f524e005d2f",
+   "raw": {
+    "extracted/3. BatteryAgingARC_25-44/B0038.mat": "41d4a6977e3f3a46623f80ad8f6e5ba6ad83a2746403f71966c88a4722ffd409",
+    "extracted/3. BatteryAgingARC_25-44/B0039.mat": "0ea0a44622b61f13306cfc9c7080c7a6a8eb187da38607bfdc776974fcb5f000",
+    "extracted/3. BatteryAgingARC_25-44/B0040.mat": "1d7eb3dbf82bda46837831756999d911211b9ed0cc892c7e2e8d7f9059a5e013"
+   },
+   "source": "public Li-ion aging archive, three sibling cells at 44 C (pseudonyms A, B, C); never used by v0, v1 or the repsem repair"
+  },
+  "Q2": {
+   "calibration_ranks": [
+    0,
+    2,
+    4,
+    6,
+    8,
+    9
+   ],
+   "pack_sha256": "1a03ba0587f97f7c4e57b6c60e264179963e63c18e30e6ab3a4732cee236a022",
+   "soc_groups_z0": [
+    [
+     0.9977,
+     0.9929,
+     0.9834
+    ],
+    [
+     0.946,
+     0.9445,
+     0.9415,
+     0.9339
+    ],
+    [
+     0.8919,
+     0.8904,
+     0.8874,
+     0.8799
+    ],
+    [
+     0.7837,
+     0.7822,
+     0.7792,
+     0.7716
+    ],
+    [
+     0.6756,
+     0.6741,
+     0.6711,
+     0.6636
+    ],
+    [
+     0.5676,
+     0.5661,
+     0.5631,
+     0.5556
+    ],
+    [
+     0.4594,
+     0.4579,
+     0.4549,
+     0.4474
+    ],
+    [
+     0.3514,
+     0.3498,
+     0.3468,
+     0.3393
+    ],
+    [
+     0.2433,
+     0.2418,
+     0.2388,
+     0.2313
+    ],
+    [
+     0.1351,
+     0.1336,
+     0.1306
+    ]
+   ],
+   "source": "the LG HG2 25 C HPPC discharge-pulse windows of the identifiability study, re-split by state-of-charge set point (v1 split them by current level; the constant-current test v1 held out is not used: its outcome is known)",
+   "split": {
+    "calibration.json": "c8de4415eed8f80e6824496232943eabd558f29e6c16fda11317a99b0001174e",
+    "heldout_pulses.json": "f5251c1e00a74ba11079e973c2c64327bff4550a903787390bacfe7dd5798d0e",
+    "ocv.json": "e0bfc9bd4a30eb6c11114e2ed94399cdfc4357225f473d102b30db504bcdefb4"
+   }
+  },
+  "identity_map_sha256": "324a12f8f1715bb6179455638d3f279bf374386c37d57761ecfd45857122adcb",
+  "pack_manifest_sha256": "71c6bcafb7fea370bff3c32d9eefa250690bed24cb1316402c402b4f0853c23b",
+  "splits": {
+   "Q1": {
+    "calibration": [
+     "Q1-c01",
+     "Q1-c02",
+     "Q1-c03",
+     "Q1-c04",
+     "Q1-c05",
+     "Q1-c06",
+     "Q1-c07",
+     "Q1-c08"
+    ],
+    "cross_unit_heldout/other_cell": [
+     "Q1-x01",
+     "Q1-x02",
+     "Q1-x03",
+     "Q1-x04"
+    ],
+    "within_unit_heldout/later_cycles": [
+     "Q1-w01",
+     "Q1-w02",
+     "Q1-w03",
+     "Q1-w04",
+     "Q1-w05",
+     "Q1-w06",
+     "Q1-w07",
+     "Q1-w08"
+    ]
+   },
+   "Q2": {
+    "calibration": [
+     "Q2-c01",
+     "Q2-c02",
+     "Q2-c03",
+     "Q2-c04",
+     "Q2-c05",
+     "Q2-c06",
+     "Q2-c07",
+     "Q2-c08",
+     "Q2-c09",
+     "Q2-c10",
+     "Q2-c11",
+     "Q2-c12",
+     "Q2-c13",
+     "Q2-c14",
+     "Q2-c15",
+     "Q2-c16",
+     "Q2-c17",
+     "Q2-c18",
+     "Q2-c19",
+     "Q2-c20",
+     "Q2-c21",
+     "Q2-c22"
+    ],
+    "within_unit_heldout/pulses_alternate_soc": [
+     "Q2-w01",
+     "Q2-w02",
+     "Q2-w03",
+     "Q2-w04",
+     "Q2-w05",
+     "Q2-w06",
+     "Q2-w07",
+     "Q2-w08",
+     "Q2-w09",
+     "Q2-w10",
+     "Q2-w11",
+     "Q2-w12",
+     "Q2-w13",
+     "Q2-w14",
+     "Q2-w15",
+     "Q2-w16"
+    ]
+   }
+  }
+ },
+ "expected_outputs": [
+  "results/candidate/OLD_MIND__Q1.json",
+  "results/candidate/OLD_MIND__Q2.json",
+  "results/candidate/REPRESENTATION_ONLY__Q1.json",
+  "results/candidate/REPRESENTATION_ONLY__Q2.json",
+  "results/candidate/SEMANTIC_ROLES_ONLY__Q1.json",
+  "results/candidate/SEMANTIC_ROLES_ONLY__Q2.json",
+  "results/candidate/REPRESENTATION_PLUS_ROLES__Q1.json",
+  "results/candidate/REPRESENTATION_PLUS_ROLES__Q2.json",
+  "results/candidate/CAREFUL_BASELINE__Q1.json",
+  "results/candidate/CAREFUL_BASELINE__Q2.json",
+  "results/candidate/FIXED_FIT__Q1.json",
+  "results/candidate/FIXED_FIT__Q2.json",
+  "results/candidate/ALWAYS_FIT__Q1.json",
+  "results/candidate/ALWAYS_FIT__Q2.json",
+  "results/candidate/ALWAYS_REFUSE__Q1.json",
+  "results/candidate/ALWAYS_REFUSE__Q2.json",
+  "results/candidate/OLD_MIND_TRACES__Q1.json",
+  "results/candidate/OLD_MIND_TRACES__Q2.json",
+  "results/candidate/TIMINGS.json",
+  "results/ACCESS_LOG.json",
+  "results/LEAKAGE_PRE_SEAL.json",
+  "results/SEAL.json",
+  "results/replay/REPLAY.json",
+  "results/ACCESS_LOG_REPLAY.json",
+  "MUTATION_REPORT_post_seal.json",
+  "results/LEAKAGE_POST_SEAL.json",
+  "results/TRUTH.json",
+  "results/EVALUATION.json",
+  "results/EVALUATION.md"
+ ],
+ "frozen_files": {
+  "benchmarks/battery_rediscovery_v1/__init__.py": "ed7abe03c3087bd4c92990621e5ac8d718b37532b47c25984be8a40497f91452",
+  "benchmarks/battery_rediscovery_v1/candidate/__init__.py": "8a0fa5142993065b6d88798e43ffb2a61d30cdb9165a3b4f97417ed36ebe184b",
+  "benchmarks/battery_rediscovery_v1/candidate/baselines.py": "6d71600c3c1b1eaf577798e7fac44bf37ef0a51aef874337633d099bec42541f",
+  "benchmarks/battery_rediscovery_v1/candidate/common.py": "2b2163f9e1f1eb4088763ccbbf7982dbd16882ca2b7adfa7d87f187fc811226d",
+  "benchmarks/battery_rediscovery_v1/candidate/mind_arm.py": "959182aa04ca85f50daf8d8aa00ceafa5cbef657477ce3286bd0b224b3a83f1b",
+  "benchmarks/battery_rediscovery_v1/candidate/model.py": "9dfcdd33495fae1d1eaa2be2feea5b2da94d4e7d1f7e2aeb2c9bd988f59055a6",
+  "benchmarks/battery_rediscovery_v1/leakage.py": "1c52d53ef00270dc42e78328cd2950987992a91fa954f0d85a0c6491b1274dac",
+  "benchmarks/battery_rediscovery_v1/mutation.py": "1e59ccf94d66b4e80ecb78851175d3ba9e8dc10f7af17ea2470fc930542d70c4",
+  "benchmarks/battery_rediscovery_v2/MUTATION_REPORT_pre_run.json": "1b5b65fa7bc126045e24edf625e2d75f226a9f57d66584a2e62da826ef0feb53",
+  "benchmarks/battery_rediscovery_v2/__init__.py": "a9725684ed8a924eb3241ab6e6ebbc7b13408c3de9050211a2fce2f792cd3908",
+  "benchmarks/battery_rediscovery_v2/build_pack.py": "fbc389cf38ca2224259a2f7f0eb010d91e2405f052c4417ccf1b9383f434014e",
+  "benchmarks/battery_rediscovery_v2/candidate/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "benchmarks/battery_rediscovery_v2/candidate/arms.py": "bfe9a62a87e83e4fe66c25d5653a36243c235cbf474062cfa405309650c889a3",
+  "benchmarks/battery_rediscovery_v2/candidate/common.py": "474c8a41a58d1de6f5bda85cc915e48f000aaf6c41a36a39fbe9db8bf01b6407",
+  "benchmarks/battery_rediscovery_v2/candidate/families.py": "3b9d1d4b9013b4145318cca55aa6f42cae995e2baae3e9fd01fdb4537e2d3304",
+  "benchmarks/battery_rediscovery_v2/candidate/pack/MANIFEST.json": "71c6bcafb7fea370bff3c32d9eefa250690bed24cb1316402c402b4f0853c23b",
+  "benchmarks/battery_rediscovery_v2/candidate/pack/Q1.json": "dc8f7f3ea7e5cfb590d1fde34600872d99e3de0627cd7ce53f399f524e005d2f",
+  "benchmarks/battery_rediscovery_v2/candidate/pack/Q2.json": "1a03ba0587f97f7c4e57b6c60e264179963e63c18e30e6ab3a4732cee236a022",
+  "benchmarks/battery_rediscovery_v2/candidate/run.py": "6880048b0485b4445ae13023c6b6628a63f146cbadefbff468d48f2c37ad33ae",
+  "benchmarks/battery_rediscovery_v2/candidate/views.py": "8db4995b65e68e990f065632bc3e8449fc0efa0531cb91c33b9f9a957bbb542c",
+  "benchmarks/battery_rediscovery_v2/evaluator/IDENTITY_MAP.json": "324a12f8f1715bb6179455638d3f279bf374386c37d57761ecfd45857122adcb",
+  "benchmarks/battery_rediscovery_v2/evaluator/PACK_PROVENANCE.json": "360c7ba7daedd2a32d273b2e8e5773a50c38d36a5eea11f7ae2c6833b175c3a8",
+  "benchmarks/battery_rediscovery_v2/evaluator/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "benchmarks/battery_rediscovery_v2/evaluator/conclusion.py": "4b6094f7d58ee6d6c7e2297385620c8de4153a73457623fc8a0bcdc1cc2cd335",
+  "benchmarks/battery_rediscovery_v2/evaluator/reference.py": "fab4761b8d1a5db1a724dea49f8c82d9d5c4fad8488342a7240767001ae22863",
+  "benchmarks/battery_rediscovery_v2/evaluator/run_evaluation.py": "c803c6eb788939f63a0e49e8f9cc4e348bcdd0451e27fcfdd3320cfed7b469f1",
+  "benchmarks/battery_rediscovery_v2/evaluator/score.py": "572d8591d12cf2bda9fd38f80338ae2054a1cbfecd7e3dbfd33ace8912e05997",
+  "benchmarks/battery_rediscovery_v2/evaluator/truth.py": "5f091f60c5df062f2bf7740c31182679dede4bc91d4bd8834715032322b22027",
+  "benchmarks/battery_rediscovery_v2/freeze.py": "55a8ecb1b3068553183cc87667270b6973f1c0de003c2d2d4d354a0994f76d39",
+  "benchmarks/battery_rediscovery_v2/launch.py": "51226fc018b1cf973d5c452237095df02836ac8b2ecde1b0d49db564960ac1de",
+  "benchmarks/battery_rediscovery_v2/leakage.py": "84ed2f4fda556d48e0b503ddaed834dea92e29a9517f81b6dd3914de930063bd",
+  "benchmarks/battery_rediscovery_v2/mutation.py": "10599c44a112b87c1bbf0a73cc0cc7f12fcd7a10433a356f5f5907fb1202803a",
+  "benchmarks/battery_rediscovery_v2/sandbox_run.py": "c1eacb54a63fad6b6beb05be0d936fcb686e39c727f619b2e8ad822bf75f7520",
+  "benchmarks/battery_rediscovery_v2/seal.py": "25b95b319df90656179fded189ff626364918423d1aee8d6ddf05813a39e5b86",
+  "benchmarks/battery_rediscovery_v2/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "benchmarks/battery_rediscovery_v2/tests/synthetic_pack.py": "fd4e8252fe73910982f83fa9f42501a36279a7f23d15b24102602daedd7105ab",
+  "benchmarks/battery_rediscovery_v2/tests/test_battery_rediscovery_v2.py": "d2d4a6a111f22fedac461357547178a5fe3477bc85668e2b5084febbe8672085",
+  "benchmarks/battery_rediscovery_v2/tests/test_reference.py": "4c923e2fd3cb14761edbcade752823dbd75d3755076941745675e94b04639ba6",
+  "benchmarks/mind_repsem_v1/__init__.py": "b06dbe7d465b912c5d67f1145c4939c44bf0096c229917f5fc28ad126bc23b65",
+  "benchmarks/mind_repsem_v1/arms.py": "46f7ed960d4cff9c7651c775b8283e6772cc1313096efc1610df7a0b21b49735",
+  "benchmarks/mind_repsem_v1/fixtures.py": "16c6af37197f2d7a779c923851d5f2ede9cc918c67f4e0cc249a10bf5f416ec5",
+  "src/engcore/hybrid_uq/identifiability.py": "611d37249d9878ce8c77e2d4532d471ec1d273b502579477d432c4f39ceabee7",
+  "src/engcore/mind/__init__.py": "a9021b919b3d3a6674109d8323a569dd963531f59965d0e32057c6d6a9915999",
+  "src/engcore/mind/minimal/__init__.py": "c42b41b8a7fc8718f1a089f0406c09b99e89a76d0f68e9e87356faeb712c7e94",
+  "src/engcore/mind/minimal/competition.py": "d92d6104b8cdfe6075a742c36e0181c7f227a78e834fe6df2e90521f24e08ee7",
+  "src/engcore/mind/minimal/experiments.py": "f06886b6c25c221d1df90e62364b54e7faacc789db1ffe3573ba7b8a56f931a1",
+  "src/engcore/mind/minimal/falsifier.py": "cde282cfb68ef49d51812e9befb26c9affaf04deb206bd0e27d5da3b9f8d1332",
+  "src/engcore/mind/minimal/outcome_model.py": "282a421d4574cc7caff6a053375f1f9700c2b219ae7408ae9399371407ab146e",
+  "src/engcore/mind/minimal/problem.py": "5d2856fc00facaa2e21c024e40390d5f3a377b536b5b1de08f0117eec8b6f3cd",
+  "src/engcore/mind/minimal/runner.py": "4b2350234f7b2276c3d162ac5249a745cc14e20c995715d5e7f309fcc588b8b8",
+  "src/engcore/mind/minimal/stopping.py": "0363a830449c1eedcff88462fcedba0ec61efc4579104d481149c3b5e8630fed",
+  "src/engcore/mind/minimal/structures.py": "cb0b83274832160da978257a67198d7ee2f2f9a9bd74c6f6d8c6ed4d0011deff",
+  "src/engcore/mind/minimal/trace.py": "1260f09d007e39399d3f23767a77cdf9ac56016f0392125998e1a7e920b77c01",
+  "src/engcore/mind/repsem/__init__.py": "9f29cb0a8ed21976f54577e67157d264f26809d1bdd3c797a8a9bf5a4eaff550",
+  "src/engcore/mind/repsem/assess.py": "fb715985cfdedd335c4feaac508c8b6aed2b6b8c892f923f9e9bcc30c66cc52d",
+  "src/engcore/mind/repsem/claims.py": "8abbe88c927576febaf657e753b378280a90996b8143720f26fde02074e4fa22",
+  "src/engcore/mind/repsem/families.py": "364a49fc72d7db3eee0d137b5738edbf043c0eaf7682e7c5baf4ce16686a93c9",
+  "src/engcore/mind/repsem/hypothesis.py": "db3a9316c57cf462e3f041a6070f2cf3019b09b957134496207ea3b7992d7dd7",
+  "src/engcore/mind/repsem/roles.py": "96367f9a46b6d8cf2f37deb149477f4bfe39ccc964abcd9c9ca4d7ec020eb6bf"
+ },
+ "hypotheses": {
+  "H1": "REPRESENTATION_PLUS_ROLES reduces false refusal relative to OLD_MIND without increasing false support",
+  "H2": "REPRESENTATION_PLUS_ROLES outperforms each single-layer arm on scientifically assessable axes",
+  "H3": "REPRESENTATION_PLUS_ROLES moves toward the CAREFUL baseline on held-out real data",
+  "operationalisation": "evaluator/conclusion.py docstring",
+  "thresholds": {
+   "MIN_DECIDED": 4,
+   "MIN_FR_REDUCTION": 2,
+   "false_support_materiality": "any increase of FALSE_SUPPORT over OLD_MIND is material"
+  }
+ },
+ "id": "battery_rediscovery_v2",
+ "leakage": {
+  "blind_execution": "the candidate runs once, in a sandboxed subprocess under an audit hook, from a committed clean freeze; it may read only the candidate package, the pack, the imported frozen code and the engcore platform; outputs are write-only during the run; no truth exists until after the seal",
+  "firewall": "leakage.py (v2 policy over v1's numeric/text engines)",
+  "mutation_pre_run": {
+   "benign_controls": 219,
+   "benign_triggered": 0,
+   "leak_mutations": 434,
+   "leaks_caught": 434,
+   "status": "PASS"
+  },
+  "mutation_report_pre_run_sha256": "1b5b65fa7bc126045e24edf625e2d75f226a9f57d66584a2e62da826ef0feb53",
+  "numeric_engine_sha256": "1c52d53ef00270dc42e78328cd2950987992a91fa954f0d85a0c6491b1274dac",
+  "scanner_sha256": "84ed2f4fda556d48e0b503ddaed834dea92e29a9517f81b6dd3914de930063bd"
+ },
+ "model_space": {
+  "families": {
+   "Q1": {
+    "rc1_fitted_ocv/1": {
+     "description": "Thevenin 1RC, OCV a fitted piecewise-linear table on the declared knots. V = OCV(z) - I*R0 - v1;  dv1/dt = I/C1 - v1/(R1*C1);  dz/dt = -I/Q.  Positive I is discharge.  Rint (R1 = 0) is the declared rival.",
+     "family_id": "rc1_fitted_ocv/1",
+     "parameters": [
+      "R0",
+      "R1",
+      "C1",
+      "ocv_k0",
+      "ocv_k1",
+      "ocv_k2",
+      "ocv_k3",
+      "ocv_k4",
+      "ocv_k5",
+      "ocv_k6"
+     ],
+     "required_conditions": [
+      "initial_polarization",
+      "capacity_As"
+     ],
+     "slots": [
+      {
+       "name": "driver",
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "state_of": null
+      },
+      {
+       "name": "charge_state",
+       "roles": [
+        "STATE_VARIABLE"
+       ],
+       "state_of": "driver"
+      }
+     ]
+    },
+    "rint_fitted_ocv/1": {
+     "description": "Rint (R1 = 0), OCV a fitted piecewise-linear table on the declared knots.",
+     "family_id": "rint_fitted_ocv/1",
+     "parameters": [
+      "R0",
+      "ocv_k0",
+      "ocv_k1",
+      "ocv_k2",
+      "ocv_k3",
+      "ocv_k4",
+      "ocv_k5",
+      "ocv_k6"
+     ],
+     "required_conditions": [
+      "initial_polarization",
+      "capacity_As"
+     ],
+     "slots": [
+      {
+       "name": "driver",
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "state_of": null
+      },
+      {
+       "name": "charge_state",
+       "roles": [
+        "STATE_VARIABLE"
+       ],
+       "state_of": "driver"
+      }
+     ]
+    }
+   },
+   "Q2": {
+    "rc1_measured_ocv/1": {
+     "description": "Thevenin 1RC, measured fixed OCV table. V = OCV(z) - I*R0 - v1;  dv1/dt = I/C1 - v1/(R1*C1);  dz/dt = -I/Q.  Positive I is discharge.  Rint (R1 = 0) is the declared rival.",
+     "family_id": "rc1_measured_ocv/1",
+     "parameters": [
+      "R0",
+      "R1",
+      "C1"
+     ],
+     "required_conditions": [
+      "initial_polarization",
+      "capacity_As"
+     ],
+     "slots": [
+      {
+       "name": "driver",
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "state_of": null
+      },
+      {
+       "name": "charge_state",
+       "roles": [
+        "STATE_VARIABLE"
+       ],
+       "state_of": "driver"
+      }
+     ]
+    },
+    "rint_measured_ocv/1": {
+     "description": "Rint (R1 = 0), measured fixed OCV table.",
+     "family_id": "rint_measured_ocv/1",
+     "parameters": [
+      "R0"
+     ],
+     "required_conditions": [
+      "initial_polarization",
+      "capacity_As"
+     ],
+     "slots": [
+      {
+       "name": "driver",
+       "roles": [
+        "CONTROLLED_INPUT"
+       ],
+       "state_of": null
+      },
+      {
+       "name": "charge_state",
+       "roles": [
+        "STATE_VARIABLE"
+       ],
+       "state_of": "driver"
+      }
+     ]
+    }
+   }
+  },
+  "fitted_ocv_bounds_V": [
+   2.0,
+   4.5
+  ],
+  "fitted_ocv_knots_soc": [
+   0.0,
+   0.05,
+   0.15,
+   0.3,
+   0.5,
+   0.75,
+   1.0
+  ],
+  "rule": "the candidate-visible model vocabulary is exactly the declared family and its declared rival per problem; no model is added after the run"
+ },
+ "protocol_roles": {
+  "Q1": {
+   "declarations": [
+    {
+     "basis": "declared family parameter: RC-branch capacitance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "C1",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "F"
+    },
+    {
+     "basis": "declared family parameter: series resistance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "R0",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "ohm"
+    },
+    {
+     "basis": "declared family parameter: RC-branch resistance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "R1",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "ohm"
+    },
+    {
+     "basis": "the cycler applies the programmed load current; positive is discharge",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "current_A",
+     "role": "CONTROLLED_INPUT",
+     "source": "protocol_metadata",
+     "unit": "A"
+    },
+    {
+     "basis": "the load level the protocol set for the run",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "level_A",
+     "role": "FIXED_PROTOCOL_CONDITION",
+     "source": "protocol_metadata",
+     "unit": "A"
+    },
+    {
+     "basis": "declared family parameter: fitted OCV table value at z = 0.0",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "ocv_k0",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "V"
+    },
+    {
+     "basis": "declared family parameter: fitted OCV table value at z = 0.05",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "ocv_k1",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "V"
+    },
+    {
+     "basis": "declared family parameter: fitted OCV table value at z = 0.15",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "ocv_k2",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "V"
+    },
+    {
+     "basis": "declared family parameter: fitted OCV table value at z = 0.3",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "ocv_k3",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "V"
+    },
+    {
+     "basis": "declared family parameter: fitted OCV table value at z = 0.5",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "ocv_k4",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "V"
+    },
+    {
+     "basis": "declared family parameter: fitted OCV table value at z = 0.75",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "ocv_k5",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "V"
+    },
+    {
+     "basis": "declared family parameter: fitted OCV table value at z = 1.0",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "ocv_k6",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "V"
+    },
+    {
+     "basis": "charge state: evolves by coulomb counting of the applied current from the declared initial state over the declared capacity basis; no column is recorded",
+     "derived_from": [],
+     "driven_by": [
+      "current_A"
+     ],
+     "name": "soc",
+     "role": "STATE_VARIABLE",
+     "source": "protocol_metadata",
+     "unit": "1"
+    },
+    {
+     "basis": "the logger's sampling schedule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "t_s",
+     "role": "FIXED_PROTOCOL_CONDITION",
+     "source": "protocol_metadata",
+     "unit": "s"
+    },
+    {
+     "basis": "cell temperature, logged, not controlled",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "temperature_C",
+     "role": "NUISANCE_VARIABLE",
+     "source": "protocol_metadata",
+     "unit": "degC"
+    },
+    {
+     "basis": "terminal voltage, the measured response",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "voltage_V",
+     "role": "MEASUREMENT",
+     "source": "protocol_metadata",
+     "unit": "V"
+    }
+   ],
+   "role_table_digest": "9d2ad456020f6d74ab3b043b195853bd092461f6b3fe393e915a0fbf92720d88"
+  },
+  "Q2": {
+   "declarations": [
+    {
+     "basis": "declared family parameter: RC-branch capacitance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "C1",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "F"
+    },
+    {
+     "basis": "declared family parameter: series resistance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "R0",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "ohm"
+    },
+    {
+     "basis": "declared family parameter: RC-branch resistance",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "R1",
+     "role": "LATENT_PARAMETER",
+     "source": "protocol_metadata",
+     "unit": "ohm"
+    },
+    {
+     "basis": "the cycler applies the programmed load current; positive is discharge",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "current_A",
+     "role": "CONTROLLED_INPUT",
+     "source": "protocol_metadata",
+     "unit": "A"
+    },
+    {
+     "basis": "the pulse current level the protocol set for the window",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "level_A",
+     "role": "FIXED_PROTOCOL_CONDITION",
+     "source": "protocol_metadata",
+     "unit": "A"
+    },
+    {
+     "basis": "charge state: evolves by coulomb counting of the applied current from the declared initial state over the declared capacity basis; no column is recorded",
+     "derived_from": [],
+     "driven_by": [
+      "current_A"
+     ],
+     "name": "soc",
+     "role": "STATE_VARIABLE",
+     "source": "protocol_metadata",
+     "unit": "1"
+    },
+    {
+     "basis": "the logger's sampling schedule",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "t_s",
+     "role": "FIXED_PROTOCOL_CONDITION",
+     "source": "protocol_metadata",
+     "unit": "s"
+    },
+    {
+     "basis": "cell temperature, logged, not controlled",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "temperature_C",
+     "role": "NUISANCE_VARIABLE",
+     "source": "protocol_metadata",
+     "unit": "degC"
+    },
+    {
+     "basis": "terminal voltage, the measured response",
+     "derived_from": [],
+     "driven_by": [],
+     "name": "voltage_V",
+     "role": "MEASUREMENT",
+     "source": "protocol_metadata",
+     "unit": "V"
+    }
+   ],
+   "role_table_digest": "2d173b4b2414e7e393e64c93e43345ffedeb69a1768d11e3e8878e9f02ff789e"
+  }
+ },
+ "schema": "forge.battery_rediscovery_v2.plan/1",
+ "scoring": {
+  "doc": "see the module docstring (frozen with it)",
+  "module": "benchmarks/battery_rediscovery_v2/evaluator/score.py"
+ },
+ "seeds_and_budgets": {
+  "mind_budget_queries_per_probe": 40,
+  "mind_tolerance_ln": 0.05,
+  "note": "deterministic arms give the same answers for every seed and run once",
+  "primary_seed": 0,
+  "repsem_max_nfev": 200,
+  "repsem_starts": "2^p + 1 (engine constant)",
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "v1_baseline_fit_starts": 8
+ },
+ "sources": {
+  "base_commit": "8603463936b3e4010ac2a541a7663976fae97703",
+  "imported_frozen_files": {
+   "benchmarks/battery_rediscovery_v1/__init__.py": "ed7abe03c3087bd4c92990621e5ac8d718b37532b47c25984be8a40497f91452",
+   "benchmarks/battery_rediscovery_v1/candidate/__init__.py": "8a0fa5142993065b6d88798e43ffb2a61d30cdb9165a3b4f97417ed36ebe184b",
+   "benchmarks/battery_rediscovery_v1/candidate/baselines.py": "6d71600c3c1b1eaf577798e7fac44bf37ef0a51aef874337633d099bec42541f",
+   "benchmarks/battery_rediscovery_v1/candidate/common.py": "2b2163f9e1f1eb4088763ccbbf7982dbd16882ca2b7adfa7d87f187fc811226d",
+   "benchmarks/battery_rediscovery_v1/candidate/mind_arm.py": "959182aa04ca85f50daf8d8aa00ceafa5cbef657477ce3286bd0b224b3a83f1b",
+   "benchmarks/battery_rediscovery_v1/candidate/model.py": "9dfcdd33495fae1d1eaa2be2feea5b2da94d4e7d1f7e2aeb2c9bd988f59055a6",
+   "benchmarks/battery_rediscovery_v1/leakage.py": "1c52d53ef00270dc42e78328cd2950987992a91fa954f0d85a0c6491b1274dac",
+   "benchmarks/battery_rediscovery_v1/mutation.py": "1e59ccf94d66b4e80ecb78851175d3ba9e8dc10f7af17ea2470fc930542d70c4",
+   "benchmarks/mind_repsem_v1/__init__.py": "b06dbe7d465b912c5d67f1145c4939c44bf0096c229917f5fc28ad126bc23b65",
+   "benchmarks/mind_repsem_v1/arms.py": "46f7ed960d4cff9c7651c775b8283e6772cc1313096efc1610df7a0b21b49735",
+   "benchmarks/mind_repsem_v1/fixtures.py": "16c6af37197f2d7a779c923851d5f2ede9cc918c67f4e0cc249a10bf5f416ec5",
+   "src/engcore/hybrid_uq/identifiability.py": "611d37249d9878ce8c77e2d4532d471ec1d273b502579477d432c4f39ceabee7",
+   "src/engcore/mind/__init__.py": "a9021b919b3d3a6674109d8323a569dd963531f59965d0e32057c6d6a9915999",
+   "src/engcore/mind/minimal/__init__.py": "c42b41b8a7fc8718f1a089f0406c09b99e89a76d0f68e9e87356faeb712c7e94",
+   "src/engcore/mind/minimal/competition.py": "d92d6104b8cdfe6075a742c36e0181c7f227a78e834fe6df2e90521f24e08ee7",
+   "src/engcore/mind/minimal/experiments.py": "f06886b6c25c221d1df90e62364b54e7faacc789db1ffe3573ba7b8a56f931a1",
+   "src/engcore/mind/minimal/falsifier.py": "cde282cfb68ef49d51812e9befb26c9affaf04deb206bd0e27d5da3b9f8d1332",
+   "src/engcore/mind/minimal/outcome_model.py": "282a421d4574cc7caff6a053375f1f9700c2b219ae7408ae9399371407ab146e",
+   "src/engcore/mind/minimal/problem.py": "5d2856fc00facaa2e21c024e40390d5f3a377b536b5b1de08f0117eec8b6f3cd",
+   "src/engcore/mind/minimal/runner.py": "4b2350234f7b2276c3d162ac5249a745cc14e20c995715d5e7f309fcc588b8b8",
+   "src/engcore/mind/minimal/stopping.py": "0363a830449c1eedcff88462fcedba0ec61efc4579104d481149c3b5e8630fed",
+   "src/engcore/mind/minimal/structures.py": "cb0b83274832160da978257a67198d7ee2f2f9a9bd74c6f6d8c6ed4d0011deff",
+   "src/engcore/mind/minimal/trace.py": "1260f09d007e39399d3f23767a77cdf9ac56016f0392125998e1a7e920b77c01",
+   "src/engcore/mind/repsem/__init__.py": "9f29cb0a8ed21976f54577e67157d264f26809d1bdd3c797a8a9bf5a4eaff550",
+   "src/engcore/mind/repsem/assess.py": "fb715985cfdedd335c4feaac508c8b6aed2b6b8c892f923f9e9bcc30c66cc52d",
+   "src/engcore/mind/repsem/claims.py": "8abbe88c927576febaf657e753b378280a90996b8143720f26fde02074e4fa22",
+   "src/engcore/mind/repsem/families.py": "364a49fc72d7db3eee0d137b5738edbf043c0eaf7682e7c5baf4ce16686a93c9",
+   "src/engcore/mind/repsem/hypothesis.py": "db3a9316c57cf462e3f041a6070f2cf3019b09b957134496207ea3b7992d7dd7",
+   "src/engcore/mind/repsem/roles.py": "96367f9a46b6d8cf2f37deb149477f4bfe39ccc964abcd9c9ca4d7ec020eb6bf"
+  },
+  "minimal_mind_source_commit": "e2b8037c881847a497c32f7ca56f82b95b493727",
+  "repair_result_carried_in": "READY_FOR_BATTERY_V2 on synthetic fixtures only (development evidence)",
+  "repsem_failing_first_tests_commit": "db4397446774d789c92f7e0a20338f097d51e430",
+  "repsem_repair_commit": "cac1c584d8056720cc2c83f63fe93d3b32a83151"
+ },
+ "status": "DEVELOPMENT fresh real-data confirmation: not formal, not certification, not a discovery claim",
+ "structural_assessability": {
+  "Q1": {
+   "CROSS_CELL_TRANSFER": "ASSESSABLE: declared bar and applicability domain",
+   "IDENTIFIABILITY": "NOT_ASSESSABLE unless near-structural non-identifiability: no declared measurement uncertainty, so practical identifiability cannot be shown",
+   "MODEL_ADEQUACY": "ASSESSABLE: a declared adequacy bar (risk policy) needs no measurement uncertainty",
+   "MODEL_DISCREPANCY": "NOT_ASSESSABLE: the measurement uncertainty is UNKNOWN and the plan defines no defensible bound",
+   "WITHIN_CELL_GENERALIZATION": "ASSESSABLE: declared bar and applicability domain"
+  },
+  "Q2": {
+   "CROSS_CELL_TRANSFER": "NOT_ASSESSABLE: no such held-out set is supplied",
+   "IDENTIFIABILITY": "ASSESSABLE: declared measurement uncertainty",
+   "MODEL_ADEQUACY": "ASSESSABLE: a declared adequacy bar (risk policy) needs no measurement uncertainty",
+   "MODEL_DISCREPANCY": "ASSESSABLE: a declared Type-B bound on the measurement error",
+   "WITHIN_CELL_GENERALIZATION": "ASSESSABLE: declared bar and applicability domain"
+  }
+ },
+ "task": "BR-BATT-REDISC-03",
+ "threats_to_validity": [
+  "the developer is NOT blind to history: v0/v1 per-instance answers and truths, the repsem gap map and fixtures, and the LG HG2 study's results (1RC with a measured OCV fits its pulses to about 12-13 mV) were known when this plan, the Q2 re-split and the bars were written; bars are inherited verbatim from the v1 pack (50/90 mV for the aging-archive class, 15/30 mV for the pulse class) to avoid choosing them",
+  "Q2 is the same pulse windows as v1's P2, re-split: it is a new arrangement, not new data",
+  "the Q1 data are fresh for this project's Mind work, but the archive's 44 C cells may have been used by earlier, unrelated battery flagship work; no number from such work is read here",
+  "the Q1 design was chosen from protocol covariates (ambient, level, cycle order, recorded temperature ranges) before any fit; the applicability margins (1 C, 0.05 A, 0.02 charge state) are a declared scope policy, set after seeing covariate ranges but before any voltage was compared with a model",
+  "a 24 C, 4 A problem was dropped before any fit because the causal capacity convention breaks there",
+  "the frozen v1 baselines and Mind adapter implement v1's coarser domain rule (no charge-state range from calibration, no protocol-level check); the truth uses the pack's declared rule",
+  "OLD_MIND and SEMANTIC_ROLES_ONLY cannot judge adequacy or discrepancy at all (v1 vocabulary)",
+  "about ten scored instances in total: a single instance moves every hypothesis"
+ ],
+ "truth_protocol": {
+  "computed": "only after the seal is verified (evaluator/truth.py refuses otherwise)",
+  "doc": "see the module docstring (frozen with it)",
+  "independence": "a separate implementation of the declared forward model and a denser oracle fit; it reads no candidate code or output",
+  "margin": 1.1,
+  "module": "benchmarks/battery_rediscovery_v2/evaluator/reference.py"
+ },
+ "uncertainty_inputs": {
+  "Q1": {
+   "basis": "no accuracy statement is published for the logger; the uncertainty is never set to zero and no residual estimate replaces it",
+   "independent": null,
+   "sigma": null,
+   "status": "UNKNOWN"
+  },
+  "Q2": {
+   "basis": "publisher's instrument accuracy statement (0.1 % of the 5 V full scale); a bound on the error, not a statement that errors are independent",
+   "distribution": "uniform",
+   "half_width": 0.005,
+   "independent": null,
+   "sigma": 0.002886751345948129,
+   "status": "DECLARED_TYPE_B"
+  }
+ }
+}

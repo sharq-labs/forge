@@ -1,0 +1,20 @@
+reviewed_prefix 1 36 failed, 53 passed in 3.53s
+control 0 89 passed in 3.00s
+discard_interrupted_handing 1 12 failed, 77 passed in 3.06s
+retain_live_mapping 1 4 failed, 85 passed in 3.09s
+handing_dictionary_copy 1 2 failed, 87 passed in 3.01s
+exact_pair_type 1 2 failed, 87 passed in 3.06s
+reread_retired_content 1 1 failed, 88 passed in 3.09s
+seal_entry_only 1 10 failed, 79 passed in 3.07s
+no_comparison_seal 1 9 failed, 80 passed in 3.05s
+no_post_wait_seal 1 1 failed, 88 passed in 3.03s
+interrupt_poison 1 17 failed, 72 passed in 3.10s
+no_reconciliation 1 4 failed, 85 passed in 3.03s
+no_history_count 1 2 failed, 87 passed in 3.07s
+drop_before_observation 1 2 failed, 87 passed in 2.98s
+comparison_outside_lock 1 1 failed, 88 passed in 3.02s
+no_retained_history_reconciliation 1 2 failed, 87 passed in 3.04s
+listing_outside_interrupt_guard 0 89 passed in 2.99s
+interrupt_implicit_success 1 3 failed, 86 passed in 3.06s
+listing_outside_without_handing_recovery 1 13 failed, 76 passed in 3.00s
+16 correctness mutants deterministically killed; one redundant guard removal justified by retained recovery

@@ -1,0 +1,28 @@
+{
+ "access_log": {
+  "benchmarks/battery_rediscovery_v0/results/ACCESS_LOG.json": "4cfb1e1a466dcc649194618061e6fbd04a6f7e92a03d95cc6a8dc71f4ecc5f23"
+ },
+ "code_commit": "085d9a7c686d707edf70af29a8e9f6086791875d",
+ "leakage_pre_seal": {
+  "benchmarks/battery_rediscovery_v0/results/LEAKAGE_PRE_SEAL.json": "33d2849e8c697db36ee0428730ab8217266457a3bbb990adcb6efabdaf5bb8fd"
+ },
+ "note": "TIMINGS.json is excluded: wall-clock values are not scientific content",
+ "outputs": {
+  "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_FIT__P1.json": "5032f81e2e117401999b81f9cf55f8bd02b54b6fe15b53451569e0dff5ed23f5",
+  "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_FIT__P2.json": "a317ae04aad0a5a6fd16775e8ab536afeed070f23102c7ac8cb44dcbd19774d2",
+  "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_REFUSE__P1.json": "ce05c3d5e3aeb2faacb9af02a8c6af69c5a0610fc89075f28afe5b0aed51c6e0",
+  "benchmarks/battery_rediscovery_v0/results/candidate/ALWAYS_REFUSE__P2.json": "2e73e7c618492ec07591b4ac3eb0dfbbf710e8eeb3a3eb5be6f93f5176ab408a",
+  "benchmarks/battery_rediscovery_v0/results/candidate/CAREFUL_BASELINE__P1.json": "1d6f8c90669f7e11dc02000e23b08189af2ab6a70307c13a8df7ea4544dcc4ee",
+  "benchmarks/battery_rediscovery_v0/results/candidate/CAREFUL_BASELINE__P2.json": "faa2e61e2d355330a78a173b69cac2560d852529487a4c8a672616e0a08dbfe1",
+  "benchmarks/battery_rediscovery_v0/results/candidate/FIXED_FIT__P1.json": "70f5832665f2c809fe92bbfaba65263b8c425bd821b9181bc507fa05b5f2d698",
+  "benchmarks/battery_rediscovery_v0/results/candidate/FIXED_FIT__P2.json": "31be4752fff392577f92363bf895e9c33458e6d6f3613399b5001d76411ecf9f",
+  "benchmarks/battery_rediscovery_v0/results/candidate/MIND_TRACES__P1.json": "33ae21d23628294ab64d76c9d474b3c4fea56ee5c1ccd6ac0ae0b248a29cf2aa",
+  "benchmarks/battery_rediscovery_v0/results/candidate/MIND_TRACES__P2.json": "76ea124539586617f2bc450faa0df52468f533847e571601841cfc77833dad48",
+  "benchmarks/battery_rediscovery_v0/results/candidate/MIND__P1.json": "9b9d29cfda619dc6d145f5769665b992d66e3d784c5c4e447fe165d50a62e092",
+  "benchmarks/battery_rediscovery_v0/results/candidate/MIND__P2.json": "cd61594cbb8a52b32057fb242a762251c2e90fafc9c2f994298f63644eb5c3ac"
+ },
+ "pack_manifest_sha256": "1beb70c48b91399e8fb7e05149f2397008dddbccb80c22440b376c0f1bb3839e",
+ "plan_sha256": "adc3a30f5966892885cd3fc4ea3a49871adea2ad489becee189dd52dafc3c1bf",
+ "schema": "forge.battery_rediscovery.seal/1",
+ "status": "PASS"
+}

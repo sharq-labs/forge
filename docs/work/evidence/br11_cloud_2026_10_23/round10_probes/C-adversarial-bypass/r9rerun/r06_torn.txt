@@ -1,0 +1,2 @@
+pins 83, refused 3, torn records 0; examples (evaluations, accounting.attempts, revision): []
+exit 0

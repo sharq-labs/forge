@@ -1,0 +1,2991 @@
+{
+ "benchmark_sha256": "e200c1e62b9c6558151c52ae234bdd634831da9e9d21c9423eabe56e0bc8646c",
+ "br1_commit": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
+ "decisions": {
+  "battery/base/observe_rest/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/observe_rest/CHANGE_FIXED:T_amb": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/observe_rest/OBSERVE_DERIVED:P_el": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/OBSERVE_LATENT:C1": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/OBSERVE_NOTHING:observe_rest": {
+   "codes": [
+    "OBSERVE_TARGETS_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/observe_rest/OBSERVE_NO_CHANNEL:SOC": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/OBSERVE_UNOFFERED:I": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/SET_DERIVED:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/SET_LATENT:C1": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/SET_MEASUREMENT:V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/SET_NUISANCE:T_surf": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/SET_STATE:SOC": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "battery/base/observe_rest/SET_UNOFFERED_INPUT:I": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/observe_rest/SET_UNSELECTABLE_PROTOCOL:mode": {
+   "codes": [
+    "PROTOCOL_CONDITION_NOT_SELECTABLE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/observe_rest/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/observe_rest/VALID_FIXED_RESTATE:T_amb": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/observe_rest/VALID_OBSERVE_SUBSET:T_surf": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/observe_rest/VALID_OBSERVE_SUBSET:V": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/precondition_to_soc/ABOVE_RANGE:SOC=1.04": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/precondition_to_soc/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/precondition_to_soc/BELOW_RANGE:SOC=-0.039999999999999994": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/precondition_to_soc/CHANGE_FIXED:T_amb": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/precondition_to_soc/MISSING_CONTROL:SOC": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/precondition_to_soc/OBSERVE_DERIVED:P_el": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/OBSERVE_LATENT:C1": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/OBSERVE_NO_CHANNEL:SOC": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/OBSERVE_UNOFFERED:I": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/SET_DERIVED:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/SET_LATENT:C1": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/SET_MEASUREMENT:V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/SET_NUISANCE:T_surf": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/SET_UNOFFERED_INPUT:I": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/precondition_to_soc/SET_UNSELECTABLE_PROTOCOL:mode": {
+   "codes": [
+    "PROTOCOL_CONDITION_NOT_SELECTABLE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/precondition_to_soc/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/precondition_to_soc/VALID_BOUNDARY:SOC=0.05": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/precondition_to_soc/VALID_BOUNDARY:SOC=0.95": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/precondition_to_soc/VALID_FIXED_RESTATE:T_amb": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/precondition_to_soc/WRONG_UNIT:SOC": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/ABOVE_RANGE:t_pulse=659.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/pulse/BELOW_RANGE:t_pulse=-49.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/CHANGE_FIXED:T_amb": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/pulse/CHANGE_FIXED:mode": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/pulse/MISSING_CONTROL:I": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVED",
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/pulse/MISSING_CONTROL:t_pulse": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/pulse/OBSERVE_DERIVED:P_el": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/OBSERVE_LATENT:C1": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/OBSERVE_NO_CHANNEL:SOC": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/OFF_LEVEL:I=1.5": {
+   "codes": [
+    "LEVEL_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/pulse/OFF_LEVEL:I=1.5+WRONG_UNIT:t_pulse": {
+   "codes": [
+    "LEVEL_NOT_DECLARED",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/SET_DERIVED:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/SET_LATENT:C1": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/SET_MEASUREMENT:V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/SET_NUISANCE:T_surf": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/SET_STATE:SOC": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "battery/base/pulse/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/pulse/VALID_BOUNDARY:t_pulse=10.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/pulse/VALID_BOUNDARY:t_pulse=600.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/pulse/VALID_FIXED_RESTATE:T_amb": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/pulse/VALID_OBSERVE_SUBSET:I": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/pulse/VALID_OBSERVE_SUBSET:T_surf": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/pulse/WRONG_UNIT:I": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/pulse/WRONG_UNIT:t_pulse": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/ABOVE_RANGE:I=6.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/ABOVE_RANGE:t_pulse=659.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/signed_pulse/BELOW_RANGE:I=-6.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/BELOW_RANGE:t_pulse=-49.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/CHANGE_FIXED:T_amb": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/signed_pulse/CONSTRAINT_VIOLATED:charge_positive=-2.5": {
+   "codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/signed_pulse/CONSTRAINT_VIOLATED:discharge_negative=2.5": {
+   "codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/signed_pulse/MISSING_CONTROL:I": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVED",
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/signed_pulse/MISSING_CONTROL:mode": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED",
+    "GUARD_UNRESOLVED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/signed_pulse/MISSING_CONTROL:t_pulse": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/signed_pulse/OBSERVE_DERIVED:P_el": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/OBSERVE_LATENT:C1": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/OBSERVE_NO_CHANNEL:SOC": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/OBSERVE_UNOFFERED:T_surf": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/SET_DERIVED:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/SET_LATENT:C1": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/SET_MEASUREMENT:V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/SET_NUISANCE:T_surf": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/SET_STATE:SOC": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "battery/base/signed_pulse/UNDECLARED_CATEGORY:mode=undeclared_category": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/signed_pulse/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/signed_pulse/VALID_BOUNDARY:t_pulse=10.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/signed_pulse/VALID_BOUNDARY:t_pulse=600.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/signed_pulse/VALID_FIXED_RESTATE:T_amb": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/signed_pulse/VALID_OBSERVE_SUBSET:I": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/signed_pulse/WRONG_KIND:mode": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/WRONG_UNIT:I": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/signed_pulse/WRONG_UNIT:t_pulse": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/ABOVE_RANGE:I=5.49": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/ABOVE_RANGE:I=5.49+WRONG_UNIT:T_amb": {
+   "codes": [
+    "APPLICABILITY_NOT_ASSESSABLE",
+    "OUTSIDE_RANGE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/ABOVE_RANGE:T_amb=97.5": {
+   "codes": [
+    "OUTSIDE_RANGE",
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/ABOVE_RANGE:t_pulse=659.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/APPLICABILITY_OUTSIDE:T_amb=67.5": {
+   "codes": [
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_APPLICABILITY"
+  },
+  "battery/base/simulate_pulse/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/simulate_pulse/BELOW_RANGE:I=-0.39": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/BELOW_RANGE:T_amb=-52.5": {
+   "codes": [
+    "OUTSIDE_RANGE",
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/BELOW_RANGE:t_pulse=-49.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/CHANGE_FIXED:mode": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "battery/base/simulate_pulse/MISSING_CONTROL:I": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVED",
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/simulate_pulse/MISSING_CONTROL:T_amb": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/simulate_pulse/MISSING_CONTROL:t_pulse": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/simulate_pulse/OBSERVE_DERIVED:P_el": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/OBSERVE_LATENT:C1": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/OBSERVE_NO_CHANNEL:SOC": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/OBSERVE_UNOFFERED:I": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/SET_DERIVED:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/SET_LATENT:C1": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/SET_MEASUREMENT:V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/SET_NUISANCE:T_surf": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/SET_STATE:SOC": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "battery/base/simulate_pulse/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/base/simulate_pulse/VALID_BOUNDARY:t_pulse=10.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/simulate_pulse/VALID_BOUNDARY:t_pulse=600.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/simulate_pulse/VALID_RESPELL:T_amb": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "battery/base/simulate_pulse/WRONG_UNIT:I": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/WRONG_UNIT:T_amb": {
+   "codes": [
+    "APPLICABILITY_NOT_ASSESSABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/simulate_pulse/WRONG_UNIT:t_pulse": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "battery/base/undeclared_action/UNDECLARED_ACTION:undeclared_action": {
+   "codes": [
+    "UNDECLARED_ACTION"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/budget_exhausted:experiments:0/observe_rest/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "battery/budget_exhausted:experiments:0/precondition_to_soc/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "battery/budget_exhausted:experiments:0/pulse/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "battery/budget_exhausted:experiments:0/signed_pulse/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "battery/budget_exhausted:solver_calls:1/simulate_pulse/BUDGET_EXHAUSTED:solver_calls": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "battery/budget_undeclared:cost/observe_rest/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/budget_undeclared:cost/precondition_to_soc/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/budget_undeclared:cost/pulse/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/budget_undeclared:cost/signed_pulse/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/budget_undeclared:cost/simulate_pulse/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/provider_down:sim.ecm/simulate_pulse/PROVIDER_DOWN:sim.ecm": {
+   "codes": [
+    "PROVIDER_UNAVAILABLE"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "battery/provider_other_version:sim.ecm:1.0.1/simulate_pulse/PROVIDER_OTHER_VERSION:sim.ecm": {
+   "codes": [
+    "PROVIDER_VERSION_MISMATCH"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "battery/uncertainty_unknown:SOC/pulse/PRECONDITION_UNCERTAIN:soc_floor": {
+   "codes": [
+    "PRECONDITION_UNCERTAINTY_UNKNOWN",
+    "STATE_DOMAIN_UNDECIDABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/uncertainty_unknown:SOC/signed_pulse/PRECONDITION_UNCERTAIN:soc_ceiling": {
+   "codes": [
+    "PRECONDITION_UNCERTAINTY_UNKNOWN",
+    "STATE_DOMAIN_UNDECIDABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "battery/value:SOC/pulse/PRECONDITION_VIOLATED:soc_floor": {
+   "codes": [
+    "PRECONDITION_VIOLATED",
+    "STATE_DOMAIN_UNDECIDED"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "battery/value:SOC/signed_pulse/PRECONDITION_VIOLATED:soc_ceiling": {
+   "codes": [
+    "PRECONDITION_VIOLATED",
+    "STATE_DOMAIN_UNDECIDED"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "drone/base/climb_test/ABOVE_RANGE:thrust_cmd=44.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/climb_test/BELOW_RANGE:thrust_cmd=-4.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/CHANGE_FIXED:payload": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/climb_test/CONSTRAINT_VIOLATED:climb_thrust=10.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/climb_test/MISSING_CONTROL:flight_mode": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED",
+    "GUARD_UNRESOLVED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/climb_test/MISSING_CONTROL:thrust_cmd": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVED",
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/climb_test/OBSERVE_DERIVED:shaft_power": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/OBSERVE_LATENT:drag_coeff": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/OBSERVE_NO_CHANNEL:flight_mode": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/OBSERVE_UNOFFERED:wind": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/SET_DERIVED:shaft_power": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/SET_LATENT:drag_coeff": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/SET_MEASUREMENT:battery_V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/SET_NUISANCE:wind": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/SET_STATE:altitude": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "drone/base/climb_test/UNDECLARED_CATEGORY:flight_mode=undeclared_category": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/climb_test/UNDECLARED_CATEGORY:flight_mode=undeclared_category+WRONG_UNIT:thrust_cmd": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/climb_test/VALID_FIXED_RESTATE:payload": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/climb_test/VALID_OBSERVE_SUBSET:battery_V": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/climb_test/VALID_OBSERVE_SUBSET:velocity": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/climb_test/VALID_RESPELL:thrust_cmd": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/climb_test/WRONG_KIND:flight_mode": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/climb_test/WRONG_UNIT:thrust_cmd": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/ABOVE_RANGE:thrust_cmd=44.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/hover_test/BELOW_RANGE:thrust_cmd=-4.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/CHANGE_FIXED:flight_mode": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/hover_test/MISSING_CONTROL:payload": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/hover_test/MISSING_CONTROL:thrust_cmd": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/hover_test/OBSERVE_DERIVED:shaft_power": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/OBSERVE_LATENT:drag_coeff": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/OBSERVE_NO_CHANNEL:flight_mode": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/OBSERVE_UNOFFERED:wind": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/OFF_LEVEL:payload=0.25": {
+   "codes": [
+    "LEVEL_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/hover_test/OFF_LEVEL:payload=0.25+WRONG_UNIT:thrust_cmd": {
+   "codes": [
+    "LEVEL_NOT_DECLARED",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/SET_DERIVED:shaft_power": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/SET_LATENT:drag_coeff": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/SET_MEASUREMENT:battery_V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/SET_NUISANCE:wind": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/SET_STATE:altitude": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "drone/base/hover_test/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/hover_test/VALID_LEVEL:payload=0.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/hover_test/VALID_LEVEL:payload=1.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/hover_test/VALID_OBSERVE_SUBSET:battery_V": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/hover_test/VALID_OBSERVE_SUBSET:velocity": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/hover_test/VALID_RESPELL:thrust_cmd": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/hover_test/WRONG_UNIT:payload": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/hover_test/WRONG_UNIT:thrust_cmd": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/observe_wind/OBSERVE_DERIVED:shaft_power": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/OBSERVE_LATENT:drag_coeff": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/OBSERVE_NOTHING:observe_wind": {
+   "codes": [
+    "OBSERVE_TARGETS_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/observe_wind/OBSERVE_NO_CHANNEL:flight_mode": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/OBSERVE_UNOFFERED:altitude": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/SET_DERIVED:shaft_power": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/SET_LATENT:drag_coeff": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/SET_MEASUREMENT:battery_V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/SET_NUISANCE:wind": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/SET_STATE:altitude": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "drone/base/observe_wind/SET_UNOFFERED_INPUT:thrust_cmd": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/observe_wind/SET_UNSELECTABLE_PROTOCOL:flight_mode": {
+   "codes": [
+    "PROTOCOL_CONDITION_NOT_SELECTABLE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/observe_wind/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/simulate_flight/ABOVE_RANGE:thrust_cmd=44.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/simulate_flight/BELOW_RANGE:thrust_cmd=-4.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/CHANGE_FIXED:flight_mode": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/simulate_flight/CHANGE_FIXED:payload": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "drone/base/simulate_flight/MISSING_CONTROL:thrust_cmd": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/simulate_flight/OBSERVE_DERIVED:shaft_power": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/OBSERVE_LATENT:drag_coeff": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/OBSERVE_NO_CHANNEL:flight_mode": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/OBSERVE_UNOFFERED:battery_V": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/SET_DERIVED:shaft_power": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/SET_LATENT:drag_coeff": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/SET_MEASUREMENT:battery_V": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/SET_NUISANCE:wind": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/simulate_flight/SET_STATE:altitude": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "drone/base/simulate_flight/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/base/simulate_flight/VALID_FIXED_RESTATE:payload": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/simulate_flight/VALID_OBSERVE_SUBSET:velocity": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/simulate_flight/VALID_RESPELL:thrust_cmd": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "drone/base/simulate_flight/WRONG_UNIT:thrust_cmd": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "drone/base/undeclared_action/UNDECLARED_ACTION:undeclared_action": {
+   "codes": [
+    "UNDECLARED_ACTION"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/budget_exhausted:experiments:0/climb_test/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "drone/budget_exhausted:experiments:0/hover_test/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "drone/budget_exhausted:solver_calls:2/simulate_flight/BUDGET_EXHAUSTED:solver_calls": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "drone/budget_undeclared:cost/climb_test/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/budget_undeclared:cost/hover_test/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/budget_undeclared:cost/observe_wind/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/budget_undeclared:cost/simulate_flight/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/provider_down:sim.6dof/simulate_flight/PROVIDER_DOWN:sim.6dof": {
+   "codes": [
+    "PROVIDER_UNAVAILABLE"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "drone/provider_other_version:sim.6dof:0.9.1/simulate_flight/PROVIDER_OTHER_VERSION:sim.6dof": {
+   "codes": [
+    "PROVIDER_VERSION_MISMATCH"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "drone/uncertainty_unknown:altitude/climb_test/PRECONDITION_UNCERTAIN:near_ground": {
+   "codes": [
+    "PRECONDITION_UNCERTAINTY_UNKNOWN"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/uncertainty_unknown:altitude/hover_test/PRECONDITION_UNCERTAIN:near_ground": {
+   "codes": [
+    "PRECONDITION_UNCERTAINTY_UNKNOWN"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "drone/value:altitude/climb_test/PRECONDITION_VIOLATED:near_ground": {
+   "codes": [
+    "PRECONDITION_VIOLATED"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "drone/value:altitude/hover_test/PRECONDITION_VIOLATED:near_ground": {
+   "codes": [
+    "PRECONDITION_VIOLATED"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "drone/value:wind/simulate_flight/APPLICABILITY_OUTSIDE_INTERVAL:wind=14.2": {
+   "codes": [
+    "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_APPLICABILITY"
+  },
+  "hvac_chamber/base/mode_change/ABOVE_RANGE:speed=6500.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/mode_change/BELOW_RANGE:speed=500.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/CHANGE_FIXED:T_out": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/mode_change/CONSTRAINT_VIOLATED:heat_speed_cap=5000.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/mode_change/MISSING_CONTROL:hvac_mode": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED",
+    "GUARD_UNRESOLVED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/mode_change/MISSING_CONTROL:speed": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVED",
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/mode_change/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/OBSERVE_NO_CHANNEL:T_out": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/OBSERVE_UNOFFERED:occupancy": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/SET_NUISANCE:occupancy": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_chamber/base/mode_change/SET_UNOFFERED_INPUT:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/UNDECLARED_CATEGORY:hvac_mode=undeclared_category": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/mode_change/UNDECLARED_CATEGORY:hvac_mode=undeclared_category+WRONG_UNIT:speed": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/mode_change/VALID_FIXED_RESTATE:T_out": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/mode_change/VALID_OBSERVE_SUBSET:T_room": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/mode_change/VALID_RESPELL:speed": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/mode_change/WRONG_KIND:hvac_mode": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/mode_change/WRONG_UNIT:speed": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/observe_room/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/OBSERVE_NOTHING:observe_room": {
+   "codes": [
+    "OBSERVE_TARGETS_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/observe_room/OBSERVE_NO_CHANNEL:T_out": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/OBSERVE_UNOFFERED:occupancy": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/SET_NUISANCE:occupancy": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_chamber/base/observe_room/SET_UNOFFERED_INPUT:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/observe_room/SET_UNSELECTABLE_PROTOCOL:T_out": {
+   "codes": [
+    "PROTOCOL_CONDITION_NOT_SELECTABLE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/observe_room/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/observe_room/VALID_OBSERVE_SUBSET:P_el": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/simulate_building/ABOVE_RANGE:speed=6500.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/simulate_building/BELOW_RANGE:speed=500.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/CHANGE_FIXED:T_out": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED",
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/simulate_building/CHANGE_FIXED:hvac_mode": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/simulate_building/MISSING_CONTROL:speed": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/simulate_building/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/OBSERVE_NO_CHANNEL:T_out": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/OBSERVE_UNOFFERED:P_el": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/SET_NUISANCE:occupancy": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_chamber/base/simulate_building/SET_UNOFFERED_INPUT:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/simulate_building/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/simulate_building/VALID_FIXED_RESTATE:T_out": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/simulate_building/VALID_RESPELL:speed": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/simulate_building/WRONG_UNIT:speed": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/ABOVE_RANGE:speed=6450.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/step_speed/BELOW_RANGE:speed=1050.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/CHANGE_FIXED:T_out": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/step_speed/CHANGE_FIXED:hvac_mode": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_chamber/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6+WRONG_UNIT:speed": {
+   "codes": [
+    "OUTSIDE_RANGE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/MISSING_CONTROL:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/step_speed/MISSING_CONTROL:speed": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/step_speed/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/OBSERVE_NO_CHANNEL:T_out": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/OBSERVE_UNOFFERED:occupancy": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/SET_NUISANCE:occupancy": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_chamber/base/step_speed/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/base/step_speed/VALID_FIXED_RESTATE:T_out": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/step_speed/VALID_INTEGER_BOUND:fan_stage=1": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/step_speed/VALID_INTEGER_BOUND:fan_stage=5": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/step_speed/VALID_OBSERVE_SUBSET:T_room": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/step_speed/VALID_RESPELL:speed": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_chamber/base/step_speed/WRONG_KIND:fan_stage": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/step_speed/WRONG_UNIT:speed": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_chamber/base/undeclared_action/UNDECLARED_ACTION:undeclared_action": {
+   "codes": [
+    "UNDECLARED_ACTION"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/budget_exhausted:experiments:0/mode_change/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_chamber/budget_exhausted:experiments:0/step_speed/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_chamber/budget_exhausted:solver_calls:0/simulate_building/BUDGET_EXHAUSTED:solver_calls": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_chamber/budget_exhausted:wall_time:1799.0/step_speed/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_chamber/budget_exhausted:wall_time:3599.0/mode_change/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_chamber/budget_exhausted:wall_time:59.0/simulate_building/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_chamber/budget_exhausted:wall_time:599.0/observe_room/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_chamber/budget_undeclared:cost/mode_change/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/budget_undeclared:cost/observe_room/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/budget_undeclared:cost/simulate_building/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/budget_undeclared:cost/step_speed/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/fixed_condition:simulate_building:T_out/simulate_building/APPLICABILITY_OUTSIDE:T_out=45.0": {
+   "codes": [
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_APPLICABILITY"
+  },
+  "hvac_chamber/provider_down:sim.rc-building/simulate_building/PROVIDER_DOWN:sim.rc-building": {
+   "codes": [
+    "PROVIDER_UNAVAILABLE"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "hvac_chamber/provider_other_version:sim.rc-building:2.1.1/simulate_building/PROVIDER_OTHER_VERSION:sim.rc-building": {
+   "codes": [
+    "PROVIDER_VERSION_MISMATCH"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "hvac_chamber/uncertainty_unknown:T_room/step_speed/PRECONDITION_UNCERTAIN:room_not_hot": {
+   "codes": [
+    "PRECONDITION_UNCERTAINTY_UNKNOWN"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_chamber/value:T_room/step_speed/PRECONDITION_VIOLATED:room_not_hot": {
+   "codes": [
+    "PRECONDITION_VIOLATED"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_field/base/mode_change/ABOVE_RANGE:speed=6500.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED",
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/mode_change/BELOW_RANGE:speed=500.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/CONSTRAINT_VIOLATED:heat_speed_cap=5000.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_field/base/mode_change/MISSING_CONTROL:hvac_mode": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED",
+    "GUARD_UNRESOLVED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/mode_change/MISSING_CONTROL:speed": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVED",
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/mode_change/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/OBSERVE_NO_CHANNEL:fan_stage": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/OBSERVE_UNOFFERED:T_out": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/SET_NUISANCE:T_out": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_field/base/mode_change/SET_UNOFFERED_INPUT:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/UNDECLARED_CATEGORY:hvac_mode=undeclared_category": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_field/base/mode_change/UNDECLARED_CATEGORY:hvac_mode=undeclared_category+WRONG_UNIT:speed": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/mode_change/VALID_OBSERVE_SUBSET:T_room": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/mode_change/VALID_RESPELL:speed": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/mode_change/WRONG_KIND:hvac_mode": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/mode_change/WRONG_UNIT:speed": {
+   "codes": [
+    "CONSTRAINT_UNRESOLVABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/observe_room/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/OBSERVE_NOTHING:observe_room": {
+   "codes": [
+    "OBSERVE_TARGETS_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/observe_room/OBSERVE_NO_CHANNEL:fan_stage": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/OBSERVE_UNOFFERED:occupancy": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/SET_NUISANCE:T_out": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_field/base/observe_room/SET_UNOFFERED_INPUT:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/observe_room/SET_UNSELECTABLE_PROTOCOL:hvac_mode": {
+   "codes": [
+    "PROTOCOL_CONDITION_NOT_SELECTABLE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_field/base/observe_room/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/observe_room/VALID_OBSERVE_SUBSET:P_el": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/observe_room/VALID_OBSERVE_SUBSET:T_out": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/observe_room/VALID_OBSERVE_SUBSET:T_room": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/simulate_building/ABOVE_RANGE:speed=6500.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/simulate_building/BELOW_RANGE:speed=500.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/CHANGE_FIXED:hvac_mode": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_field/base/simulate_building/MISSING_CONTROL:speed": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/simulate_building/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/OBSERVE_NO_CHANNEL:fan_stage": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/OBSERVE_UNOFFERED:P_el": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/SET_NUISANCE:T_out": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_field/base/simulate_building/SET_UNOFFERED_INPUT:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/simulate_building/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/simulate_building/VALID_RESPELL:speed": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/simulate_building/WRONG_UNIT:speed": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/ABOVE_RANGE:speed=6450.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/step_speed/BELOW_RANGE:speed=1050.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/CHANGE_FIXED:hvac_mode": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "hvac_field/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/INTEGER_ABOVE_RANGE:fan_stage=6+WRONG_UNIT:speed": {
+   "codes": [
+    "OUTSIDE_RANGE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/MISSING_CONTROL:fan_stage": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/step_speed/MISSING_CONTROL:speed": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/step_speed/OBSERVE_DERIVED:COP": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/OBSERVE_LATENT:UA": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/OBSERVE_NO_CHANNEL:fan_stage": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/OBSERVE_UNOFFERED:T_out": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/SET_DERIVED:COP": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/SET_LATENT:UA": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/SET_MEASUREMENT:P_el": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/SET_NUISANCE:T_out": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/SET_STATE:T_room": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "hvac_field/base/step_speed/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/base/step_speed/VALID_INTEGER_BOUND:fan_stage=1": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/step_speed/VALID_INTEGER_BOUND:fan_stage=5": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/step_speed/VALID_OBSERVE_SUBSET:T_room": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/step_speed/VALID_RESPELL:speed": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "hvac_field/base/step_speed/WRONG_KIND:fan_stage": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/step_speed/WRONG_UNIT:speed": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "hvac_field/base/undeclared_action/UNDECLARED_ACTION:undeclared_action": {
+   "codes": [
+    "UNDECLARED_ACTION"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/budget_exhausted:experiments:0/mode_change/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_field/budget_exhausted:experiments:0/step_speed/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_field/budget_exhausted:solver_calls:0/simulate_building/BUDGET_EXHAUSTED:solver_calls": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_field/budget_exhausted:wall_time:1799.0/step_speed/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_field/budget_exhausted:wall_time:3599.0/mode_change/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_field/budget_exhausted:wall_time:59.0/simulate_building/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_field/budget_exhausted:wall_time:599.0/observe_room/BUDGET_EXHAUSTED:wall_time": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "hvac_field/budget_undeclared:cost/mode_change/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/budget_undeclared:cost/observe_room/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/budget_undeclared:cost/simulate_building/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/budget_undeclared:cost/step_speed/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/provider_down:sim.rc-building/simulate_building/PROVIDER_DOWN:sim.rc-building": {
+   "codes": [
+    "PROVIDER_UNAVAILABLE"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "hvac_field/provider_other_version:sim.rc-building:2.1.1/simulate_building/PROVIDER_OTHER_VERSION:sim.rc-building": {
+   "codes": [
+    "PROVIDER_VERSION_MISMATCH"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "hvac_field/uncertainty_unknown:T_room/step_speed/PRECONDITION_UNCERTAIN:room_not_hot": {
+   "codes": [
+    "PRECONDITION_UNCERTAINTY_UNKNOWN"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "hvac_field/value:T_out/simulate_building/APPLICABILITY_OUTSIDE_INTERVAL:T_out=46.0": {
+   "codes": [
+    "INTERVAL_OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_APPLICABILITY"
+  },
+  "hvac_field/value:T_room/step_speed/PRECONDITION_VIOLATED:room_not_hot": {
+   "codes": [
+    "PRECONDITION_VIOLATED"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "motor/base/load_step/ABOVE_RANGE:I_cmd=33.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/ABOVE_RANGE:I_cmd=33.0+WRONG_UNIT:V_supply": {
+   "codes": [
+    "OUTSIDE_RANGE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/load_step/BELOW_RANGE:I_cmd=-3.0": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/CONSTRAINT_VIOLATED:speed_mode_cap=25.0": {
+   "codes": [
+    "CONSTRAINT_VIOLATED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "motor/base/load_step/MISSING_CONTROL:I_cmd": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/load_step/MISSING_CONTROL:V_supply": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/load_step/MISSING_CONTROL:ctrl_mode": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED",
+    "GUARD_UNRESOLVED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/load_step/OBSERVE_DERIVED:efficiency": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/OBSERVE_LATENT:R_wind": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/OBSERVE_NO_CHANNEL:I_cmd": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/OBSERVE_UNOFFERED:T_ambient": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/OFF_LEVEL:V_supply=36.0": {
+   "codes": [
+    "LEVEL_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "motor/base/load_step/SET_DERIVED:efficiency": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/SET_LATENT:R_wind": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/SET_MEASUREMENT:torque": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/SET_NUISANCE:T_ambient": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/SET_STATE:T_wind": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "motor/base/load_step/SET_UNOFFERED_INPUT:solver_iterations": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/UNDECLARED_CATEGORY:ctrl_mode=undeclared_category": {
+   "codes": [
+    "CATEGORY_NOT_DECLARED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "motor/base/load_step/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/load_step/VALID_LEVEL:V_supply=24.0": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/load_step/VALID_OBSERVE_SUBSET:T_wind": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/load_step/VALID_OBSERVE_SUBSET:omega": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/load_step/VALID_RESPELL:V_supply": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/load_step/WRONG_KIND:ctrl_mode": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/WRONG_UNIT:I_cmd": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/load_step/WRONG_UNIT:V_supply": {
+   "codes": [
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/observe_temperature/OBSERVE_DERIVED:efficiency": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/OBSERVE_LATENT:R_wind": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/OBSERVE_NOTHING:observe_temperature": {
+   "codes": [
+    "OBSERVE_TARGETS_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/observe_temperature/OBSERVE_NO_CHANNEL:I_cmd": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/OBSERVE_UNOFFERED:T_ambient": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/SET_DERIVED:efficiency": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/SET_LATENT:R_wind": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/SET_MEASUREMENT:torque": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/SET_NUISANCE:T_ambient": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/SET_STATE:T_wind": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "motor/base/observe_temperature/SET_UNOFFERED_INPUT:I_cmd": {
+   "codes": [
+    "CONTROL_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/observe_temperature/SET_UNSELECTABLE_PROTOCOL:V_supply": {
+   "codes": [
+    "PROTOCOL_CONDITION_NOT_SELECTABLE"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "motor/base/observe_temperature/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/simulate_thermal/ABOVE_RANGE:I_cmd=33.0": {
+   "codes": [
+    "OUTSIDE_RANGE",
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/APPLICABILITY_OUTSIDE:I_cmd=27.5": {
+   "codes": [
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_APPLICABILITY"
+  },
+  "motor/base/simulate_thermal/BASE": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/simulate_thermal/BELOW_RANGE:I_cmd=-3.0": {
+   "codes": [
+    "OUTSIDE_RANGE",
+    "OUTSIDE_VALIDATED_DOMAIN"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/CHANGE_FIXED:V_supply": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "motor/base/simulate_thermal/CHANGE_FIXED:ctrl_mode": {
+   "codes": [
+    "FIXED_CONDITION_CHANGED"
+   ],
+   "status": "INFEASIBLE_PROTOCOL"
+  },
+  "motor/base/simulate_thermal/INTEGER_ABOVE_RANGE:solver_iterations=1001": {
+   "codes": [
+    "OUTSIDE_RANGE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/MISSING_CONTROL:I_cmd": {
+   "codes": [
+    "APPLICABILITY_NOT_SUPPLIED",
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/simulate_thermal/MISSING_CONTROL:solver_iterations": {
+   "codes": [
+    "CONTROL_NOT_SUPPLIED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/simulate_thermal/OBSERVE_DERIVED:efficiency": {
+   "codes": [
+    "DERIVED_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/OBSERVE_LATENT:R_wind": {
+   "codes": [
+    "LATENT_NOT_OBSERVABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/OBSERVE_NO_CHANNEL:I_cmd": {
+   "codes": [
+    "NO_OBSERVATION_CHANNEL"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/OBSERVE_UNOFFERED:T_ambient": {
+   "codes": [
+    "OBSERVABLE_NOT_OFFERED_BY_ACTION"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/SET_DERIVED:efficiency": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/SET_LATENT:R_wind": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/SET_MEASUREMENT:torque": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/SET_NUISANCE:T_ambient": {
+   "codes": [
+    "ROLE_NOT_CONTROLLABLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/SET_STATE:T_wind": {
+   "codes": [
+    "STATE_NOT_DIRECTLY_SETTABLE"
+   ],
+   "status": "INFEASIBLE_STATE"
+  },
+  "motor/base/simulate_thermal/UNDECLARED_VARIABLE:undeclared_variable": {
+   "codes": [
+    "UNDECLARED_VARIABLE"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/base/simulate_thermal/VALID_FIXED_RESTATE:V_supply": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/simulate_thermal/VALID_INTEGER_BOUND:solver_iterations=1": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/simulate_thermal/VALID_INTEGER_BOUND:solver_iterations=1000": {
+   "codes": [],
+   "status": "FEASIBLE"
+  },
+  "motor/base/simulate_thermal/WRONG_KIND:solver_iterations": {
+   "codes": [
+    "VALUE_KIND_MISMATCH"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/simulate_thermal/WRONG_UNIT:I_cmd": {
+   "codes": [
+    "APPLICABILITY_NOT_ASSESSABLE",
+    "UNIT_INCOMPATIBLE"
+   ],
+   "status": "INFEASIBLE_DOMAIN"
+  },
+  "motor/base/undeclared_action/UNDECLARED_ACTION:undeclared_action": {
+   "codes": [
+    "UNDECLARED_ACTION"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/budget_exhausted:experiments:0/load_step/BUDGET_EXHAUSTED:experiments": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "motor/budget_exhausted:solver_calls:0/simulate_thermal/BUDGET_EXHAUSTED:solver_calls": {
+   "codes": [
+    "OVER_BUDGET"
+   ],
+   "status": "INFEASIBLE_BUDGET"
+  },
+  "motor/budget_undeclared:cost/load_step/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/budget_undeclared:cost/observe_temperature/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/budget_undeclared:cost/simulate_thermal/BUDGET_UNDECLARED:cost": {
+   "codes": [
+    "BUDGET_DIMENSION_UNDECLARED"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/provider_down:sim.lumped-thermal/simulate_thermal/PROVIDER_DOWN:sim.lumped-thermal": {
+   "codes": [
+    "PROVIDER_UNAVAILABLE"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "motor/provider_other_version:sim.lumped-thermal:3.2.1/simulate_thermal/PROVIDER_OTHER_VERSION:sim.lumped-thermal": {
+   "codes": [
+    "PROVIDER_VERSION_MISMATCH"
+   ],
+   "status": "INFEASIBLE_PROVIDER"
+  },
+  "motor/uncertainty_unknown:T_wind/load_step/PRECONDITION_UNCERTAIN:winding_cool": {
+   "codes": [
+    "PRECONDITION_UNCERTAINTY_UNKNOWN"
+   ],
+   "status": "MISSING_INFORMATION"
+  },
+  "motor/value:T_wind/load_step/PRECONDITION_VIOLATED:winding_cool": {
+   "codes": [
+    "PRECONDITION_VIOLATED"
+   ],
+   "status": "INFEASIBLE_STATE"
+  }
+ },
+ "decisions_digest": "d33a9c2d2f6079334bc499cf8e59be41e68b7f64534b35b35dfba1cc010a356b",
+ "schema": "forge.mind.gen2_authority.br1_decisions/1",
+ "statement": "BR1's own decisions on its 515 frozen cases, produced by BR1's code at the commit above; the full decision records hashed to BR1's committed decisions_digest."
+}

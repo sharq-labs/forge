@@ -1,0 +1,79 @@
+import itertools, sys
+from unittest.mock import patch
+import pytest
+from engcore.mind.world import BudgetReader, OwnerKind, owners
+from engcore.mind.world.authority import OwnerUnavailable
+from tests.mind.test_authority_review_r17 import _fixture, _append, _checkpoint
+from tests.mind.test_authority_review_r16 import _interrupt_handing
+from tests.mind.test_authority_review_r14 import _desk, _solver, _settle, _refused, ax
+from engcore.sria.campaign.budget import BudgetLedger
+
+@pytest.mark.parametrize("kind", ["ledger", "experiment"])
+@pytest.mark.parametrize("order", list(itertools.permutations(range(3))))
+def test_numeric_json_three_prefixes(kind, order):
+    account, held, follow, reader, owner_kind = _fixture(kind)
+    versions=[_checkpoint(account,kind)]
+    for i in range(2):
+        if kind == "ledger":
+            account.settle(charge_id=str(i), action_id=str(i), iteration=i, family="explore", realized=1., detail={"v":{2:"a",10:"b"}})
+        else:
+            from engcore.scientific.experiments.evaluation import ScientificEvaluation, EvaluationStatus
+            account.record(ScientificEvaluation(str(i),{},status=EvaluationStatus.NOT_CONVERGED,metadata={"v":{2:"a",10:"b"}}))
+        versions.append(_checkpoint(account,kind))
+    for i in order:
+        held[0]=_checkpoint(versions[i],kind); _interrupt_handing(reader)
+    held[0]=_checkpoint(versions[1],kind)
+    with pytest.raises(OwnerUnavailable): reader.read(owner_kind,"a")
+    held[0]=_checkpoint(versions[2],kind)
+    assert reader.read(owner_kind,"a") == BudgetReader.following(follow).read(owner_kind,"a")
+    assert not reader._diverged
+
+@pytest.mark.parametrize("kind", ["ledger","experiment"])
+def test_reconcile_interrupt_each_entry_recovers(kind):
+    account,held,follow,reader,owner_kind=_fixture(kind)
+    _append(account,kind,{2:"a",10:"b"}); _interrupt_handing(reader)
+    held[0]=_checkpoint(account,kind); _interrupt_handing(reader)
+    original=BudgetReader._retained_entry
+    calls=[]
+    def interrupt(k,e):
+        calls.append(1); raise KeyboardInterrupt()
+    with patch.object(BudgetReader,"_retained_entry",staticmethod(interrupt)):
+        with pytest.raises(OwnerUnavailable): reader.read(owner_kind,"a")
+    assert calls and reader._unread_entries and not reader._diverged and reader._sealed is None
+    assert reader.read(owner_kind,"a") == BudgetReader.following(follow).read(owner_kind,"a")
+
+@pytest.mark.parametrize("detached", [False,True])
+def test_native_capture_pair(detached):
+    o=ax.owned("battery"); lid=_solver(o); calls=[]; published=[]
+    def follow():
+        mapping=(dict(o.ledgers),dict(o.experiments)) if detached else (o.ledgers,o.experiments)
+        published.append(mapping)
+        return mapping
+    def execute(auth):
+        calls.append(1); _settle(o.ledgers[lid],f"run.{len(calls)}")
+    reader,_,gateway,admitted=_desk(o,follow,execute)
+    saved=BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+    gateway.dispatch(admitted.admitted)
+    injections=[]
+    def recovery(frame):
+        while frame:
+            if frame.f_code is BudgetReader._recover_handing.__code__: return True
+            frame=frame.f_back
+        return False
+    def trace(frame,event,arg):
+        if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is published[-1][0] and not injections:
+            injections.append("capture"); raise KeyboardInterrupt()
+        return trace
+    def profile(frame,event,arg):
+        if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is published[-1][0] and len(injections)==1 and recovery(frame):
+            injections.append("recovery"); raise KeyboardInterrupt()
+    sys.setprofile(profile); sys.settrace(trace)
+    try:
+        with pytest.raises(KeyboardInterrupt): reader.pinned()
+    finally: sys.settrace(None); sys.setprofile(None)
+    assert injections==["capture","recovery"]
+    o.ledgers[lid]=saved
+    refused=_refused(gateway,admitted.admitted)
+    print({"detached":detached,"injections":injections,"refused":refused,"calls":len(calls)})
+    if detached: assert refused and len(calls)==1
+    else: assert not refused and len(calls)==2 # reproduction assertion, not desired behavior

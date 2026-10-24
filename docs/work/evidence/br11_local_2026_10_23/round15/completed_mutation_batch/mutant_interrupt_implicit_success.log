@@ -1,0 +1,94 @@
+........F.....F.F....................................................... [ 80%]
+.................                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_interrupt_at_entry_listing_preserves_previously_read_spend ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x77c85fbb8920>
+
+    def test_interrupt_at_entry_listing_preserves_previously_read_spend(monkeypatch):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._entries
+        armed = [True]
+        def interrupted(self, key):
+            if key[0] == "experiment" and armed:
+                armed.pop()
+                raise KeyboardInterrupt()
+            return original(self, key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_entries", interrupted)
+>           with pytest.raises(KeyboardInterrupt):
+E           Failed: DID NOT RAISE KeyboardInterrupt
+
+tests/mind/test_authority_review_r15.py:205: Failed
+___________ test_unchanged_detached_accounts_recover_after_interrupt ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x77c85f946960>
+
+    def test_unchanged_detached_accounts_recover_after_interrupt(monkeypatch):
+        account, held, mode, reader = _simple()
+        reader._follow = lambda: ({k: BudgetLedger.from_dict(v.to_dict()) for k,v in held.items()}, {})
+        original = BudgetReader._account
+        armed = [True]
+        def interrupted(self, key):
+            if armed:
+                armed.pop()
+                raise KeyboardInterrupt()
+            return original(self, key)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_account", interrupted)
+>           with pytest.raises(KeyboardInterrupt):
+E           Failed: DID NOT RAISE KeyboardInterrupt
+
+tests/mind/test_authority_review_r15.py:276: Failed
+_____ test_repeated_content_interrupt_is_explicit_never_success_or_poison ______
+
+    def test_repeated_content_interrupt_is_explicit_never_success_or_poison():
+        account, held, mode, reader = _simple()
+        class Interrupted:
+            def __str__(self):
+                raise KeyboardInterrupt("account content")
+        _settle(account, "interrupt", Interrupted())
+        for _ in range(2):
+            with pytest.raises(KeyboardInterrupt):
+>               reader.read(K, "a")
+
+tests/mind/test_authority_review_r15.py:316: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1012: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1013: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x77c85faf95e0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' was not read back: its read-back was interrupted (KeyboardInterrupt)
+
+src/engcore/mind/world/owners.py:1076: OwnerUnavailable
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_interrupt_at_entry_listing_preserves_previously_read_spend
+FAILED tests/mind/test_authority_review_r15.py::test_unchanged_detached_accounts_recover_after_interrupt
+FAILED tests/mind/test_authority_review_r15.py::test_repeated_content_interrupt_is_explicit_never_success_or_poison
+3 failed, 86 passed in 3.06s

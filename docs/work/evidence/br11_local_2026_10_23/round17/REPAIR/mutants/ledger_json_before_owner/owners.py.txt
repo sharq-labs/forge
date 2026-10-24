@@ -1,0 +1,1379 @@
+"""Read-only adapters over the canonical owners a world is projected from.
+
+Each reader READS one owner through that owner's own API, states the identity of a record, and projects the allowed
+fields.  (The budget follower also lists a handed account's history entries straight from the owner's own container,
+the one the owner's ``revision`` / ``attempts`` count, so that no code of the account runs; see ``BudgetReader``.)  It never writes, converts, decides applicability, availability or affordability, and never issues a
+verdict.  Exact owner types are required: a look-alike or a subclass is not the owner.  Where the owner defines a
+digest (``SystemState.digest``, ``BudgetLedger.digest``, the provider health report's status digest, the unit
+registry fingerprint) that digest is the identity.  ``ScientificModelDefinition`` and ``ScientificExperiment`` define
+none: their identity here is sha256 of the core's own frozen deterministic serialization (``engcore.scientific.
+to_json``), a change detector over the owner's whole record, labelled world-derived (no owner digest exists).
+
+LIVENESS.  A reader is ``live`` when every read consults the owner as it is at that moment.  Readers over mutable
+owner objects (the model and provider registries, ledgers, experiments, the unit registry) are live.  A run record
+and a set of declarations are values: ``RunStateReader(record)`` and ``DeclarationReader(declarations)`` state what the
+execution side handed over at one moment (enough to project and to replay) and are NOT live;
+``RunStateReader.following(head)`` and ``DeclarationReader.following(in_force)`` ask the execution side again at every
+read and are.  Frozen snapshot readers are never live.  Liveness is derived from the reader's type and mode, never
+asserted by a caller; only live readers back a dispatch.  Liveness is the reader's MODE, not a proof of currency: a
+following reader is as current as the callable the execution side hands it (a callable that returns a fixed record
+is live by mode), a ``BudgetReader`` built over a mapping holds that mapping's id -> account objects (``following``
+re-reads the mapping), and a ``ProviderRegistryReader`` reads the provider owner's cached status unless the execution
+side chooses ``refresh=True``.  Which currency the execution side needs is its own policy; nothing here decides it.
+
+=================  ======================================================================================================
+owner kind         owner, identity and current read
+=================  ======================================================================================================
+SYSTEM_STATE       ``system_runtime``: the execution side's run record (``SystemRunResult`` or ``SystemCheckpoint``).
+                   Owner instance: the run's request digest.  Record: one ``(state owner, variable)`` of the HEAD
+                   state (``final_state`` / the checkpoint's ``state``, which the owner's constructors bind to the last
+                   committed state of a digest chain).  Revision: the state sequence.  Digest: ``SystemState.digest``.
+                   History: every earlier committed state of the run (so a ghost digest is MISSING, an earlier one
+                   STALE).  Which run governs is the execution side's statement; across runs nothing is inferred.
+MODEL_RECORD       ``scientific.ModelRegistry.get(model_id, version)``; exact ``ScientificModelDefinition`` only.
+                   Digest: sha256 of ``engcore.scientific.to_json`` (the frozen deterministic serialization).
+PROVIDER_STATUS    ``providers.ProviderRegistry.status(provider_id)`` and ``providers.health.assess_health``.  Digest:
+                   the health report's own ``status_digest`` rule (``content_digest`` of the status without its
+                   location).  Revision: the status version.
+BUDGET_LEDGER      ``sria.campaign.BudgetLedger``: ``digest`` and ``revision`` (the ledger's own read-only identity).
+EXPERIMENT         ``scientific.experiments.ScientificExperiment``: sha256 of ``to_json``; revision = evaluations.
+DECLARATION        the problem/protocol declaration the execution side holds in force (``ProtocolDeclaration``).
+UNIT_REGISTRY      ``scientific.units``: ``registry_fingerprint()`` after ``verify_registry_unmutated()``.
+=================  ======================================================================================================
+
+A reader built from a snapshot (:func:`frozen_readers`) answers exactly the reads a historical projection and its
+verification made, and only after each recorded payload re-derives the owner's own identity for the record (the
+owner's digest rule applied to the payload, :func:`rederive`): a snapshot record whose payload its digest refutes is
+refused.  Replay therefore proves that a record is self-consistent under the owners' rules and what admission decided
+on it, never that the owners held it then or still state it now (provenance needs the owner's own anchor).
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import threading
+import time
+from typing import Any, Callable, Iterable, Mapping
+
+from engcore.providers.catalog import (
+    Availability, ProviderCapability, ProviderRegistry, ProviderStatus, ProviderUnavailable,
+)
+from engcore.providers.health import assess_health
+from engcore.providers.identity import content_digest
+from engcore.scientific import ModelNotFoundError, ScientificCoreError, to_json
+from engcore.scientific.experiments.experiment import ScientificExperiment
+from engcore.scientific.experiments.evaluation import ScientificEvaluation
+from engcore.scientific.models.definition import ScientificModelDefinition
+from engcore.scientific.models.registry import ModelRegistry
+from engcore.scientific.units.quantity import registry_fingerprint, verify_registry_unmutated
+from engcore.sria.campaign.budget import BudgetCharge, BudgetLedger
+from engcore.system_runtime.result import SystemCheckpoint, SystemRunResult
+from engcore.system_runtime.state import SystemState
+
+from .authority import OwnerKind, OwnerRecord, OwnerUnavailable
+from .base import WorldRefused, text
+
+K = OwnerKind
+
+
+def record_key(*parts: str) -> str:
+    """An unambiguous record identity from owner-side identifiers (which may contain any separator)."""
+    return json.dumps([text(p, "record identity part") for p in parts], ensure_ascii=True, separators=(",", ":"))
+
+
+def record_parts(record_id: str, n: int) -> tuple[str, ...] | None:
+    try:
+        parts = json.loads(record_id)
+    except (TypeError, ValueError):
+        return None
+    if not isinstance(parts, list) or len(parts) != n or any(type(p) is not str for p in parts):
+        return None
+    return tuple(parts)
+
+
+def _sha_json(record: Any) -> str:
+    return hashlib.sha256(to_json(record).encode("utf-8")).hexdigest()
+
+
+class _Unreadable(OwnerUnavailable):
+    """An account state its owner cannot write down and read back, the same way at every attempt (a property of the
+    state handed over, not of the moment it was read): it cannot be ordered against what a following reader observed."""
+
+
+class _InvalidHanding(OwnerUnavailable):
+    """Structural evidence that the handing is not a pair of account dictionaries."""
+
+
+class _RetainedHanding:
+    """Native mapping entries retained for an unfinished verification; never scientific evidence."""
+    __slots__ = ("entries",)
+
+    def __init__(self, entries: tuple[tuple, tuple]) -> None:
+        self.entries = entries
+
+
+class _PendingHistories:
+    """Identity-incomparable retained histories, awaiting owner reconciliation; no evidence of divergence."""
+    __slots__ = ("observations",)
+
+    def __init__(self, observations: tuple[tuple[Any, ...], ...]) -> None:
+        self.observations = observations
+
+
+class _NotRead:
+    """Why one handed account was not read back, whether that refuses it for good (``_Unreadable``), and otherwise the
+    entries of its history its owner's container held then (the entry objects themselves, in order)."""
+
+    __slots__ = ("why", "for_good", "entries")
+
+    def __init__(self, why: str, for_good: bool, entries: tuple[Any, ...] = ()) -> None:
+        self.why, self.for_good, self.entries = why, for_good, entries
+
+
+class _Failed(Exception):
+    """One read-back attempt that failed: why, and the text written before it failed (None if none was)."""
+
+    def __init__(self, why: str, text_: str | None, moving: bool, recursion: bool) -> None:
+        super().__init__(why)
+        self.why, self.text, self.moving, self.recursion = why, text_, moving, recursion
+
+
+_ATTEMPTS = 3                                         # read-backs of one handed account before it is classified
+_MUTATION = ("changed size during iteration", "mutated during iteration", "changed during iteration")
+_CAUSE, _CONTEXT = BaseException.__dict__["__cause__"], BaseException.__dict__["__context__"]
+_INTERRUPTS = (KeyboardInterrupt,)                # never classified as a failure: re-raised (anything else is a failure)
+
+
+def _interrupt(exc: BaseException) -> bool:
+    return issubclass(type(exc), _INTERRUPTS)
+
+
+def _type_name(exc: BaseException) -> str:
+    return type.__dict__["__name__"].__get__(type(exc))     # the class's own name: no metaclass code runs
+
+
+def _described(exc: BaseException) -> str:
+    """A failure as text.  Rendering runs the failure's own ``__str__``; whatever that raises (other than an interrupt,
+    which is re-raised) is caught here and the failure is described by its type alone, the same text at every attempt."""
+    try:
+        message = str.__str__(str(exc))
+    except BaseException as failed:  # noqa: BLE001 - a message that cannot be rendered is no message, never an escape
+        if _interrupt(failed):
+            raise
+        message = "(its message cannot be rendered)"
+    return f"{_type_name(exc)}: {message}"
+
+
+def _extends(entries: tuple[Any, ...], prefix: tuple[Any, ...]) -> bool:
+    """Whether ``entries`` begins with exactly the entry objects of ``prefix`` (identity, in order)."""
+    return len(entries) >= len(prefix) and all(a is b for a, b in zip(entries, prefix))
+
+
+def _moving(exc: BaseException, described: str) -> bool:
+    """The interpreter's own signal that a container was mutated while it was iterated (exactly ``RuntimeError``)."""
+    return type(exc) is RuntimeError and any(m in described for m in _MUTATION)
+
+
+def _recursion(exc: BaseException) -> bool:
+    """Whether the interpreter's recursion limit is among a failure's causes (an owner may wrap it: the unit owner
+    raises ``UnitCompatibilityError`` from it).  Read through ``BaseException``'s own fields: no code of the failure runs."""
+    pending, seen = [exc], set()
+    while pending and len(seen) < 64:
+        e = pending.pop()
+        if id(e) in seen:
+            continue
+        seen.add(id(e))
+        if issubclass(type(e), RecursionError):
+            return True
+        pending.extend(n for n in (_CAUSE.__get__(e), _CONTEXT.__get__(e)) if n is not None)
+    return False
+
+
+class _Reader:
+    kinds: frozenset[OwnerKind] = frozenset()
+    owner_id: str = ""
+    live: bool = True                                 # see LIVENESS above; a reader over a mutable owner object
+
+    def pinned(self) -> "_Reader":
+        """This reader with the owner's current state held fixed for one verification (one consistent read)."""
+        return self
+
+    def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:
+        return None                                   # most owners replace in place and keep no history
+
+    def project(self, record: OwnerRecord, fields: tuple[str, ...]) -> dict[str, Any]:
+        payload = record.payload
+        missing = [f for f in fields if f not in payload]
+        if missing:
+            raise WorldRefused(f"the {record.owner_kind.value} record {record.record_id!r} has no field {missing}")
+        return {f: payload[f] for f in fields}
+
+
+# ---- the state owner -------------------------------------------------------------------------------------------------------
+class RunStateReader(_Reader):
+    """The head state of the run the execution side says governs (exactly a run result or checkpoint).
+
+    ``RunStateReader(record)`` reads the record as handed over: it cannot know whether the run moved on since, so it
+    is not live.  ``RunStateReader.following(head)`` calls the execution side's ``head()`` at every verification and
+    reads the record it returns now, which must be the same run (its request digest is the owner instance): live.
+    Which record is the head of the run is the execution side's statement; nothing here infers it."""
+
+    kinds = frozenset({K.SYSTEM_STATE})
+
+    def __init__(self, record: Any) -> None:
+        self.owner_id, self._head, self._history = self._load(record)
+        self._follow: Callable[[], Any] | None = None
+        self._record = record                         # the record object loaded (a following reader reuses its load)
+        self._highest = (self._head.sequence, self._head.digest)     # following: the furthest head stated so far
+        self._lock = threading.Lock()                 # one desk serves concurrent admissions: check-and-advance is atomic
+
+    @classmethod
+    def following(cls, head: Callable[[], Any]) -> "RunStateReader":
+        if not callable(head):
+            raise WorldRefused("a followed run head is a callable the execution side answers with its current record")
+        reader = cls(head())
+        reader._follow = head
+        return reader
+
+    @property
+    def live(self) -> bool:                          # derived from the mode, never set
+        return self._follow is not None
+
+    @staticmethod
+    def _load(record: Any) -> tuple[str, Any, frozenset[str]]:
+        if type(record) is SystemRunResult:
+            head = record.final_state
+        elif type(record) is SystemCheckpoint:
+            head = record.state
+        else:
+            raise WorldRefused("the state owner is exactly a SystemRunResult or SystemCheckpoint (its constructors "
+                               f"bind the head to the last committed state), not {type(record).__name__}")
+        if head is None:
+            raise WorldRefused("the run committed no state; there is no head to read")
+        return record.request_digest, head, frozenset(s.digest for s in record.state_history) - {head.digest}
+
+    def pinned(self) -> "RunStateReader":
+        if self._follow is None:
+            return self
+        try:
+            record = self._follow()
+            if record is self._record and type(record) in (SystemRunResult, SystemCheckpoint):
+                current = RunStateReader.__new__(RunStateReader)      # the same frozen record: its load is reused
+                current.owner_id, current._head, current._history = self.owner_id, self._head, self._history
+                current._follow, current._record = None, record
+            else:
+                current = RunStateReader(record)
+        except Exception as exc:  # noqa: BLE001 - an owner that cannot state its head is unavailable, never guessed
+            raise OwnerUnavailable("the execution side could not state the run's current head: "
+                                   f"{_described(exc)}") from None
+        if current.owner_id != self.owner_id:
+            raise OwnerUnavailable("the followed head belongs to another run (its request digest changed); which run "
+                                   "governs is a new statement, not a move of this one")
+        sequence, head = current._head.sequence, current._head.digest
+        with self._lock:
+            if sequence < self._highest[0] or (sequence == self._highest[0] and head != self._highest[1]):
+                raise OwnerUnavailable(f"the followed head went back (sequence {sequence} after {self._highest[0]}) or "
+                                       "restated a sequence with another state: a run's head only moves forward")
+            self._highest = (sequence, head)
+            self._record, self._head, self._history = current._record, current._head, current._history
+        return current
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._follow is not None:
+            return self.pinned().read(kind, record_id)
+        parts = record_parts(record_id, 2)
+        if OwnerKind(kind) is not K.SYSTEM_STATE or parts is None:
+            return None
+        owner, variable = parts
+        try:
+            values = self._head.owner(owner).values
+        except KeyError:
+            return None
+        found = [v for v in values if v.variable_id == variable]
+        if len(found) != 1:
+            return None
+        v = found[0]
+        return OwnerRecord(K.SYSTEM_STATE, self.owner_id, record_id, str(self._head.sequence), self._head.digest,
+                           {"value": v.value.to_dict(), "uncertainty": v.uncertainty.to_dict(),
+                            "state": self._head.to_dict()})
+
+    def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:
+        if self._follow is not None:
+            return self.pinned().superseded(kind, record_id)
+        return self._history
+
+
+# ---- the model registry -----------------------------------------------------------------------------------------------------
+class ModelRegistryReader(_Reader):
+    kinds = frozenset({K.MODEL_RECORD})
+
+    def __init__(self, registry: ModelRegistry, owner_id: str) -> None:
+        if type(registry) is not ModelRegistry:
+            raise WorldRefused("the model owner is exactly a ModelRegistry")
+        self._registry = registry
+        self.owner_id = text(owner_id, "model registry id")
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        parts = record_parts(record_id, 2)
+        if OwnerKind(kind) is not K.MODEL_RECORD or parts is None:
+            return None
+        try:
+            model = self._registry.get(*parts)
+        except ModelNotFoundError:
+            return None
+        if type(model) is not ScientificModelDefinition:
+            raise WorldRefused(f"the registered record for {parts} is a {type(model).__name__}, not exactly a "
+                               "ScientificModelDefinition (a subclass could assess differently)")
+        return OwnerRecord(K.MODEL_RECORD, self.owner_id, record_id, model.version, _sha_json(model),
+                           {"model": model.to_dict()})
+
+
+# ---- the provider authority --------------------------------------------------------------------------------------------------
+class ProviderRegistryReader(_Reader):
+    """The provider registry's status of a provider, and the owner's health assessment of that status.
+
+    ``ProviderRegistry.status`` answers from the registry's own cache once a provider was probed (the owner's
+    semantics, the same ``system_runtime.preflight`` relies on).  With ``refresh=True`` every read re-probes through the
+    owner's ``status(refresh=True)``: the execution side chooses its currency policy; nothing here decides it.  (The
+    owner's refresh also clears its process-wide distribution caches: re-probing is a deliberate execution-side cost.)"""
+
+    kinds = frozenset({K.PROVIDER_STATUS})
+
+    def __init__(self, registry: ProviderRegistry, owner_id: str, *, refresh: bool = False) -> None:
+        if type(registry) is not ProviderRegistry:
+            raise WorldRefused("the provider owner is exactly a ProviderRegistry")
+        if type(refresh) is not bool:
+            raise WorldRefused("refresh is a bool")
+        self._registry = registry
+        self._refresh = refresh
+        self.owner_id = text(owner_id, "provider registry id")
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if OwnerKind(kind) is not K.PROVIDER_STATUS:
+            return None
+        try:
+            status = self._registry.status(record_id, refresh=self._refresh)
+        except ProviderUnavailable:                   # the registry holds no such provider
+            return None
+        except Exception as exc:  # noqa: BLE001 - a probe that fails is an owner that cannot answer, never a guess
+            raise OwnerUnavailable(f"the provider registry could not probe {record_id!r}: "
+                                   f"{_described(exc)}") from None
+        report = assess_health(status)
+        payload = status.to_dict()
+        return OwnerRecord(K.PROVIDER_STATUS, self.owner_id, record_id, status.version or "-",
+                           content_digest({k: v for k, v in payload.items() if k != "location"}),
+                           {"status": payload, "report": report.to_dict()})
+
+
+# ---- the budget owners ---------------------------------------------------------------------------------------------------------
+def _items(mapping: Any) -> list[tuple[Any, Any]]:
+    """The entries of one handed account mapping, read from a dict's own storage: no code of the mapping (its
+    truthiness, ``__len__``, ``keys``, ``__iter__``, ``items``) and no key's ``__hash__`` or ``__eq__`` runs, so the
+    mapping cannot hide, add or merge an entry.  ``None`` hands no account; a mapping that is not a dict (a dict
+    subclass is read as the dict it stores) is refused (``TypeError``)."""
+    if mapping is None:
+        return []
+    if not issubclass(type(mapping), dict):
+        raise TypeError(f"an account mapping is a dict, not a {_type_name(mapping)}")
+    return list(dict.items(mapping))
+
+
+class BudgetReader(_Reader):
+    """Budget ledgers (``BudgetLedger``) and observation accounts (``ScientificExperiment``) by id.
+
+    ``BudgetReader(ledgers, experiments)`` reads the account OBJECTS handed over: live for their in-place changes
+    (settled charges, recorded evaluations), not for an execution side that replaces an account object (as
+    ``sria.campaign`` does on restore); its constructor refuses an account set that is not a dict or not exactly
+    typed, names an account by anything but a str, names two accounts by ids that spell one id, or registers one object
+    under two ids.  ``BudgetReader.following(accounts)`` asks the execution side's ``accounts()`` for the current
+    ``(ledgers, experiments)`` at every verification, and every account only moves forward: its history (a ledger's
+    settled charges, an experiment's recorded evaluations, in the form the owner reads them back, so a restore of an
+    unchanged account is the same history) must extend the longest history this reader observed for it.  An account
+    BEHIND that history (it went back, or this verification's snapshot is older than one already observed) is refused
+    for as long as it is behind; an account that REWROTE its history (neither extends nor is a prefix of it) is refused
+    by this reader from then on; adopting a new timeline is the execution side's statement, made with a new reader.  A
+    change to an account's declaration with its history unchanged (a budget top-up) is a move of the owner.  Every
+    account handed over is observed at construction and at every verification (``Authorities.memoized`` pins every
+    reader when a verification starts, whichever world is verified: a proposer's world never chooses what is
+    observed); an account is refused only to a verification that reads it, so an account no world reads refuses
+    nothing, except that a KeyboardInterrupt during any account's current read-back aborts the entire pin.
+    Repeated interrupting content is an availability residual; it never implicitly succeeds or seals the reader.
+
+    What a verification is handed is read entry by entry (one malformed entry never hides the others): each of the two
+    mappings is read as a dict from the dict's own storage, so no code of the mapping or of its keys runs and nothing
+    can hide, add or merge an entry (a mapping that is not a dict is no pair of account mappings); an account is named
+    by its str id (a str subclass is read as the
+    plain str it spells, and no code of the id runs; an entry under any other key is no account a world can bind, and
+    is not read); two entries that spell one id refuse that id for good; an account that is not exactly its owner's
+    type is refused for good; one object handed under two ids is observed under both and refused to that verification.
+    Each account is read back by its owner from the text its owner writes it down as: a ledger by
+    ``BudgetLedger.from_dict`` from its digest rule's JSON (``canonical_digest``: sorted keys, ``default=str``), an
+    experiment whole by ``ScientificExperiment.from_dict`` from ``to_json`` (once per account and content), so the
+    record served, its digest and its history are detached data a checkpoint restore of the same account reproduces;
+    the record served is parsed from that text at every read.  A read-back is tried up to three times and its failure
+    classified by what happens, not by the exception's type: any success is observed; three failures alike (the same
+    failure on the same text) are the state itself, which its owner cannot write down and read back, and refuse the
+    account from then on (that state cannot be ordered against what was observed, and it may hold a spend); failures
+    that differ, or the interpreter's own "changed during iteration" error, are an account that may have moved while
+    it was serialized: not read back to that verification.  Any exception the account's code raises is such a failure
+    (including one that is not an ``Exception``); rendering a failure runs its own ``__str__``, and whatever that
+    raises is caught and the failure described by its type (``SystemExit`` and ``GeneratorExit`` included).  Only a
+    ``KeyboardInterrupt`` is not a failure: the account it stopped, and every account not read yet, are not read back,
+    the verification compares what it was handed, and then the interrupt is re-raised.
+
+    A state handed and NOT read back retains the entry objects observed before and after the read-back.
+    A successful read must have identical entry objects at both boundaries and a history of the same length.
+    Growth during the read is refused transiently; rollback cannot erase the initial observation. A state whose
+    entries are an identity prefix of a stable previously read state adds no unseen entry (its other content is
+    not thereby observed). An unread barrier can be reconciled on a later verification by the existing canonical
+    entry-history rule, outside the comparison lock. Its result applies only if those exact retained entries are
+    still the pending barrier. Unreadability never implies equality: unresolved entries keep admission refused.
+    This permits unchanged detached checkpoints to recover after an interrupt, without forgiving a recorded spend.
+    A recursion failure (the interpreter's own,
+    or one an owner wrapped) on every attempt is retried with the same attempts on a fresh thread; a verification waits
+    for its fresh-thread read-backs at most ``WAIT_S`` in all, and a fresh thread still running then leaves its account
+    not read back (a later verification starts no second one for that account while it runs).
+
+    Each verification is in flight from its start, through ``accounts()`` and the read-back (both with no lock held:
+    no execution-side code runs under the reader's lock), to the end of its comparison, which holds the lock.  Every
+    observation that extends the history is recorded, and a verification decides on an account only once every other
+    verification in flight when it compared has compared too, whichever started first: it waits for them (at most
+    ``WAIT_S``, holding no lock; a compared verification never waits for another compared one), then decides on what is
+    observed by then (an account another verification moved past is behind; one refused for good is refused; one whose
+    state another verification was handed and could not read back must extend that state's entries).  A verification
+    it waited for that was handed accounts and left without comparing (interrupted), or one still in flight after
+    ``WAIT_S``, makes it decide on no account (refused to that verification only).  So a state handed to a
+    verification is compared before any verification that was waiting on it decides, and a return to an earlier state
+    never re-authorizes what such a state had moved past.  The cost: a verification whose ``accounts()`` or read-back
+    does not complete within ``WAIT_S`` makes every verification that compares meanwhile wait ``WAIT_S`` and be
+    refused, until it completes.  What is never observed: a state no verification was handed (a spend and its rollback
+    both between two verifications look like no change), the content of a state handed and not read back (only its
+    entry objects), an entry under a key that is not a str, the state of a verification whose ``accounts()`` raises or
+    hands no pair of mappings; at-most-once execution is the execution owner's. Repeated interruptions before stable
+    capture can still lose a returned mutable handing if the owner replaces it: this is an unresolved defect, not an
+    accepted caller-stack exclusion. An ``accounts()`` or
+    read-back that reads through the reader it feeds on the same thread, or from its fresh thread, is refused at once
+    (from inside the read-back, that refusal repeats, so the account is refused for good).  A pinned snapshot serves the
+    records it observed and is never live."""
+
+    kinds = frozenset({K.BUDGET_LEDGER, K.EXPERIMENT})
+    WAIT_S = 1.0                                     # the most a compared verification waits for the others in flight
+
+    @classmethod
+    def following(cls, accounts: Callable[[], tuple[dict[str, Any] | None, dict[str, Any] | None]],
+                  owner_id: str = "budget") -> "BudgetReader":
+        if not callable(accounts):
+            raise WorldRefused("followed accounts are a callable the execution side answers with (ledgers, experiments)")
+        reader = cls(*accounts(), owner_id=owner_id)
+        reader._follow = accounts
+        ticket = reader._ticket()
+        try:
+            reader._observe_all(reader, ticket)          # what is handed over at construction: the first baseline
+        finally:
+            reader._leave(ticket, False)
+        return reader
+
+    @property
+    def live(self) -> bool:                          # derived from the mode: a pinned snapshot is never live (R7-D1)
+        return self._observed is None
+
+    @staticmethod
+    def _history(items: Iterable[Any]) -> tuple[str, ...]:
+        return tuple(hashlib.sha256(json.dumps(x.to_dict(), sort_keys=True, default=str).encode("utf-8")).hexdigest()
+                     for x in items)
+
+    @staticmethod
+    def _retained_entry(kind: str, entry: Any) -> Any:
+        """The entry portion of the ordinary owner's write/read path, in the same order.
+
+        Ledger entries are owner-normalized before JSON (whose digest rule permits ``default=str``).
+        Experiment entries are written first, then rebuilt and checked writable by the Scientific Core.
+        JSON key/sequence normalization therefore matches detached checkpoints without widening either owner.
+        """
+        if kind == "ledger":
+            normalized = BudgetCharge.from_dict(json.loads(json.dumps(entry.to_dict(), sort_keys=True, default=str)))
+            written = json.dumps(normalized.to_dict(), sort_keys=True, separators=(",", ":"), default=str)
+            return BudgetCharge.from_dict(json.loads(written))
+        rebuilt = ScientificEvaluation.from_dict(json.loads(to_json(entry)))
+        to_json(rebuilt)
+        return rebuilt
+
+    def _read_once(self, key: tuple[str, str], cache: dict[tuple[str, str], tuple[Any, ...]]) \
+            -> tuple[OwnerRecord, tuple[str, ...]]:
+        """One read-back of one handed account: its record and history, both from ONE text its owner wrote, or
+        ``_Failed`` with the text written before the failure (if any).  ``cache`` is the read-back cache it may use
+        and fill (private to the thread that runs it)."""
+        kind, record_id = key
+        text_: str | None = None
+        try:
+            if kind == "ledger":
+                ledger = self._ledgers[record_id]
+                # The owner's read-back (``from_dict``, which normalizes what it reads), written down by the owner's own
+                # digest rule and read back again from that text.
+                text_ = json.dumps(BudgetLedger.from_dict(ledger.to_dict()).to_dict(), sort_keys=True,
+                                   separators=(",", ":"), default=str)
+                back = BudgetLedger.from_dict(json.loads(text_))
+                return (OwnerRecord(K.BUDGET_LEDGER, self.owner_id, record_id, str(back.revision), back.digest,
+                                    {"ledger": back.to_dict()}), self._history(back.charges))
+            exp = self._experiments[record_id]
+            text_ = to_json(exp)
+            content = hashlib.sha256(text_.encode("utf-8")).hexdigest()
+            cached = cache.get(key)
+            if cached is None or cached[0] != content:
+                written = json.loads(text_)
+                rebuilt = ScientificExperiment.from_dict(json.loads(text_))
+                back_text = to_json(rebuilt)
+                back = json.loads(back_text)
+                if type(written) is not dict or back.get("accounting") != written.get("accounting") \
+                        or back.get("budget") != written.get("budget"):
+                    raise ValueError("its accounting is not its evaluations' (an account serialized while it moved, "
+                                     "or one whose accounting its owner does not derive)")
+                cached = (content, back_text, hashlib.sha256(back_text.encode("utf-8")).hexdigest(),
+                          self._history(rebuilt.evaluations))
+                cache[key] = cached
+            _, back_text, digest_, history = cached
+            back = json.loads(back_text)             # parsed from the owner's text at every read: never shared
+            return (OwnerRecord(K.EXPERIMENT, self.owner_id, record_id, str(len(back["evaluations"])), digest_,
+                                {"budget": back["budget"], "accounting": back["accounting"], "experiment": back}),
+                    history)
+        except BaseException as exc:  # noqa: BLE001 - classified by the caller over several attempts
+            if _interrupt(exc):
+                raise
+            why = _described(exc)
+            raise _Failed(why, text_, _moving(exc, why), _recursion(exc)) from None
+
+    def _account(self, key: tuple[str, str]) -> tuple[OwnerRecord | None, tuple[str, ...]]:
+        """One handed account read back by its owner: its record and history (any attempt that succeeds), or, after
+        ``_ATTEMPTS`` failures, ``_Unreadable`` when they fail alike (the state itself) or ``OwnerUnavailable`` when
+        they differ or the interpreter says the account was mutated while it was iterated (not read back)."""
+        kind, record_id = key
+        if record_id not in (self._ledgers if kind == "ledger" else self._experiments):
+            return None, ()
+        what = f"budget {kind} {record_id!r}"
+        where = ""
+        read, failures = self._attempts(key, self._readback)
+        if read is not None:
+            return read
+        if all(f.recursion for f in failures):       # the state's depth, or this verification's caller's?
+            read, failures = self._at_baseline_depth(key, what)
+            if read is not None:
+                return read
+            if all(f.recursion for f in failures):
+                raise _Unreadable(f"{what} is not one its owner writes down and reads back (it exceeds the "
+                                  f"interpreter's recursion limit on a fresh thread too): {failures[-1].why}")
+            where = " on a fresh thread"
+        if any(f.moving for f in failures) or len({(f.why, f.text) for f in failures}) > 1:
+            raise OwnerUnavailable(f"{what} was not read back to this verification ({len(failures)} read-back attempts "
+                                   f"failed{where}, not alike or with the interpreter's mutation error, so it may have "
+                                   f"moved while it was serialized; the last: {failures[-1].why})")
+        raise _Unreadable(f"{what} is not one its owner writes down and reads back ({len(failures)} read-backs failed "
+                          f"alike{where}): {failures[-1].why}")
+
+    def _attempts(self, key: tuple[str, str], cache: dict[tuple[str, str], tuple[Any, ...]]) \
+            -> tuple[tuple[OwnerRecord, tuple[str, ...]] | None, list[_Failed]]:
+        """Up to ``_ATTEMPTS`` read-backs of one handed account: the first that succeeds, or every failure."""
+        failures: list[_Failed] = []
+        for _ in range(_ATTEMPTS):
+            try:
+                return self._read_once(key, cache), failures
+            except _Failed as failed:
+                failures.append(failed)
+        return None, failures
+
+    def _at_baseline_depth(self, key: tuple[str, str], what: str) \
+            -> tuple[tuple[OwnerRecord, tuple[str, ...]] | None, list[_Failed]]:
+        """The same attempts once more on a fresh thread (a shallow stack), under the same-thread read-through flag:
+        whether the state is too deep for its owner's rules, or only this verification's caller's stack was.  The
+        thread fills a private copy of the read-back cache.  It is waited for until this verification's fresh-thread
+        deadline (``WAIT_S`` after its read-back started): one still running then (it may wait on a lock this
+        verification's caller holds), or one that ended without a result, leaves the account not read back to this
+        verification (``OwnerUnavailable``), and whatever it does later reaches nothing this reader holds.  While it
+        runs, no other verification of this reader starts a fresh thread for that account."""
+        box: dict[str, Any] = {}
+        cache = dict(self._readback)
+
+        def run() -> None:
+            self._in_follow.active = True
+            try:
+                box["result"] = self._attempts(key, cache)
+            finally:
+                self._in_follow.active = False
+
+        with self._fresh_lock:                       # check and register as one step (no account code runs here)
+            earlier = self._fresh.get(key)
+            if earlier is not None and earlier.is_alive():
+                raise OwnerUnavailable(f"{what} was not read back: an earlier read-back of it on a fresh thread is "
+                                       "still running")
+            thread = threading.Thread(target=run, name="budget-read-back", daemon=True)
+            try:
+                thread.start()
+            except Exception as exc:  # noqa: BLE001 - no fresh thread now: not read back to this verification
+                raise OwnerUnavailable(f"{what} was not read back: no fresh thread could start "
+                                       f"({_described(exc)})") from None
+            self._fresh[key] = thread
+        thread.join(max(0.0, self._deadline - time.monotonic()))
+        if thread.is_alive():                        # first: a result set after this check is never read
+            raise OwnerUnavailable(f"{what} was not read back: its read-back on a fresh thread had not completed when "
+                                   f"this verification's {self.WAIT_S} s for fresh-thread read-backs ran out")
+        result = box.get("result")
+        if result is None:
+            raise OwnerUnavailable(f"{what} was not read back: its read-back on a fresh thread ended without a result "
+                                   "(an interrupt)")
+        if result[0] is not None and key in cache:
+            self._readback[key] = cache[key]
+        return result
+
+    def _read_back(self) -> tuple[dict[tuple[str, str], Any], BaseException | None]:
+        """Every account handed over, read back now (no lock held): its record, its history and the entry objects its
+        owner's container held just before the read-back (or why it was not read back), and the interrupt that stopped
+        the read-back, if one did.  Total: no failure of one account's read-back leaves this method or hides another
+        account; after an interrupt, every account not read yet is not read back, and the caller re-raises the
+        interrupt once it has compared."""
+        out: dict[tuple[str, str], Any] = dict(self._entry_refusals)
+        interrupted: BaseException | None = None
+        self._deadline = time.monotonic() + self.WAIT_S
+        for key in [*(("ledger", i) for i in self._ledgers), *(("experiment", i) for i in self._experiments)]:
+            if key in self._skip:                    # refused for good already: not read again
+                out[key] = _NotRead("", True)
+                continue
+            what = f"budget {key[0]} {key[1]!r}"
+            if interrupted is not None:
+                out[key] = self._unread(key, f"{what} was not read back: this verification's read-back was "
+                                             f"interrupted ({_type_name(interrupted)}) before it")
+                continue
+            before = None
+            try:
+                before = self._entries(key)
+                record, history = self._account(key)
+                after = self._entries(key)
+                if (before is None or after is None or len(before) != len(after)
+                        or not _extends(before, after) or len(history) != len(after)):
+                    out[key] = self._unread(key, f"{what} was not read back as one stable entry history "
+                                                "(its listed entries and read-back did not reconcile)", before)
+                else:
+                    out[key] = (record, history, before, after)
+            except _Unreadable as exc:
+                out[key] = _NotRead(str(exc), True)
+            except OwnerUnavailable as exc:
+                out[key] = self._unread(key, str(exc), before)
+            except BaseException as exc:  # noqa: BLE001 - an interrupt (or the caller's stack): re-raised after comparing
+                interrupted = exc
+                out[key] = self._unread(key, f"{what} was not read back: its read-back was interrupted "
+                                             f"({_type_name(exc)})", before)
+        return out, interrupted
+
+    def _unread(self, key: tuple[str, str], why: str,
+                before: tuple[Any, ...] | None = None) -> _NotRead:
+        entries = self._entries(key)
+        if before is not None and entries is not None:
+            if _extends(before, entries):
+                entries = before                    # never discard the state listed before a rollback
+            elif not _extends(entries, before):
+                return _NotRead(f"{why}; its entry history changed to a different timeline during read-back", True)
+        if entries is None:
+            return _NotRead(f"{why}; which entries its history held cannot be listed without running its code either",
+                            True)
+        return _NotRead(why, False, entries)
+
+    def _entries(self, key: tuple[str, str]) -> tuple[Any, ...] | None:
+        """The entry objects of the handed account's history now, in order, read from its owner's own container (a
+        ledger's ``charges`` tuple, an experiment's ``_evaluations`` list: what the owners' ``revision`` and ``attempts``
+        count) directly, so that no code of the account runs; None if they cannot be listed that way."""
+        kind, record_id = key
+        name = "charges" if kind == "ledger" else "_evaluations"
+        for _ in range(_ATTEMPTS):
+            try:
+                account = (self._ledgers if kind == "ledger" else self._experiments)[record_id]
+                state = object.__getattribute__(account, "__dict__")     # the account is exactly its owner's type
+                if type(state) is not dict:
+                    return None
+                for field, value in list(dict.items(state)):
+                    if type(field) is str and field == name:
+                        return tuple(value) if type(value) in (tuple, list) else None
+                return None
+            except (RecursionError, MemoryError):
+                raise                               # resource failure is not evidence of malformed account storage
+            except RuntimeError:                     # its __dict__ changed size while it was listed: list it again
+                continue
+            except Exception:  # noqa: BLE001 - not listable without running its code: None
+                return None
+        return None
+
+    def _note_unread(self, key: tuple[str, str], entries: tuple[Any, ...]) -> str | None:
+        """Under the lock: record the entry objects a state handed and not read back held, whatever its length (a
+        shorter one than the history observed may be a rewind that spent). Identity prefixes need only the longer
+        observation. Incomparable identities retain both observations until owner normalization outside the lock can
+        establish their content relation; identity mismatch alone is not evidence of rewritten history."""
+        earlier = self._unread_entries.get(key)
+        if earlier is None:
+            known = self._seen_entries.get(key)
+            if known is None or not _extends(known, entries):   # adds no unseen entry; says nothing about other content
+                self._unread_entries[key] = entries
+        else:
+            observations = earlier.observations if type(earlier) is _PendingHistories else (earlier,)
+            if any(_extends(previous, entries) for previous in observations):
+                return None                         # this observation adds no new entry identities
+            kept = tuple(previous for previous in observations if not _extends(entries, previous))
+            self._unread_entries[key] = (_PendingHistories((*kept, entries)) if kept else entries)
+        return None
+
+    def _against_unread(self, key: tuple[str, str], before: tuple[Any, ...] | None,
+                        after: tuple[Any, ...] | None) -> str | None:
+        """Under the lock: a read state against the entries of the latest state of its account handed and not read back.
+        None when there is none, or when the account's container began with exactly those entry objects both just
+        before and just after the read-back (it moved on from that state: the record is cleared); "behind" when both
+        held a prefix of them; otherwise the reason it is refused for good (it rewrote them, or its entries could not be
+        listed, so it cannot be ordered against that state)."""
+        unread = self._unread_entries.get(key)
+        if unread is None:
+            return None
+        if type(unread) is _PendingHistories:
+            return "unresolved histories"            # equality or divergence needs owner content, outside the lock
+        if before is None or after is None:
+            return (f"budget {key[0]} {key[1]!r}: its entries could not be listed without running its code while a "
+                    "state of it handed and not read back is recorded, so it cannot be ordered against that state: "
+                    "refused by this reader from then on (a new timeline is stated with a new reader)")
+        if _extends(before, unread) and _extends(after, unread):
+            self._unread_entries.pop(key, None)  # it moved on from that state: its history decides from now on
+            return None
+        if _extends(unread, before) and _extends(unread, after):
+            return "behind unread"
+        return self._rewrote_unread(key)
+
+    @staticmethod
+    def _rewrote_unread(key: tuple[str, str]) -> str:
+        return (f"budget {key[0]} {key[1]!r} rewrote the entries of a state of it a verification was handed and could "
+                "not read back (its owner's container no longer begins with exactly those entry objects): refused by "
+                "this reader from then on (a new timeline is stated with a new reader)")
+
+    def _observe_all(self, snapshot: "BudgetReader", ticket: int) -> dict[tuple[str, str], OwnerRecord | str | None]:
+        """The following reader's forward-only rule over EVERY account handed over in ``snapshot``.  The read-back runs
+        with no lock held (it runs the account objects' own serialization, into the snapshot's private cache); only
+        the comparison holds the lock, and it runs no code of the accounts.  Every observation that extends the history
+        is recorded; a handed account its owner cannot write down and read back refuses its account from then on; one
+        not read back records its entry objects.  A verification leaves the in-flight set when its comparison ends,
+        and decides on an account only once every verification in flight when it compared has compared too, whichever
+        started first: it waits for them (at most ``WAIT_S``, holding no lock; a compared verification never waits for
+        another compared one, so no two wait for each other), then decides on what is observed by then.  If one of them
+        was still in flight after the wait, or was handed accounts and left without comparing, it decides on no account
+        (refused for that verification only).  An interrupt of the read-back is re-raised after the comparison."""
+        read, interrupted = snapshot._read_back()
+        resolved = {}
+        unresolved = {}
+        for key, barrier in snapshot._unread_entries.items():
+            if key in snapshot._skip:
+                continue                            # retired accounts never run their content again
+            observations = barrier.observations if type(barrier) is _PendingHistories else (barrier,)
+            got = read.get(key)
+            if (type(got) is tuple and got[2] is not None and got[3] is not None
+                    and all(_extends(got[2], entries) and _extends(got[3], entries) for entries in observations)):
+                continue                            # the current owner read already reconciles these objects
+            # Reuse the entry owner's read-back normalization, exactly as the
+            # ordinary account history does. Never serialize under the lock.
+            try:
+                histories = tuple(self._history(self._retained_entry(key[0], entry) for entry in entries)
+                                  for entries in observations)
+                resolved[key] = (barrier, histories)
+            except BaseException as exc:  # noqa: BLE001 - unread entries remain unread
+                unresolved[key] = (f"budget {key[0]} {key[1]!r}: previously unread entries could not be "
+                                   f"reconciled ({_type_name(exc)}); refused for this verification only")
+        observed: dict[tuple[str, str], OwnerRecord | str | None] = {}
+        accepted: dict[tuple[str, str], tuple[tuple[str, ...], tuple[Any, ...] | None,
+                                             tuple[Any, ...] | None]] = {}
+        with self._changed:
+            if self._sealed is not None:
+                if interrupted is not None:
+                    raise interrupted
+                raise OwnerUnavailable(self._sealed)
+            pending = self._in_flight - {ticket}
+            for key, (barrier, histories) in resolved.items():
+                if self._unread_entries.get(key) is not barrier:
+                    continue                        # another comparison changed the exact barrier
+                seen = self._seen.get(key, ())
+                for history in histories:
+                    if history[:len(seen)] == seen:
+                        seen = history
+                    elif seen[:len(history)] != history:
+                        self._diverged[key] = self._rewrote_unread(key)
+                        break                       # owner-readable incompatible histories, not identity alone
+                else:
+                    self._seen[key] = seen
+                    self._unread_entries.pop(key, None)
+            self._readback = {k: v for k, v in snapshot._readback.items() if k in read}   # the accounts handed now
+            for key, got in read.items():
+                if key in self._diverged:
+                    observed[key] = self._diverged[key]
+                    continue
+                if type(got) is _NotRead:
+                    if got.for_good:
+                        self._diverged[key] = (f"{got.why}; the account was handed over in that state, which cannot "
+                                               "be ordered against the history this reader observed (it may hold a "
+                                               "spend): refused by this reader from then on (a new timeline is stated "
+                                               "with a new reader)")
+                        observed[key] = self._diverged[key]
+                    else:                            # not read back: its entry objects are still observed
+                        observed[key] = self._note_unread(key, got.entries) or got.why
+                    continue
+                record, history, before, after = got
+                if record is None:
+                    observed[key] = None
+                    continue
+                seen = self._seen.get(key, ())
+                if history[:len(seen)] != seen and seen[:len(history)] != history:
+                    self._diverged[key] = (f"budget {key[0]} {key[1]!r} rewrote its history (it neither extends nor is "
+                                           "a prefix of the history this reader observed): refused by this reader from "
+                                           "then on (a new timeline is stated with a new reader)")
+                    observed[key] = self._diverged[key]
+                    continue
+                if len(history) < len(seen):
+                    observed[key] = self._behind(key)
+                    continue
+                self._seen[key] = history
+                if before is not None and after is not None and len(before) == len(after) and _extends(before, after):
+                    self._seen_entries[key] = after  # the entry objects of the state whose history was recorded
+                else:
+                    self._seen_entries.pop(key, None)
+                if key in unresolved and key in self._unread_entries:
+                    observed[key] = unresolved[key]
+                    continue
+                against = self._against_unread(key, before, after)
+                if against == "unresolved histories":
+                    observed[key] = f"budget {key[0]} {key[1]!r}: retained histories await owner reconciliation"
+                    continue
+                if against == "behind unread":
+                    observed[key] = self._behind_unread(key)
+                    continue
+                if against is not None:
+                    self._diverged[key] = against
+                    observed[key] = against
+                    continue
+                if key in snapshot._aliased:
+                    observed[key] = (f"budget {key[0]} {key[1]!r} was handed over as one account object under two ids "
+                                     "(one account stating two accounts): observed, but refused for this verification")
+                else:
+                    observed[key] = record
+                    accepted[key] = (history, before, after)
+            self._uncompared.pop(ticket, None)
+            self._in_flight.discard(ticket)          # compared: only now no longer in flight
+            self._changed.notify_all()
+            if interrupted is None and pending and accepted:
+                waiter = [pending, False]            # [the tickets waited for, one of them left without comparing]
+                self._waiters[ticket] = waiter
+                try:
+                    done = self._changed.wait_for(lambda: waiter[1] or not pending & self._in_flight,
+                                                  timeout=self.WAIT_S)
+                finally:
+                    del self._waiters[ticket]
+                if not done or waiter[1]:
+                    why = ("was handed accounts and left without comparing them" if waiter[1] else
+                           f"was still in flight {self.WAIT_S} s after this one compared")
+                    waiting = (f"another verification of this budget reader {why} (it may hold a later state of the "
+                               "accounts, whichever verification started first): this verification decides on no "
+                               "account; refused for this verification only")
+                    return {k: (waiting if k in accepted else v) for k, v in observed.items()}
+                if self._sealed is not None:
+                    raise OwnerUnavailable(self._sealed)
+                for key, (history, before, after) in accepted.items():   # decided on what is observed once compared
+                    if key in self._diverged:
+                        observed[key] = self._diverged[key]
+                    elif len(self._seen.get(key, ())) > len(history):
+                        observed[key] = self._behind(key)
+                    elif self._against_unread(key, before, after) is not None:
+                        observed[key] = (f"budget {key[0]} {key[1]!r}: another verification was handed a state of it "
+                                         "meanwhile and could not read it back, and this state is not one that begins "
+                                         "with that state's entries: refused for this verification only")
+        if interrupted is not None:
+            raise interrupted
+        return observed
+
+    @staticmethod
+    def _behind(key: tuple[str, str]) -> str:
+        return (f"budget {key[0]} {key[1]!r} is behind the history this reader observed (it went back a revision, or "
+                "this verification's snapshot is older than one already observed): refused while it is behind")
+
+    @staticmethod
+    def _behind_unread(key: tuple[str, str]) -> str:
+        return (f"budget {key[0]} {key[1]!r} is behind a state of it a verification was handed and could not read "
+                "back (its owner's container holds a prefix of that state's entry objects): refused while it is "
+                "behind")
+
+    def _leave(self, ticket: int, handed: bool) -> None:
+        """``ticket`` is no longer in flight.  One that was handed accounts and never compared them makes every
+        verification waiting for it decide on no account."""
+        with self._changed:
+            if handed and ticket in self._in_flight:
+                for waiter in self._waiters.values():
+                    if ticket in waiter[0]:
+                        waiter[1] = True
+            self._in_flight.discard(ticket)
+            self._changed.notify_all()
+
+    def _ticket(self) -> int:
+        with self._lock:
+            self._tickets += 1
+            self._in_flight.add(self._tickets)
+            return self._tickets
+
+    @staticmethod
+    def _retain_handing(handed: Any) -> _RetainedHanding:
+        """Retain native mapping storage while an interrupted verification remains uncompared."""
+        pair = tuple if issubclass(type(handed), tuple) else list if issubclass(type(handed), list) else None
+        if pair is None or pair.__len__(handed) != 2:
+            raise _InvalidHanding("accounts must be handed as a pair")
+        maps = pair.__getitem__(handed, 0), pair.__getitem__(handed, 1)
+        if any(m is not None and not issubclass(type(m), dict) for m in maps):
+            raise _InvalidHanding("each account mapping must be a dict")
+        return _RetainedHanding(tuple(_items(m) for m in maps))
+
+    def _recover_handing(self, ticket: int) -> None:
+        """Under the lock: resume an uncompared handing into the existing unread-entry barrier.
+
+        Only native account storage is inspected. No serialization or account content runs.
+        If interrupted again the handing remains pending; no later pin can bypass its recovery.
+        """
+        mapping = self._uncompared[ticket]
+        current = BudgetReader._handed(mapping, self.owner_id, frozenset(self._diverged))
+        for key, refusal in current._entry_refusals.items():
+            self._diverged[key] = refusal.why
+        for kind, accounts in (("ledger", current._ledgers), ("experiment", current._experiments)):
+            for name in accounts:
+                key = kind, name
+                if key in self._diverged:
+                    continue
+                entries = current._entries(key)
+                if entries is None:
+                    self._diverged[key] = f"budget {kind} {name!r}: interrupted handing has unlistable entries"
+                else:
+                    self._note_unread(key, entries)
+        self._uncompared.pop(ticket)
+
+    @classmethod
+    def _handed(cls, handed: Any, owner_id: str, skip: frozenset[tuple[str, str]]) -> "BudgetReader":
+        """What one ``accounts()`` call handed over, entry by entry: an entry that is not an account never hides one
+        that is (see the class docstring)."""
+        retained = handed if type(handed) is _RetainedHanding else cls._retain_handing(handed)
+        ledger_entries, experiment_entries = retained.entries
+        snapshot = cls(owner_id=owner_id)
+        objects: dict[int, list[tuple[str, str]]] = {}
+        spelled: set[tuple[str, str]] = set()
+        for kind, entries, owner_type, store in (("ledger", ledger_entries, BudgetLedger, snapshot._ledgers),
+                                                 ("experiment", experiment_entries, ScientificExperiment,
+                                                  snapshot._experiments)):
+            for raw_id, account in entries:
+                if not issubclass(type(raw_id), str):
+                    continue                         # no world binds an account by a key that is not a str
+                key = (kind, str.__str__(raw_id))    # the plain str it spells (no code of the id runs)
+                if key in spelled:                   # two entries (keys that differ only as objects) spell one id
+                    store.pop(key[1], None)
+                    snapshot._entry_refusals[key] = _NotRead(f"budget {kind} {key[1]!r} was handed under two entries "
+                                                             "that spell one id (two accounts stating one id)", True)
+                    continue
+                spelled.add(key)
+                if type(account) is not owner_type:
+                    snapshot._entry_refusals[key] = _NotRead(f"budget {kind} {key[1]!r} is not exactly a "
+                                                             f"{owner_type.__name__}", True)
+                    continue
+                store[key[1]] = account
+                objects.setdefault(id(account), []).append(key)
+        snapshot._aliased = frozenset(k for keys in objects.values() if len(keys) > 1 for k in keys)
+        snapshot._skip = skip
+        return snapshot
+
+    def pinned(self) -> "BudgetReader":
+        """One verification's snapshot: the accounts the execution side hands over now (asked with no lock held), read
+        back and compared with what this reader observed under its lock, and served only as observed (records taken at
+        the pin; the next verification observes any later move).  Never live."""
+        if self._follow is None:
+            return self
+        if getattr(self._in_follow, "active", False):
+            raise OwnerUnavailable("the execution side read through the budget reader it feeds while the reader was "
+                                   "asking for, or reading back, the accounts it would read (on this thread)")
+        if self._sealed is not None:
+            raise OwnerUnavailable(self._sealed)
+        ticket, handed = 0, False
+        not_returned = object()
+        mapping = not_returned
+        try:
+            self._in_follow.active = True
+            with self._lock:                         # the ticket is named before it is in flight: a finally that
+                for pending_ticket in tuple(self._uncompared):
+                    if pending_ticket not in self._in_flight:
+                        self._recover_handing(pending_ticket)
+                self._tickets += 1                   # runs at any point discards exactly what was taken
+                ticket = self._tickets
+                self._in_flight.add(ticket)
+                skip = frozenset(self._diverged)
+            try:
+                mapping = self._follow()
+            except Exception as exc:  # noqa: BLE001 - an owner that cannot state its accounts is unavailable
+                raise OwnerUnavailable("the execution side could not state its budget accounts: "
+                                       f"{_described(exc)}") from None
+            handed = True
+            try:
+                with self._lock:
+                    self._uncompared[ticket] = mapping
+                    self._uncompared[ticket] = BudgetReader._retain_handing(mapping)
+                current = BudgetReader._handed(self._uncompared[ticket], self.owner_id, skip)
+            except _InvalidHanding as exc:  # structural evidence, never an asynchronous interruption
+                with self._lock:
+                    self._sealed = ("the execution side handed over what is not a pair of account dicts "
+                                    f"({_type_name(exc)}): the accounts in it were not observed and any of them may "
+                                    "hold a spend, so this reader refuses every account from then on (a new timeline "
+                                    "is stated with a new reader)")
+                raise OwnerUnavailable(self._sealed) from None
+            with self._lock:
+                current._unread_entries = dict(self._unread_entries)
+            current._readback = dict(self._readback)     # a private copy: no other verification writes into it
+            current._in_follow = self._in_follow         # its read-back runs under this reader's read-through flag
+            current._fresh = self._fresh                 # one fresh-thread read-back per account across verifications
+            current._fresh_lock = self._fresh_lock
+            current._observed = self._observe_all(current, ticket)
+            return current
+        except BaseException:
+            # Preserve the interrupted handing before control returns to the owner.
+            # A second interruption leaves it pending, and the next pin must resume it.
+            try:
+                with self._lock:
+                    if mapping is not not_returned and ticket in self._in_flight and self._sealed is None:
+                        handed = True
+                        if ticket not in self._uncompared:
+                            self._uncompared[ticket] = mapping
+                        self._recover_handing(ticket)
+            except BaseException:  # noqa: BLE001 - original failure propagates; pending is not acceptance
+                pass
+            raise
+        finally:
+            self._in_follow.active = False
+            try:
+                self._leave(ticket, handed)
+            finally:
+                self._in_flight.discard(ticket)      # (atomic): never left in flight if the lock wait is interrupted
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._follow is not None:
+            return self.pinned().read(kind, record_id)
+        return self._read(kind, record_id)
+
+    def __init__(self, ledgers: dict[str, BudgetLedger] | None = None,
+                 experiments: dict[str, ScientificExperiment] | None = None, owner_id: str = "budget") -> None:
+        self._follow: Callable[[], Any] | None = None
+        self._observed: dict[tuple[str, str], OwnerRecord | str | None] | None = None   # a pinned snapshot's records
+        self._seen: dict[tuple[str, str], tuple[str, ...]] = {}
+        self._unread_entries: dict[tuple[str, str], tuple[Any, ...] | _PendingHistories] = {}   # account -> the entry objects of the
+        # states handed and not read back; incomparable identities await canonical owner reconciliation
+        self._diverged: dict[tuple[str, str], str] = {}   # account -> why it is refused by this reader for good
+        self._readback: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> (content digest, read-back text,
+        # its digest, its history): one entry per account, so the cache never outgrows the accounts' current state
+        self._entry_refusals: dict[tuple[str, str], _NotRead] = {}   # a snapshot's handed entries that are no account
+        self._aliased: frozenset[tuple[str, str]] = frozenset()     # a snapshot's ids handed for one object
+        self._skip: frozenset[tuple[str, str]] = frozenset()        # accounts refused for good when the pin started
+        self._in_follow = threading.local()          # set while this reader's accounts() or read-back runs on a thread
+        self._fresh: dict[tuple[str, str], threading.Thread] = {}   # account -> its latest fresh read-back thread
+        self._fresh_lock = threading.Lock()          # guards _fresh's check-and-register (shared with snapshots)
+        self._seen_entries: dict[tuple[str, str], tuple[Any, ...]] = {}   # account -> the entry objects of the state
+        # whose history was last recorded (identical listings and matching read-back history length)
+        self._sealed: str | None = None              # why every account is refused from then on (an unreadable handing)
+        self._deadline = 0.0                         # when this read-back's fresh-thread waits run out (monotonic)
+        self._tickets = 0                            # verifications of this reader, numbered when they start
+        self._in_flight: set[int] = set()
+        self._uncompared: dict[int, Any] = {}         # interrupted handing awaiting existing unread-entry observation
+        self._waiters: dict[int, list[Any]] = {}     # a waiting ticket -> [the tickets it waits for, one left uncompared]
+        self._lock = threading.Lock()
+        self._changed = threading.Condition(self._lock)   # a verification left the in-flight set
+        spelled: list[dict[str, Any]] = []
+        for mapping in (ledgers, experiments):       # read from a dict's own storage (see _items)
+            entries: dict[str, Any] = {}
+            try:
+                listed = _items(mapping)
+            except TypeError as exc:
+                raise WorldRefused(str(exc)) from None
+            for raw_id, account in listed:
+                if not issubclass(type(raw_id), str):
+                    raise WorldRefused("a budget account id is a str")
+                if str.__str__(raw_id) in entries:
+                    raise WorldRefused("two budget account ids spell one id (two accounts stating one id)")
+                entries[str.__str__(raw_id)] = account
+            spelled.append(entries)
+        self._ledgers, self._experiments = spelled
+        if any(type(x) is not BudgetLedger for x in self._ledgers.values()):
+            raise WorldRefused("a budget ledger is exactly a BudgetLedger")
+        if any(type(x) is not ScientificExperiment for x in self._experiments.values()):
+            raise WorldRefused("an observation account is exactly a ScientificExperiment")
+        accounts = [*self._ledgers.values(), *self._experiments.values()]
+        if len({id(x) for x in accounts}) != len(accounts):
+            raise WorldRefused("one budget account object is registered under one id (an account registered twice "
+                               "could state two dimensions from one pool)")
+        self.owner_id = text(owner_id, "budget owner id")
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+            raise OwnerUnavailable(observed)
+        return observed
+
+
+# ---- the declaration in force ----------------------------------------------------------------------------------------------------
+class DeclarationReader(_Reader):
+    """The problem / protocol declarations the execution side holds in force, by declaration id.
+
+    The reader holds DETACHED copies (rebuilt from each declaration's payload), so no world projected from it shares an
+    object with what is in force.  ``DeclarationReader(declarations)`` holds the set as handed over (not live; edits to
+    the objects handed over do not reach it).  ``DeclarationReader.following(in_force)`` asks the execution side's
+    ``in_force()`` at every verification (live) and trusts what it returns NOW: a revised declaration makes every
+    admission on the old one stale, a revision restated with other content is refused (a revision names one content),
+    and a revision lower than one already seen is refused (revisions only move forward).  The execution side should
+    return payload-built copies, not objects it shares with others."""
+
+    kinds = frozenset({K.DECLARATION})
+
+    def __init__(self, in_force: Iterable[Any], owner_id: str = "declarations") -> None:
+        self._held = self._load(in_force)
+        self.owner_id = text(owner_id, "declaration owner id")
+        self._follow: Callable[[], Iterable[Any]] | None = None
+        self._seen: dict[tuple[str, int], str] = {(i, d.revision): d.digest for i, d in self._held.items()}
+        self._latest: dict[str, int] = {i: d.revision for i, d in self._held.items()}
+        self._lock = threading.Lock()
+
+    @classmethod
+    def following(cls, in_force: Callable[[], Iterable[Any]], owner_id: str = "declarations") -> "DeclarationReader":
+        if not callable(in_force):
+            raise WorldRefused("followed declarations are a callable the execution side answers with those in force")
+        reader = cls(in_force(), owner_id)
+        reader._follow = in_force
+        return reader
+
+    @property
+    def live(self) -> bool:                          # derived from the mode, never set
+        return self._follow is not None
+
+    @staticmethod
+    def _load(in_force: Iterable[Any]) -> dict[str, Any]:
+        from .declaration import ProtocolDeclaration
+
+        held: dict[str, Any] = {}
+        for d in in_force:
+            if type(d) is not ProtocolDeclaration:
+                raise WorldRefused("a declaration in force is exactly a ProtocolDeclaration")
+            if d.declaration_id in held:
+                raise WorldRefused(f"two declarations in force for {d.declaration_id!r}")
+            detached = ProtocolDeclaration.from_dict(d.to_dict())
+            if detached.digest != d.digest:
+                raise WorldRefused(f"declaration {d.declaration_id!r} does not rebuild from its own payload")
+            held[d.declaration_id] = detached
+        return held
+
+    def pinned(self) -> "DeclarationReader":
+        if self._follow is None:
+            return self
+        try:
+            current = DeclarationReader(self._follow(), self.owner_id)
+        except Exception as exc:  # noqa: BLE001 - an owner that cannot state what is in force is unavailable
+            raise OwnerUnavailable("the execution side could not state the declarations in force: "
+                                   f"{_described(exc)}") from None
+        held = [(k, current._held[k[0]]) for k in current._seen]
+        with self._lock:                             # check everything, then advance: atomic per verification
+            for key, d in held:
+                if self._seen.get(key, d.digest) != d.digest:
+                    raise OwnerUnavailable(f"declaration {key[0]!r} revision {key[1]} is restated with other content "
+                                           "(a revision names one content; a change is a new revision)")
+                if d.revision < self._latest.get(key[0], d.revision):
+                    raise OwnerUnavailable(f"declaration {key[0]!r} went back from revision {self._latest[key[0]]} "
+                                           f"to {d.revision} (revisions only move forward)")
+            for key, d in held:
+                self._seen.setdefault(key, d.digest)
+                self._latest[key[0]] = max(self._latest.get(key[0], d.revision), d.revision)
+        return current
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._follow is not None:
+            return self.pinned().read(kind, record_id)
+        d = self._held.get(record_id) if OwnerKind(kind) is K.DECLARATION else None
+        if d is None:
+            return None
+        return OwnerRecord(K.DECLARATION, self.owner_id, record_id, str(d.revision), d.digest,
+                           {"declaration": d.to_dict()})
+
+
+# ---- the unit registry -----------------------------------------------------------------------------------------------------------
+UNIT_RECORD = "sealed_registry"
+
+
+class UnitRegistryReader(_Reader):
+    kinds = frozenset({K.UNIT_REGISTRY})
+    owner_id = "engcore.scientific.units"
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if OwnerKind(kind) is not K.UNIT_REGISTRY or record_id != UNIT_RECORD:
+            return None
+        try:
+            verify_registry_unmutated()
+        except ScientificCoreError as exc:
+            raise WorldRefused(f"the unit registry was mutated behind its seal: {exc}") from None
+        fingerprint = registry_fingerprint()
+        return OwnerRecord(K.UNIT_REGISTRY, self.owner_id, UNIT_RECORD, fingerprint[:16], fingerprint,
+                           {"fingerprint": fingerprint})
+
+
+# ---- frozen readers (replay) -----------------------------------------------------------------------------------------------------
+def rederive(kind: OwnerKind, owner_id: str, record_id: str, payload: Mapping[str, Any]) -> tuple[str, str]:
+    """(revision, digest) of a recorded owner payload, by the owner's own identity rule; refused when the payload does
+    not carry what the rule needs, is not self-consistent, or is not the record it is filed under (the run, model,
+    provider or declaration it names).  Used for snapshot records, never for live reads."""
+    from engcore.sria.decision.replay import canonical_digest
+
+    from .declaration import ProtocolDeclaration
+
+    kind = OwnerKind(kind)
+    try:
+        if kind is K.DECLARATION:
+            d = ProtocolDeclaration.from_dict(payload["declaration"])
+            if d.declaration_id != record_id:
+                raise WorldRefused("the recorded declaration is not the one it is filed under")
+            return str(d.revision), d.digest
+        if kind is K.UNIT_REGISTRY:
+            fingerprint = payload["fingerprint"]
+            return fingerprint[:16], fingerprint
+        if kind is K.SYSTEM_STATE:
+            state = SystemState.from_dict(payload["state"])
+            if state.request_digest != owner_id:
+                raise WorldRefused("the recorded state is another run's than the owner it is filed under")
+            owner, variable = record_parts(record_id, 2) or ("", "")
+            found = [v for v in state.owner(owner).values if v.variable_id == variable]
+            if len(found) != 1 or found[0].value.to_dict() != payload["value"] or \
+                    found[0].uncertainty.to_dict() != payload["uncertainty"]:
+                raise WorldRefused("the recorded value is not the recorded state's")
+            return str(state.sequence), state.digest
+        if kind is K.MODEL_RECORD:
+            model = ScientificModelDefinition.from_dict(payload["model"])
+            if (model.model_id, model.version) != record_parts(record_id, 2):
+                raise WorldRefused("the recorded model is not the (model, version) it is filed under")
+            return model.version, _sha_json(model)
+        if kind is K.PROVIDER_STATUS:
+            status = payload["status"]
+            if status["capability"]["provider_id"] != record_id:
+                raise WorldRefused("the recorded status is another provider's")
+            digest_ = content_digest({k: v for k, v in status.items() if k != "location"})
+            if payload["report"].get("status_digest") != digest_:
+                raise WorldRefused("the recorded health report is for another status")
+            rebuilt = _provider_status(status)       # the owner's constructors over the recorded fields...
+            if rebuilt.to_dict() != dict(status):     # ...which must give back exactly the recorded status
+                raise WorldRefused("the recorded provider status does not rebuild through the owner's constructors")
+            if assess_health(rebuilt).to_dict() != dict(payload["report"]):    # the owner's own rule
+                raise WorldRefused("the recorded health report is not what the owner's assessment gives")
+            return status.get("version") or "-", digest_
+        if kind is K.BUDGET_LEDGER:
+            rebuilt = BudgetLedger.from_dict(payload["ledger"])             # a valid ledger record whose derived
+            if _as_float(rebuilt.to_dict()) != _as_float(payload["ledger"]):   # totals are the owner's own
+                raise WorldRefused("the recorded ledger's derived totals are not what its charges give")
+            return str(len(payload["ledger"]["charges"])), canonical_digest(rebuilt.to_dict())   # the owner's rule
+        if kind is K.EXPERIMENT:
+            exp = ScientificExperiment.from_dict(payload["experiment"])
+            full = exp.to_dict()
+            if full["budget"] != payload["budget"] or full["accounting"] != payload["accounting"]:
+                raise WorldRefused("the recorded accounting is not the recorded experiment's")
+            return str(len(exp.evaluations)), _sha_json(exp)
+    except (KeyError, TypeError, ValueError, AttributeError, ScientificCoreError) as exc:
+        raise WorldRefused(f"a recorded {kind.value} payload cannot re-derive its owner identity: {exc}") from None
+    raise WorldRefused(f"no identity rule for {kind.value}")
+
+
+def _provider_status(status: Mapping[str, Any]) -> ProviderStatus:
+    """A recorded ``ProviderStatus.to_dict()`` handed back to the provider owner's own constructors (the owner exposes
+    no loader; the caller checks that ``to_dict`` gives the recorded payload back exactly, so no field is reinterpreted)."""
+    cap = {k: v for k, v in dict(status["capability"]).items() if k != "classification"}
+    for name in ("physics", "dimensions", "time_modes", "output_ranks", "property_forms", "dependencies"):
+        cap[name] = tuple(cap.get(name, ()))
+    return ProviderStatus(ProviderCapability(**cap), Availability(status["availability"]), status["version"],
+                          status["digest"], status["location"], status["reason"],
+                          tuple(tuple(d) for d in status["dependencies"]), status["executable_digest"])
+
+
+def _as_float(node: Any) -> Any:
+    """Numbers compared as the owner's from_dict reads them (an int and the equal float are one amount)."""
+    if isinstance(node, bool) or node is None or isinstance(node, str):
+        return node
+    if isinstance(node, (int, float)):
+        return float(node)
+    if isinstance(node, Mapping):
+        return {k: _as_float(v) for k, v in node.items()}
+    if isinstance(node, (list, tuple)):
+        return [_as_float(v) for v in node]
+    return node
+
+
+class FrozenReader(_Reader):
+    """Answers exactly the reads recorded in a snapshot: what the owners stated then, not what they state now.  Each
+    record is accepted only if its payload re-derives the recorded revision and digest by the owner's rule."""
+
+    live = False
+
+    def __init__(self, kind: OwnerKind, owner_id: str, records: Mapping[str, tuple[OwnerRecord, frozenset[str] | None]],
+                 unavailable: str = "", refused: Mapping[str, tuple[str, str]] | None = None) -> None:
+        self.kinds = frozenset({OwnerKind(kind)})
+        self.owner_id = owner_id
+        self._unavailable = unavailable
+        self._refused = dict(refused or {})
+        for record_id, (record, _) in records.items():
+            if record.owner_kind is not OwnerKind(kind) or record.owner_id != owner_id or record.record_id != record_id:
+                raise WorldRefused(f"snapshot record {record_id!r} is not a {OwnerKind(kind).value} record of {owner_id!r}")
+            if rederive(record.owner_kind, record.owner_id, record_id, record.payload) != (record.revision,
+                                                                                          record.record_digest):
+                raise WorldRefused(f"snapshot record {record_id!r}: its payload does not re-derive the recorded "
+                                   f"{record.owner_kind.value} revision and digest (the owner's rule refutes it)")
+        self._records = dict(records)
+
+    def read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        if self._unavailable:
+            raise OwnerUnavailable(self._unavailable)
+        if record_id in self._refused:                   # a read the owner refused then is refused again
+            cls, why = self._refused[record_id]
+            raise (OwnerUnavailable if cls == "OwnerUnavailable" else WorldRefused)(why)
+        found = self._records.get(record_id)
+        return None if found is None or OwnerKind(kind) not in self.kinds else found[0]
+
+    def superseded(self, kind: OwnerKind, record_id: str) -> frozenset[str] | None:
+        found = self._records.get(record_id)
+        return None if found is None else found[1]
+
+
+def frozen_readers(snapshot: Mapping[str, Any]) -> tuple[FrozenReader, ...]:
+    by_kind: dict[OwnerKind, dict[str, tuple[OwnerRecord, frozenset[str] | None]]] = {}
+    owners = {OwnerKind(k): o for k, o in snapshot["owners"]}
+    unavailable = {OwnerKind(k): why for k, why in snapshot.get("unavailable", ())}
+    refused: dict[OwnerKind, dict[str, tuple[str, str]]] = {}
+    for k, record_id, cls, why in snapshot.get("refused", ()):
+        refused.setdefault(OwnerKind(k), {})[record_id] = (cls, why)
+    for item in snapshot["records"]:
+        r = item["record"]
+        record = OwnerRecord(OwnerKind(r["owner_kind"]), r["owner_id"], r["record_id"], r["revision"],
+                             r["record_digest"], r["payload"])
+        history = None if item["superseded"] is None else frozenset(item["superseded"])
+        by_kind.setdefault(record.owner_kind, {})[record.record_id] = (record, history)
+    return tuple(FrozenReader(kind, owner_id, by_kind.get(kind, {}), unavailable.get(kind, ""), refused.get(kind))
+                 for kind, owner_id in sorted(owners.items(), key=lambda kv: kv[0].value))
+
+
+#: The readers whose liveness is derived from their own type and mode (``Authorities.live``); any other object is not
+#: a live owner reader, whatever it says about itself.
+LIVE_READER_TYPES = (RunStateReader, ModelRegistryReader, ProviderRegistryReader, BudgetReader, DeclarationReader,
+                     UnitRegistryReader)
+
+
+def is_live(reader: Any) -> bool:
+    """Whether ``reader`` reads its owner as it is now (derived; see LIVENESS)."""
+    return type(reader) in LIVE_READER_TYPES and reader.live is True
+
+
+__all__ = [
+    "BudgetReader", "DeclarationReader", "FrozenReader", "LIVE_READER_TYPES", "ModelRegistryReader",
+    "ProviderRegistryReader", "RunStateReader", "UNIT_RECORD", "UnitRegistryReader", "frozen_readers", "is_live",
+    "record_key", "record_parts", "rederive",
+]

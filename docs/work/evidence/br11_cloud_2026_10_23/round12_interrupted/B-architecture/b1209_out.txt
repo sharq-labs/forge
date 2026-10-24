@@ -1,0 +1,9 @@
+--- run 1 (load: 2.52 3.45 2.65)
+read-back failures: {"ValueError: its accounting is not its evaluations' (an accou": 1}
+K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 13, 'MISSING_INFORMATION in flight': 35} in 34.8s; latency p50 5662 ms, max 10227 ms
+--- run 2 (load: 1.70 3.12 2.57)
+read-back failures: {"ValueError: its accounting is not its evaluations' (an accou": 1}
+K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 39, 'MISSING_INFORMATION in flight': 9} in 35.8s; latency p50 6013 ms, max 7986 ms
+--- run 3 (load: 1.37 2.85 2.51)
+read-back failures: {}
+K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 37, 'MISSING_INFORMATION in flight': 11} in 35.5s; latency p50 5743 ms, max 7320 ms

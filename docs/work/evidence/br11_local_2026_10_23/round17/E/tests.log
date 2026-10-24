@@ -1,0 +1,88 @@
+.............injections ['initial native capture', 'native recovery'] pending ['tuple'] sealed None
+refused False calls 2
+Finjections ['initial native capture', 'native recovery'] pending ['tuple'] sealed None
+refused False calls 2
+F................
+=================================== FAILURES ===================================
+___________ test_open_native_two_interrupts_preserve_spend[ledgers] ____________
+
+capture_map = 'ledgers'
+
+    @pytest.mark.parametrize("capture_map", ["ledgers", "experiments"])
+    def test_open_native_two_interrupts_preserve_spend(capture_map):
+        o=ax.owned("battery"); lid=_solver(o); calls=[]
+        def execute(authorization):
+            calls.append(1); _settle(o.ledgers[lid],f"run.{len(calls)}")
+        reader,_,gateway,admitted=_desk(o,lambda:(o.ledgers,o.experiments),execute)
+        saved=BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(admitted.admitted)
+        injections=[]
+        def recovery(frame):
+            while frame:
+                if frame.f_code is BudgetReader._recover_handing.__code__: return True
+                frame=frame.f_back
+            return False
+        def trace(frame,event,arg):
+            if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is getattr(o,capture_map) and not injections:
+                injections.append("initial native capture"); raise KeyboardInterrupt()
+            return trace
+        def profile(frame,event,arg):
+            if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is getattr(o,capture_map) and len(injections)==1 and recovery(frame):
+                injections.append("native recovery"); raise KeyboardInterrupt()
+        sys.setprofile(profile); sys.settrace(trace)
+        try:
+            with pytest.raises(KeyboardInterrupt): reader.pinned()
+        finally:
+            sys.settrace(None); sys.setprofile(None)
+        assert len(injections)==2
+        print("injections",injections,"pending",[type(v).__name__ for v in reader._uncompared.values()],"sealed",reader._sealed)
+        o.ledgers[lid]=saved
+        refused=_refused(gateway,admitted.admitted)
+        print("refused",refused,"calls",len(calls))
+>       assert refused and len(calls)==1
+E       assert (False)
+
+../br11-review/r17/E/test_replay.py:97: AssertionError
+_________ test_open_native_two_interrupts_preserve_spend[experiments] __________
+
+capture_map = 'experiments'
+
+    @pytest.mark.parametrize("capture_map", ["ledgers", "experiments"])
+    def test_open_native_two_interrupts_preserve_spend(capture_map):
+        o=ax.owned("battery"); lid=_solver(o); calls=[]
+        def execute(authorization):
+            calls.append(1); _settle(o.ledgers[lid],f"run.{len(calls)}")
+        reader,_,gateway,admitted=_desk(o,lambda:(o.ledgers,o.experiments),execute)
+        saved=BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(admitted.admitted)
+        injections=[]
+        def recovery(frame):
+            while frame:
+                if frame.f_code is BudgetReader._recover_handing.__code__: return True
+                frame=frame.f_back
+            return False
+        def trace(frame,event,arg):
+            if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is getattr(o,capture_map) and not injections:
+                injections.append("initial native capture"); raise KeyboardInterrupt()
+            return trace
+        def profile(frame,event,arg):
+            if event=="call" and frame.f_code is owners._items.__code__ and frame.f_locals["mapping"] is getattr(o,capture_map) and len(injections)==1 and recovery(frame):
+                injections.append("native recovery"); raise KeyboardInterrupt()
+        sys.setprofile(profile); sys.settrace(trace)
+        try:
+            with pytest.raises(KeyboardInterrupt): reader.pinned()
+        finally:
+            sys.settrace(None); sys.setprofile(None)
+        assert len(injections)==2
+        print("injections",injections,"pending",[type(v).__name__ for v in reader._uncompared.values()],"sealed",reader._sealed)
+        o.ledgers[lid]=saved
+        refused=_refused(gateway,admitted.admitted)
+        print("refused",refused,"calls",len(calls))
+>       assert refused and len(calls)==1
+E       assert (False)
+
+../br11-review/r17/E/test_replay.py:97: AssertionError
+=========================== short test summary info ============================
+FAILED ::test_open_native_two_interrupts_preserve_spend[ledgers] - assert (Fa...
+FAILED ::test_open_native_two_interrupts_preserve_spend[experiments] - assert...
+2 failed, 29 passed in 1.73s

@@ -1,0 +1,36 @@
+{
+  "name": "ledger_scientific_json",
+  "command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "-o",
+    "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src",
+    "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/pt",
+    "tests/mind/test_authority_review_r17.py",
+    "tests/mind/test_authority_review_r16.py"
+  ],
+  "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+  "environment": {
+    "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src:/home/dev_kaeem/forge-gen2-authority-v1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "exit_code": 1,
+  "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/pytest.log",
+  "identity_command": [
+    "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "-c",
+    "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+  ],
+  "identity_exit_code": 0,
+  "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py\n",
+  "source_sha256": "5870fef8e66eed02c4bd1e6d1d054ce17c6ef717d79f072c5bc417f08e9d3c2b",
+  "summary": "2 failed, 30 passed in 1.94s",
+  "failures": [
+    "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[value0]",
+    "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[nan]"
+  ]
+}

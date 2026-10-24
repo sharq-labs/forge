@@ -1,0 +1,17 @@
+== ledger top-up read between total and reservation
+  baseline admission: FEASIBLE | interleaving forced: True
+  torn verification: read revision 1
+  later verification: read revision 1
+  later verification: read revision 1
+  later verification: read revision 1
+  a NEW reader over the same accounts reads: revision 1
+  admission through the same desk readers after the top-up: MISSING_INFORMATION ('AUTHORITY_STALE',)
+experiment budget ExperimentBudget(max_observations=20, max_attempts=None) observations 3
+== experiment top-up + record read between budget and evaluations
+  baseline admission: FEASIBLE | interleaving forced: True
+  torn verification: read revision 22
+  later verification: read revision 22
+  later verification: read revision 22
+  later verification: read revision 22
+  a NEW reader over the same accounts reads: revision 22
+  admission through the same desk readers after the top-up: MISSING_INFORMATION ('AUTHORITY_STALE',)

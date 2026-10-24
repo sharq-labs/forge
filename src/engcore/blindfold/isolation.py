@@ -152,13 +152,16 @@ class IsolatedEscrow:
             out, err, outside = _discovery_exchange(
                 proc, (json.dumps({**task, "fd": fd}) + "\n").encode(), self.storage_dir, timeout,
             )
-        except BaseException:
+        except BaseException as failure:
             # Kill the session even if its leader exited while a descendant kept a pipe open.
+            # Cleanup confirmation can itself fail; bounded reaping of the directly owned leader
+            # is attempted before that error escapes.
             try:
-                os.killpg(proc.pid, signal.SIGKILL)
-            except ProcessLookupError:
-                pass
-            proc.wait(timeout=5)
+                _stop_discovery_process_group(proc)
+            except BaseException as cleanup_error:
+                raise RuntimeError(
+                    f"discovery cleanup failed after {type(failure).__name__}: {cleanup_error}"
+                ) from cleanup_error
             raise
         finally:
             for stream in (proc.stdin, proc.stdout, proc.stderr):
@@ -232,6 +235,76 @@ def _discovery_exchange(proc, payload: bytes, storage_dir: pathlib.Path, timeout
             raise subprocess.TimeoutExpired(proc.args, timeout)
         proc.wait(timeout=remaining)
     return bytes(output), bytes(errors), outside
+
+
+def _stop_discovery_process_group(proc: subprocess.Popen) -> None:
+    """Kill and observe the launcher process group, then reap its directly owned leader."""
+    observation_error = None
+    try:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        else:
+            # Reap nothing until every live member has observed SIGKILL. Waiting only for the
+            # leader leaves a race with inherited-pipe descendants.
+            _wait_process_group_stopped(proc.pid, timeout=5)
+    except BaseException as exc:
+        observation_error = exc
+
+    reap_error = None
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        try:
+            os.killpg(proc.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        try:
+            proc.kill()
+        except ProcessLookupError:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except BaseException as exc:
+            reap_error = exc
+    except BaseException as exc:
+        reap_error = exc
+
+    if observation_error is not None or reap_error is not None:
+        raise RuntimeError(
+            f"group observation failed: {observation_error}; leader reap failed: {reap_error}"
+        ) from (observation_error or reap_error)
+
+
+def _wait_process_group_stopped(process_group: int, *, timeout: float) -> None:
+    """Wait until SIGKILL has stopped every live member of this launcher-owned group.
+
+    Zombies are already stopped and may remain until their parent namespace reaps them. The
+    deadline is bounded; a live survivor is a cleanup failure, never successful timeout handling.
+    """
+    deadline = time.monotonic() + timeout
+    proc_root = pathlib.Path("/proc")
+    while True:
+        live = []
+        for stat_path in proc_root.glob("[0-9]*/stat"):
+            try:
+                raw = stat_path.read_text()
+            except (FileNotFoundError, ProcessLookupError):
+                continue
+            try:
+                fields = raw.rsplit(")", 1)[1].split()
+                state, group = fields[0], int(fields[2])
+            except (IndexError, ValueError) as exc:
+                raise RuntimeError(f"cannot parse process-group observation at {stat_path}") from exc
+            if group == process_group and state not in ("Z", "X"):
+                live.append(stat_path.parent.name)
+        if not live:
+            return
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise RuntimeError(f"discovery process group {process_group} still has live members {live[:8]}")
+        time.sleep(min(0.01, remaining))
 
 
 def _leaf(pid: int) -> int:

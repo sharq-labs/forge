@@ -1,0 +1,4 @@
+[ctrl-C at the listing call for the 2nd account] verification: KeyboardInterrupt; ledger history recorded with the spend: False
+   after restoring S0, re-dispatch: DISPATCHED AGAIN; executor calls = 2
+[ctrl-C at the account call for the 2nd account] verification: KeyboardInterrupt; ledger history recorded with the spend: True
+   after restoring S0, re-dispatch: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA; executor calls = 1

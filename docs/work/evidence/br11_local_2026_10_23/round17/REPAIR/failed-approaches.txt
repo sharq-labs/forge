@@ -1,0 +1,1 @@
+Initial failing-first test expected ValueError for Scientific Core NaN rejection; actual owner wraps it in ScientificCoreError. Corrected test exception expectation before implementation, and reran failing-first. Original output retained.

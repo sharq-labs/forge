@@ -1,0 +1,3 @@
+verification 1: refused once: budget experiment 'synthetic.battery.pulse-cell.experiment' moved while it was serialized (3 read-backs failed differently): ValueError: its accountin
+verification 2: read revision 6
+refused for good by this reader: False

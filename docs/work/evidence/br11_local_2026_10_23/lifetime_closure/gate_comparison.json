@@ -1,0 +1,204 @@
+{
+  "base_sha": "1202ea6c3d96f5c31d0b142a32438da75e020cae",
+  "environment": "unchanged WSL CPython3.12.3 existing venv",
+  "rows": [
+    {
+      "suite": "guards_local",
+      "current_log": "/home/dev_kaeem/br11-review/lifetime-closure/guards_local.log",
+      "base_log": "/home/dev_kaeem/br11-logs/gates_base_1202ea6c_r3/guards.txt",
+      "current_log_sha256": "890ab06e415f67082e6bcfd75905fb629f67fdc30ee79fd0780a3eb2001ab73b",
+      "base_log_sha256": "b8c3549693e2d2a0f35e03bea502c8a8a30b238847d5fd73d8fb77732393ad80",
+      "new": [],
+      "fixed": [],
+      "reasons": [
+        {
+          "node": "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
+          "current_reason": "E       AssertionError: a function takes a verification threshold as a bare float: [('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__', ['conservation_atol', 'temperature_atol', 'local_power_atol'])]",
+          "base_reason": "E       AssertionError: a function takes a verification threshold as a bare float: [('src/engcore/domains/thermal_models/conduction1d_transient_fv.py', '__init__', ['conservation_atol', 'temperature_atol', 'local_power_atol'])]",
+          "same": true
+        },
+        {
+          "node": "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one",
+          "current_reason": "E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}",
+          "base_reason": "E       AssertionError: these read a serialized record without checking the schema it claims to be: {'_AuditOnlyRecord': 'src/engcore/numerical/mesh_adaptation.py', 'BalanceTerm': 'src/engcore/scientific/conservation.py', 'ConservationBalance': 'src/engcore/scientific/conservation.py', 'FieldDefinition': 'src/engcore/scientific/fields/definition.py', 'ConservationTermBinding': 'src/engcore/scientific/multiphysics/conservation.py', 'CoupledConservation': 'src/engcore/scientific/multiphysics/conservation.py', 'PortDefinition': 'src/engcore/scientific/multiphysics/ports.py'}",
+          "same": true
+        }
+      ],
+      "summary": "2 failed, 1585 passed in 41.46s"
+    },
+    {
+      "suite": "expensive_local",
+      "current_log": "/home/dev_kaeem/br11-review/lifetime-closure/expensive_local.log",
+      "base_log": "/home/dev_kaeem/br11-logs/gates_base_1202ea6c_r3/expensive.txt",
+      "current_log_sha256": "44dad4339eff763031941d62fee58978cefaa7eee17e9d98f1a9c5b3284d3e9d",
+      "base_log_sha256": "b2adec20cf8673f72a1329591e03f6755c5927a26ea4ed94c750760fbed70b1f",
+      "new": [],
+      "fixed": [],
+      "reasons": [
+        {
+          "node": "benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_a2_the_provider_actually_computes_the_answer",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_b2_the_netlist_translation_is_deterministic_and_assigns_names",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_b_both_paths_consume_the_same_canonical_problem",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_c2_the_provider_answer_satisfies_craftys_own_assembled_equations",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_c_native_and_ngspice_agree_within_the_preregistered_tolerance",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_d2_only_one_dispatch_entry_differs",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e2_case_e_two_stage_coupled_results_agree",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e3_the_electrical_quantities_at_the_fixed_point_agree",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e4_iteration_counts_are_recorded_not_required",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_e_case_a_coupled_results_agree",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_f_provenance_distinguishes_the_execution",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g3_a_missing_requested_quantity_is_a_provider_failure",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g4_provider_failure_is_none_of_the_other_three_failures",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_g5_the_singular_precondition_is_detected_on_both_paths",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_i_no_provider_syntax_reaches_a_scientific_record",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_m_the_two_solvers_execute_the_same_realization",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_n_substituting_the_provider_does_not_inflate_the_record",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p2_the_corrupted_power_is_refused_before_the_coupled_loop_admits_it",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p3_the_relations_are_independent_of_the_quantity_they_check",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p4_admission_is_a_provider_failure_not_a_scientific_verdict",
+          "current_reason": "E       assert False",
+          "base_reason": "E       assert False",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_CorruptPower-V_drop \\\\* I]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedCurrent-current convention]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        },
+        {
+          "node": "tests/test_heterogeneous_ngspice.py::test_p_a_corrupted_provider_quantity_is_refused_at_admission[_FlippedPower-V_drop \\\\* I]",
+          "current_reason": "NO EXTRACTED REASON",
+          "base_reason": "NO EXTRACTED REASON",
+          "same": true
+        }
+      ],
+      "summary": "13 failed, 335 passed, 14 errors in 38.15s"
+    }
+  ]
+}

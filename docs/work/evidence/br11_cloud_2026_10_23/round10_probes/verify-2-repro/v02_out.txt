@@ -1,0 +1,8 @@
+T2=pinned exhaust=True  mode=replace: log=[('T2', 0.027, 2), ('T1', 0.207, 1), ('MainThread', 0.533, 1)] | T1 DISPATCHED | T2 pinned | executor ran 2 (re-dispatches in window: 1) | later refused
+T2=pinned exhaust=True  mode=inplace: log=[('T2', 0.026, 2), ('T1', 0.206, 1), ('MainThread', 0.532, 1)] | T1 DISPATCHED | T2 pinned | executor ran 2 (re-dispatches in window: 1) | later refused
+T2=pinned exhaust=False mode=replace: log=[('T2', 0.026, 2), ('T1', 0.206, 1), ('MainThread', 0.532, 1)] | T1 DISPATCHED | T2 pinned | executor ran 2 (re-dispatches in window: 1) | later refused
+T2=pinned exhaust=False mode=inplace: log=[('T2', 0.025, 2), ('T1', 0.205, 1), ('MainThread', 0.532, 1)] | T1 DISPATCHED | T2 pinned | executor ran 2 (re-dispatches in window: 1) | later refused
+T2=dispatch exhaust=True  mode=replace: log=[('T2', 0.032, 2), ('T1', 0.207, 1), ('MainThread', 0.548, 1)] | T1 DISPATCHED | T2 refused (ORITY_STALE)) | executor ran 2 (re-dispatches in window: 1) | later refused
+T2=dispatch exhaust=True  mode=inplace: log=[('T2', 0.033, 2), ('T1', 0.207, 1), ('MainThread', 0.557, 1)] | T1 DISPATCHED | T2 refused (ORITY_STALE)) | executor ran 2 (re-dispatches in window: 1) | later refused
+T2=dispatch exhaust=False mode=replace: log=[('T2', 0.042, 2), ('T1', 0.206, 1), ('MainThread', 0.567, 1)] | T1 DISPATCHED | T2 refused (ORITY_STALE)) | executor ran 2 (re-dispatches in window: 1) | later refused
+T2=dispatch exhaust=False mode=inplace: log=[('T2', 0.032, 2), ('T1', 0.205, 1), ('MainThread', 0.55, 1)] | T1 DISPATCHED | T2 refused (ORITY_STALE)) | executor ran 2 (re-dispatches in window: 1) | later refused

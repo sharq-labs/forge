@@ -25,6 +25,8 @@ from engcore.scientific.multiphysics import (
     ExtrapolationPolicy, FieldMappingDefinition, FieldMappingMethod, MappingDiagnostics,
 )
 from engcore.scientific.units.quantity import Quantity
+from engcore.scientific.fields.semantics import FieldSemantics
+from engcore.scientific.semantics import QuantitySemantics, QuantityRole, ConservedQuantity
 
 
 def _m(value):
@@ -39,14 +41,23 @@ def _conservative(round_trip=True):
     return FieldMappingDefinition("map", FieldMappingMethod.CONSERVATIVE_CELL, verify_round_trip=round_trip)
 
 
+def _density_semantics(unit, dimension):
+    # Explicit mathematical fixture: area/volume density of the same power amount.
+    return FieldSemantics("cell_average_density",
+        QuantitySemantics("fixture:power_density", unit, (QuantityRole.DENSITY,)),
+        f"m**{dimension}", ConservedQuantity("fixture:power", "W"))
+
+
 def _cell_field(store, mesh, values, unit="W/m**2", field_id="q"):
-    definition = FieldDefinition(field_id, unit, mesh.mesh_id, FieldLocation.CELL)
+    definition = FieldDefinition(field_id, unit, mesh.mesh_id, FieldLocation.CELL,
+                                 semantics=_density_semantics(unit, mesh.spatial_dimension))
     record, _ = FieldValue(definition, mesh, np.asarray(values, dtype=float)).store(store)
     return record
 
 
 def _target(mesh, unit="W/m**2"):
-    return FieldDefinition("q_target", unit, mesh.mesh_id, FieldLocation.CELL)
+    return FieldDefinition("q_target", unit, mesh.mesh_id, FieldLocation.CELL,
+                           semantics=_density_semantics(unit, mesh.spatial_dimension))
 
 
 def _map(store, record, source_mesh, target_mesh, definition=None, unit="W/m**2"):
@@ -129,9 +140,11 @@ def test_a_signed_field_that_integrates_to_zero_is_conserved_without_division_by
 def test_offset_scale_units_are_refused():
     store = InMemoryBulkStore()
     source, target = _grid("a", 1.0, 3), _grid("b", 1.0, 2)
-    record = _cell_field(store, source, np.full(source.cell_shape, 20.0), unit="degC")
-    with pytest.raises(InvalidScientificProblem, match="offset-scale"):
-        _map(store, record, source, target, unit="degC")
+    semantics = FieldSemantics("cell_average_density",
+        QuantitySemantics("fixture:temperature_density", "K", (QuantityRole.DENSITY,)),
+        "m**2", ConservedQuantity("fixture:temperature_integral", "K*m**2"))
+    with pytest.raises(InvalidScientificProblem, match="ratio-scale"):
+        FieldDefinition("q", "degC", source.mesh_id, FieldLocation.CELL, semantics=semantics)
 
 
 def test_a_target_outside_the_source_support_is_refused():
@@ -156,11 +169,9 @@ def test_a_conservative_definition_cannot_extrapolate():
 def test_node_fields_are_refused():
     store = InMemoryBulkStore()
     source, target = _grid("a", 1.0, 3), _grid("b", 1.0, 2)
-    definition = FieldDefinition("q", "W/m**2", "a", FieldLocation.NODE)
-    record, _ = FieldValue(definition, source, np.ones(source.node_shape)).store(store)
-    mapper = FieldMapper(BulkDataResolver(store), store)
-    with pytest.raises(InvalidScientificProblem, match="cell-centered"):
-        mapper.execute(record, source, _target(target), target, _conservative())
+    with pytest.raises(InvalidScientificProblem, match="CELL"):
+        FieldDefinition("q", "W/m**2", "a", FieldLocation.NODE,
+                        semantics=_density_semantics("W/m**2", 2))
 
 
 def test_hexahedral_cells_are_refused():
@@ -170,7 +181,7 @@ def test_hexahedral_cells_are_refused():
     hexa = UnstructuredMeshData("hex", CellType.HEXAHEDRON, cube, np.array([tuple(range(8))])).store(store)
     other = UnstructuredMeshData("hex2", CellType.HEXAHEDRON, cube, np.array([tuple(range(8))])).store(store)
     with pytest.raises(InvalidScientificProblem, match="not implemented"):
-        _map(store, _cell_field(store, hexa, [1.0]), hexa, other)
+        _map(store, _cell_field(store, hexa, [1.0], unit="W/m**3"), hexa, other, unit="W/m**3")
 
 
 def test_a_non_convex_quadrilateral_is_refused():

@@ -1,0 +1,80 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "E: replay/readback/restore",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R18-E-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Twice-interrupted capture of reused mutable handing loses spend on checkpoint replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1015,
+      "related_lines": [
+        1002,
+        1016,
+        1042,
+        1043
+      ],
+      "smallest_reproduction": "E/test_e.py::test_native_capture_pair[False]: seal live reader through _desk, dispatch once (settles spend), interrupt _items at initial capture and recovery using trace/profile checkpoints, replace ledger in the previously returned dict with saved pre-spend checkpoint, dispatch original action again. No source mutation.",
+      "actual_result": "First pin raises KeyboardInterrupt; later rollback is accepted and execution count reaches 2. Log: detached=False, refused=False, calls=2.",
+      "expected_result": "The handed spend remains an obligation; later rollback is refused and calls remains 1.",
+      "threat_families": [
+        "native capture/recovery interruption",
+        "mutable returned mapping",
+        "checkpoint replacement",
+        "hidden spend and duplicate dispatch"
+      ],
+      "trust_boundary": "Execution owner legitimately hands canonical objects then replaces account on restore; interrupts are native control flow. No source/private account mutation. Crosses documented observation-forwardness contract; not a generic reservation or at-most-once requirement.",
+      "proposed_correction": "For this replacement family, owner-publish a detached dict pair whose membership is not subsequently mutated; preserve referenced spent account objects across replacement. Paired test_native_capture_pair[True] uses dict copies and refuses redispatch (calls=1), without acknowledgement. This is a bounded sufficient control, not a universal cure: nested account mutation and interruptions before any stable publication need separate lifecycle decisions. Additional reader-local retry alone has no demonstrated guarantee under repeated interruption.",
+      "evidence": "/home/dev_kaeem/br11-review/r18/E/tests.log"
+    }
+  ],
+  "changed_code_assessment": "_retained_entry follows _read_once ordering: ledger BudgetCharge normalization then sorted JSON/default=str and owner readback; experiment scientific to_json then ScientificEvaluation readback then writability. No second serializer policy found. R17 controls and new ordering controls demonstrate numeric-key parity without silent rollback acceptance.",
+  "tested_transitions": [
+    "Both owners: three detached JSON-normalized history prefixes, all six observation permutations; middle checkpoint refused then maximal history accepted (12 tests).",
+    "Both owners: interrupted retained-entry serializer keeps obligation without divergence/seal; subsequent honest checkpoint recovers (2 tests).",
+    "Double native capture/recovery interrupt: mutable reused dict allows repeat execution; fresh detached dict pair refuses same replacement (2 paired tests).",
+    "Existing R16 owner-history controls 16 and R17 owner JSON controls 16 executed on exact SHA."
+  ],
+  "missing_coverage": [
+    "Bounded traces only; no exhaustive interleaving proof.",
+    "Detached mapping pair does not prove protection against mutation within retained account objects.",
+    "No new exhaustive contradictory-history permutation suite; existing R16 conflict control ran.",
+    "Q1/Q2/Q3/Q5/Q6/Q7 NO means no finding in this replay lens, not an exhaustive independent audit of those subsystems.",
+    "Full FAST, remote workflows, certification and scientific validation not run."
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r18/E/pt",
+        "/home/dev_kaeem/br11-review/r18/E/test_e.py",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/E/tests.log"
+    }
+  ],
+  "outcome": "48 passed in 1.92s (includes assertions reproducing known defect, not 48 safety claims). Known Q4 MAJOR remains open; no new substantive defect found in bounded new transitions."
+}

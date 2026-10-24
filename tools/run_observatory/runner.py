@@ -26,7 +26,7 @@ import uuid
 from tools.run_observatory import (CLASSIFICATION, PENDING_SCHEMA, RECEIPT_SCHEMA, RUN_KINDS, adapters, compare,
                                    identity, metrics, receipt as receipt_mod)
 from tools.run_observatory.ledger import Ledger, iter_pending, quarantine
-from tools.run_observatory.redaction import Redactor
+from tools.run_observatory.redaction import Redactor, StreamRedactor
 
 OBSERVER_VERSION = "1.0.0"
 WINDOWS = sys.platform == "win32"
@@ -205,6 +205,7 @@ class _Pump(threading.Thread):
         self.raw = hashlib.sha256()
         self.stored = hashlib.sha256()
         self.raw_bytes = self.stored_bytes = self.redactions = 0
+        self.stream_redactor = StreamRedactor(redactor)
 
     def run(self) -> None:
         log = open(self.log_path, "wb") if self.log_path else None
@@ -219,13 +220,18 @@ class _Pump(threading.Thread):
                     except (OSError, ValueError):
                         self.sink = None
                 if log is not None:
-                    clean, count = self.redactor.redact_bytes(chunk)
+                    clean, count = self.stream_redactor.feed(chunk)
                     log.write(clean)
                     self.stored.update(clean)
                     self.stored_bytes += len(clean)
                     self.redactions += count
         finally:
             if log is not None:
+                clean, count = self.stream_redactor.feed(b"", final=True)
+                log.write(clean)
+                self.stored.update(clean)
+                self.stored_bytes += len(clean)
+                self.redactions += count
                 log.close()
             self.stream.close()
 
@@ -235,7 +241,8 @@ class _Pump(threading.Thread):
                 "stored_path": store.relative(self.log_path) if self.log_path else None,
                 "stored_sha256": self.stored.hexdigest() if self.log_path else None,
                 "stored_bytes": self.stored_bytes if self.log_path else None,
-                "redactions": self.redactions, "persisted": self.log_path is not None, "capture_complete": complete}
+                "redactions": self.redactions, "persisted": self.log_path is not None, "capture_complete": complete,
+                "redaction_limit_omitted": self.stream_redactor.omitted}
 
 
 def _sink(stream_name: str, quiet: bool):
@@ -503,6 +510,9 @@ def _execute(req: RunRequest, *, clock, environ) -> RunOutcome:
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     report_file = artifacts_dir / "report.json"
     additions, context = adapter.prepare(argv, artifacts_dir)
+    if context.get("junit"):
+        report_path = Path(context["junit"])
+        context["junit"] = str((cwd / report_path).resolve())
 
     body: dict = {
         "schema": RECEIPT_SCHEMA, "classification": CLASSIFICATION, "measurement_label": "MEASURED",
@@ -567,7 +577,8 @@ def _execute(req: RunRequest, *, clock, environ) -> RunOutcome:
             host.start()
             try:
                 proc = subprocess.Popen([*argv, *additions], cwd=cwd, env=child_env, stdin=None,
-                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False)
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=False,
+                                        start_new_session=not WINDOWS)
             except OSError as exc:
                 start_error = exc
             if proc is not None:
@@ -657,15 +668,19 @@ def _stop_child(proc: subprocess.Popen | None, monitor: metrics.ProcessTreeMonit
     """Give the child ``grace`` seconds to finish after an interrupt, then stop its whole tree."""
     if proc is None:
         return None
-    if not WINDOWS and signum not in (None, signal.SIGINT) and proc.poll() is None:
+    if not WINDOWS:
         try:
-            proc.send_signal(signum)  # a terminal's Ctrl+C already reached the child; a SIGTERM did not
-        except OSError:
+            os.killpg(proc.pid, signum or signal.SIGINT)
+        except ProcessLookupError:
             pass
     deadline = time.monotonic() + grace
     while time.monotonic() < deadline:
         try:
-            return proc.wait(timeout=0.2)
+            rc = proc.wait(timeout=0.2)
+            # The parent may exit while workers ignore the forwarded signal.
+            if not WINDOWS:
+                monitor.terminate_tree()
+            return rc
         except subprocess.TimeoutExpired:
             continue
         except KeyboardInterrupt:

@@ -1,0 +1,201 @@
+{
+ "failed": 8,
+ "inputs": {
+  "evaluation_fields_read": [
+   "class",
+   "mind_answer",
+   "mind_outcome"
+  ],
+  "plan_representability": "battery_rediscovery_v1/PLAN.json#representability",
+  "sealed_mind": [
+   "results/candidate/MIND__P1.json",
+   "results/candidate/MIND__P2.json"
+  ]
+ },
+ "not_representable_failures": [
+  "P1/IDENTIFIABILITY",
+  "P1/MODEL_ADEQUACY",
+  "P1/MODEL_DISCREPANCY",
+  "P2/MODEL_ADEQUACY",
+  "P2/MODEL_DISCREPANCY"
+ ],
+ "rows": [
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [
+    "cross_cell_heldout/other_cell: refused as a passive association with z (inclusion 1.0); posed as covariates ['T_K', 'z'] beside settable ['t_on_s', 'I_A']; protocol role of z = STATE_VARIABLE (conventions.initial_soc + capacity_basis: coulomb-counted from the applied current)"
+   ],
+   "failed": true,
+   "instance": "P1/CROSS_CELL_TRANSFER",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "SEMANTIC_ROLE_ERROR",
+   "reachable": [
+    "SUPPORTED",
+    "NOT_SUPPORTED",
+    "NOT_ASSESSABLE",
+    "REFUSED"
+   ],
+   "representability": "REPRESENTABLE_APPROXIMATELY",
+   "semantics": "PROXY"
+  },
+  {
+   "current_answer": "REFUSED",
+   "evidence": [
+    "frozen reachable set ['REFUSED']: the RELAXATION probe's problem is refused from the pack alone (empty box or pool): the arm can only refuse",
+    "sealed RELAXATION probe: problem_refused (input 't_off_s': the settable box is a positive interval low < high)",
+    "the claim is about latent R0/R1/C1, which have no representation in the Mind; its only path is an observable-shape proxy, and the proxy's problem cannot be built from this pack"
+   ],
+   "failed": true,
+   "instance": "P1/IDENTIFIABILITY",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "REPRESENTATION_MISSING",
+   "reachable": [
+    "REFUSED"
+   ],
+   "representability": "NOT_REPRESENTABLE",
+   "semantics": "PROXY"
+  },
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [
+    "frozen capability: none: the declared 1RC family is not in the hypothesis space (log-linear structures)",
+    "sealed answer reason: the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   ],
+   "failed": true,
+   "instance": "P1/MODEL_ADEQUACY",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "REPRESENTATION_MISSING",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "representability": "NOT_REPRESENTABLE",
+   "semantics": "NONE"
+  },
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [
+    "frozen capability: none: residuals of the declared family are never computed by the arm",
+    "sealed answer reason: the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   ],
+   "failed": true,
+   "instance": "P1/MODEL_DISCREPANCY",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "REPRESENTATION_MISSING",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "representability": "NOT_REPRESENTABLE",
+   "semantics": "NONE"
+  },
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [],
+   "failed": false,
+   "instance": "P1/WITHIN_CELL_GENERALIZATION",
+   "outcome": "CORRECT_REFUSAL",
+   "primary_gap": null,
+   "reachable": [
+    "SUPPORTED",
+    "NOT_SUPPORTED",
+    "NOT_ASSESSABLE",
+    "REFUSED"
+   ],
+   "representability": "REPRESENTABLE_APPROXIMATELY",
+   "semantics": "PROXY"
+  },
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [],
+   "failed": false,
+   "instance": "P2/CROSS_CELL_TRANSFER",
+   "outcome": "CORRECT_REFUSAL",
+   "primary_gap": null,
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "representability": "REPRESENTABLE_EXACTLY",
+   "semantics": "EXACT"
+  },
+  {
+   "current_answer": "REVIEW",
+   "evidence": [
+    "RELAXATION: LAW mind:L[x0]Q[] linear in ln t_off ({'t_off_s': 0.056082506961}), no curvature term -> translated REVIEW",
+    "REPRESENTATION_MISSING: identifiability of latent R0/R1/C1 is judged through the shape of an observable, not through the parameters' information",
+    "HYPOTHESIS_GENERATION_FAILURE: the log-linear structure family has no exponential relaxation term, so an RC time scale can only appear as curvature in ln t; the arm cannot test it as a parameter"
+   ],
+   "failed": true,
+   "instance": "P2/IDENTIFIABILITY",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "MULTIPLE_CAUSES",
+   "reachable": [
+    "NOT_SUPPORTED",
+    "REFUSED",
+    "REVIEW",
+    "SUPPORTED"
+   ],
+   "representability": "REPRESENTABLE_APPROXIMATELY",
+   "semantics": "PROXY"
+  },
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [
+    "frozen capability: none: the declared 1RC family is not in the hypothesis space (log-linear structures)",
+    "sealed answer reason: the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   ],
+   "failed": true,
+   "instance": "P2/MODEL_ADEQUACY",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "REPRESENTATION_MISSING",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "representability": "NOT_REPRESENTABLE",
+   "semantics": "NONE"
+  },
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [
+    "frozen capability: none: residuals of the declared family are never computed by the arm",
+    "sealed answer reason: the declared 1RC family is not in the Minimal Mind's hypothesis space (log-linear structures of a positive observable); the Mind cannot judge it"
+   ],
+   "failed": true,
+   "instance": "P2/MODEL_DISCREPANCY",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "REPRESENTATION_MISSING",
+   "reachable": [
+    "NOT_ASSESSABLE"
+   ],
+   "representability": "NOT_REPRESENTABLE",
+   "semantics": "NONE"
+  },
+  {
+   "current_answer": "NOT_ASSESSABLE",
+   "evidence": [
+    "within_cell_heldout/cc: refused as a passive association with I_A (inclusion 0.990046277); posed as covariates ['I_A', 'T_K', 'z'] beside settable ['t_on_s']; protocol role of I_A = FIXED_PROTOCOL_CONDITION (description: 'discharge pulses at two current levels' (held-out: two other levels))",
+    "within_cell_heldout/pulses: refused as a passive association with I_A (inclusion 0.971473718); posed as covariates ['I_A', 'T_K', 'z'] beside settable ['t_on_s']; protocol role of I_A = FIXED_PROTOCOL_CONDITION (description: 'discharge pulses at two current levels' (held-out: two other levels))"
+   ],
+   "failed": true,
+   "instance": "P2/WITHIN_CELL_GENERALIZATION",
+   "outcome": "FALSE_REFUSE",
+   "primary_gap": "SEMANTIC_ROLE_ERROR",
+   "reachable": [
+    "SUPPORTED",
+    "NOT_SUPPORTED",
+    "NOT_ASSESSABLE",
+    "REFUSED"
+   ],
+   "representability": "REPRESENTABLE_APPROXIMATELY",
+   "semantics": "PROXY"
+  }
+ ],
+ "schema": "forge.mind.repsem.gap_map/1",
+ "tally": {
+  "EVIDENCE_UPDATE_FAILURE": 0,
+  "HYPOTHESIS_GENERATION_FAILURE": 0,
+  "MULTIPLE_CAUSES": 1,
+  "REPRESENTATION_MISSING": 5,
+  "SEMANTIC_ROLE_ERROR": 2,
+  "STOPPING_REFUSAL_FAILURE": 0,
+  "UNKNOWN": 0
+ }
+}

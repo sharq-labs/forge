@@ -1,0 +1,357 @@
+{
+  "base_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "files": {
+    "src/engcore/mind/world/owners.py": "bee80307fcd73de69a8a00f49b3e1d7d56295b2e4f7d78bd0183616a6568a298",
+    "tests/mind/test_authority_review_r17.py": "83cf992ff9da6dca16fff55c5431c5b4be73cb245f52e58c1809bcf135e0388a"
+  },
+  "changes": [
+    "Per-entry ledger from_dict -> JSON default=str sorted compact -> from_dict -> existing history hash.",
+    "Per-entry experiment to_json -> from_dict -> to_json writability check -> existing history hash.",
+    "Stale caller-stack exclusion clarified as unresolved pre-capture defect."
+  ],
+  "tests": "16 new R17 controls plus16 existing R16 controls; L0 32 passed",
+  "mutation_result": "7/7 isolated semantic mutants killed by assertion failures; imports retain canonical identity; pytest pythonpath explicitly points at each isolated src",
+  "narrow_invalid_serialization_contrast": "Baseline experiment opaque/NaN entries cleared retained barrier but old checkpoint was still refused as behind. No extra acceptance/bypass claim. Fixed retains unresolved barrier because ordinary owner serializer rejects content.",
+  "open": "Known repeated pre-capture interruption information-loss MAJOR remains OPEN; no protocol redesign.",
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/pt-failing-first",
+        "tests/mind/test_authority_review_r17.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/failing-first.log",
+      "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb",
+      "test_sha256": "df0f8a560044cc79e1bb1d3238a1e5b637d91515e8219df4a205494e1a5ad578",
+      "summary": "4 failed, 12 passed in 1.61s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-experiment]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]"
+      ]
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/pt-failing-first-corrected",
+        "tests/mind/test_authority_review_r17.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/failing-first-corrected.log",
+      "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb",
+      "test_sha256": "83cf992ff9da6dca16fff55c5431c5b4be73cb245f52e58c1809bcf135e0388a",
+      "summary": "4 failed, 12 passed in 1.16s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-experiment]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]"
+      ]
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/pt-l0",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 0,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/l0.log",
+      "source_sha256": "bee80307fcd73de69a8a00f49b3e1d7d56295b2e4f7d78bd0183616a6568a298",
+      "test_sha256": "83cf992ff9da6dca16fff55c5431c5b4be73cb245f52e58c1809bcf135e0388a",
+      "summary": "32 passed in 1.69s",
+      "failures": []
+    },
+    {
+      "name": "ledger_skip_json",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/src",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/pt",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/pytest.log",
+      "identity_command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+      ],
+      "identity_exit_code": 0,
+      "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/src/engcore/mind/world/owners.py\n",
+      "source_sha256": "28fcdf5470e5ab1c37ee276ebe0b122509e26e7eee8dc36f93a135a8092346e8",
+      "summary": "1 failed, 31 passed in 2.05s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]"
+      ]
+    },
+    {
+      "name": "experiment_skip_json",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/src",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/pt",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/pytest.log",
+      "identity_command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+      ],
+      "identity_exit_code": 0,
+      "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/src/engcore/mind/world/owners.py\n",
+      "source_sha256": "2a6420a7993de05ee17feb3a44cb2ecaae89a7ca7dfc85fcaf55af95b0440271",
+      "summary": "1 failed, 31 passed in 1.82s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-experiment]"
+      ]
+    },
+    {
+      "name": "ledger_scientific_json",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/pt",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/pytest.log",
+      "identity_command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+      ],
+      "identity_exit_code": 0,
+      "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py\n",
+      "source_sha256": "5870fef8e66eed02c4bd1e6d1d054ce17c6ef717d79f072c5bc417f08e9d3c2b",
+      "summary": "2 failed, 30 passed in 1.94s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[value0]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[nan]"
+      ]
+    },
+    {
+      "name": "experiment_default_string",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/pt",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/pytest.log",
+      "identity_command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+      ],
+      "identity_exit_code": 0,
+      "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src/engcore/mind/world/owners.py\n",
+      "source_sha256": "94ffd2d8f87004f6d4d1ad0e56dd0d21a9ed9809749e4cf15de34b9624987ef9",
+      "summary": "1 failed, 31 passed in 2.01s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]"
+      ]
+    },
+    {
+      "name": "experiment_nonfinite_allowed",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/src",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/pt",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/pytest.log",
+      "identity_command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+      ],
+      "identity_exit_code": 0,
+      "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/src/engcore/mind/world/owners.py\n",
+      "source_sha256": "698646ef3fe8642a7d14c5fb3402c8c34677cc67188ef4c7dff4bf905cebe540",
+      "summary": "1 failed, 31 passed in 1.87s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]"
+      ]
+    },
+    {
+      "name": "ledger_json_before_owner",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/src",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/pt",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/pytest.log",
+      "identity_command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+      ],
+      "identity_exit_code": 0,
+      "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/src/engcore/mind/world/owners.py\n",
+      "source_sha256": "ab2a513c559470428b36ec6ded352642b81f1497f9f3e90626efed13a551b9b1",
+      "summary": "2 failed, 30 passed in 1.73s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[value0]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[nan]"
+      ]
+    },
+    {
+      "name": "discard_retained_histories",
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-o",
+        "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/pt",
+        "tests/mind/test_authority_review_r17.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-gen2-authority-v1",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src:/home/dev_kaeem/forge-gen2-authority-v1",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/pytest.log",
+      "identity_command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"
+      ],
+      "identity_exit_code": 0,
+      "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src/engcore/mind/world/owners.py\n",
+      "source_sha256": "699fc9ae84050cf803db550ed305f9fbfe79cbd3a9ba5f3db7c009ad29ac5916",
+      "summary": "10 failed, 22 passed in 1.65s",
+      "failures": [
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-ledger]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-experiment]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-ledger]",
+        "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-experiment]",
+        "FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[handed = True]",
+        "FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[self._uncompared[ticket] = mapping]",
+        "FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[rollback]",
+        "FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[different]",
+        "FAILED tests/mind/test_authority_review_r16.py::test_experiment_detached_histories_reconcile_without_losing_attempts[True]",
+        "FAILED tests/mind/test_authority_review_r16.py::test_retained_conflict_cannot_be_erased_by_returning_to_first_branch"
+      ]
+    }
+  ],
+  "failed_approaches": "Initial invalid test exception expectation missed ScientificCoreError wrapper; corrected and reran failing-first before source edits. Initial WSL Ubuntu distro absent; switched to actual Ubuntu-24.04; no test in failed invocation.",
+  "scientific_validation": "NOT PERFORMED",
+  "certification": "NOT PERFORMED"
+}

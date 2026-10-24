@@ -1,0 +1,13 @@
+3.13.16
+[A: str(detail) raises an exception whose __str__ raises] pins on the spent state: ['RAISED ValueError', 'RAISED ValueError']
+   admissions on the spent state: ["RAISED ValueError: ValueError('message not available')", "RAISED ValueError: ValueError('message not available')"]
+   history recorded for the ledger: 1 charges; diverged: False
+   re-dispatch after the restore: DISPATCHED AGAIN; executor ran 2
+[B: str(detail) raises RuntimeError(arg) whose arg's __str__ raises] pins on the spent state: ['RAISED ValueError', 'RAISED ValueError']
+   admissions on the spent state: ["RAISED ValueError: ValueError('arg not printable')", "RAISED ValueError: ValueError('arg not printable')"]
+   history recorded for the ledger: 1 charges; diverged: False
+   re-dispatch after the restore: DISPATCHED AGAIN; executor ran 2
+[C control: str(detail) raises TypeError('plain failure')] pins on the spent state: ['pinned ok', 'pinned ok']
+   admissions on the spent state: ["MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',)", "MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',)"]
+   history recorded for the ledger: 1 charges; diverged: True
+   re-dispatch after the restore: refused: admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE; executor ran 1

@@ -8122,3 +8122,1919 @@ Commit `132ebba91b40998c9c878759d4e9ae5724f3ba59`. Policy v2 (default; v1 kept a
 - Re-read of recorded ledger pairs (`python -m tools.run_observatory --run-root D:/forge-run-ledger compare <cand> <base>`): the A-vs-A false positive `20261022T122037Z-f26687f666cb4941` vs `20261022T122025Z-f8e29da697064e6d` (+25.9 %) → v2 UNCHANGED, band 5 runs 7.531–10.095 s, within band; with `--policy-version=1` → PERFORMANCE_REGRESSION (unchanged v1 behaviour). Real improvement `20261022T122020Z-09ee6612a7e84859` vs `20261022T122011Z-2c8320eb09e64a43` (CODE_VARIANT, −55.4 %) → v2 PERFORMANCE_IMPROVED, band 4 runs 8.347–10.095 s, outside. First A pair (1 earlier run, +6.4 %) → UNCHANGED (inside the bars).
 - Live runs at `132ebba9`, `python -c "print(sum(i * i for i in range(8_000_000)))"` ×4 (`20261022T123149Z-f502be0ca55b4151` … `20261022T123151Z-b78d09a9586d4923`): 0.609 / 0.645 / 0.643 / 0.671 s, all UNCHANGED, band growing 1→3 runs; host load 8.1 / 8.2 / 8.7 / 10.2 of 24 cores busy outside the run (machine 38–46 % busy) — the concurrent Battery v3 workload.
 - Changed-file gate (`--base 12862b0b…`): 798 passed, 5 failed, 3 skipped, exit 1, 219 s; the 5 failed nodes are the baseline set recorded above (all failing on the exact base). NEW failures 0, NEW errors 0; not green. RECERTIFICATION_REQUIRED (owner-run) unchanged; FAST NOT RUN (Battery v3 still active).
+
+## 2026-10-21 — BR-BATT-REDISC-01 battery historical-rediscovery development pilot (non-formal)
+
+Branch `research/battery-rediscovery-pilot-v0` (worktree `D:/forge-redisc`), base origin/main `12862b0b`, local only:
+nothing is pushed, merged, certified or frozen. Family-3a `a6200e5c` is untouched. The Minimal Mind was copied
+byte-exact from `e2b8037c`. Commits: `085d9a7c` pre-run freeze (PLAN.json `adc3a30f`), `e1be5910` sealed outputs,
+then the evaluation commit. Report: `benchmarks/battery_rediscovery_v0/README.md`.
+
+**Result:** the preregistered conclusion is **LEAKAGE_INVALIDATED**, and the trigger is an audit false positive. The
+post-seal value pattern for P1's historical C1 = 760 F was `(?<![\d.])760(?![\d])`. It matched one measured timestamp,
+`760.006 s`, in P2's 1C record, because it excluded a following digit but not a following `.`. Every other audit check
+passed.
+- Under an amended audit the rule would give REPRESENTATION_BOTTLENECK. The owner has not decided whether to amend.
+- The Mind answered 0 CORRECT, 2 CORRECT_REFUSAL, 0 FALSE_SUPPORT and 8 FALSE_REFUSE, against CAREFUL_BASELINE's 7, 2, 1
+  and 0.
+- Replay: 12/12 outputs identical, 5/5 traces VERIFIED.
+
+**Failed approaches, recorded so they are not repeated:**
+- The EXCITATION probe read "no dependence on I" as "R0 not identifiable", which is physically wrong.
+- The raw relaxation observable mixed two current levels into the replicate noise.
+- A pseudo-inverse covariance reported zero variance on null directions.
+- The numeric leakage regex did not exclude a following decimal point.
+
+Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and the phyx `.venv` Python 3.14:
+
+1. `python -m pytest benchmarks/battery_rediscovery_v0/tests tests/mind/test_minimal_mind.py -q -p no:cacheprovider
+   --basetemp D:/redisc-tmp/bt3`: 44 passed.
+2. `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rf --basetemp ...` (FAST):
+   - pilot tree, uncommitted: 199 failed/errors, 11752 passed, 235 skipped;
+   - pristine `12862b0b` worktree `D:/forge-redisc-base`: 197 failed/errors, 11713 passed.
+   - The only new nodes are `tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1` and
+     `tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`.
+     Both fail only on `tree.clean` (uncommitted pilot files). FAST was not rerun after the commit. Not green.
+3. `python -m benchmarks.battery_rediscovery_v0.sandbox_run results/ACCESS_LOG.json -- --out results/candidate`:
+   exit 0, 14 s.
+4. `python -m benchmarks.battery_rediscovery_v0.seal ...`: pre-seal audit PASS.
+5. `sandbox_run ... -- --replay results/candidate --out results/replay`: exit 0.
+6. `python -m benchmarks.battery_rediscovery_v0.evaluator.run_evaluation --results ...`: LEAKAGE_INVALIDATED.
+
+SCIENTIFIC, the regression pack and certification were NOT RUN.
+
+
+## 2026-10-21 — BR-BATT-REDISC-01 AMENDMENT_01 (post-seal, owner-requested, disclosed)
+
+The owner asked for the numeric leakage regex to be fixed and for only the post-seal audit and the evaluation to be
+rerun as a disclosed amendment. Branch `research/battery-rediscovery-pilot-v0`, local only.
+
+**What changed**
+- `leakage.historical_value_tokens`: the lookahead `(?![\d])` became `(?![\d.])`.
+- `evaluator/run_evaluation.py`: a new `--amendment` option writes suffixed outputs.
+- `tests/test_battery_rediscovery_v0.py`: the frozen-file test admits files declared in `results/AMENDMENT_01.json`
+  (PLAN digest -> amended digest). A new test pins that the amended pattern ignores `760.006` and still catches `760`.
+
+**What did not change:** candidate outputs, traces, SEAL.json, the pre-seal audit, the truth mapping, the scoring,
+the conclusion rule, PLAN.json, and the preregistered `EVALUATION.{json,md}` and `LEAKAGE_POST_SEAL.json`. The last
+three were sha256-checked after the rerun: OK.
+
+**Result**
+- Preregistered conclusion: LEAKAGE_INVALIDATED (unchanged).
+- Amended conclusion: REPRESENTATION_BOTTLENECK.
+- The amended post-seal audit is PASS: 23 value patterns, no static, schema or runtime finding.
+- The amendment was made with the amended outcome already known. It is weaker than a preregistered result; a clean
+  confirmation needs a v0.1 plan frozen with the fixed audit and a fresh sealed run.
+
+Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and the phyx `.venv` Python 3.14:
+1. `python -m benchmarks.battery_rediscovery_v0.evaluator.run_evaluation --results benchmarks/battery_rediscovery_v0/results
+   --amendment AMENDMENT_01`: exit 0, REPRESENTATION_BOTTLENECK.
+2. `python -m pytest benchmarks/battery_rediscovery_v0/tests tests/mind/test_minimal_mind.py -q -p no:cacheprovider
+   --basetemp D:/redisc-tmp/bt4`: 45 passed.
+3. `python -m benchmarks.battery_rediscovery_v0.freeze --check`: exit 1, listing exactly the three amended files
+   (expected: PLAN.json is the pre-run record and is not rewritten).
+
+FAST, SCIENTIFIC, the regression pack and certification were NOT RUN for this amendment.
+
+
+## 2026-10-21 — BR-BATT-REDISC-02: battery_rediscovery_v1 clean confirmation (development)
+
+Experiment `benchmarks/battery_rediscovery_v1`, on branch `research/battery-rediscovery-pilot-v0`, local only.
+Commits: `53e6a6db` freeze (PLAN.json `3b7e6676`), `c0613435` seal, then the evaluation commit.
+
+- v0 is preserved as history in `V0_HISTORY.json`: PREREGISTERED_RESULT = LEAKAGE_INVALIDATED,
+  POST_SEAL_AMENDMENT_RESULT = REPRESENTATION_BOTTLENECK, CONFIRMED_RESULT = NONE. No v0 file was modified.
+- The candidate side is copied byte-exact from v0 (Mind arm, baselines, pack). The Mind was not upgraded.
+- **Leakage scanner v1:** complete numeric tokens are compared by value, measurement arrays are protected by
+  provenance, and a separate text scanner covers identities and verdicts. Mutation suite: 420/420 leaks caught and
+  0/219 benign triggered pre-run; 460/460 and 0/243 post-seal.
+- **Conclusion: REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY.** Mind failures 8, of which 5 are NOT_REPRESENTABLE
+  (share 0.625). Accuracy on representable instances: Mind 0.40, CAREFUL 1.00; the "not poor" gate fails at half of
+  CAREFUL.
+- Replay: 12/12 outputs identical, 5/5 traces VERIFIED. The outputs are byte-identical to v0's.
+- **Limits:** not an independent replication (same data, same deterministic code), and the developer was not blind
+  (the thresholds were written with v0's per-instance answers known). See the v1 README.
+
+**Failed approaches, recorded so they are not repeated:**
+- A scanner rule skipping tokens with fewer than 3 significant digits missed "8.4 mV" for 8.40. The mutation suite
+  caught it and it was removed pre-run.
+- A numeric scan of raw measurement arrays cannot be made safe: a 12.5 s timestamp equals a 3-digit historical RMSE.
+  Provenance replaces it for those arrays.
+
+Commands, all run with `PYTHONPATH="D:/forge-redisc/src;D:/forge-redisc"` and the phyx `.venv` Python 3.14:
+1. `python -m benchmarks.battery_rediscovery_v1.mutation --phase pre_run`: PASS 420/420, 0/219.
+2. `python -m pytest benchmarks/battery_rediscovery_v1/tests benchmarks/battery_rediscovery_v0/tests
+   tests/mind/test_minimal_mind.py -q -p no:cacheprovider --basetemp D:/redisc-tmp/bt6`: 82 passed.
+3. `python -m benchmarks.battery_rediscovery_v1.launch run`: exit 0.
+4. `python -m benchmarks.battery_rediscovery_v1.seal`: PASS.
+5. `python -m benchmarks.battery_rediscovery_v1.launch replay`: exit 0.
+6. `python -m benchmarks.battery_rediscovery_v1.evaluator.run_evaluation`: REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY.
+
+FAST, SCIENTIFIC, the regression pack and certification were NOT RUN for v1.
+
+
+## 2026-10-22 — BR-MIND-REPSEM-01: minimal representation + scientific semantic roles repair (development)
+
+Branch `research/mind-representation-semantics-v1` (worktree `D:/forge-repsem`, local, based on `d516e681`).
+Commits: `db439744` (gap map and failing-first tests), then the implementation commit. Report:
+`benchmarks/mind_repsem_v1/README.md`. Development evidence only. No battery data was evaluated, battery v2 was not
+run, and nothing here is a battery improvement claim.
+
+- **Gap map** (from frozen candidate-side records and the outcome labels only; `truth` is never read): of the 8 v1 Mind
+  failures, REPRESENTATION_MISSING 5, SEMANTIC_ROLE_ERROR 2 (P1 cross-cell: SOC posed as a passive covariate; P2
+  within-cell: the protocol current level posed as a passive covariate), MULTIPLE_CAUSES 1 (P2 identifiability).
+- **New package `engcore.mind.repsem`.**
+  - Seven declared roles, accepted only from the specification or the protocol.
+  - Five dispositions, ten scoped claim states and six named refusal reasons. Each claim type records its meaning,
+    evidence, refusal condition and scope.
+  - `ScientificHypothesis` has no `law` field.
+  - Role-typed family binding; replayable judgments.
+  - Identifiability reuses the frozen V1 rule (`hybrid_uq.identifiability.classify`).
+  - `engcore.mind.minimal` and every v1 frozen file are unchanged (pinned by a test).
+- **Ablation** on 6 synthetic fixtures × 5 seeds × 2 protocols, 260 scored answers per arm. Correct / false support /
+  false refuse:
+
+  | Arm | Correct | False support | False refuse |
+  |---|---:|---:|---:|
+  | OLD_MIND | 66 | 10 | 184 |
+  | REPRESENTATION_ONLY | 60 | 0 | 200 |
+  | SEMANTIC_ROLES_ONLY | 60 | 0 | 200 |
+  | REPRESENTATION_PLUS_ROLES | 260 | 0 | 0 |
+
+  - Replay: 120/120 EXACT.
+  - The combined score is on fixtures generated around its own declared family with 2× truth margins. It shows
+    expressiveness and correct refusal logic, not real-data performance.
+- **Conclusion: READY_FOR_BATTERY_V2**, against the task's six success criteria. A v2 still needs:
+  - role declarations frozen in the pack;
+  - a fitted-OCV declared family for P1;
+  - acceptance that P1's UNKNOWN voltage uncertainty forces refusals by design.
+
+**Disclosed corrections and failed approaches, recorded so they are not repeated:**
+- **Slow-branch fixture absorbed by rc1.** The first MODEL_INADEQUATE fixture used a slow second RC branch. rc1 absorbs
+  it (3.1 mV rmse, under the 5 mV bar), so the "inadequate" label was false. It is now a charge-transfer overpotential
+  (asinh in I).
+- **Truth labels need an audit, not an argument.** Every label must now pass `construction_audit`: noise-free data, a
+  dense oracle fit and a 2× margin. The audit then showed that MODEL_INADEQUATE's within-cell label is SUPPORTED (an
+  inadequate family interpolates the 1.5 A level to 2.2 mV). It also showed that the cross-unit R0 of 0.022 Ω missed
+  the margin (raised to 0.026 Ω).
+- **v1's adapter cannot pose a 20 s pulse.** Its time box starts at median(dt)/0.05 = 20 s. A long-pulse protocol was
+  added so the Mind arms are tested where they can act. Labels the audit does not support there are unscored.
+- **Roles alone do not help the Minimal Mind.** Posing the protocol current as settable makes the Mind request levels a
+  recorded pool does not hold (first request 1.15 A; refused; no rival fitted). Its two-class problem form cannot carry
+  FIXED_PROTOCOL_CONDITION.
+- **Two failing-first expectations were wrong, and were corrected.**
+  - Test B expected the claim state and the refusal reason NOT_IDENTIFIABLE to differ as strings. The brief names both
+    identically; they differ by field and by disposition.
+  - Test H used the disproved MODEL_INADEQUATE within-cell label.
+- **The schema-check guard needs a schema-checking parent.** `RoleDeclaration` joined its nested-exemption list, which
+  required `RoleTable.from_spec` to check the problem schema itself.
+
+Commands, all run with `PYTHONPATH="D:/forge-repsem/src;D:/forge-repsem"` and the phyx `.venv` Python 3.14:
+1. Before implementation: `python -m pytest tests/mind/test_repsem_failing_first.py tests/mind/test_repsem_replay.py -q`
+   gave 2 collection errors (ImportError).
+2. `python -m benchmarks.mind_repsem_v1.run_ablation`: written to `results/ABLATION.json`, replay 120 EXACT / 0 OTHER.
+   Rerun after the `_domain` hardening: byte-identical.
+3. `python -m pytest tests/mind tests/test_core_semantic_invariants.py tests/test_core_api_layering.py
+   benchmarks/mind_repsem_v1/tests benchmarks/battery_rediscovery_v1/tests -q -p no:cacheprovider`: see the commit
+   message for the final count. The one failure, `test_every_reader_that_writes_a_schema_also_checks_one`, is
+   pre-existing: it fails identically on `d516e681` for 7 unrelated classes.
+4. FAST, `python -m pytest -q -m "not expensive" -n 4`:
+   - base `d516e681` (`D:/forge-redisc`): 197 failed, 22 errors, 11792 passed.
+   - this branch, uncommitted: 200 failed, 22 errors, 11837 passed.
+   - The 3 new failures were two Core-freeze manifest tests reporting `tree.clean` (uncommitted files) and the
+     nested-exemption read-site test (fixed). See the commit message for the clean-tree recheck.
+
+The regression pack, SCIENTIFIC and certification were NOT RUN.
+
+Clean-tree recheck after commit cac1c584: test_the_tree_is_core_freeze_v1 and
+test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks: 2 passed. So FAST on this branch differs from
+base d516e681 only by tests added here (no new failure).
+
+## 2026-10-22 — BR-BATT-REDISC-03: battery_rediscovery_v2, fresh real-data confirmation of the repsem repair
+
+Branch `research/battery-rediscovery-v2` (worktree `D:/forge-redisc-v2`, base `86034639`), local only. Report:
+`benchmarks/battery_rediscovery_v2/README.md`. Commits: `f6229986` freeze (PLAN `85f1b7f3`), `ee3a6946` seal
+(SEAL `843c6e14`), `6a75d816` replay + post-seal mutation, `625f5fea` evaluation.
+
+**Preregistered conclusion: REAL_DATA_IMPROVEMENT_CONFIRMED** — on thin evidence:
+- combined arm 8/8 scored correct, 0 false support, 0 false refusal; OLD_MIND 5 false refusals, 0 false support;
+  representation-only and roles-only 5 false refusals each; CAREFUL 1 false refusal, 1 unsupported decision.
+- only 5 decided-truth instances (2 held out); Q1 adequacy and Q1 within-cell unscored (inside the 1.10 margin band).
+- The single-layer zeros are structural, and the combined arm reached the same optimum as the independent reference,
+  so this shows correct implementation of the declared judgments on real data, not that the 1RC physics is right
+  (Q1's fit puts R1 on its 1 ohm bound, tau ~5200 s).
+- Q2 is v1 P2's pulse windows re-split by SOC set point, not new data; Q1 (aging-archive cells 38/39/40 at 44 C) is.
+
+**Failed approaches / design corrections, recorded so they are not repeated:**
+- A 24 C, 4 A problem was dropped before any fit: runs stop at the cutoff early, so the causal capacity basis is
+  0.56 Ah in one cell and 1.24 Ah in another.
+- The runtime audit first flagged every output path: the scratch path used an 8.3 short name and the roots were
+  resolved to long names. Roots now match both forms. It also flagged `__pycache__` bytecode of allowed sources,
+  which is now allowed exactly when the source file is allowed.
+- Firewall identity tokens `battery_rediscovery_v0` and `GAP_MAP(.json)` were too broad: they hit docstrings of frozen
+  code. Reads of those files stay forbidden by the runtime audit.
+- Repsem's 2^p + 1 starts make a 13-knot fitted OCV infeasible (65 537 starts). v2 declares 7 knots (1025 starts,
+  ~5 min on Q1).
+
+Commands, all with `PYTHONPATH="D:/forge-redisc-v2/src;D:/forge-redisc-v2"` and the phyx `.venv` Python 3.14:
+1. `python -m pytest benchmarks/battery_rediscovery_v2/tests -q -p no:cacheprovider`: 45 passed, before the freeze.
+2. `python -m benchmarks.battery_rediscovery_v2.mutation --phase pre_run`: PASS, 434/434 caught, 0/219 benign.
+   `--phase post_seal`: the same.
+3. `launch run` exit 0; `seal` PASS; `launch replay`: 16/16 identical; `evaluator.run_evaluation`: verdict above, post-seal
+   audit PASS.
+4. FAST, `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider`:
+   - this branch: 199 failed, 22 errors, 11886 passed;
+   - pristine base `86034639` (`D:/forge-repsem`): 197 failed, 22 errors, 11843 passed.
+   - The only failures not on the base are `test_the_tree_is_core_freeze_v1` and
+     `test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks` (an uncommitted README at run time).
+     See the commit for the clean-tree recheck.
+
+The regression pack, SCIENTIFIC and certification were NOT RUN.
+
+Clean-tree recheck after the report commit: `test_the_tree_is_core_freeze_v1` and
+`test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`: 2 passed. So FAST on this branch differs
+from base 86034639 only by the tests added here (no new failure). `freeze --check` still exits 0.
+
+## 2026-10-22 — BR-BATT-REDISC-04: GEN1 reference sealed; battery_rediscovery_v3 strong real-data baseline
+
+Branch `research/battery-rediscovery-v3-gen1-baseline` (worktree `D:/forge-redisc-v3`, base v2 head `b8160e21`),
+local only. Report: `benchmarks/battery_rediscovery_v3/README.md`.
+
+**Part A, GEN1 reference.** `docs/discovery/MIND_GEN1_REFERENCE.md` and `mind_gen1_reference.json` (commit
+`8bd0d499`) bind, by git blob id and sha256 at `b8160e21`:
+- the Minimal Mind and repsem sources;
+- the v1/v2 adapters and baselines;
+- the firewall and the v2 reference protocol;
+- the v0/v1/v2 PLAN/SEAL/TRUTH/EVALUATION records.
+v2 is recorded as REAL_DATA_IMPROVEMENT_CONFIRMED_BY_PREREGISTERED_V2_RULE with EVIDENCE_STRENGTH LIMITED_SMALL_N.
+SCIENTIFICALLY_VERIFIED, CERTIFIED and FORMAL are all NO. `gen1_reference --check` passed before the freeze, the run,
+the replay and after the evaluation.
+
+**Part B, v3.** Commits: `5023fe92` census and bundle, `82917615` failing-first rule tests, `07a7604f` freeze (PLAN
+`2b549035`), `9e018614` seal (SEAL `033cae41`), `16dfe967` replay, `c40bf360` evaluation.
+
+**Preregistered conclusion: GEN1_REAL_DATA_ADVANTAGE_CONFIRMED.**
+- 31 primary problems on 19 independent cells from Kirkaldy 2024, Chen 2020 and NASA, under 5 operating conditions:
+  155 instances, 73 decided, 49 of them held out.
+- Combined arm: 73/73 decided correct, 0 false support, 0 false refusal.
+- OLD_MIND and both single-layer arms: 0/73.
+- CAREFUL: 72/73 decided, with 52 unsupported decisions.
+- Robust to all 146 single-instance removals and flips. Reference A/B disagreement 0. Replay exact. Leakage PASS.
+
+**What it shows.** The combined arm decides correctly on unused real cells, and it refuses when the noise is UNKNOWN.
+
+**What it does not show.** It is not better judgment than a careful analyst on decided questions: 1 win, 0 losses and
+72 ties against CAREFUL. It is not physics either:
+- Every primary dataset has UNKNOWN noise, so identifiability and discrepancy are refusal tests only.
+- 58 of the 73 decided truths are 1RC failures against bars inherited from v1/v2.
+- The 43 C NASA problems reproduce v2's degenerate fit (R1 on its bound, τ longer than the run). The diagnostics flag
+  it, and no SUPPORTED answer rests on it.
+
+**Failed approaches and design corrections, recorded so they are not repeated:**
+- **v2 protected values too generic to protect.**
+  - v2 Q1's R1 = 1.0 is a bound, so protecting it matches every "1". Bound-valued estimates are not protected.
+  - The memory value "25 mV" (two significant digits) collides with "25 C". Memory values need ≥ 3 significant digits.
+- **Firewall tokens.**
+  - The harness docstrings named the vault and truth directories. They were reworded.
+  - engcore claims modules name `model_measurement_validation` in their text. That token is platform-exempt; reads of
+    the directory stay refused.
+- **Chen 2020 exports.** A logger marker record ("SBr") shares a timestamp with the next record. The reader drops
+    non-R/C/D modes and keeps the first of equal timestamps.
+- **Kirkaldy Expt 4 GITT files** start 20 s before the first pulse. That pulse fails the 600 s pre-rest rule, which is
+  expected.
+- **The 4 C NASA groups** never taper to the protocol's 20 mA. They fail the charge-termination screen (> 30 mA
+  median), except B0051 at exactly 30.0 mA.
+- **The robustness rule** with a 5 % false-support materiality needs more than 20 held-out decided instances to
+  absorb one flipped truth. The test fixture was enlarged; the rule was not changed.
+
+Commands, all with `PYTHONPATH="D:/forge-redisc-v3/src;D:/forge-redisc-v3"`, the phyx `.venv` Python 3.14, and
+`TMPDIR=D:/ftmp`:
+1. `python -m pytest benchmarks/battery_rediscovery_v3/tests -q -p no:cacheprovider --basetemp=D:/fbt3`: 32 passed
+   before the freeze. This includes the synthetic end-to-end and replay dry runs through the real sandbox.
+2. `mutation --phase pre_run`: PASS, 1361/1361 caught, 0/706 benign, 9/9 runtime controls (one is a real subprocess).
+   `--phase post_seal`: the same. `freeze --pre-run-audit`: PASS.
+3. `launch run`: exit 0. `seal`: PASS. `launch replay`: 264/264 identical. `evaluator.run_evaluation`: the verdict
+   above; post-seal audit PASS.
+4. After the evaluation:
+   - `freeze --check` exit 0; v2 `freeze --check` exit 0; `gen1_reference --check` INTACT.
+   - `python -m pytest benchmarks/battery_rediscovery_v3/tests tests/mind benchmarks/mind_repsem_v1/tests
+     benchmarks/battery_rediscovery_v2/tests benchmarks/battery_rediscovery_v1/tests -q -n 4`: 211 passed.
+5. FAST, `python -m pytest -m "not expensive" -q -n 4 -p no:cacheprovider -rfE`:
+   - pristine base `b8160e21` (`D:/forge-redisc-v3-base`): 186 failed, 22 errors, 11899 passed.
+   - this branch at `c40bf360`, clean tree: 186 failed, 22 errors, 11926 passed.
+   The failure sets are identical: no new failure. The base is red, so FAST is NOT green.
+
+The regression pack, SCIENTIFIC and certification were NOT RUN.
+
+## 2026-10-22 — GEN2-BR1 (in progress): round-1 authority fixes did not close the review; stopping rule
+
+Branch `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, base `da932552`), local only.
+
+The read-only authority review (brief §22) answered YES on Q1, Q2, Q4 and Q7. Fix batch `5b27dbad` addressed every
+finding it named. An adversarial re-verification at `282b4d58` (8 skeptics, one per question, plus a critic, each
+re-running the old probes and writing new ones; probes and outputs kept in the session scratchpad) still answered
+YES on Q1, Q2, Q3, Q4, Q5 and Q7, PARTIAL on Q6 and NO on layering. It reported 1 BLOCKER, 16 MAJOR and 20 MINOR
+findings.
+
+**Failed approach, recorded so it is not repeated: a research execution gate inside the Mind package.** The gate was
+meant to stop unadmitted actions reaching an executor. To do that it had to re-implement owner functions: a dispatch
+and budget ledger (held in process memory, keyed by world revision, not atomic), the budget statement it reserved
+against (the world's unverified copy, the BLOCKER), state currency after a dispatch, provider-build checks against
+duck-typed objects, and executor routing by a world-declared execution kind. Each of these is a second authority.
+The brief (§16) asks only for the smallest Mind-facing interface. Round 2 removes the gate. BR1 ends the flow at a
+self-describing admitted-action record, and the gate findings are recorded as requirements for the execution-owner
+wiring step.
+
+**Round-2 core fixes**, all findings against the world and the action space:
+- identity over raw owner payloads, so one revision decides one way;
+- integer and categorical domains in the variable's own unit;
+- owner unit conversion before any comparison (temperature differences vs points);
+- budget comparisons on raw magnitudes through the owner rules;
+- the state-domain check only on reads the decision uses, and sound for two-sided sets;
+- applicability halves that keep `conservative_screen` and `requires`, with a distinct code for the world's interval
+  rule;
+- DECLARED exact only for set points;
+- owner-typed record verification (superseded states, the measured quantity);
+- the bound-value rule in lineage verification;
+- language-model provenance verified by re-deriving the proposal from its suggestion;
+- closed reason codes.
+
+**Stopping rule, fixed before round 2 is written.** After round 2, run one more adversarial re-verification with the
+same seven questions, layering, and a critic. If any question is still YES with a BLOCKER or MAJOR finding, BR1
+concludes AUTHORITY_DUPLICATION_BLOCKER with that evidence. There is no third fix round inside BR1. A question left
+PARTIAL with only MINOR findings may stand if every MINOR is disclosed.
+
+## 2026-10-22 — GEN2-BR1: ScientificWorld + Feasible ActionSpace v1 — AUTHORITY_DUPLICATION_BLOCKER
+
+Branch `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, base `da932552`, the sealed Gen1
+head). Local only: not pushed, not merged, not certified. Report: `benchmarks/mind_gen2_world_v1/README.md`.
+
+**Conclusion: AUTHORITY_DUPLICATION_BLOCKER.** The round-2 read-only authority review answered YES on Q1–Q6 (15 MAJOR,
+24 MINOR, 0 BLOCKER) and PARTIAL on Q7; layering was NO. The stopping rule committed in `575faaa3` before round 2 was
+written applies, so there is no third fix round.
+
+**What it shows.**
+- `engcore.mind.world` gives the Mind a grounded world view and a typed action-feasibility check.
+- On 515 frozen synthetic cases:
+  - 78/78 valid actions found FEASIBLE and 437/437 invalid found NOT_FEASIBLE, with status and codes 515/515;
+  - replay 515/515, and decisions independent of the hash seed.
+- Gen1's own design on a two-level protocol requests 10/10 off-level currents. Gen1 finds all 10 FEASIBLE; Gen2 finds
+  them INFEASIBLE_PROTOCOL, with declared alternatives 1.0 A and 2.0 A.
+- A check takes 0.14 ms at p50, roughly 600 times cheaper than an in-repo model fit.
+
+**What it does not show.**
+- The scores do not test trust in owner copies; every fixture binds trusted synthetic records.
+- The same author wrote the oracle and the checker.
+- Admission is decided on world copies that nothing verifies with their owners.
+- There is no real data and no scientific claim.
+
+**Failed approaches, recorded so they are not repeated:**
+- **An execution gate inside the Mind package** (round 0 → round 1). To stop unadmitted dispatch it had to re-implement
+  owner functions: a dispatch and budget ledger in process memory, reservation against the world's own budget copy,
+  state currency, duck-typed provider and registry objects, and routing by a world label. Each one was a second
+  authority.
+- **No gate, an admitted-action record only** (round 2). Removing the gate also removed the only caller of
+  `verify_bindings` and the only synthetic-world refusal, so admission now trusts copies.
+- **Shared cause.** A view over owner records admits soundly only if admission verifies those records with their
+  owners. Two owners expose nothing verifiable today: `BudgetLedger` has no digest, and there is no head-state view.
+  Fixing this inside the Mind package keeps adding world-made rules (currency, coverage, containment, lineage), and
+  each becomes a second authority. The README §6 lists eight requirements for the owner-reviewed next step.
+- **Smaller traps found on the way:**
+  - 12-digit base-unit identity made one revision decide two ways. Identity is now the raw owner payload.
+  - `is_compatible_with` treats a temperature difference as a temperature. Use the owner's conversion.
+  - An integer domain in `percent` on a dimensionless variable silently rescales by 100. State it in the variable's
+    own unit.
+  - The all-edges rule is unsound for two-sided sets (ranges, EQUAL bands). Decide side by side.
+  - `dataclasses.replace` on a frozen record with a two-field invariant must set both fields in one call. The case
+    generator broke on this in run `…aae3ce78` (RUN_FAIL), fixed in `08602f75`.
+
+**Commits:**
+- tests and implementation: `9d71df1c`, `6007e7aa`, `a2d5d94e`;
+- frozen cases: `4998dc2e`;
+- arms and results: `93368e06`, `193abd84`;
+- round-0 fixes: `5b27dbad`;
+- round-0 results: `8bdda7c1`, `1209de17`, `282b4d58`;
+- stopping rule: `575faaa3`;
+- round 2: `cc3a3d60`, `08602f75`, `67cfcf37`, `3cbe0a8c`;
+- report: this commit.
+
+**Run Observatory** (ledger `D:/forge-run-ledger`):
+- Gen1 reproduction, RUN_PASS: `20261022T114747Z-b0031e2f00a94ea5`, `20261022T122439Z-b9f04e8811e94995`,
+  `20261022T132120Z-b3cc1f0dd5664d80`.
+- Benchmark, RUN_PASS: `20261022T114757Z-da10950bd4e64e9a`, `20261022T122525Z-99f5fc35579046f8`,
+  `20261022T132208Z-86d9280a10f14b0c` (reported).
+- Superseded: `20261022T122455Z-cb5111ea69a640b4` (dirty tree).
+- RUN_FAIL: `20261022T132132Z-aae3ce78b0be4d68`.
+
+**Commands.** All use the phyx `.venv` Python 3.14, `PYTHONPATH="D:/forge-gen2-world/src;D:/forge-gen2-world"` and
+TMPDIR on D:.
+1. `python -m pytest tests/mind/test_world_failing_first.py tests/mind/test_world_contract.py
+   tests/mind/test_world_boundary.py -q -p no:cacheprovider`: 103 passed (at `cc3a3d60`).
+2. `python -m pytest benchmarks/mind_gen2_world_v1/tests -q`: 8 passed (at `3cbe0a8c`).
+3. Guard and Mind suites: `python -m pytest tests/mind tests/test_blind_challenge_guards.py
+   tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py
+   tests/test_repository_architecture.py tests/test_trust_boundary_*.py -q -n 4`. Result: 868 passed, 2 failed. The
+   two failures are byte-identical on the pristine base `da932552`:
+   - `test_core_guards::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against`, on
+     conduction1d_transient_fv;
+   - `test_core_semantic_invariants::test_every_reader_that_writes_a_schema_also_checks_one`, on 7 unrelated classes.
+4. `python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`: GEN1_REFERENCE INTACT, before and after
+   round 2.
+5. FAST: `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rfE`.
+   - Pristine base `da932552` (`D:/forge-gen2-base`): 186 failed, 22 errors, 11926 passed.
+   - Branch at `282b4d58`: 186 failed, 22 errors, 12030 passed.
+   - Branch at `3cbe0a8c`: 186 failed, 22 errors, 12037 passed.
+   - All three have the same 208 failing node ids (`comm` over sorted id lists): **NO_NEW_FAILURES**. The extra
+     passes are exactly the new tests. FAST is red on the base, so it is NOT green.
+
+The regression pack, SCIENTIFIC, `forge_check --changed` and certification were NOT RUN.
+
+## 2026-10-22 — GEN2-BR1.1: authority-bound ScientificWorld + non-bypassable admission (review loop)
+
+Branch `research/mind-gen2-authority-binding-v1` (cloud worktree `/home/user/forge`, base `1202ea6c`, BR1's report
+commit; review-fix worktrees `/home/user/forge-fix`, `/home/user/forge-fix2`, pristine base `/home/user/forge-base`).
+Not merged, not certified; pushed to `origin` (no PR) at the 2026-10-23 cloud handoff (item 27). Report:
+`benchmarks/mind_gen2_authority_v1/README.md`. Conclusion: README §12 (written when the review loop closes; this entry
+is updated then). Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`.
+
+**What changed.** `engcore.mind.world` became a verified projection of FORGE's owners (`authority.py`, `owners.py`,
+`declaration.py`, `projection.py`, `admission.py`), with non-bypassable admission and dispatch (`ExecutionDesk`,
+`AdmissionGateway`, `DispatchAuthorization`). One owner file changed: read-only `BudgetLedger.digest` / `.revision`
+(`src/engcore/sria/campaign/budget.py`, CORE_CERTIFIED: recertification NOT RUN, owner decision in the active plan).
+
+**Review rounds** (independent read-only lenses A scientific authority, B architecture, C adversarial bypass, D replay
+and stale state, E `forge-scientific-reviewer` from round 2; skeptic verification of every BLOCKER/MAJOR; a
+completeness critic):
+- round 1 at `5ee16c5`: BLOCKER C-F1/D-F1 (an in-place edited world admitted), MAJOR A-F1/A-F3, A-F2, A-F4/B2;
+  fixed in `36e4ac5`, `be781d5`, `5adf3e7`, `bc6980c`, `31cfa03`;
+- round 2 at `bc6980c`: lenses 0 BLOCKER / 0 MAJOR after skeptics; the critic's BLOCKER K-F1 (a restated fixed
+  condition decided on the restatement, dispatched at the fixed value); fixed in `1514560`, `991a4d3`, `a0378d4`,
+  `0a0890d`, `867a6a1`, `1a87f7c`;
+- round 3 at `1a87f7c`: BLOCKERs R3-A1 (= R3-B-01, R3-C-01, R3-D1, E3-F1: a level control decided on its spelling,
+  executed as the level), R3-A2 (absolute level tolerance at zero), K3-F1 (integers decided through floats); fixed in
+  `d113d30` (decide on exactly what is executed);
+- round 4 at `d0a0408`: lenses 0 BLOCKER; MAJOR R4-A1 = R4-C-F1 (a fixed condition's own domain checked on its
+  declared spelling, the converted value executed; repro skeptics confirmed, scope skeptics graded MINOR); the critic's
+  MAJOR K4-F1 (the `d113d30` mint guard was circular); fixed in `26d7724`;
+- round 5 at `c52dcfd`: lenses 0 BLOCKER; MAJOR B5-F1 = R5-C-F1 = R5-D1 (the round-4 budget follower took a history
+  it had just refused as its baseline, so a rolled-back account was refused once, then re-authorized); fixed in
+  `2422014`;
+- round 6 at `ceac320`: lenses 0 BLOCKER / 0 MAJOR (27 MINOR), critic K6-F1, K6-F2 MINOR; Q1, Q5, Q6 NO from every
+  lens, Q2, Q3, Q4, Q7 PARTIAL from at least one lens on MINOR findings only. The brief does not close on PARTIAL, so
+  every finding behind a PARTIAL was fixed or documented in `0453a95`, `a058cf2` (README §9);
+- round 7 at `27b9f71` (six lenses: A-E and F, a deep attack on the round-6 rewrites): BLOCKER R7-C-F1 = A7-F1
+  (MAJOR) and the critic's BLOCKER K7-F1 (round 6's nearer-level rule counted another spelling of the SAME level as
+  another level: a spelling of a refuted level was admitted and dispatched an ulp off it, also in offset temperature
+  units and on a fixed protocol condition); MAJOR B7-M1 = R7-D1 = F7-F1 (a pinned budget snapshot derived live;
+  scope skeptics graded it MINOR, treated as MAJOR); 30 MINOR; fixed in `9a61a01`, `14caa58`, `b572bfc` (README §9);
+- round 8 at `15725ec` (six lenses): 0 BLOCKER / 0 MAJOR, 36 MINOR (critic K8-F1..F3 MINOR); Q1-Q7 NO from lenses A-E;
+  lens F and the critic held Q4 PARTIAL on two MINORs (the fixed-condition half of the exact-level guard had no control;
+  round 7's unlocked read-back let a rollback land between a verification's read-back and its comparison); fixed in
+  `03f3aab`, `2f7281f` (README §9);
+- round 9 at `ceaf8cd` (six lenses): 0 BLOCKER / 0 MAJOR, 38 MINOR (critic K9-F1..F3 MINOR); Q1-Q7 NO from every lens
+  and the critic: the completion gate's review criteria held. The brief says not to loop on cosmetic MINORs; the
+  non-cosmetic ones (some introduced by round 8) and the records were fixed in `17a1c31`, `e573096` (README §9), and
+  round 10 reviews that change once;
+- round 10 at `c69e579` (six lenses): 0 BLOCKER / 2 MAJOR / 36 MINOR (critic K10-F1, K10-F2 MINOR). R10-C-F1 (repro
+  skeptic MAJOR, scope skeptic MINOR): round 9's exact-type plain-data rule refused ordinary owner content (an
+  evaluation's frozen nested metadata, numpy and enum values), so a spend recorded with it was never observed and a
+  restore re-dispatched the executed action, sequentially; R10-C-F2 (both skeptics MINOR): the ticket rule protected
+  a handed spend only when its verification had started first. Q4: YES from C, PARTIAL from B and F, NO from A, D, E
+  and the critic (which ruled both MINOR). Both treated as MAJOR and fixed in `d89dd3b` (README §9 lists every
+  disposition), with the records in the commit after it;
+- round 11 at `aad2f69` (six lenses): 0 BLOCKER / 3 MAJOR / 22 MINOR (critic K11-F1, K11-F2 MINOR). R11-C-F1 = F11-1:
+  round 10 left the served experiment's `deepcopy` outside the classifying try, so owner-valid content nested ~500
+  levels deep raised out of every verification and a restore re-dispatched the executed action; F11-2: a handed
+  mapping the constructor refused hid a spend on another account. Q4: YES from C, F and the critic, PARTIAL from A, B,
+  D (classification by exception type), NO from E. Fixed in `d5ef1e3` (README §9), records in the commits after it;
+- round 12 at `a96baa6`: INTERRUPTED / INCOMPLETE, no result (item 27): stopped at the cloud handoff after lenses A and
+  B had started and before any lens, skeptic or critic returned. Their probes left unverified MAJOR-class leads in the
+  budget follower (`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/ROUND12_STATUS.md`).
+
+**Failed approaches, recorded so they are not repeated:**
+- **A declared coverage band** (the first BR1.1 interval rule: an interval at or above a declared coverage decides
+  containment). It is a world-made coverage policy at a caller-chosen level; a 1 %-coverage interval decided
+  FEASIBLE. Removed in round 1. Without an owner enclosure form or coverage policy, no current value decides.
+- **Trusting a world's cached content digest** in verification: an object edited in place kept its digest. Admission
+  now decides only on a rebuild from the payload and on the owners' fresh projection.
+- **A caller-asserted `live` flag** on readers: liveness is now derived from reader type and mode.
+- **Deciding on the proposal's spelling and executing something else** (twice: fixed conditions in round 2, level
+  controls and integers in round 3). Every family now decides on each value as it will be executed, and admission
+  mints exactly that.
+- **A 64-ulp level rule** (round 2): absolute at a zero level and a second comparison rule beside the unit owner's.
+  Levels use the unit owner's `canonical_magnitude` identity rule (BR1's original rule).
+- **A mint guard that re-derives with the function that built what it checks** (`d113d30`): it cannot fail. The
+  configuration is now built from its sources and compared with every value the families read.
+- **Checking a declared value once, at bind, in its declared spelling** (fixed conditions, action levels): the value
+  executed is the converted one. Bind and every check now decide on the value as executed.
+- **A forward-only rule on counts only** (followed budget accounts): a history rewritten at the same length, or a return
+  to an earlier state after a later one was observed, passed. The reader now keeps the history it observed, in the
+  owner's read-back form (so a restore of an unchanged integer-amount account is not a change).
+- **Taking a refused history as the new baseline** (round 4's fix for the rule above): the refusal lasted one
+  verification. A diverged account is now refused by that reader for good; a new timeline needs a new reader.
+- **A world-made level-separation threshold** (round 4): it refused level sets the unit owner distinguishes. Matching
+  now refuses a value that lies nearer another declared level instead.
+- **Matching a level in one level set, then falling back to another** (round 5): a value nearer a level of the
+  variable's own domain was matched to a farther action level. One set decides, and the nearer-level rule also looks
+  at the variable's own levels.
+- **Observing only the accounts a verification reads** (round 5's answer to "unbound accounts are read"): a rollback of
+  an account no later verification of its world read (a desk verifying other worlds, a reader built after a spend) was
+  accepted; a submitted world chose which accounts were tracked; reading outside the lock let an older snapshot be
+  taken for a divergence. Every handed account is now observed at construction and at every verification (round 6
+  put the whole pin under one lock; round 7 took the execution side's callback out of it; round 8 keeps the read-back
+  and the comparison locked), and an account no verification reads refuses nothing.
+- **Excluding "the matched level" from the nearer-level rule by object identity** (round 6): another spelling of the
+  same level (the variable's 0.7 A beside the action's 700 mA) then counted as a nearer level, the value fell through
+  unmatched, and two rules (membership and as_executed) disagreed. Same-level spellings are excluded by the owner's
+  identity, and a level-set value is executed only as exactly a declared level (family and mint both check).
+- **Freezing a snapshot without deriving its liveness** (round 6's budget snapshot inherited `live = True`).
+- **Pinning a follower lazily, only when a record of its kind is read** (a verification that read no budget record
+  observed nothing), and **holding the follower's lock across the execution side's callback** (lock-order deadlock).
+  Every reader is pinned when a verification starts; only the comparison is locked, so a concurrent older snapshot is
+  "behind" (refused while behind), not a permanent divergence.
+- **Reading accounts back with no lock held** (round 7, to keep the execution side's callback outside the lock): a
+  rollback could land between one verification's read-back of a spend and its comparison. The callback stays unlocked;
+  the read-back and the comparison are one locked step again (round 8).
+- **Serving an experiment's raw serialization while checking its read-back** (round 7): live digests could differ from
+  replay's. An experiment is served in its owner's read-back form (round 8).
+- **Putting the read-back back under the follower's lock** (round 8, for B8-m1): the account objects' serialization (and
+  any hook the execution side put in their metadata) then ran under the lock, reopening round 7's deadlock class, and a
+  verification handed a spend but not yet read back still did not protect it. Round 9: tickets taken when a
+  verification starts, the read-back unlocked, and a verification that started while an earlier one is in flight
+  decides on nothing (no waiting); experiments read back only from plain JSON data.
+- **An exact-type plain-data rule for account read-backs** (round 9, against code hooks and digest drift): it is a
+  second readability rule beside the owner's, and it refused content the owner writes down and reads back (an
+  evaluation's FrozenList/FrozenMapping metadata, numpy scalars, enums), so a spend recorded that way was never
+  observed and a restore re-authorized the executed action (R10-C-F1). Round 10 reads each account back by the owner's
+  own written form (ledger: `canonical_digest`'s JSON; experiment: `to_json`) and refuses for good an account handed
+  in a state the owner cannot write down.
+- **Ordering verifications by when they start** (round 9's ticket rule): a verification that started first but was
+  handed a restore after a later one was handed the spend decided first and re-dispatched (R10-C-F2).
+- **Refusing a verification while any other is in flight** (round 10's first candidate for the rule above): correct,
+  but 3 of 160 admissions were decided in the reviewers' p10c load (4 threads, 30 experiment accounts). Round 10 waits
+  instead, bounded and holding no lock, for the verifications in flight when one compared.
+- **Classifying a read-back failure by its exception type** (round 10's `_written`): a torn read of an honest top-up
+  raised the owner's own `ValueError` and was refused for good, while a deterministic `NotImplementedError` was taken
+  for a move and hid a spend. Round 11 classifies by behaviour over three attempts (alike = the state, for good;
+  different or the interpreter's iteration-mutation error = a move, once), with recursion retried on a fresh thread.
+- **A reader-side step outside the classification** (round 10's `copy.deepcopy` of the served experiment): its own
+  recursion limit decided readability for owner-valid deep content, and its exception escaped the comparison. Round
+  11 serves records parsed from the owner's cached text and keeps every step after the write under one classification.
+- **Building a verification's snapshot with the strict constructor** (rounds 6-10): one malformed entry (an alias, a
+  subclass, and since round 10 a `numpy.str_` id) refused the whole mapping, so a spend on a well-formed account in it
+  was never observed. Round 11 reads the mapping entry by entry.
+- **One read-back cache shared by the follower and every in-flight snapshot** (round 9): an unlocked read-back inserted
+  into the dict a locked comparison was pruning, raising `RuntimeError` and losing a handed spend (B10-1). Each snapshot
+  now reads back into a private copy, adopted at its comparison.
+- **A mutation run under the repository's pytest config with only `PYTHONPATH` pointed at a mutant `src`**:
+  `pyproject.toml`'s `pythonpath` puts the checkout's own `src` first, so the mutant was never imported. Mutants need a
+  full tree copy run from its own root.
+- **Renaming the `relied_on_bound_values` annotation**: it broke BR1's committed `GEN1_REPRODUCTION.json`; reverted.
+- **Pre-fix tests run through the editable install**: the venv's editable install points at `/home/user/forge/src`,
+  so worktree runs need `PYTHONPATH=<worktree>/src:<worktree>` (and a test file copied into the worktree under test).
+
+**Commands** (venv `/home/user/.forge-venv`, Python 3.13.16, `PYTHONPATH=<checkout>/src:<checkout>`):
+1. `python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests
+   tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4` at `d113d30`: **483 passed** (includes the
+   expensive BR1-decision re-derivation, which also passed alone with `-m expensive` at `0a0890d`: 1 passed).
+2. Round-3 regression tests against the pre-fix tree `1a87f7c` (`/home/user/forge-fix2`, test file copied in): 20 of 21
+   failed, as intended.
+3. `python -m benchmarks.mind_gen2_authority_v1.rescore --check`: BR1_RESCORE MATCHES;
+   `python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`: AUTHORITY MATCHES (at `d113d30`).
+4. `python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`: GEN1_REFERENCE INTACT (at `d113d30`).
+5. FAST: `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rfE`.
+   - Pristine base `1202ea6c` (`/home/user/forge-base`): 94 failed, 5 errors, 12175 passed.
+   - `5ee16c5`: 93 failed, 5 errors, 12366 passed. `bc6980c`: 93 failed, 5 errors, 12407 passed. `1a87f7c`: 93 failed,
+     5 errors, 12445 passed.
+   - Failing ids compared with `comm` against the base: NEW 0 at every SHA; FIXED 1 at `5ee16c5` and `1a87f7c`
+     (`tests/foundations/test_discovery_deadline.py::test_timeout_covers_handshake_output_and_inherited_pipes[...]`, a
+     timing test, not touched by BR1.1). FAST is red on the base, so it is NOT green.
+6. Regression pack (the test list `python tools/forge_check.py --regression --dry-run` prints, run with pytest) at
+   `5ee16c5`: 279 passed.
+7. Guard suites `python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py
+   tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py
+   tests/test_trust_boundary_*.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py
+   -q -n 4` at `bc6980c`: 1099 passed, 2 failed, both pre-existing on the base (`test_core_semantic_invariants::
+   test_every_reader_that_writes_a_schema_also_checks_one`, 7 unrelated classes; `test_core_guards::
+   test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against`, conduction1d_transient_fv).
+8. `python tools/forge_check.py --changed --base 1202ea6c... --dry-run` at `bc6980c`: narrowing refused (unclassified
+   benchmark files) → whole FAST + regression pack; `src/engcore/mind/world` is `scientific_shared` (SCIENTIFIC before
+   merge); `budget.py` and `tests/**` need recertification.
+9. Performance (`run_benchmark`, uncontended, at `d113d30` plus the harness's dispatch timing): superseded by item 12.
+10. Gates at `d0a0408` (detached worktree `/home/user/forge-gate`; base `/home/user/forge-base` at `1202ea6c`):
+    - FAST `python -m pytest -q -n 4 --dist loadfile -m "not expensive" -p no:cacheprovider -rfE`: 93 failed,
+      5 errors, 12467 passed. Against the base's 99 failing ids: NEW 0, FIXED 1, the same timing test
+      (`tests/foundations/test_discovery_deadline.py::test_timeout_covers_handshake_output_and_inherited_pipes[...]`).
+      It passes 3/3 when run alone on the base (`python -m pytest tests/foundations/test_discovery_deadline.py`:
+      11 passed each time), so it is load-dependent, not a BR1.1 effect. FAST is red on the base: NOT green.
+    - Regression pack (the command `python tools/forge_check.py --regression --dry-run` prints): 279 passed.
+    - Guard suites (command 7 plus `tests/test_sria_budget_ledger_identity.py`): 1198 passed, 2 failed, the same two
+      pre-existing failures with byte-identical messages as on the base.
+    - `python tools/forge_check.py --changed --base 1202ea6c... --dry-run`: narrowing refused (unclassified benchmark
+      files and `src/engcore/mind/world`) → whole FAST + regression pack (run above); 365 affected expensive tests.
+    - The affected expensive tests minus the 3 campaign tests
+      (`python -m pytest <the 14 paths the gate lists> -m "expensive and not campaign" -q -n 3 --dist loadfile`), on
+      branch and base: 13 failed, 14 errors, 335 passed on BOTH, the same 27 failing ids (NEW 0, FIXED 0):
+      `tests/test_heterogeneous_ngspice.py` (the ngspice provider) and
+      `benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates`.
+      This is the gate's affected subset, not the SCIENTIFIC tier.
+11. At `26d7724`: the suite command of item 1, **500 passed**; `test_authority_review_r4.py` (17) copied into the
+    `d0a0408` tree: 16 failed, 1 passed (the matched-level replay control), as intended; `rescore --check`: MATCHES;
+    `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT. Every BR1 case keeps its BR1.1 status and
+    codes (259 changed cases, identical sets); the decisions digest moved.
+12. Performance at `26d7724` on an idle host: `python -m benchmarks.mind_gen2_authority_v1.run_benchmark`
+    (`results/PERFORMANCE.json`); BR1's harness alternately on `1202ea6c` and on this branch, three times each
+    (`results/BR1_PERFORMANCE_THIS_HOST.json`, every run and the command); the ledger-size curve
+    (`results/LEDGER_SIZE_CURVE.json`); a `cProfile` of 20 battery admissions (verified projection ~71 %,
+    `verify_registry_unmutated` ~24 %). README §8.
+
+13. At `2422014`: the suite command of item 1, **511 passed**; `test_authority_review_r5.py` (11) copied into the
+    `c52dcfd` tree (`/home/user/forge-gate2`): 9 failed, 2 passed (corrected in round 6, E6-F1: the two that pass are
+    a round-4 reader-fix control and E5-F3's control, a path that already held; the K5-F2 ledger control fails there at
+    the round-4 follower's construction read); the two K4-F1
+    regression tests of `test_authority_review_r4.py` copied into the `d0a0408` tree: both fail at the mint assertion
+    (K4-F1 itself); `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT.
+    `python -m benchmarks.mind_gen2_authority_v1.ledger_curve` and `run_benchmark` regenerated the curve and
+    `PERFORMANCE.json` (README §8).
+14. Gates at `c52dcfd` (`/home/user/forge-gate2`): FAST 94 failed, 5 errors, 12483 passed; failing ids identical to the
+    base's 99 (NEW 0, FIXED 0; the load-dependent timing test failed this time, as on the base). Regression pack: 279
+    passed. Guard suites: 1215 passed, the same 2 pre-existing failures. FAST is red on the base: NOT green.
+
+15. Round 6 at `a058cf2` (fixes `0453a95`, `a058cf2`; provenance helpers `c2d41fb`, `0fc399b`): the suite command of
+    item 1, **531 passed**; `test_authority_review_r6.py` (14) copied into the `ceac320` tree: 9 failed, 5 passed (the
+    passing five guard paths that already held; the thread stress test failed there in 1 of 3 runs); the two
+    experiment-follower controls fail on a full-tree mutant (`/tmp/claude-0/-home-user/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/mut_r7tree`) whose follower skips the
+    experiment history check (2 failed, 11 passed then); `rescore --check`: MATCHES after regeneration (statuses and
+    codes of every case unchanged; the decisions digest moved with A6-F4's record); `run_benchmark --check`: MATCHES;
+    `gen1_reference --check`: INTACT. `run_benchmark` and `ledger_curve` regenerated `PERFORMANCE.json` and
+    `LEDGER_SIZE_CURVE.json` at `0fc399b` (both name it). A scratch probe (`/tmp/claude-0/-home-user/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/perf_r7/unbound_cost.py`) measured
+    admission with one unbound ledger of 0 / 1000 / 5000 charges: p50 21.6 / 39.8 / 108.6 ms (README §8).
+16. Gates at `a058cf2` (`/home/user/forge-gate2`): FAST (command of item 5) 93 failed, 5 errors, 12515 passed; against
+    the base's 99 failing ids NEW 0, FIXED 1 (the load-dependent timing test of item 10). Regression pack: 279 passed.
+    Guard suites (item 10's set): 1246 passed, 2 failed, the same two pre-existing failures with messages identical to
+    the base's (re-run on `/home/user/forge-base` and diffed). `forge_check.py --changed --base 1202ea6c... --dry-run`:
+    narrowing refused (unclassified `src/engcore/mind/world` and benchmark files) → whole FAST + regression pack, as
+    run above. FAST is red on the base: NOT green. The affected expensive tests minus the campaign tests (item 10's
+    command): 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base (NEW 0, FIXED 0).
+
+17. Round 7 at `b572bfc` (fixes `9a61a01`, `14caa58`; curve `888eecd`; controls `b572bfc`): the suite command of item
+    1, **553 passed**; `test_authority_review_r7.py` (22) copied into a `27b9f71` archive
+    (`/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/tree-27b9f71`): 19 failed, 3
+    passed (paths that already held); the extended round-1 liveness test fails there too; the provider control fails on
+    a full-tree mutant that stops naming providers (`.../scratchpad/mut_provider`: 1 failed, 31 passed over r6+r7);
+    every reviewer probe of the round-7 findings re-run on the fix tree gives the correct outcome (the a702 level fuzz
+    decides all 5440 honest cases exactly as `ceac320` did; c24b 0 of 26075 executed off a level; c25/c25b/c26/a709/
+    k01-k03 every spelling of a refuted level refused; r04/n06 no deadlock; r05 0 refusals under 50 settles; c12 an
+    older concurrent snapshot refused once, nothing refused for good); `rescore --check`: MATCHES; `run_benchmark
+    --check`: MATCHES; `gen1_reference --check`: INTACT. Performance regenerated at `b572bfc`: `run_benchmark`,
+    `ledger_curve` (bound and unbound curves) and BR1's harness alternately on `1202ea6c` and `b572bfc`, three runs
+    each (`BR1_PERFORMANCE_THIS_HOST.json`; the alternation script is
+    `/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/perf_r7/br1_alternating.py`).
+
+18. Gates at `b572bfc` (`/home/user/forge-gate2`, the code under review in round 8): FAST (command of item 5) 93
+    failed, 5 errors, 12537 passed; against the base's 99 failing ids NEW 0, FIXED 1 (the load-dependent timing test of
+    item 10). Regression pack: 279 passed. Guard suites (item 10's set): 1268 passed, 2 failed, the same two
+    pre-existing failures with messages identical to the base's. The affected expensive tests minus the campaign tests:
+    13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. `forge_check.py --changed --base
+    1202ea6c... --dry-run`: narrowing refused (unclassified files) → whole FAST + regression pack, run above; it marks
+    `budget.py` and the certified harness tests as needing hardened recertification (NOT RUN). FAST is red on the
+    base: NOT green.
+
+19. Round 8 at `1c9303e` (fixes `03f3aab`, `2f7281f`; curve `adffac7`; results `1c9303e`): the suite command of item
+    1, **572 passed**; `test_authority_review_r8.py` (15) copied into a `15725ec` archive: 10 failed, 5 passed (paths
+    round 7 had fixed without a control); the declaration-mode controls fail on full-tree mutants that read the
+    unnamed bindings of a world naming no declaration or one not in force (1 failed each); every reviewer probe of the
+    round-8 findings re-run on the fix tree gives the correct outcome (a803/a808/a809: the fixed-condition branch, its
+    stated reason, subnormal and signed zeros; p01: the cache stays at one entry per account; p04: a torn experiment is
+    refused; p05: an unread owner's pin refusal changes nothing; p07: no provider outside the declaration is probed);
+    the restated round-6 stress test passed 6/6 (corrected in round 9, K9-F1: "every reviewer probe" overstated it:
+    the probes re-run were a803/a808/a809, B's p01/p04/p05/p07 and the r7 offset-unit probes; B's p03, run unmodified
+    at `ceaf8cd`, still re-dispatched, because it pauses a verification before its locked read-back, a window round 9
+    closed with the ticket rule; and only two of the declaration-mode mutants, "no declaration" and "not in force",
+    were run); `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES;
+    `gen1_reference --check`: INTACT. The disk allowance filled once during the round (the BR1 re-derivation test
+    failed while it was full and passed after scratch tree copies were removed). Performance at `adffac7`/`2f7281f`:
+    `run_benchmark`, `ledger_curve` (three curves) and BR1's harness alternately on `1202ea6c`, `27b9f71` and
+    `2f7281f`, five runs each (`BR1_PERFORMANCE_THIS_HOST.json`; the script is
+    `/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/perf_r7/br1_alternating5.py`).
+    Item 17's provider mutant ran on the 18-test r7 file of `14caa58` (1 failed, 31 passed over r6+r7); item 15's
+    experiment mutant on the 13-test r6 file of `0453a95`.
+
+20. Gates at `1c9303e` (`/home/user/forge-gate2`, the code under review in round 9): FAST (command of item 5) 93
+    failed, 5 errors, 12556 passed; against the base's 99 failing ids NEW 0, FIXED 1 (the load-dependent timing test of
+    item 10). Regression pack: 279 passed. Guard suites (item 10's set): 1287 passed, 2 failed, the same two
+    pre-existing failures with messages identical to the base's. The affected expensive tests minus the campaign tests:
+    13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. FAST is red on the base: NOT green.
+
+21. Round 9 at `f5d8dc0` (fixes `17a1c31`, `e573096`; results `f5d8dc0`): the suite command of item 1, **583
+    passed** (the round-6 stress test and the round-9 controls also passed 5/5 repeated); `test_authority_review_r9.py`
+    (10) copied into a `ceaf8cd` archive: 9 failed, 1 passed (the in-place detachment control); `rescore --check`:
+    MATCHES; `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT. Performance regenerated at `e573096`:
+    `run_benchmark`, `ledger_curve` (three curves) and BR1's harness alternately on `1202ea6c`, `27b9f71` and
+    `e573096`, five rounds each (README §8, with paired comparisons). Scratch tree copies are deleted after use (the disk
+    allowance filled once in round 8).
+
+22. Gates at `f5d8dc0` (`/home/user/forge-gate2`, the code under review in round 10): FAST (command of item 5) 94
+    failed, 5 errors, 12566 passed; failing ids identical to the base's 99 (NEW 0, FIXED 0; the load-dependent timing
+    test of item 10 failed this time, as on the base). Regression pack: 279 passed. Guard suites (item 10's set): 1298
+    passed, 2 failed, the same two pre-existing failures with messages identical to the base's. The affected expensive
+    tests minus the campaign tests: 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. FAST is
+    red on the base: NOT green.
+
+23. Round 10 (fix `d89dd3b`; results and records in the commit after it). The suite command of item 1 at `d89dd3b`:
+    **612 passed**; the r6+r10 files 5 times (44 passed each) and the r6/r7/r9/r10 files under `-n 4` 5 times (76
+    passed each; made precise in round 11, R11-D-F5: those repeats ran while the r10 file had 27 tests, before its
+    last three controls were added, so 14 + 26 + 9 + 27 = 76; at `d89dd3b` the four files hold 79 tests); after the r10 file's `WAIT_S` references were made to run on older trees, the r10 file again 30
+    passed. The 30-test r10 file copied into a `c69e579` archive: 20 failed, 9 passed, and the self-containing-value
+    test hung (stopped after 20 s; README §5 says which pass and why). Thirteen mutants of the round-10 code, each in a
+    full tree copy run from its own root (scripts `.../scratchpad/mut_r10/mutate.py` and `mutate2.py`), each failed at
+    least one r10 control. `rescore --check`: MATCHES; `run_benchmark --check`: MATCHES; `gen1_reference --check`:
+    INTACT. The reviewers' round-10 probes re-run on the fix (`.../scratchpad/review_r10/`): c1001, c1003, c1007, c1008,
+    c1010, f01 (both modes), d14, d14b and the scope skeptic's v1/v2 classes: every restore after a handed spend
+    refused, the executor ran once; d16/p11 (a self-containing value) refused in under 1 ms; d10b/p15 (forged
+    revisions '²', '¹⁰', '1²', 5000 digits) refused, not raised; f10 (ledger aliasing) detached; p10 no `RuntimeError`
+    (the 598/600 count it printed is its own unsynchronized counter); p10c 160 of 160 FEASIBLE; p18b (8 threads) 240 of
+    240; p12 (a stuck `accounts()`) 5 of 5 refused after `WAIT_S` each. Round 10's first candidate (refuse while any
+    other verification is in flight) gave p10c 3 of 160 FEASIBLE and was dropped before the commit. Performance
+    regenerated at `d89dd3b` on an idle host: `run_benchmark`, `ledger_curve` and BR1's harness alternately on
+    `1202ea6c`, `27b9f71` and `d89dd3b`, five rounds each (a first run of the first two overlapped test collection and
+    was discarded); an interleaved A/B of BR1's harness on `e573096` and `d89dd3b`, 8 runs each, gave p50 medians 0.229
+    and 0.230 ms (`.../scratchpad/perf_r10/ab_e573096_d89dd3b.txt`), so round 10 did not change the check's cost and
+    the larger BR1.1/BR1 gap in this file is the host's state (README §8). Correction to item 19 (A9-F2): since round
+    8 the identity rule is required of the proposed spelling itself, so an honest other-unit spelling whose conversion
+    is byte-equal to a 13+-digit level is refused (224043.6073475 mm for the level 8820.6144625 inch, which `15725ec`
+    admitted), and a fixed condition spelled that way is refused at bind (README §4).
+
+24. Gates at `4156c36` (`/home/user/forge-gate2`, the code under review in round 11; `d89dd3b`'s code plus the r10
+    test file's older-tree edit): FAST (command of item 5) 93 failed, 5 errors, 12596 passed; against the base's 99
+    failing ids NEW 0, FIXED 1 (the load-dependent timing test of item 10, which passed this time). Regression pack:
+    279 passed. Guard suites (item 10's set): 1327 passed, 2 failed, the same two pre-existing failures with messages
+    identical to the base's. The affected expensive tests minus the campaign tests: 13 failed, 14 errors, 335 passed,
+    the same 27 failing ids as on the base. FAST is red on the base: NOT green.
+
+25. Round 11 (fix `d5ef1e3`; results and records in the commit after it, which also restates three test comments and
+    pins two labels for E11-F3). The suite command of item 1: **649 passed** (at `d5ef1e3`, and again with the E11-F3
+    test edits); the r6/r7/r9/r10/r11 files under `-n 4` 5 times, 115 passed each (with the r11 file's first 36 tests).
+    The 37-test r11 file copied into an `aad2f69` archive: 20 failed, 17 passed (README §5 says which pass and why).
+    Thirteen mutants of the round-11 code, each in a full tree copy run from its own root
+    (`.../scratchpad/mut_r11/mutate.py`), each failed at least one r10/r11 control. `rescore --check`: MATCHES;
+    `run_benchmark --check`: MATCHES; `gen1_reference --check`: INTACT. The reviewers' round-11 probes re-run on the fix
+    (`.../scratchpad/review_r11/`): c1112, f1102 (both orders, depths 3-5000), f1102b, f1102d, f1103, f1105 (alias and
+    `numpy.str_`), k01 (a)-(c), a1104, d21, d23, c1106, c1108, c1109, c1111, p25, p26, p27: every restore after a handed
+    spend refused, the executor ran once; a1102, d20, c1102, p23 (torn top-ups): read, never refused for good; a1105:
+    numpy float64, enums, tuples and nested lists read, non-float numpy scalars and `Decimal` refused for good; p22:
+    nothing left in flight; p28 refused nothing for good down to 12 frames of headroom (at 10 the reader's own frames
+    hit the limit and the verification raises, fail-closed; k01's part (d) and p28's own crash are probe artifacts: k01
+    referenced the removed `copy` import, p28 recurses in the probe itself). c1104's "raises" case is the documented
+    residual (W's `accounts()` raised, nothing was handed). Performance regenerated at `d5ef1e3` on an idle host:
+    `run_benchmark`, `ledger_curve` and BR1's harness alternately on `1202ea6c`, `27b9f71` and `d5ef1e3`, five rounds
+    each; contention probes p18b 240/240, p10c 160/160, p12 5/5 refused after `WAIT_S`; B11-4's large-account probe
+    (p24, 8 threads, 2500 evaluations changing every 0.1 s) in 9 interleaved runs each: `d5ef1e3` 3-48 of 48 FEASIBLE
+    (median 38), `aad2f69` 30-48 (median 44); at 1000 evaluations 48/48 (`.../scratchpad/perf_r11/p24_ab.txt`,
+    `contention_d5ef1e3.txt`).
+
+26. Gates at `ec2c000` (`/home/user/forge-gate2`, the code under review in round 12): FAST (command of item 5) 94
+    failed, 5 errors, 12632 passed; failing ids identical to the base's 99 (NEW 0, FIXED 0; the load-dependent timing
+    test of item 10 failed this time, as on the base). Regression pack: 279 passed. Guard suites (item 10's set): 1364
+    passed, 2 failed, the same two pre-existing failures with messages identical to the base's. The affected expensive
+    tests minus the campaign tests: 13 failed, 14 errors, 335 passed, the same 27 failing ids as on the base. FAST is
+    red on the base: NOT green.
+
+27. Cloud handoff, 2026-10-23 (owner instruction: stop the cloud session, prepare a local resume, push the branch; no
+    new capability, review round, refactor, certification, PR or merge). Review round 12 (`wf_9cb45dfa-bb5`, at
+    `a96baa6`) was stopped after lenses A and B had started and before any lens returned: INTERRUPTED / INCOMPLETE, no
+    result; its probes and leads are preserved, unverified
+    (`docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/ROUND12_STATUS.md`). Evidence that lived only in
+    the session scratchpad and is cited here or in the report was copied to `docs/work/evidence/br11_cloud_2026_10_23/`
+    (439 files, 2.9 MB, `EVIDENCE_MANIFEST.sha256`; copied trees, temp trees, caches, full FAST logs, agent transcripts
+    and large regenerable record dumps were not kept). Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`
+    (registered in `docs/ai/DOCSET.txt`); ACTIVE_PLAN's BR1.1 entry states the status and the next bounded task (R12-T1).
+    Handoff checks only (no FAST, SCIENTIFIC, assurance, mutation or expensive run): `python docs/ai/check_docs.py`:
+    AI_DOCS PASS (8 documents); `git diff --cached --check`: clean (the evidence directory is `* -text -whitespace`,
+    its captured outputs kept byte for byte); `sha256sum -c EVIDENCE_MANIFEST.sha256`: OK; `python tools/forge_check.py
+    --changed --base a96baa6` (every changed path `doc_only`; the gate's own 14-module contract selection): 299 passed,
+    5 failed, the 5 failures all in the base's failing ids (`test_domain_real_data` x4,
+    `test_multiphysics_window_control` x1) and failing identically at `ec2c000` without the handoff; the four
+    inventory tests' messages are identical with and without the evidence directory.
+
+28. Local resume and round-12 lead triage, 2026-10-23 (WSL2 Ubuntu 24.04, native clone
+    `~/forge-gen2-authority-v1` built from a full-history bundle of `origin/research/mind-gen2-authority-binding-v1` at
+    `d40aff44`; CPython 3.12.3, `.venv` with `-e ".[dev,mcp,oracles]"`; no GitHub access from WSL; logs under
+    `~/br11-logs/`, the ones cited here copied to `docs/work/evidence/br11_local_2026_10_23/`).
+    - Baseline at `d40aff44`: `PYTHONPATH=src:. python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests
+      benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4
+      --dist loadfile`: exit 0, 649 passed (20 s), as at the handoff; `rescore --check` BR1_RESCORE MATCHES;
+      `run_benchmark --check` AUTHORITY MATCHES; `gen1_reference --check` GEN1_REFERENCE INTACT.
+    - Every preserved round-12 probe re-run unchanged at `d40aff44` (`PYTHONPATH=src:. python <probe>`; a1207 re-run with
+      `PYTHONUNBUFFERED=1` because it ends in `os._exit`; b1209 needs arguments and was run in the A/B below): b1201,
+      b1202, b1204-b1208, b1210, b1211 output identical to the cloud's; b1203 differs only in the headroom (10 frames
+      here, 11 on 3.13: PLATFORM_DIFFERENCE, documented residual); a1202, a1205, a1205b, a1206, a1207 reproduce their
+      leads. Dispositions: README §9 "Round-12 lead triage" (R12-1..R12-6 CONFIRMED; b1203, a1208, b1209-b1211 not
+      new defects).
+    - Fix `33258438` (`owners.BudgetReader`): R12-1 failures described without running code of them that can raise;
+      R12-2 two entries spelling one id refused for good, constructor refuses; R12-3 a state not read back observes its
+      history length (shorter later states behind; unreadable length refused for good); R12-4 fresh-thread wait bounded
+      by `WAIT_S`, private cache; R12-5 fresh thread runs the same classified attempts, recursion read through the
+      exception chain.
+    - Controls `tests/mind/test_authority_review_r12.py` (18): on a tree whose `owners.py` is `d40aff44`'s, 14 failed,
+      4 passed (the controls for the five round-11 mutants that survived round 12). One control first failed for a
+      wrong reason (its deep-stack simulation did not apply on a non-main thread); it was rewritten before any fix and
+      then failed for the lead's reason (the verification never returned).
+    - Mutation (`mutate_r12_local.py` + `run_mutants_local.sh`, each mutant on a full tree copy, the whole BR1.1 suite):
+      18 mutants, 17 caught (each failing at least one round-12 control; README §5); `shared_cache` survives (666
+      passed, 1 skipped): race-only, no deterministic schedule exists, recorded as uncontrolled.
+    - At `33258438`: BR1.1 suite 667 passed (18 s); rescore MATCHES; run_benchmark MATCHES; Gen1 INTACT.
+    - Gates at `33258438` against a pristine base worktree `~/forge-gen2-base-1202` (`1202ea6c`), both in this
+      environment, run concurrently (`gates.sh`: item 5's FAST command, `python tools/forge_check.py --regression`, item
+      10's guard set, item 10's affected expensive tests minus campaign):
+      FAST branch 67 failed, 12678 passed, 190 skipped; base 67 failed, 12203 passed, 190 skipped; failing ids compared
+      with `comm`: NEW 0, FIXED 0 (this environment's base failing set is 67, not the cloud's 99: an environment
+      difference; only the same-environment comparison is used). FAST: NO NEW FAILURES VS BASE (red on both: NOT
+      green). Regression pack: 279 passed on both. Guard suites: branch 1382 passed, 2 failed; base (without the
+      BR1.1-only `tests/test_sria_budget_ledger_identity.py`) 913 passed, 2 failed; the same two pre-existing failures
+      (`test_core_guards::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against`,
+      `test_core_semantic_invariants::test_every_reader_that_writes_a_schema_also_checks_one`) with identical messages.
+      Affected expensive minus campaign: 13 failed, 14 errors, 335 passed on both, the same 27 failing ids. Neither tree
+      was dirtied by the gates.
+    - Performance A/B (`ab_r12.py pre=<d40aff44 tree> post=<33258438 tree>`, interleaved, 5 rounds, nothing else
+      running): admission p50 12.30 ms (12.28-12.69) before, 12.36 ms (12.28-12.52) after; budget pin p50 0.17 / 0.17
+      ms: NO SPEED DIFFERENCE ESTABLISHED. Desk at 1000 evaluations 48/48 in all runs; at 2500 (overloaded) 48, 48,
+      14, 48, 48 before and 31, 47, 48, 45, 48 after, every refusal "in flight", none "behind": no availability
+      difference established (README §8).
+
+29. Fresh review round 13 and its fix, 2026-10-23 (same local environment as item 28).
+    - Round 13 (workflow `wf_e63abf7f-517`) at `3b407ddb`: six read-only lenses (A-D, F executing probes in a detached
+      worktree `~/forge-r13-review`; E static), two skeptics per BLOCKER/MAJOR, a completeness critic; 17 agents, all
+      returned. Outputs: `docs/work/evidence/br11_local_2026_10_23/review_results/review_r13_result.json` (rebuilt
+      from the workflow journal's full per-agent results). Q1-Q3, Q5-Q7 NO from every lens and the critic; Q4 YES
+      (A, B, C, F, critic) / PARTIAL (D, E). MAJOR after skeptics: F13-02 = R13-C-F1, R13-B-F1 (both skeptics MAJOR);
+      R13-C-F2 = R13-A-F1 (skeptics split: MAJOR / MINOR as the accepted interrupted residual; treated as MAJOR);
+      critic R13-CRIT-1 (not skeptic-verified; treated as MAJOR). 24 lens MINORs plus R13-CRIT-2. Gate NOT met.
+      Dispositions: README §9 "Round 13 dispositions".
+    - Fix `13051154`: a state not read back is observed as its history's entry objects (a later state must begin
+      with them; a prefix is behind; anything else refused for good), replacing round 12's length; any non-interrupt
+      `BaseException` from account content or a failure's rendering is a classified failure, an interrupt is re-raised
+      after the comparison; a handed mapping is read as a dict from its own storage (a non-dict refused to that
+      verification; the constructor refuses it); fresh-thread MINORs (liveness before result, one thread per account,
+      one deadline per verification); a verification in flight until its comparison ends; refusal texts.
+    - The round-11 control `test_a_verification_waited_for_that_leaves_uncompared_makes_the_waiter_decide_on_nothing`
+      failed on the fix (it injected a `BaseException` inside the read-back, which is now a classified failure); it
+      was restated to interrupt W at the snapshot step, where W still leaves uncompared, and still fails on
+      `no_abandon` and `handed_never_set` (recorded here and in README §9, not silent).
+    - Controls `tests/mind/test_authority_review_r13.py` (18) plus the restated r11 control on a tree whose
+      `owners.py` is `3b407ddb`'s: 14 failed, 5 passed (README §5 names them). The first version of the F13-02
+      control was vacuous (it re-admitted against the original world object, stale for another reason): mutant
+      `unread_length_only` survived; rewritten to project a world from the owners, after which it fails on that mutant.
+    - Mutation (`mutate_r13_local.py`, `run_mutants_r13.sh`, whole BR1.1 suite per mutant): 32 mutants; first pass 31
+      caught, `box_before_alive` survived because its control asserted only "not for good"; the control was
+      tightened to require the record be served and the mutant was caught on re-run. Round 12's surviving
+      `shared_cache` is now caught.
+    - At `13051154`: BR1.1 suite 685 passed; rescore MATCHES; run_benchmark MATCHES; Gen1 INTACT.
+    - Gates at `13051154` against `1202ea6c` (both re-run concurrently here): FAST 67 failed, 12696 passed, 190 skipped
+      (branch) / 67 failed, 12203 passed, 190 skipped (base); NEW 0, FIXED 0: FAST: NO NEW FAILURES VS BASE (red on
+      both, NOT green). Regression pack 279 passed on both. Guard suites: branch 1400 passed, 2 failed; base 913 passed,
+      2 failed; the same two pre-existing failures, identical summary lines. Affected expensive minus campaign: 13
+      failed, 14 errors, 335 passed on both, identical failing ids.
+    - Performance A/B (`ab_r12.py pre=<33258438 tree> post=<13051154 tree>`): admission p50 11.96 / 12.15 ms with
+      overlapping ranges: NO SPEED DIFFERENCE ESTABLISHED; desk at 2500 evaluations 46, 41, 45, 48, 47 before and 48,
+      46, 48, 48, 48 after (refusals "in flight"): no availability difference established.
+    - Next: a completely fresh review round 14 at the committed docs SHA (round 13 is not resumed).
+
+30. Fresh review round 14 and its fix, 2026-10-23 (same local environment).
+    - Round 14 (workflow `wf_d353d99a-ae3`) at `1c9fdd84`: six lenses, two skeptics per BLOCKER/MAJOR, a critic; 17
+      agents, all returned (`review_results/review_r14_result.json`, rebuilt from the journal). Harness defect R14-C-H1:
+      the brief's probe command imported `~/forge-r13-review` (`3b407ddb`) and its pytest basetemp named the r13 scratch
+      directory; lenses A and C noticed and ran against `~/forge-r14-review`; the MAJOR also stands on lens E's static
+      reading of the correct mirror and on its skeptics. Fixed in the round-15 brief. Q1-Q3, Q5-Q7 NO from every lens
+      and the critic; Q4 YES from A, C, D, E, F and the critic (lens B answered NO: CRIT14-3, recorded as a missed
+      finding). MAJOR: R14-A-F1 = R14-C-F1 = D14-F1 = F14-F1 = E14-F1 (both skeptics each); critic CRIT14-1. 19 lens
+      MINORs, critic CRIT14-2 / CRIT14-3. Gate NOT met. Dispositions: README §9 "Round 14 dispositions".
+    - Fix `7b4a0de8`: every not-read-back state recorded as its entry objects whatever its length (unless its entry
+      objects are a prefix of those of the state last read back); read states checked against them just before and just
+      after the read-back; a handing that is not a pair of dicts seals the reader (every account refused from then on);
+      only `KeyboardInterrupt` is an interrupt; the fresh-thread check and registration under one lock; refusal texts;
+      dict annotations. Two existing controls changed, not weakened: the round-13 non-dict control's message match (the
+      refusal is now the sealing one) and the round-11 restated control's helper (its interrupted thread now raises the
+      sealing refusal, which it absorbs; before, the suite reported an unhandled thread exception warning).
+    - Controls `tests/mind/test_authority_review_r14.py` (9 items) on a tree whose `owners.py` is `1c9fdd84`'s: 7
+      failed, 2 passed. Mutation (`mutate_r14_local.py`, 38 mutants, whole BR1.1 suite each): first pass 37 caught;
+      `unread_not_cleared` survived (the round-13 control of it no longer reached the clearing once a state with no new
+      entry records nothing); a round-14 control with a new entry was added and caught it on re-run.
+    - At `7b4a0de8`: BR1.1 suite 694 passed (no warnings); rescore MATCHES; run_benchmark MATCHES; Gen1 INTACT.
+    - Gates at `7b4a0de8` against `1202ea6c` (both re-run concurrently): FAST 67 failed, 12705 passed, 190 skipped
+      (branch) / 67 failed, 12203 passed, 190 skipped (base); NEW 0, FIXED 0: FAST: NO NEW FAILURES VS BASE (red on
+      both, NOT green). Regression pack 279 passed on both. Guard suites: branch 1409 passed, 2 failed; base 913 passed,
+      2 failed; identical failure lines. Affected expensive minus campaign: 13 failed, 14 errors, 335 passed on both,
+      identical ids.
+    - A/B (`13051154` against `7b4a0de8`): admission p50 11.84 / 12.09 ms, overlapping: NO SPEED DIFFERENCE
+      ESTABLISHED; overloaded desk over 10 interleaved rounds each 42-48 before, 23-48 after (two low after-runs in the
+      first five, none in the second five): no availability difference established (README §8).
+    - Next: a completely fresh review round 15 at the committed record SHA.
+
+**Failed approach (round 12, recorded so it is not retried).** Classifying a read-back failure as "moving" or "the
+state" by what the failure looks like (its type, its message, its written text) cannot be made safe: an execution-side
+value chooses all three (b1204, b1208). Observing the account instead (its history length from the owner's container,
+read without running account code) closed the re-dispatch of the SAME admitted action, but not a fresh admission after
+a restore plus one more charge: round 13 (F13-02) showed the length is not enough, and the entry objects replaced it
+(item 29). Refusing every state not read back for good was considered and not adopted (not run): in the local re-run
+of a1203 an honest stress run had 8 verifications whose three read-backs all failed, and each would then have retired
+an honest account.
+
+SCIENTIFIC tier (beyond the gate's affected expensive subset in item 10), hardened recertification and certification:
+NOT RUN. Run Observatory: not present in this tree (no observatory code on any local branch, no run ledger in this
+cloud session); not used, and nothing was merged for it.
+
+- R15 continuation execution: `repro_A-scientific-authority_p1_seal_race`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/A-scientific-authority/p1_seal_race.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_A-scientific-authority_p1_seal_race.log`.
+
+- R15 continuation execution: `repro_A-scientific-authority_p2_claim`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/A-scientific-authority/p2_claim.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_A-scientific-authority_p2_claim.log`.
+
+- R15 continuation execution: `repro_A-scientific-authority_p3_aba`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/A-scientific-authority/p3_aba.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_A-scientific-authority_p3_aba.log`.
+
+- R15 continuation execution: `repro_B-architecture_p2_unread_cleared_by_lying_readback`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/B-architecture/p2_unread_cleared_by_lying_readback.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p2_unread_cleared_by_lying_readback.log`.
+
+- R15 continuation execution: `repro_B-architecture_p2b_before_listing_dropped`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/B-architecture/p2b_before_listing_dropped.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p2b_before_listing_dropped.log`.
+
+- R15 continuation execution: `repro_B-architecture_p3_fresh_threads`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/B-architecture/p3_fresh_threads.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p3_fresh_threads.log`.
+
+- R15 continuation execution: `repro_B-architecture_p4_cross_thread_readthrough`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/B-architecture/p4_cross_thread_readthrough.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p4_cross_thread_readthrough.log`.
+
+- R15 continuation execution: `repro_D-replay-stale_p1_copies_interrupt`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/D-replay-stale/p1_copies_interrupt.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_D-replay-stale_p1_copies_interrupt.log`.
+
+- R15 continuation execution: `repro_D-replay-stale_p2_seal_stack`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/D-replay-stale/p2_seal_stack.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_D-replay-stale_p2_seal_stack.log`.
+
+- R15 continuation execution: `repro_D-replay-stale_p7_before_unrecorded`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/D-replay-stale/p7_before_unrecorded.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_D-replay-stale_p7_before_unrecorded.log`.
+
+- R15 continuation execution: `repro_F-round14-rewrites-deep_p2_minors`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/F-round14-rewrites-deep/p2_minors.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_F-round14-rewrites-deep_p2_minors.log`.
+
+- R15 continuation execution: `repro_F-round14-rewrites-deep_p3_interrupt_at_listing`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/F-round14-rewrites-deep/p3_interrupt_at_listing.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_F-round14-rewrites-deep_p3_interrupt_at_listing.log`.
+
+- R15 continuation execution: `repro_critic_kbi_content`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-r15-review`; `PYTHONPATH=/home/dev_kaeem/forge-r15-review/src:/home/dev_kaeem/forge-r15-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r15/critic/kbi_content.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/repro_critic_kbi_content.log`.
+
+- R15 continuation execution: `l0_prefix`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py -q -p no:cacheprovider`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_prefix.log`.
+
+- R15 continuation execution: `l0_fix1`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_fix1.log`.
+
+- R15 continuation execution: `l1_fix1`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r11.py tests/mind/test_authority_review_r12.py tests/mind/test_authority_review_r13.py tests/mind/test_authority_review_r14.py tests/mind/test_authority_review_r15.py -q -p no:cacheprovider`; exit 2. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l1_fix1.log`.
+
+- R15 continuation execution: `l1_fix2`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r11.py tests/mind/test_authority_review_r12.py tests/mind/test_authority_review_r13.py tests/mind/test_authority_review_r14.py tests/mind/test_authority_review_r15.py -q -p no:cacheprovider`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l1_fix2.log`.
+
+- R15 failed approach: resolving retained unread entries initially propagated a repeated content KeyboardInterrupt and aborted L1 after 62 tests. Resolution failures now preserve the unread barrier and explicitly refuse the affected account. R14 restore control changed its reason from permanent refusal to known-behind: the retained canonical entry history is now readable, so the prior spend remains observed; refusal outcome is preserved. No certified owner artifact was changed.
+
+- R15 continuation execution: `l1_fix3`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r11.py tests/mind/test_authority_review_r12.py tests/mind/test_authority_review_r13.py tests/mind/test_authority_review_r14.py tests/mind/test_authority_review_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l1_fix3.log`.
+
+- R15 continuation execution: `l2_fix3`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l2_fix3.log`.
+
+- R15 continuation execution: `l0_generated`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_generated.log`.
+
+- R15 continuation execution: `l0_generated2`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_generated2.log`.
+
+- R15 continuation execution: `mutations_run1`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/mutations_run1.log`.
+
+- R15 continuation execution: `l2_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l2_final.log`.
+
+- R15 continuation execution: `rescore`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/rescore.log`.
+
+- R15 continuation execution: `benchmark`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/benchmark.log`.
+
+- R15 continuation execution: `gen1`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/gen1.log`.
+
+- R15 continuation execution: `regression`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/regression.log`.
+
+- R15 evidence correction: B15-F4 is resolved by preserving the completed R14 base r3 run (913 passed / 2 failed guards) in round15/reused_base_r14; no claim that a missing R12 rerun log was recovered. R14-C-F2 remained open at 95f3869e despite the earlier Fixed label. R15 D/E Q4 PARTIAL is superseded for aggregation by the critic's Q4 YES. R14's additional five performance runs were data-dependent, as now disclosed.
+
+- R15 continuation execution: `retired_prefix_candidate`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py::test_retired_account_never_reruns_retained_content -q -p no:cacheprovider`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/retired_prefix_candidate.log`.
+
+- R15 candidate self-check found retained-entry reconciliation reran content of an account already refused for good. Deterministic test retired_prefix_candidate failed (1 failed) before correction. Reconciliation now respects the existing snapshot retirement set; no new authority state. This extra source change requires final L0/L2 and FAST on the finished source, rather than treating the in-progress changed-selector FAST as final evidence.
+
+- R15 continuation execution: `l0_retired_fixed`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_retired_fixed.log`.
+
+- R15 continuation execution: `mutations_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/mutations_final.log`.
+
+- R15 continuation execution: `l1_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r11.py tests/mind/test_authority_review_r12.py tests/mind/test_authority_review_r13.py tests/mind/test_authority_review_r14.py tests/mind/test_authority_review_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l1_final.log`.
+
+- R15 failed evidence packaging approach: the initial copy of original R15 probe material accidentally included B-architecture/pt, a regenerable 434 MB pytest basetemp containing an archived tree. Repository pytest has no testpaths restriction, so the initial changed-selector FAST collection could include copied tests. Removed only that newly created evidence copy (original scratch preserved) and interrupted the contaminated run; its results are NOT a gate verdict. Final FAST must run after cleanup on completed source.
+
+- R15 continuation execution: `l2_completed_source`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l2_completed_source.log`.
+
+- R15 continuation execution: `changed`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 95f3869e --workers 4`; exit 2. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/changed.log`.
+
+- R15 continuation execution: `guards`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/guards.log`.
+
+- R15 continuation execution: `expensive`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m 'expensive and not campaign' -q -n 3 --dist loadfile -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/expensive.log`.
+
+- R15 continuation execution: `performance`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/performance.log`.
+
+- R15 continuation execution: `changed_selection_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 95f3869e --workers 4 --dry-run`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/changed_selection_final.log`.
+
+- R15 repaired-source checkpoint: L0 65 passed; L1 R11–R15 101 passed; complete BR1.1 L2 759 passed; 12/12 semantic mutants killed. Guards 1474 passed / 2 existing failures; affected expensive 335 passed / 13 failed / 14 errors, both failure sets identical to preserved base r3. Five fixed paired affected-path measurements completed: verification/comparison/wait/dispatch/contention ranges overlap (NO SPEED DIFFERENCE ESTABLISHED); seal microbenchmark before 9.13–10.86 us, after 5.14–5.63 us. Contention 32/32 served in each run. Final FAST and preservation checks pending.
+
+- R15 continuation execution: `fast_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m 'not expensive' -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/fast_final.log`.
+
+- R15 continuation execution: `regression_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/regression_final.log`.
+
+- R15 continuation execution: `rescore_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/rescore_final.log`.
+
+- R15 continuation execution: `benchmark_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/benchmark_final.log`.
+
+- R15 continuation execution: `gen1_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/gen1_final.log`.
+
+- R15 working-tree FAST: 69 failed / 12768 passed / 190 skipped; exactly 2 additional failures assert tree.clean because source changes were uncommitted (test_core_freeze_manifest::test_the_tree_is_core_freeze_v1; test_core_freeze_v3_manifest::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks). Temporary snapshot preparation first stopped at whitespace checks; corrected trailing blank lines/CRLF in new tests. First attempted snapshot FAST was NOT RUN (directory absent). Created clean detached snapshot cb2b2b1ab5dfa8bf7be4bf4edd938b6af244b22c from staged tree 1483a261f53744dcf81b1b1b4d0e2715764003c9; no branch advanced and no guard modified. Clean-snapshot FAST follows.
+
+- R15 continuation execution: `pair_prefix_candidate`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py::test_native_pair_subclasses_preserve_the_dict_handing_contract -q -p no:cacheprovider`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/pair_prefix_candidate.log`.
+
+- R15 continuation execution: `honest_pair_prefix_candidate`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py::test_native_pair_subclasses_preserve_the_dict_handing_contract -q -p no:cacheprovider`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/honest_pair_prefix_candidate.log`.
+
+- R15 second candidate self-check: structural validation unnecessarily rejected honest tuple/list subclasses and sealed the reader. honest_pair_prefix_candidate: 2 failed before correction. Read the native pair storage through its builtin container methods, preserving valid pair subclasses without executing overrides. The earlier clean snapshot remains evidence only for its own source; completed-source candidate will be gated before the repair commit.
+
+- R15 continuation execution: `l0_pair_fixed`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_pair_fixed.log`.
+
+- R15 continuation execution: `mutations_completed_source`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/mutations_completed_source.log`.
+
+- R15 continuation execution: `l2_pair_fixed`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l2_pair_fixed.log`.
+
+- R15 continuation execution: `fast_clean`, source HEAD `cb2b2b1ab5dfa8bf7be4bf4edd938b6af244b22c`; cwd `/home/dev_kaeem/forge-r15-gate-candidate`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-candidate/src:/home/dev_kaeem/forge-r15-gate-candidate PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m 'not expensive' -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/fast_clean.log`.
+
+- R15 continuation execution: `regression_completed`, source HEAD `8a5c87825fe455a4e54c2290e8df074093685d90`; cwd `/home/dev_kaeem/forge-r15-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-final/src:/home/dev_kaeem/forge-r15-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression --workers 4`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/regression_completed.log`.
+
+- R15 continuation execution: `guards_completed`, source HEAD `8a5c87825fe455a4e54c2290e8df074093685d90`; cwd `/home/dev_kaeem/forge-r15-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-final/src:/home/dev_kaeem/forge-r15-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/guards_completed.log`.
+
+- R15 continuation execution: `expensive_completed`, source HEAD `8a5c87825fe455a4e54c2290e8df074093685d90`; cwd `/home/dev_kaeem/forge-r15-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-final/src:/home/dev_kaeem/forge-r15-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m 'expensive and not campaign' -q -n 3 --dist loadfile -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/expensive_completed.log`.
+
+- R15 continuation execution: `interrupted_handing_candidate`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py -k interrupted_handing_preserves -q -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/interrupted_handing_candidate.log`.
+
+- R15 continuation execution: `interrupted_handing_fix1`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider -rfE`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/interrupted_handing_fix1.log`.
+
+- R15 continuation execution: `l0_handoff`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_handoff.log`.
+
+- R15 continuation execution: `fast_clean_final`, source HEAD `8a5c87825fe455a4e54c2290e8df074093685d90`; cwd `/home/dev_kaeem/forge-r15-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-final/src:/home/dev_kaeem/forge-r15-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m 'not expensive' -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/fast_clean_final.log`.
+
+- R15 continuation execution: `rescore_completed`, source HEAD `8a5c87825fe455a4e54c2290e8df074093685d90`; cwd `/home/dev_kaeem/forge-r15-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-final/src:/home/dev_kaeem/forge-r15-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/rescore_completed.log`.
+
+- R15 continuation execution: `benchmark_completed`, source HEAD `8a5c87825fe455a4e54c2290e8df074093685d90`; cwd `/home/dev_kaeem/forge-r15-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-final/src:/home/dev_kaeem/forge-r15-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/benchmark_completed.log`.
+
+- R15 continuation execution: `gen1_completed`, source HEAD `8a5c87825fe455a4e54c2290e8df074093685d90`; cwd `/home/dev_kaeem/forge-r15-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-final/src:/home/dev_kaeem/forge-r15-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/gen1_completed.log`.
+
+### R15 repair self-check: interrupted handing before canonical comparison
+The clean `8a5c8782` candidate is superseded: an injected KeyboardInterrupt, RecursionError or MemoryError in `_handed` could drop a handed spend and permit redispatch after restore (three failing-first controls in `interrupted_handing_candidate.log`). Recovery now retains the native dict storage of each uncompared handing, resumes its entries into the existing unread-entry barrier, and clears lifecycle bookkeeping only when comparison finishes. This is an unfinished-verification buffer, not a second budget history or scientific authority. Repeated interruption leaves it pending; a later pin cannot skip it. Native entry listing no longer classifies resource exhaustion as malformed storage.
+The first extended L0 run exposed a mistaken cleanup placement in `_leave` (fixed: clear only at authoritative comparison), and one generated-harness expectation: a handed pin retaining the spend may serve that spend even after a newer mapping is restored; the subsequent pin must refuse the older state. No accepted older state is permitted. The harness now checks that distinction directly. Earlier clean-candidate gate results remain evidence for their own source only.
+
+- R15 continuation execution: `l0_handoff_fixed`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider -rfE`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_handoff_fixed.log`.
+
+- R15 continuation execution: `mutations_handoff`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/mutations_handoff.log`.
+
+Mutation completion found that moving listing outside its inner exception guard now preserves the outcome through independent interrupted-handing recovery. This single guard removal is behaviorally redundant for this family; the compound removal of that guard and handing recovery is added as a killing control. It is reported separately, not called killed or silently dropped. No scheduling failure is excused.
+
+- R15 continuation execution: `mutations_handoff_final`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/mutations_handoff_final.log`.
+
+- R15 continuation execution: `l2_handoff`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v0/tests tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`; exit 5. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l2_handoff.log`.
+
+- R15 continuation execution: `l2_handoff_corrected`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l2_handoff_corrected.log`.
+
+The first handoff L2 invocation mistyped the world benchmark directory as `mind_gen2_world_v0` and collected no tests (exit 5). It is NOT a test result. The exact previously successful L2 command, using `mind_gen2_world_v1`, was recovered from executions.jsonl and rerun.
+
+The full L2 caught two real regressions in the new handoff buffer: `test_a_dict_subclass_never_hides_a_handed_account[says_empty]` and `[skips_the_solver]`. CPython's `dict.copy` on these subclasses consulted their hiding behavior. Replaced copying with existing `_items` native storage capture, retaining its raw entry tuples so key hooks and duplicate spellings are not lost. Existing R13 controls are included in mutation proof, including a `handing_dictionary_copy` mutant. No owner or R13 expectations changed.
+
+- R15 continuation execution: `l0_native_handoff`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py tests/mind/test_authority_review_r13.py::test_a_dict_subclass_never_hides_a_handed_account -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l0_native_handoff.log`.
+
+- R15 continuation execution: `mutations_native_handoff`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/mutations_native_handoff.log`.
+
+The first native-handoff mutation run stopped at its timeout: the old live-mapping mutant returned the wrong new internal carrier type, so it was a malformed harness mutation, not a valid killed/surviving result. Corrected the mutant to omit only retention of native storage in the pending lifecycle record, preserving normal parsing and the rest of the interface. Timeout is not counted as a kill.
+
+- R15 continuation execution: `mutations_native_handoff_fixed`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/mutations_native_handoff_fixed.log`.
+
+- R15 continuation execution: `l2_native_handoff`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l2_native_handoff.log`.
+
+- R15 continuation execution: `performance_native_handoff`, source HEAD `95f3869ed020b04c36c098f0c33050aa009212b6`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/performance_native_handoff.log`.
+
+- R15 continuation execution: `l1_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r11.py tests/mind/test_authority_review_r12.py tests/mind/test_authority_review_r13.py tests/mind/test_authority_review_r14.py tests/mind/test_authority_review_r15.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/l1_release.log`.
+
+- R15 continuation execution: `regression_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression --workers 4`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/regression_release.log`.
+
+- R15 continuation execution: `guards_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/guards_release.log`.
+
+- R15 continuation execution: `expensive_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m 'expensive and not campaign' -q -n 3 --dist loadfile -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/expensive_release.log`.
+
+- R15 continuation execution: `changed_release_selection`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 95f3869e --workers 4 --dry-run`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/changed_release_selection.log`.
+
+- R15 continuation execution: `fast_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m 'not expensive' -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/fast_release.log`.
+
+- R15 continuation execution: `rescore_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/rescore_release.log`.
+
+- R15 continuation execution: `benchmark_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/benchmark_release.log`.
+
+- R15 continuation execution: `gen1_release`, source HEAD `ec4d23dc238d2e8818170a4029a010538e23af72`; cwd `/home/dev_kaeem/forge-r15-gate-recovery`; `PYTHONPATH=/home/dev_kaeem/forge-r15-gate-recovery/src:/home/dev_kaeem/forge-r15-gate-recovery PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round15/gen1_release.log`.
+
+### Completed R15 repair gate at ec4d23dc238d2e8818170a4029a010538e23af72
+Immutable clean source/test snapshot, source SHA256 `96a576efb138aa76fd0c9a687ae0b09e702d8a90a65466f06a5a917e272f1367`. L0: 87 new controls/traces plus two existing R13 controls = 89 passed in the mutation control. L1: 115 passed. L2: 781 passed. 16 correctness mutants killed; one redundant listing guard justified and its compound removal killed. Five fixed paired affected-path measurements completed; increased verification/comparison medians, lower structural seal medians, overlapping dispatch/wait/contention ranges; all contention samples served 32/32.
+Release regression: 279 passed. Guards: 1496 passed / 2 baseline failures. Affected expensive subset: 335 passed / 13 failures / 14 errors, all baseline. FAST: 12792 passed / 67 failures / 190 skipped, exact baseline failure set. Executed `python3 /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round15/compare_gates.py`: exit 0, NEW 0 and FIXED 0 for all three differential suites; NO NEW FAILURES VS BASE. The base remains red. Rescore MATCHES, authority benchmark MATCHES, Gen1 INTACT. Commands and failure IDs are in executions.jsonl and gate_differential.json.
+The clean gate snapshot is adopted on the requested local branch, followed by an evidence-only commit. No source or tests changed after that snapshot. Next: fresh independent six-lens Round 16, then two skeptics per proposed BLOCKER/MAJOR and a completeness critic. BR1.1 NOT CLOSED.
+
+### Fresh Round 16 launched
+Source repair commit `ec4d23dc238d2e8818170a4029a010538e23af72`; complete evidence commit / exact reviewed HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`. Primary was clean when review started. `git diff ec4d23dc b8a65bb9 -- src tests` was empty. A/B/C independent agents launched on a separate read-only checkout, with the full threat matrix and instructions to attack missing transitions/new families; D/E/F follow within the concurrency bound. No outcome presumed. Skill: `.claude/skills/forge-scientific-review/SKILL.md` for the scientific lens. Review outputs are not test execution or physical validation.
+
+### R16 preliminary findings (2026-10-24; not yet skeptical/critic dispositions)
+A and C independently reported that repeated interruption before native retention leaves the pending record holding live dictionaries; later replacement can lose the spent account. A supplied native CPython recursion-depth corroboration (no monkeypatching or host-memory pressure): depth 993 retains the snapshot and refuses a second execution; depths 994/995 leave raw pending maps and permit a second executor call after checkpoint replacement. B reported that an interruption immediately after callback return and before registration also loses the handing. C additionally reported honest detached accounts retired after repeated interrupted recovery. Exact reviewed source remains b8a65bb9; no source modifications during review. Preliminary probe artifacts are under `/home/dev_kaeem/br11-review/r16/{A,B,C}`. These findings require the requested independent skeptical checks and completeness critic; BR1.1 remains NOT CLOSED.
+Some reviewer turns encountered automatic content-safety flags before final reports; these interrupted turns are not counted as completed reviews. Retrying only the authorized local scientific-accounting report scope and preserving executed evidence.
+
+### Round 16 continuation steering (2026-10-24)
+Owner explicitly requires completion of both independent skeptics and completeness critic, then fixes and fresh Round 17 unless a concrete scientific/architectural blocker is demonstrated with the exact owner decision. No production edits while review is active. A/C/D/E runtime lenses report two handoff interruption families and two false-retirement families. Skeptics S1/S2 are active. F remains static-only; native shell transport authorized solely to write its two report artifacts because Windows UNC access is unavailable.
+
+### Completed R16 A/C/D/E executions (reviewed b8a65bb9)
+Probe exit zero reports outcomes, not passing invariants. Duplicate simulated dispatch is an observed failure.
+
+- Lens A: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/A/probe_retention.py`; exit 0; result: Exit 0. Zero/one KeyboardInterrupt controls: redispatch refused, executor calls=1. Two interruptions at native retention for KeyboardInterrupt, MemoryError, RecursionError: pending raw tuple; restore then redispatch accepted, executor calls=2.; log `/home/dev_kaeem/br11-review/r16/A/probe_retention.log`.
+
+- Lens A: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/A/probe_native_stack.py`; exit 0; result: Exit 0. Native caller-depth sweep 975..996 with unchanged recursion limit 1000: depths 994 and 995 have RecursionError and pending raw tuple; restore then redispatch accepted, executor calls=2. Depth 993 pending _RetainedHanding and restore refused, executor calls=1. Depth 996 also duplicated but had no pending record and is not used as the demonstrated retained-handing finding.; log `/home/dev_kaeem/br11-review/r16/A/probe_native_stack.log`.
+
+- Lens A: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/A/pt -n 1 -q tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py`; exit 0; result: bringing up nodes...
+bringing up nodes...
+
+........................................................................ [ 82%]
+...............                                                          [100%]
+87 passed in 3.18s; log `/home/dev_kaeem/br11-review/r16/A/controls.log`.
+
+- Lens A: `wsl -d Ubuntu-24.04 -- git -C /home/dev_kaeem/forge-r16-review status --porcelain=v1`; exit 0; result: Empty output; source checkout clean; log `/home/dev_kaeem/br11-review/r16/A/source_identity.json`.
+
+- Lens C: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/C/probe_lifecycle.py`; exit 0; result: {"phase": "_retain_handing", "consumed_interruptions": 2, "pending_types": ["tuple"], "redispatch_refused": false, "executor_calls": 2, "sealed": null, "diverged": [], "in_flight": []}
+{"phase": "_handed", "consumed_interruptions": 2, "pending_types": ["_RetainedHanding"], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": [], "in_flight": []}
+{"case": "unchanged_detached_two_interruptions", "outcomes": ["KeyboardInterrupt", {"diverged": [], "unread": [["ledger", "a"]]}, "KeyboardInterrupt", {"diverged": [["ledger", "a"]], "unread": [["ledger", "a"]]}], "final": "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)", "sealed": null}
+; log `/home/dev_kaeem/br11-review/r16/C/probe_lifecycle.log`.
+
+- Lens C: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/C/probe_native_depth.py`; exit 0; result: {"depth": 130, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 131, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 132, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 133, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 134, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 135, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 136, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 137, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 138, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 139, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 140, "limit": 150, "exception": null, "frames": [], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 141, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "pinned", "_observe_all", "_read_back", "_account", "_attempts", "_read_once", "_described"], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 142, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "deep", "pinned", "_observe_all", "_read_back", "_account", "_attempts", "_read_once"], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 143, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "deep", "deep", "pinned", "_observe_all", "_read_back", "_unread", "_extends"], "pending_types": [], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 144, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "pinned", "_leave", "notify_all", "notify"], "pending_types": ["_RetainedHanding"], "redispatch_refused": true, "executor_calls": 1, "sealed": null, "diverged": []}
+{"depth": 145, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "pinned", "_leave", "notify_all"], "pending_types": ["tuple"], "redispatch_refused": false, "executor_calls": 2, "sealed": null, "diverged": []}
+{"depth": 146, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "pinned", "_leave"], "pending_types": ["tuple"], "redispatch_refused": false, "executor_calls": 2, "sealed": null, "diverged": []}
+{"depth": 147, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "pinned"], "pending_types": [], "redispatch_refused": false, "executor_calls": 2, "sealed": null, "diverged": []}
+{"depth": 148, "limit": 150, "exception": "RecursionError", "frames": ["deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep", "deep"], "pending_types": [], "redispatch_refused": false, "executor_calls": 2, "sealed": null, "diverged": []}
+; log `/home/dev_kaeem/br11-review/r16/C/probe_native_depth.log`.
+
+- Lens D: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_identity.py > /home/dev_kaeem/br11-review/r16/D/probe_identity.log 2>&1`; exit 0; result: 6 native-capture cases and 3 normalization cases completed; two MAJOR outcome families and raw normalization MINOR observed; log `/home/dev_kaeem/br11-review/r16/D/probe_identity.log`.
+
+- Lens D: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_trace_capture.py > /home/dev_kaeem/br11-review/r16/D/probe_trace_capture.log 2>&1`; exit 0; result: 4 source-line checkpoints completed; lines 974/977 redispatch, 978/979 refuse; log `/home/dev_kaeem/br11-review/r16/D/probe_trace_capture.log`.
+
+- Lens D: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.py > /home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.log 2>&1`; exit 0; result: 4 cases completed; only two detached interrupted handings permanently diverged; log `/home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.log`.
+
+- Lens D: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/D/pt -q -n 1 tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/D/r15_controls.log 2>&1`; exit 0; result: 87 passed in 3.44s; log `/home/dev_kaeem/br11-review/r16/D/r15_controls.log`.
+
+- Lens E: `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -s -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/E/pt /home/dev_kaeem/br11-review/r16/E/test_e_replay.py`; exit 1; result: Discovery: 3 failed, 1 passed; superseded by expanded probe suite; log `see result.json`.
+
+- Lens E: `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -s -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/E/pt /home/dev_kaeem/br11-review/r16/E/test_e_replay.py`; exit 1; result: 7 failed, 9 passed; six duplicate-dispatch failures, one honest-checkpoint retirement failure; log `see result.json`.
+
+- Lens E: `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -s -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/E/pt /home/dev_kaeem/br11-review/r16/E/test_e_record.py`; exit 0; result: 4 passed; historical replay and frozen-reader live-dispatch refusal controls; log `see result.json`.
+
+- Lens E: `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/E/trace_repro.py`; exit 1; result: FAILED assertion after deterministic trace/profile injections: pending raw tuple, dispatch_refused False, executor_calls 2; production functions unmodified.; log `see result.json`.
+
+### R16 B/F/S2 completed (2026-10-24)
+F scientific skill review STATIC ONLY: CHANGES REQUIRED; no tests/probes run by F. B and S2 exact records below. Critic recommends proceeding with separable local repairs while retaining the interrupted pre-capture contract issue openly.
+
+- B: `wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-r16-review && git rev-parse HEAD && env PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.py > /home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log 2>&1; status=$?; cat /home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log; exit $status'`; exit 0; Five deterministic cases executed: one correct refusal (calls=1), three unregistered-handing checkpoints and one twice-interrupted capture case each allowed calls=2. Exit zero is the probe completion status, not a correctness pass.; `/home/dev_kaeem/br11-review/r16/B/probe_handing_boundary.log`.
+
+- B: `wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-r16-review && git rev-parse HEAD && env PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 1 -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/B/pt tests/mind/test_authority_review_r15.py tests/mind/test_authority_failing_first.py::test_j_a_raw_proposal_never_reaches_an_executor tests/mind/test_authority_failing_first.py::test_k_a_proposer_cannot_mint_an_admitted_action tests/mind/test_authority_failing_first.py::test_k_a_suggestion_cannot_carry_admission_or_binding_authority tests/mind/test_authority_failing_first.py::test_l_an_admitted_action_is_refused_at_dispatch_once_its_authority_moved tests/mind/test_authority_review_r3.py::test_the_desk_policy_admits_and_dispatches_only_certified_suggestions_whatever_the_port tests/mind/test_authority_review_r4.py::test_the_executor_guard_itself_applies_the_proposer_policy > /home/dev_kaeem/br11-review/r16/B/targeted_controls.log 2>&1; status=$?; cat /home/dev_kaeem/br11-review/r16/B/targeted_controls.log; exit $status'`; exit 0; 39 passed in 3.47s; `/home/dev_kaeem/br11-review/r16/B/targeted_controls.log`.
+
+- S2: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S2/probe.py`; exit 0; Independent probe: L974/L977 and two capture interruptions duplicate; L978/L979, no/one interruption, detached controls refuse; native depth 994 duplicates, 993 refuses. Depths 995/996 excluded because callback never handed spend.; `/home/dev_kaeem/br11-review/r16/S2/probe.log`.
+
+- S2: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_identity.py`; exit 0; Three injected exception types duplicate only with live dictionary; canonical integer iteration recovers, float/string forms falsely diverge.; `/home/dev_kaeem/br11-review/r16/S2/identity_reproduction.log`.
+
+- S2: `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/C/probe_lifecycle.py`; exit 0; Capture failure duplicates; post-retention failure refuses; two honest detached interruptions permanently diverge.; `/home/dev_kaeem/br11-review/r16/S2/lifecycle_reproduction.log`.
+
+### S1 independent skeptic completed
+Both major families and six minor aliases confirmed. F2 exact line975 duplicate claim NOT_REPRODUCED; line976 confirmed. No promotion of trace-sensitive ticket behavior into a new finding.
+
+- `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe.py`; result {'command': 'cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe.py', 'exit': 0, 'log_path': '/home/dev_kaeem/br11-review/r16/S1/probe.log'}; log /home/dev_kaeem/br11-review/r16/S1/probe.log.
+
+- `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe_followup.py`; result {'command': 'cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe_followup.py', 'exit': 0, 'log_path': '/home/dev_kaeem/br11-review/r16/S1/probe_followup.log'}; log /home/dev_kaeem/br11-review/r16/S1/probe_followup.log.
+
+- `cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.py`; result {'command': 'cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.py', 'exit': 0, 'log_path': '/home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.log'}; log /home/dev_kaeem/br11-review/r16/S1/probe_extra_boundaries.log.
+
+### R16 completeness critic COMPLETE (2026-10-24)
+All six lenses, two independent skeptical verifications per MAJOR alias, critic complete. Q4 YES; remaining Qs NO within bounded scope. 8 MAJOR aliases / 2 unique families; 6 MINOR aliases / 2 unique families; 0 BLOCKER-severity defects. Critic tests NOT RUN (static evidence audit). F2 line975 duplicate subclaim excluded as NOT_REPRODUCED. Separable local repairs authorized/proceeding; owner stable-handoff contract decision required for complete pre-capture guarantee. Full report and per-alias matrix preserved in round16.
+
+- R16 continuation execution: `l1_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r11.py tests/mind/test_authority_review_r12.py tests/mind/test_authority_review_r13.py tests/mind/test_authority_review_r14.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_review_r16.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/l1_local.log`.
+
+- R16 continuation execution: `l2_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/l2_local.log`.
+
+- R16 continuation execution: `changed_selection`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --dry-run`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/changed_selection.log`.
+
+- R16 continuation execution: `changed_selection_base`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 1202ea6c3d96f5c31d0b142a32438da75e020cae --dry-run`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/changed_selection_base.log`.
+
+- R16 continuation execution: `regression_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression --workers 4`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/regression_local.log`.
+
+- R16 continuation execution: `rescore_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/rescore_local.log`.
+
+- R16 continuation execution: `benchmark_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/benchmark_local.log`.
+
+- R16 continuation execution: `gen1_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/gen1_local.log`.
+
+- R16 continuation execution: `guards_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/guards_local.log`.
+
+- R16 continuation execution: `expensive_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m 'expensive and not campaign' -q -n 3 --dist loadfile -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/expensive_local.log`.
+
+- R16 continuation execution: `l2_final`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/l2_final.log`.
+
+- R16 continuation execution: `performance_local`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round16/measure_authority.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/performance_local.log`.
+
+### R16 local repairs and mutation proof
+Source SHA256 636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb. Existing owner normalization and private unresolved history alternatives; no handoff contract change. Failed approaches: ["Initial normalization fixture used nonexistent exploration enum; corrected to explore before production edits; failing-first.log retained and superseded by failing-first-corrected.log.", "Initial isolated mutant runner PYTHONPATH was overridden by pytest pythonpath=src config; every apparent survivor from mutants.json is invalid proof. Corrected explicit -o pythonpath=isolated/src; all logs preserved.", "Incompatible retained-history mutant initially survived weaker current=last-conflict case because normal seen comparison still caught it. Added H1/H2/H1 regression to owned suite; all six stable mutants now killed.", "Temporary strict xfail challenge removed from gate suite per root; separate explicit expected-refusal challenge remains failing evidence."]
+
+- {"name": "baseline", "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-o", "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-baseline", "-q", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-baseline.log", "result": "16 passed in 1.90s"}
+
+- {"name": "raw_history", "source_sha256": "5779d61c5aecf61cf91f12fdccc6a3ad08f3ee51ffd9f77a31035eef6177750a", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-o", "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-raw_history", "-q", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-raw_history.log", "result": "3 failed, 13 passed in 2.63s"}
+
+- {"name": "identity_is_divergence", "source_sha256": "c0596462c4209f686dba30dce9174cec6123e3fc5cc1e80ce6fea40e6821a868", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-o", "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-identity_is_divergence", "-q", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-identity_is_divergence.log", "result": "6 failed, 10 passed in 7.90s"}
+
+- {"name": "discard_earlier", "source_sha256": "027a0981a5e38f5d15cea978c909eca86749f9b61415b220e826562648549af1", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-o", "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-discard_earlier", "-q", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-discard_earlier.log", "result": "3 failed, 13 passed in 2.28s"}
+
+- {"name": "unguarded_reconciliation", "source_sha256": "9d9c7cd3725e18e4a42df3ad6ff8f28eae8dfbd674a13928fc6b5f4d676f6615", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-o", "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-unguarded_reconciliation", "-q", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-unguarded_reconciliation.log", "result": "1 failed, 15 passed in 1.74s"}
+
+- {"name": "incompatible_is_prefix", "source_sha256": "c20251f27105e7b8fdfa7a8d8096d08e827e0b9e59f41dccfef602520c1205d1", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-o", "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-incompatible_is_prefix", "-q", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-incompatible_is_prefix.log", "result": "1 failed, 15 passed in 2.28s"}
+
+- {"name": "lose_post_return", "source_sha256": "145a7a133ed52d15b708cd104405064b4ff94fb0ffe85b77cedd3b98d4048a60", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-o", "pythonpath=/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-mutant-lose_post_return", "-q", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant_source/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r16/REPAIR/mutant-stable-lose_post_return.log", "result": "2 failed, 14 passed in 2.08s"}
+
+Guards and expensive exact-ID comparison executed by Python: new0/fixed0 each, round16/l3_differential.json. Five paired measurements: all six paths overlapping ranges; NO SPEED DIFFERENCE ESTABLISHED. Repeated distinct unread alternatives can grow memory; no evidence forgotten to cap it.
+
+- Worker exact execution: {"name": "failing-first-corrected", "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "argv": [".venv/bin/python", "-m", "pytest", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-before2", "-q", "tests/mind/test_authority_review_r16.py"], "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-before2 -q tests/mind/test_authority_review_r16.py > /home/dev_kaeem/br11-review/r16/REPAIR/failing-first-corrected.log 2>&1", "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-before2 -q tests/mind/test_authority_review_r16.py > /home/dev_kaeem/br11-review/r16/REPAIR/failing-first-corrected.log 2>&1'", "exit_code": 1, "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/failing-first-corrected.log", "result": "6 failed, 4 passed in 1.24s", "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."}
+
+- Worker exact execution: {"name": "local", "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "argv": [".venv/bin/python", "-m", "pytest", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-local", "-q", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r15.py", "tests/mind/test_authority_state_machine_r15.py"], "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-local -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local.log 2>&1", "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-local -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local.log 2>&1'", "exit_code": 0, "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/local.log", "result": "97 passed in 3.24s", "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."}
+
+- Worker exact execution: {"name": "local-final", "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "argv": [".venv/bin/python", "-m", "pytest", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-final", "-q", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r15.py", "tests/mind/test_authority_state_machine_r15.py"], "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-final -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local-final.log 2>&1", "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-final -q tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/REPAIR/local-final.log 2>&1'", "exit_code": 0, "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/local-final.log", "result": "102 passed in 2.65s", "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."}
+
+- Worker exact execution: {"name": "open-capture", "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "argv": [".venv/bin/python", "-m", "pytest", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-open", "-q", "/home/dev_kaeem/br11-review/r16/REPAIR/test_open_capture_challenge.py"], "shell_command": "cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-open -q /home/dev_kaeem/br11-review/r16/REPAIR/test_open_capture_challenge.py > /home/dev_kaeem/br11-review/r16/REPAIR/open-capture.log 2>&1", "host_tool_command": "wsl -d Ubuntu-24.04 -- bash -lc 'cd /home/dev_kaeem/forge-gen2-authority-v1 && PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/REPAIR/pt-open -q /home/dev_kaeem/br11-review/r16/REPAIR/test_open_capture_challenge.py > /home/dev_kaeem/br11-review/r16/REPAIR/open-capture.log 2>&1'", "exit_code": 1, "log_path": "/home/dev_kaeem/br11-review/r16/REPAIR/open-capture.log", "result": "1 failed in 1.53s", "provenance": "Recovered verbatim command structure and argv from actual functions.exec exec_command calls in this worker session; exit_code is returned command exit code."}
+
+- R16 continuation execution: `fast_clean`, source HEAD `68db8819d433d1819968e44312c44f1da4996dda`; cwd `/home/dev_kaeem/forge-r16-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r16-gate-final/src:/home/dev_kaeem/forge-r16-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m 'not expensive' -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/fast_clean.log`.
+
+- R16 continuation execution: `compare_gates`, source HEAD `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 python3 /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round16/compare_gates.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round16/compare_gates.log`.
+
+### R16 repair gates complete
+Clean source commit68db8819d433d1819968e44312c44f1da4996dda: FAST12808pass/67fail/190skip; guards1511pass/2fail; affected expensive335pass/13fail/14errors. Comparator exact IDs: NEW0/FIXED0 each. NO NEW FAILURES VS BASE, not green. L2 final797 passed; regression279. Six mutants killed. References MATCHES/INTACT. Pre-capture open challenge still fails; protocol decision unapplied.
+
+### Fresh Round17 launched (2026-10-24)
+Exact evidence-complete SHA98d72b2ef854012780f4222706884b911c4a2f03, source/tests identical to clean gate source68db8819. Primary clean at launch; only review records after launch. A/B/C started independently; D/E/F next when slots available. No particular final result expected. Raw pre-capture family explicitly OPEN; no handoff semantics selected.
+
+### Round17 lens A completed
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "tests/mind/test_authority_review_r16.py", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/A/pt", "-n", "1"], "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/A/controls.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r17/A/probe_native.py"], "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/A/native.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "/home/dev_kaeem/br11-review/r17/A/test_transitions.py", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/A/pt_more", "-n", "1"], "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/A/transitions.log"}
+
+### Round17 lens B completed
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r17/B/probe_handing_boundary.py"], "cwd": "/home/dev_kaeem/forge-r17-review", "env_overrides": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/B/probe_handing_boundary.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "tests/mind/test_authority_review_r16.py", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/B/pt", "-n", "1"], "cwd": "/home/dev_kaeem/forge-r17-review", "env_overrides": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/B/r16_controls.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r17/B/probe_dispatch_histories.py"], "cwd": "/home/dev_kaeem/forge-r17-review", "env_overrides": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/B/probe_dispatch_histories.log"}
+
+### Round17 lens C completed
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['git','rev-parse','HEAD'],text=True));assert owners.__file__=='/home/dev_kaeem/forge-r17-review/src/engcore/mind/world/owners.py';assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()=='98d72b2ef854012780f4222706884b911c4a2f03'"], "cwd": "/home/dev_kaeem/forge-r17-review", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r17/C/identity.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/C/pt", "tests/mind/test_authority_review_r16.py", "/home/dev_kaeem/br11-review/r17/C/test_lifecycle.py"], "cwd": "/home/dev_kaeem/forge-r17-review", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r17/C/controls.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r17/C/probe_native_depth.py"], "cwd": "/home/dev_kaeem/forge-r17-review", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r17/C/native.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r17/C/probe_exact.py"], "cwd": "/home/dev_kaeem/forge-r17-review", "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "result": "Counterexample reproduced; explicit assertions completed.", "log": "/home/dev_kaeem/br11-review/r17/C/exact.log"}
+
+### Round17 lens D completed
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/D/pt tests/mind/test_authority_review_r16.py /home/dev_kaeem/br11-review/r17/D/test_identity.py", "cwd": "/home/dev_kaeem/forge-r17-review", "exit": 1, "log": "/home/dev_kaeem/br11-review/r17/D/identity.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/D/pt /home/dev_kaeem/br11-review/r17/D/test_open.py", "cwd": "/home/dev_kaeem/forge-r17-review", "exit": 1, "log": "/home/dev_kaeem/br11-review/r17/D/open.log"}
+
+### Round17 lens E completed
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/E/pt", "-q", "-s", "/home/dev_kaeem/br11-review/r17/E/test_replay.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-r17-review", "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/E/tests.log", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "result": "2 failed, 29 passed in 1.73s; both failures are explicit expected-refusal assertions for the known OPEN capture family.", "launcher": "wsl -d Ubuntu-24.04 -- env PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r17/E/run.py"}
+
+### Round17 lens F completed
+
+F static scientific skill review CHANGES REQUIRED; tests NOT RUN.
+
+### Round17 S1 completed
+Six major aliases upheld as one known family; D2/F2 minor upheld. Assertion passes include affirmative defect assertions, not safety success.
+
+- {"command": "wsl -d Ubuntu-24.04 -- python3 /home/dev_kaeem/br11-review/r17/S1/run.py", "inner_command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r17/S1/probe.py", "cwd": "/home/dev_kaeem/forge-r17-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "result": "Assertions confirm counterexamples, not invariant success", "log": "/home/dev_kaeem/br11-review/r17/S1/probe.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r16.py -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/S1/pt -n 1", "cwd": "/home/dev_kaeem/forge-r17-review", "exit_code": 0, "result": "16 passed in2.04s", "log": "/home/dev_kaeem/br11-review/r17/S1/controls.log"}
+
+### Round17 S2 completed
+Six major aliases upheld as one known family; D2/F2 minor upheld. Assertion passes include affirmative defect assertions, not safety success.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-s", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/S2/pt", "/home/dev_kaeem/br11-review/r17/S2/test_independent.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-r17-review", "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/S2/tests.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r17/S2/native.py"], "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/S2/native.log"}
+
+### R17 completeness critic COMPLETE
+All six lenses and both independent skeptic reports read; all6 MAJOR aliases confirmed. Q4YES; one MAJOR family, one MINOR family. Critic tests NOT RUN (static evidence audit). Complete local JSON normalization repair and fresh review before owner-only handoff; exact lifetime contract decision still unapplied. Source98d72b2e unchanged throughout review.
+
+- R17 continuation execution: `l1_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r11.py tests/mind/test_authority_review_r12.py tests/mind/test_authority_review_r13.py tests/mind/test_authority_review_r14.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py -q -p no:cacheprovider`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/l1_local.log`.
+
+- R17 continuation execution: `l2_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/l2_local.log`.
+
+- R17 continuation execution: `regression_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression --workers 4`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/regression_local.log`.
+
+- R17 continuation execution: `guards_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/guards_local.log`.
+
+### R17 normalization repair executed
+Failing-first4failed12passed on unchanged636c5e66; L0 32passed; seven semantic mutants killed. Source nowbee80307. Initial test exception expectation corrected before production edit. Invalid experiment serializer contrast only shows previously dropped unresolved barrier; restored old checkpoint still refused, no extra admission claim.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/pt-failing-first", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/failing-first.log", "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb", "test_sha256": "df0f8a560044cc79e1bb1d3238a1e5b637d91515e8219df4a205494e1a5ad578", "summary": "4 failed, 12 passed in 1.61s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-experiment]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]"]}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/pt-failing-first-corrected", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/failing-first-corrected.log", "source_sha256": "636c5e66f7e95f7c477bb3e95bcf886101cc4ec44950bde8fa979b94443641eb", "test_sha256": "83cf992ff9da6dca16fff55c5431c5b4be73cb245f52e58c1809bcf135e0388a", "summary": "4 failed, 12 passed in 1.16s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-experiment]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]"]}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/pt-l0", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/l0.log", "source_sha256": "bee80307fcd73de69a8a00f49b3e1d7d56295b2e4f7d78bd0183616a6568a298", "test_sha256": "83cf992ff9da6dca16fff55c5431c5b4be73cb245f52e58c1809bcf135e0388a", "summary": "32 passed in 1.69s", "failures": []}
+
+- {"name": "ledger_skip_json", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/src", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/pt", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/pytest.log", "identity_command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"], "identity_exit_code": 0, "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_skip_json/src/engcore/mind/world/owners.py\n", "source_sha256": "28fcdf5470e5ab1c37ee276ebe0b122509e26e7eee8dc36f93a135a8092346e8", "summary": "1 failed, 31 passed in 2.05s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-ledger]"]}
+
+- {"name": "experiment_skip_json", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/src", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/pt", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/pytest.log", "identity_command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"], "identity_exit_code": 0, "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_skip_json/src/engcore/mind/world/owners.py\n", "source_sha256": "2a6420a7993de05ee17feb3a44cb2ecaae89a7ca7dfc85fcaf55af95b0440271", "summary": "1 failed, 31 passed in 1.82s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_owner_json_equivalent_detached_history_recovers[value0-experiment]"]}
+
+- {"name": "ledger_scientific_json", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/pt", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/pytest.log", "identity_command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"], "identity_exit_code": 0, "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py\n", "source_sha256": "5870fef8e66eed02c4bd1e6d1d054ce17c6ef717d79f072c5bc417f08e9d3c2b", "summary": "2 failed, 30 passed in 1.94s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[value0]", "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[nan]"]}
+
+- {"name": "experiment_default_string", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/pt", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/pytest.log", "identity_command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"], "identity_exit_code": 0, "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_default_string/src/engcore/mind/world/owners.py\n", "source_sha256": "94ffd2d8f87004f6d4d1ad0e56dd0d21a9ed9809749e4cf15de34b9624987ef9", "summary": "1 failed, 31 passed in 2.01s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-value0]"]}
+
+- {"name": "experiment_nonfinite_allowed", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/src", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/pt", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/pytest.log", "identity_command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"], "identity_exit_code": 0, "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/experiment_nonfinite_allowed/src/engcore/mind/world/owners.py\n", "source_sha256": "698646ef3fe8642a7d14c5fb3402c8c34677cc67188ef4c7dff4bf905cebe540", "summary": "1 failed, 31 passed in 1.87s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_owner_unserializable_retained_entry_stays_unresolved[experiment-nan]"]}
+
+- {"name": "ledger_json_before_owner", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/src", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/pt", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/pytest.log", "identity_command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"], "identity_exit_code": 0, "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/ledger_json_before_owner/src/engcore/mind/world/owners.py\n", "source_sha256": "ab2a513c559470428b36ec6ded352642b81f1497f9f3e90626efed13a551b9b1", "summary": "2 failed, 30 passed in 1.73s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[value0]", "FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[nan]"]}
+
+- {"name": "discard_retained_histories", "command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "-o", "pythonpath=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src", "--basetemp=/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/pt", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-gen2-authority-v1", "environment": {"PYTHONPATH": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src:/home/dev_kaeem/forge-gen2-authority-v1", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 1, "log": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/pytest.log", "identity_command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; from engcore.mind.world import BudgetReader; from engcore.sria.campaign.budget import BudgetCharge; assert o.BudgetReader is BudgetReader; assert o.BudgetCharge is BudgetCharge; print(o.__file__)"], "identity_exit_code": 0, "identity_result": "/home/dev_kaeem/br11-review/r17/REPAIR/mutants/discard_retained_histories/src/engcore/mind/world/owners.py\n", "source_sha256": "699fc9ae84050cf803db550ed305f9fbfe79cbd3a9ba5f3db7c009ad29ac5916", "summary": "10 failed, 22 passed in 1.65s", "failures": ["FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-ledger]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rollback-experiment]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-ledger]", "FAILED tests/mind/test_authority_review_r17.py::test_owner_json_true_history_difference_refuses[rewrite-experiment]", "FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[handed = True]", "FAILED tests/mind/test_authority_review_r16.py::test_post_return_single_interrupt_retains_spend[self._uncompared[ticket] = mapping]", "FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[rollback]", "FAILED tests/mind/test_authority_review_r16.py::test_detached_pending_spend_never_disappears[different]", "FAILED tests/mind/test_authority_review_r16.py::test_experiment_detached_histories_reconcile_without_losing_attempts[True]", "FAILED tests/mind/test_authority_review_r16.py::test_retained_conflict_cannot_be_erased_by_returning_to_first_branch"]}
+
+- R17 continuation execution: `expensive_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m 'expensive and not campaign' -q -n 3 --dist loadfile -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/expensive_local.log`.
+
+- R17 continuation execution: `rescore_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/rescore_local.log`.
+
+- R17 continuation execution: `benchmark_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/benchmark_local.log`.
+
+- R17 continuation execution: `gen1_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/gen1_local.log`.
+
+- R17 continuation execution: `performance_local`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round17/measure_authority.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/performance_local.log`.
+
+R17 gates L1 201pass, L2 813pass, regression279pass. Guards1528pass/2fail, expensive335pass/13fail/14errors; exact base IDs compared new0/fixed0. Rescore/benchmark MATCHES, Gen1 INTACT. Local sourcebee80307; raw capture remains open.
+
+- R17 continuation execution: `fast_clean`, source HEAD `41a763a697707db1897ee1fcbf1365495875e45b`; cwd `/home/dev_kaeem/forge-r17-gate-final`; `PYTHONPATH=/home/dev_kaeem/forge-r17-gate-final/src:/home/dev_kaeem/forge-r17-gate-final PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m 'not expensive' -p no:cacheprovider -rfE`; exit 1. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/fast_clean.log`.
+
+- R17 continuation execution: `compare_gates`, source HEAD `98d72b2ef854012780f4222706884b911c4a2f03`; cwd `/home/dev_kaeem/forge-gen2-authority-v1`; `PYTHONPATH=/home/dev_kaeem/forge-gen2-authority-v1/src:/home/dev_kaeem/forge-gen2-authority-v1 PYTHONDONTWRITEBYTECODE=1 python3 /home/dev_kaeem/forge-gen2-authority-v1/docs/work/evidence/br11_local_2026_10_23/round17/compare_gates.py`; exit 0. Exact output/failure names: `docs/work/evidence/br11_local_2026_10_23/round17/compare_gates.log`.
+
+### R17 repair gates complete
+Clean source41a763a697707db1897ee1fcbf1365495875e45b FAST12824pass67fail190skip. Comparator new0/fixed0 for guards, expensive,FAST. NO NEW FAILURES VS BASE. References hold; seven mutants killed; ownerJSON repair ready fresh review; capture contract still OPEN.
+
+### Fresh Round18 launched
+Exactcc7ef06b0d08398173d9448ff47d8abb7e375d44, clean primary at launch. A/B/C active, D/E/F next. No expectation final; known capture defect remains OPEN and JSON local correction requires fresh review.
+
+### R18 lens A completed
+Known native capture MAJOR reproduced; JSON repair holds bounded controls; stable detached mapping matched control refuses. Full ack protocol not established necessary.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import subprocess; from engcore.mind.world import owners; print(owners.__file__); print(subprocess.check_output(['git','rev-parse','HEAD'],text=True)); assert owners.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'; assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == 'cc7ef06b0d08398173d9448ff47d8abb7e375d44'"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/identity.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r17.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/controls.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/A/probe_native.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/native.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt_new", "/home/dev_kaeem/br11-review/r18/A/test_new_transitions.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/new_transitions.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/A/probe_stable_mapping.py"], "env": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/A/stable_mapping.log"}
+
+### R18 lens B completed
+Known native capture MAJOR reproduced; JSON repair holds bounded controls; stable detached mapping matched control refuses. Full ack protocol not established necessary.
+
+- {"command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/probe.py", "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/B/probe.log"}
+
+- {"command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/B/native.py", "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/B/native.log"}
+
+- {"command": "cd /home/dev_kaeem/forge-r18-review && PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/B/pt", "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/B/controls.log"}
+
+### R18 lensC completed
+44 final controls; initial harness mistakes corrected, no new production defect promoted; known native capture reproduced.
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c 'import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True));assert owners.__file__.startswith('\"'\"'/home/dev_kaeem/forge-r18-review/'\"'\"');assert subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True).strip()=='\"'\"'cc7ef06b0d08398173d9448ff47d8abb7e375d44'\"'\"''", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/identity.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 1, "log": "/home/dev_kaeem/br11-review/r18/C/controls_initial.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/C/probe_native.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/native.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -c 'import subprocess;from engcore.mind.world import owners;print(owners.__file__);print(subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True));assert owners.__file__.startswith('\"'\"'/home/dev_kaeem/forge-r18-review/'\"'\"');assert subprocess.check_output(['\"'\"'git'\"'\"','\"'\"'rev-parse'\"'\"','\"'\"'HEAD'\"'\"'],text=True).strip()=='\"'\"'cc7ef06b0d08398173d9448ff47d8abb7e375d44'\"'\"''", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/identity.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 2, "log": "/home/dev_kaeem/br11-review/r18/C/controls_syntax.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r18/C/probe_native.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/native.log"}
+
+- {"command": "PYTHONPATH=/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r18/C/pt tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py /home/dev_kaeem/br11-review/r18/C/test_new.py", "cwd": "/home/dev_kaeem/forge-r18-review", "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/C/controls_final.log"}
+
+### R18 D completed
+Known MAJOR only; no new normalization defect established. Copied mapping matched control prevents specific replacement failure; full ack protocol not proven necessary.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import engcore.mind.world.owners as o; print(o.__file__); assert o.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/identity.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/D/pt", "/home/dev_kaeem/br11-review/r18/D/test_identity.py", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/controls.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/D/native.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/native.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/D/stable_mapping.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/D/stable_mapping.log"}
+
+### R18 E completed
+Known MAJOR only; no new normalization defect established. Copied mapping matched control prevents specific replacement failure; full ack protocol not proven necessary.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-s", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/E/pt", "/home/dev_kaeem/br11-review/r18/E/test_e.py", "tests/mind/test_authority_review_r17.py", "tests/mind/test_authority_review_r16.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit_code": 0, "log": "/home/dev_kaeem/br11-review/r18/E/tests.log"}
+
+### R18 F scientific review completed
+Static-only CHANGES REQUIRED, Q4YES known capture defect; JSON normalization appears repaired. Tests NOT RUN by F. Minimal stable owner-publication lifetime supported; full acknowledgement protocol not established mandatory.
+
+### R18 S1 complete
+All6 aliases confirmed one known family, matched stable-owner-map controls prevent replacement; no new separable defect. Exact records below.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "/home/dev_kaeem/br11-review/r18/S1/matched.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S1/matched.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/S1/pt", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S1/controls.log"}
+
+### R18 S2 complete
+All6 aliases confirmed one known family, matched stable-owner-map controls prevent replacement; no new separable defect. Exact records below.
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-c", "import subprocess;from engcore.mind.world import owners;print(owners.__file__);assert owners.__file__=='/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py';s=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();print(s);assert s=='cc7ef06b0d08398173d9448ff47d8abb7e375d44'"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S2/identity.log"}
+
+- {"command": ["/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python", "-m", "pytest", "-q", "-s", "-p", "no:cacheprovider", "--basetemp=/home/dev_kaeem/br11-review/r18/S2/pt", "/home/dev_kaeem/br11-review/r18/S2/test_s2.py", "/home/dev_kaeem/br11-review/r18/E/test_e.py", "tests/mind/test_authority_review_r16.py", "tests/mind/test_authority_review_r17.py"], "cwd": "/home/dev_kaeem/forge-r18-review", "environment": {"PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review", "PYTHONDONTWRITEBYTECODE": "1"}, "exit": 0, "log": "/home/dev_kaeem/br11-review/r18/S2/controls.log"}
+
+### R18 final critic and precise architectural handoff
+COMPLETE six lenses/two independent skeptics per alias/critic atcc7ef06b. One unique known Q4MAJOR (6aliases),0BLOCKER,0 open substantiveMINOR; no new separable defect. Prior JSON normalization correction held. Critic tests NOT RUN. OWNER_DECISION_REQUIRED stable published bindings/recoverable handed history across restore while processing pending. Full ack protocol optional, not necessity claim. No silent narrowed observation boundary or fixture-only workaround. Stop substantive implementation at this evidenced owner contract boundary after clean records/bundle. BR1.1 NOT CLOSED; no Kernel-ready claim.
+
+
+## BR1.1 owner-lifetime closure — 2026-10-24
+Owner explicitly approved stable published bindings/recoverable history across restore and bounded closure campaign; prior OWNER_DECISION_REQUIRED resolved. Initial clean HEAD a57f1fdd393d1c98f603f6eb1a4ed99fb708f149, authorized branch research/mind-gen2-authority-binding-v1, source/tests identical cc7ef06b; existing WSL CPython3.12.3 environment. Bundle SHA256 matches5586bfdae9f4bf09ea68a4508139701ad4fac6bcca0778330da3b92574d91a5a.
+Executed `.venv/bin/python /home/dev_kaeem/br11-review/lifetime-closure/reproduce_r18.py`: exit0 COUNTEREXAMPLE REPRODUCED (live mapping at depths144/145 executor2; detached control executor1). Raw log outside repository.
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_lifetime.py -q -p no:cacheprovider`: exit1; 1 failed, 1 passed in 1.76s. Expected safety failure is test_pre_capture_restore_does_not_restore_authority[2], not fixture failure. Raw log /home/dev_kaeem/br11-review/lifetime-closure/red-first.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_lifetime.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py -q -p no:cacheprovider`: exit1; 10 failed, 57 passed in 2.94s. Raw log /home/dev_kaeem/br11-review/lifetime-closure/focused-1.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`: exit1; 14 failed, 801 passed, 1 warning in 20.68s. Raw log /home/dev_kaeem/br11-review/lifetime-closure/targeted-1.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`: exit1; 1 failed, 828 passed in 33.54s. Raw log /home/dev_kaeem/br11-review/lifetime-closure/targeted-2.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`: exit1; 1 failed, 866 passed in 22.84s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/targeted-3.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_lifetime.py tests/mind/test_authority_lifetime_state_machine.py tests/mind/test_authority_review_r6.py tests/mind/test_authority_review_r15.py tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py tests/mind/test_authority_state_machine_r15.py -q -p no:cacheprovider`: exit0; 187 passed in 6.13s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/focused-final.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`: exit0; 867 passed in 25.16s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/targeted-final.log.
+
+Executed `.venv/bin/python /home/dev_kaeem/br11-review/lifetime-closure/mutate.py` (isolated source, pytest `-o pythonpath=<isolatedsrc>`): positive_before=PASS, drop_replaced_bindings=KILLED, skip_retained_reconciliation=KILLED, accept_source_override=KILLED, mutable_publication_token=KILLED, retire_open_source=KILLED, retire_pending_source=KILLED, allow_closed_snapshot=KILLED, forget_retained_spend=KILLED, positive_after=PASS. Exact child commands/failing nodes in outside mutations/results.json. Primary source was never mutated.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 1202ea6c3d96f5c31d0b142a32438da75e020cae --dry-run`: exit0; $ /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -m 'not expensive'. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/changed-classification.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression --workers 4`: exit0; . Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/regression_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/lifetime-closure/native_fixed.py`: exit0; {"cases": 34, "duplicate_dispatches": 0, "bounded_native_control": "PASS"}. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/native-fixed.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`: exit1; 2 failed, 1582 passed in 36.14s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/guards_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m expensive and not campaign -q -n 3 --dist loadfile -p no:cacheprovider -rfE`: exit1; 13 failed, 335 passed, 14 errors in 37.31s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/expensive_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`: exit0; BR1_RESCORE MATCHES. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/rescore_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`: exit0; AUTHORITY MATCHES. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/benchmark_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`: exit0; GEN1_REFERENCE INTACT. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/gen1_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`: exit0; 870 passed in 20.39s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/targeted-final-v2.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 1202ea6c3d96f5c31d0b142a32438da75e020cae --dry-run`: exit0; $ /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -m 'not expensive'. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/changed-classification.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression --workers 4`: exit0; . Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/regression_local.log.
+
+Executed `.venv/bin/python /home/dev_kaeem/br11-review/lifetime-closure/mutate.py` (isolated source, pytest `-o pythonpath=<isolatedsrc>`): positive_before=PASS, drop_replaced_bindings=KILLED, skip_retained_reconciliation=KILLED, accept_source_override=KILLED, mutable_publication_token=KILLED, retire_open_source=KILLED, retire_pending_source=KILLED, allow_closed_snapshot=KILLED, forget_retained_spend=KILLED, positive_after=PASS. Exact child commands/failing nodes in outside mutations/results.json. Primary source was never mutated.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`: exit1; 2 failed, 1585 passed in 41.46s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/guards_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m expensive and not campaign -q -n 3 --dist loadfile -p no:cacheprovider -rfE`: exit1; 13 failed, 335 passed, 14 errors in 38.15s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/expensive_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`: exit0; BR1_RESCORE MATCHES. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/rescore_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`: exit0; AUTHORITY MATCHES. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/benchmark_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`: exit0; GEN1_REFERENCE INTACT. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/gen1_local.log.
+
+Owner-lifetime draft feedback fixed: frozen returned publication token/bindings, exact source type, caller-owned active lease and recovery of interrupted lease removal, constructor lease and strict initial account-set rejection. Historical tests migrated explicitly to owner publication; no test removed/skipped or assertion relaxed. Two intermediate targeted runs failed on migrated callback/result shape or transient-refusal wording; subsequent 870 targeted pass. Native follow-up 34 cases refused redispatch (one executor call each); no exhaustive claim. Eight final-source semantic mutants killed, positive controls57 each; detailed outside logs and curated JSON retained.
+Executed `python3 /home/dev_kaeem/br11-review/lifetime-closure/compare.py`: guards2/2 and expensive27/27 failure IDs/reason lines match base1202ea6c; no new failures. FAST pending clean commit.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m not expensive -p no:cacheprovider -rfE`: exit1; 68 failed, 12880 passed, 190 skipped, 2 warnings in 338.48s (0:05:38). Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/fast_clean.log.
+
+### Round 19 review at 0b605b43416d575b60f87ca57eea7a1d646489d5 — corrective work
+FAST executed on unchanged source: 68 failed, 12880 passed, 190 skipped, 2 warnings. New failure: `tests/mind/test_authority_review_r6.py::test_concurrent_verifications_never_refuse_for_good_an_account_that_only_moves_forward`. Independent S2 Event-controlled trace confirms raw entry identity mismatch after barrier replacement permanently marks a canonical extension divergent. This is false refusal, not evidence of rewritten history. Fix assigned: retain unresolved barrier until canonical normalization; never infer conflict from identity alone.
+B-F1 late publication reproduced with 2 matched controls. Spent replacement first published during another pin after its read-back can evade that pin. E scientific skeptic correctly distinguishes unpublished first spend and acquisition-snapshot semantics from lost already-published history; S2 calls final-comparison freshness required. Resolution under approved owner lifetime contract: explicitly reconcile source generations through final comparison linearization, bounded retries and transient refusal on continued churn; no executor reservation or exactly-once claim. Both corrective changes require red-first controls and fresh review after commit.
+Failure comparison against trusted base1202ea6: guards2/2 and expensive27/27 identities/reasons match. FAST has one new R6 identity; 66 of68 extracted reasons match. Existing synthetic-data provenance failure still asserts unknown_provenance_files==0, but count is1191 versusbase456; report this as same failed invariant with changed inventory count, never identical diagnostic text. Domain provenance repair remains outside scope.
+
+Executed `.venv/bin/python -m pytest -q -p no:cacheprovider tests/mind/test_authority_review_r19.py` before R6 fix: 1 failed, 1 passed; failure `test_changed_unread_barrier_keeps_monotonic_replacement_recoverable[True]`, expected recovery instead got permanent rewrite. After fix executed `.venv/bin/python -m pytest -q -p no:cacheprovider tests/mind/test_authority_review_r19.py tests/mind/test_authority_review_r6.py tests/mind/test_authority_lifetime.py tests/mind/test_authority_lifetime_state_machine.py`: 73 passed in7.82s, source ba50b292958d2fb5de9bb3b15a46f080d02eaa8192bae7db0451c6e645aa670c stable. S2 executed `git diff --check`: exit0. Raw logs /home/dev_kaeem/br11-review/r19/S2/fix-red.log and fix-focused.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 1202ea6c3d96f5c31d0b142a32438da75e020cae --dry-run`: exit0; $ /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -m 'not expensive'. Source stable=False. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20-changed-classification.log.
+
+R20 ladder start aborted during classification after agent reported initial R10 regression (retry adopted newer binding, lost original pin identity). Classification source hash changed; not used as verification. No completed test result claimed. Helper corrected to retain later histories while preserving original pin bindings. Full gates restart under distinct r20v2 labels after source stable.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --changed --base 1202ea6c3d96f5c31d0b142a32438da75e020cae --dry-run`: exit0; $ /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -m 'not expensive'. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-changed-classification.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python tools/forge_check.py --regression --workers 4`: exit0; . Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-regression_local.log.
+
+Late-publication regression executed `.venv/bin/python -m pytest -q -p no:cacheprovider tests/mind/test_authority_publication_currency_r19.py`: RED 1 failed/1 passed, unpublished spent replacement permitted second executor call. Initial helper retry adopted a newer binding, violating original pin snapshot semantics: focused run1 failed/106 passed, `test_a_compared_verification_decides_on_what_the_ones_in_flight_record[True]`. Corrected helper rereads original handed binding while retaining all newer generations as history constraints.
+Executed `.venv/bin/python -m pytest -q -p no:cacheprovider tests/mind/test_authority_publication_currency_r19.py tests/mind/test_authority_review_r8.py tests/mind/test_authority_review_r10.py tests/mind/test_authority_lifetime.py tests/mind/test_authority_lifetime_state_machine.py tests/mind/test_authority_review_r19.py`: 118 passed in13.43s, owners source efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3. Logs /home/dev_kaeem/br11-review/r19/B/currency-{red,focused-1,focused-2}.log. Includes constructor/pin, ledger/experiment, identical/forward generation, interruption, close/retire and bounded churn.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind tests/test_blind_challenge_guards.py tests/test_core_api_layering.py tests/test_core_guards.py tests/test_core_semantic_invariants.py tests/test_repository_architecture.py tests/test_trust_boundary_admitted_row.py tests/test_trust_boundary_bookkeeping.py tests/test_trust_boundary_consensus.py tests/test_trust_boundary_package_identity.py tests/test_trust_boundary_threshold_authority.py tests/test_sria_m5_campaign.py tests/test_sria_campaign_persistence_v03_adversarial.py tests/test_sria_budget_ledger_identity.py -q -n 4 -p no:cacheprovider -rfE`: exit1; 2 failed, 1600 passed in 41.70s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-guards_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates tests/domains/kinetics/test_cstr_domain.py tests/systems/aerospace/test_multirotor_mvr0.py tests/systems/aerospace/test_multirotor_mvr1.py tests/test_electrical_v01_demo.py tests/test_heterogeneous_ngspice.py tests/test_sria_e1_electrical.py tests/test_sria_e2_model_adequacy.py tests/test_sria_e3_adequacy_obligation.py tests/test_sria_v01_certification_path.py tests/test_thermal_t1_fidelity_inference.py -m expensive and not campaign -q -n 3 --dist loadfile -p no:cacheprovider -rfE`: exit1; 13 failed, 335 passed, 14 errors in 38.01s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-expensive_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.rescore --check`: exit0; BR1_RESCORE MATCHES. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-rescore_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.mind_gen2_authority_v1.run_benchmark --check`: exit0; AUTHORITY MATCHES. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-benchmark_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m benchmarks.battery_rediscovery_v3.gen1_reference --check`: exit0; GEN1_REFERENCE INTACT. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-gen1_local.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/lifetime-closure/native_fixed.py`: exit1; AssertionError. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-native.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind benchmarks/mind_gen2_authority_v1/tests benchmarks/mind_gen2_world_v1/tests tests/test_sria_budget_ledger_identity.py -q -p no:cacheprovider -n 4 --dist loadfile`: exit0; 885 passed in 25.15s. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-targeted.log.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/lifetime-closure/native_fixed_r20.py`: exit0; {"cases": 34, "duplicate_dispatches": 0, "bounded_native_control": "PASS"}. Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-native-corrected.log.
+
+Executed `.venv/bin/python /home/dev_kaeem/br11-review/lifetime-closure/mutate-r20.py` (isolated source, pytest `-o pythonpath=<isolatedsrc>`): positive_before=PASS, skip_final_generation_check=KILLED, identity_is_divergence=KILLED, drop_replaced_bindings=KILLED, skip_retained_reconciliation=KILLED, accept_source_override=KILLED, mutable_publication_token=KILLED, retire_open_source=KILLED, retire_pending_source=KILLED, allow_closed_snapshot=KILLED, forget_retained_spend=KILLED, positive_after=PASS. Exact child commands/failing nodes in outside mutations-r20/results.json. Primary source was never mutated.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m not expensive -p no:cacheprovider -rfE`: exit1; 69 failed, 12894 passed, 190 skipped, 2 warnings in 348.15s (0:05:48). Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20v2-fast.log.
+
+R20 corrected-source FAST:69failed12894passed190skipped; two new failure IDs are clean-tree assertions only: test_the_tree_is_core_freeze_v1 and test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks, each explicitly reports tree.clean. No R6 failure. Full clean-commit FAST rerun required; these results are not presented as base-equivalent. Source hash stable. `git diff --check` executed exit0. Mutants10killed/0surviving/0invalid/0unexecuted, positives72before/after. Original native rerun initially failed harness HEAD assertion before scenarios; expected HEAD updated only, corrected34cases0duplicates.
+
+Executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -n 4 --dist loadfile -m not expensive -p no:cacheprovider -rfE`: exit1; 67 failed, 12896 passed, 190 skipped, 2 warnings in 309.15s (0:05:09). Source stable=True. Raw log /home/dev_kaeem/br11-review/lifetime-closure/r20-clean-fast.log.
+
+Round20 A_F independently executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest /home/dev_kaeem/br11-review/r20/A_F/test_probes.py tests/mind/test_authority_review_r3.py tests/mind/test_authority_cross_domain.py tests/mind/test_authority_lifetime.py tests/mind/test_world_boundary.py -q -p no:cacheprovider` atb4bbee0f: 87 passed in 11.39s. Exact report/execution in round20/A_F.
+
+Round20 B_C independently executed `/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -p no:cacheprovider /home/dev_kaeem/br11-review/r20/B_C/test_independent.py tests/mind/test_authority_lifetime.py tests/mind/test_authority_lifetime_state_machine.py tests/mind/test_authority_review_r19.py tests/mind/test_authority_publication_currency_r19.py tests/mind/test_authority_review_r6.py tests/mind/test_authority_review_r16.py tests/mind/test_authority_review_r17.py` atb4bbee0f: 129 passed in 9.57s. Exact report/execution in round20/B_C.
+
+Round20 D_E independently executed `.venv/bin/python -m pytest -q -p no:cacheprovider /home/dev_kaeem/br11-review/r20/D_E/test_independent.py tests/mind/test_authority_lifetime.py tests/mind/test_authority_publication_currency_r19.py tests/mind/test_authority_review_r16.py` atb4bbee0f: 57 passed (focused.log), exit0. Exact report/execution in round20/D_E.
+
+### BR1.1 Round20 closure
+Independent A/F87pass,B/C129pass,D/E57pass (overlappingpacks;26freshprobes), scoped scientific-review PASS, completeness PASS atb4bbee0f. Q1–Q7 allNO,0BLOCKER/0MAJOR/0substantiveMINOR. CleanFAST67failed12896passed190skipped: no new failure IDs;66/67 extractedreasonsmatch. Exception unknownprovenance count1202vsbase456 explicitly disclosed; scanner/test bytes unchanged, evidence inventory debt expanded, not repaired. Sourcehash efad8b56 stable. Exactreports/commands under round20 and lifetime_closure. Closure evidence commit documentation-only, no source/test edits after immutable reviewedimplementation. Scientific Contract Kernel v0 next; notstarted. No push/PR/merge/certification.
+
+## 2026-10-23 -- Docs-only quick wins from the repository-health audit
+
+Branch `docs/audit-quick-wins-2026-10-23` (worktree `D:/forge-docs-quickwins`), from `origin/main` `12862b0b`.
+Every changed path classifies `ordinary` under `python -m tools.certification.recertification_scope explain`; no
+certified, SHA-pinned or provenance-bound file was edited. No code or test changed.
+
+- Gate recipe unified in CLAUDE.md, README.md, docs/TESTING.md and docs/reproduce.md: CI install set
+  `.[dev,mcp,oracles]`; `forge_check --changed --base origin/main --workers 4` (the pinned substring
+  `python tools/forge_check.py --changed` is kept); FAST and SCIENTIFIC with `-n 4 --dist loadfile`; README no longer
+  recommends `-n auto`.
+- New `docs/work/FAILURE_BASELINE_2026-10-20.md`: the recorded Linux 3.12 FAST set (64 nodes: 8 OD-3 drift,
+  2 stale certified mutant N60d, 3 guard-vs-code, 49 behaviour-vs-test, 2 unresolved) and the 143 Windows-only nodes.
+  It is a comparison aid only; no registry state is assigned and nothing may read it to skip or deselect.
+- ACTIVE_PLAN: OD-6 marked merged (PR #157 `0284ae16`; line 3 keeps the pinned `Active epic:` prefix); OD-15 trigger
+  half marked stale (`324d1a7e`); OD-25 refreshed (0 of 2,499 jobs ran a step 2026-10-15..10-20; last executed job
+  2026-10-14 on `e193e573`); OD-31 pin marked applied in `abed661f` (OD-3 still open); the older duplicate OD-28 row
+  removed and the remaining row marked merged via PR #167 `337519d1`.
+- README: V&V layer location corrected to `credibility/`; CRAFTY_ARCHITECTURE_CONTEXT marked historical; SRIA.md
+  description no longer says nothing imports it; hold-out figures dated as historical.
+- "~6,600 lines" corrected in CLAUDE.md, docs/ai/CONTEXT_MAP.md and docs/ai/PROGRESS_INDEX.md (8,095 at `12862b0b`).
+
+Tests (Windows 11, CPython 3.14.2, shared venv; `PYTHONPATH` set to the worktree with `;`; temp redirected to `D:/tmp/qw`):
+
+- `python tools/forge_check.py --changed --base origin/main --workers 4` (worktree): FAIL, exit 1, 8 failed,
+  524 passed, 4 skipped in 25.50 s. All 8 are in the recorded Windows-only set: 7
+  `tests/test_local_assurance.py` (`test_source_gate_orchestration_preserves_checkout[*]` x6,
+  `test_child_exit_during_forced_kill_preserves_stream_error`) and
+  `tests/test_change_impact.py::test_f7_a_tree_with_a_refused_entry_narrows_nothing` (`WinError 1314`, symlink privilege).
+- Control: `python -m pytest -q -n 4 --dist loadfile -p no:cacheprovider --basetemp=... -m "not expensive"` over the
+  gate's 15 modules plus `tests/domains/kinetics/test_cstr_domain.py` and `benchmarks/domain_real_data/tests`, run on
+  pristine `12862b0b` (`D:/forge-redisc-base`) and on this branch: both FAIL, exit 1, 10 failed, 555 passed, 4 skipped;
+  identical failure sets. The 2 extra failures are
+  `benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance`
+  and `::test_synthetic_data_is_never_called_measured`: 6 files under
+  `docs/work/evidence/branch_ci_investigation_2026_10_20/` have no reviewed provenance row on `main`. Neither new file of
+  this branch is flagged.
+- `python docs/ai/check_docs.py`: AI_DOCS: PASS (7 documents; metadata and local paths only).
+- FAST, SCIENTIFIC, formal, full assurance and OD-3: NOT RUN.
+
+## 2026-10-24 — R21 integration gate recovery: initial reproduction and main reconciliation
+
+Authorized source c6f33f3942235dff4f8c7df0918daeb9bb7ff54f was clean on the continuing branch; fetched main5ac5267781b9310fa205e9f2c1d12b34aa86e235. Merged main documentation changes; the sole PROGRESS conflict retained both complete appended histories. Source and tests unchanged by reconciliation. BR1.1 remains locally CLOSED, integration not complete.
+Executed `.venv/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance`:2failed in1.32s. Both expected unknown-provenance assertions reproduce; current c6f33f39 count1211, historical b4bbee0f count1202, base1202ea6c count456. Exact log /home/dev_kaeem/br11-r21/provenance-red.log. No scanner/test edits.
+Governance read checks still403 for private-repository protection; only sharq-labs collaborator returned. No purchase, visibility/rules change or self-approval. Full assurance authorization and independent reviewer/protection owner actions requested while bounded provenance repair proceeds. No receipt fabricated or certificate issued.
+
+### R21 owner authorization and additional scope inspection
+
+Owner explicitly authorized required full local assurance, campaigns, mutation shards and certificate-only child after repaired-source review, with immutable SHA, controlled WSL resources, no unrelated worktrees/OD-3/scientific repair expansion and no push/merge absent SAFE_TO_PUSH:YES plus all mandatory gates. Prior authorization request is satisfied; governance actions remain unresolved.
+Executed current-tree and unpublished-object byte scans:1812 changed current files/121624072bytes and692 unpublished blobs/32864740bytes; seven credential pattern families,0candidates;0credential-filename candidates,0NUL-bearing current files.173duplicate groups retained. Scope audit documents heuristic limits and corrects the prior blanket synthetic description of measured-derived battery packs. No cleanup. Runtime discovery:Python3.12.3 present;Python3.11/ngspice absent from PATH and standard local runtime paths; no system modification.
+
+### R21 provenance repair verification
+
+The scanner remained unchanged. Added1,210 explicit provenance rows and refreshed the stale DOCSET record; all432 other existing records preserved. All746 additional entries classified:6generated results,149audit metadata,591historical logs; no raw datasets/benchmark inputs/production source in that delta. The full1,211-unknown debt is covered, including older measured-derived battery packs;39pack hashes matched retained manifests. These are inventory/custody declarations, not source-data authenticity or scientific evidence admission.
+Executed `.venv/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests`:33passed in49.10s, exit0. Pre-repair two failing current-inventory assertions (1211unknown) now pass with0unknown; malformed declarations, changed artifacts/evidence and index-binding controls also pass. Log:/home/dev_kaeem/br11-r21/provenance-repair-tests.log. Independent technical review pending; full assurance NOT RUN yet.
+
+After restoring original registry row order (values unchanged), executed `.venv/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance`:2passed in13.52s, exit0; log /home/dev_kaeem/br11-r21/provenance-final-order-tests.log. Executed `.venv/bin/python docs/ai/check_docs.py`:AI_DOCS:PASS (8documents; metadata/local paths only). `git diff --cached --check`:exit0. No regression test added because the reproduced defect was missing metadata, and existing altered-artifact/source/index controls cover that contract.
+
+Independent read-only R21 technical review PASS: all1211record repairs,746classification rows and123unique supporting evidence hashes checked; no authority promotion, no scanner/test/runtime edits. Merge history/scope audit also PASS. See r21-integration-recovery/technical-review.md. Human GitHubapproval remains absent. Next: freeze this repaired source, confirm reviewer SHA, bootstrap only checkout-local missing runtimes, then documented assurance prepare/run with4functionalworkers,2mutationshards. No physical-model validation/certification/formal-proof claim.
+
+### R21 first immutable-source assurance attempt (5d98271ae14c72202163a46b5b73ca736c3316ab)
+
+Independent final-source technical review PASS with clean tree. Missing Python3.11 and ngspice were bootstrapped locally (uv0.13.5 managedCPython3.11.17; Ubuntu ngspice42 packages extracted without system installation). Python3.12.3 uses /usr/bin/python3.12. Documented `.venv/bin/python -m tools.certification.local_assurance prepare --python311 /home/dev_kaeem/forge-gen2-authority-v1/.forge/runtime/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11 --python312 /usr/bin/python3.12`:PASS,189.45s. Imports from/tmp with `.forge/venvs/3.12/bin/python -E -s -P -c "import pint, numpy, scipy"`:exit0. Full commands/environment identities preserved in /home/dev_kaeem/br11-r21/. Numerical-library threads1, functionalworkers4, mutationworkers2.
+Executed `.forge/venvs/3.12/bin/python -m pytest benchmarks -m "not expensive" -q -rs -p no:cacheprovider`:592passed,11deselected,0skipped in182.77s.
+Executed `.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python --workers 4 --mutation-workers 2`:exit1,274.84s; dependencyguard1passed9.98s, FAST31163failed12917passed176skipped in249.06s. LOCAL_ASSURANCE:REFUSED / EXPECTED_ASSURANCE_REFUSAL / SAFE_TO_PUSH:NO. Official failure record `.forge/assurance/5d98271ae14c72202163a46b5b73ca736c3316ab/local-assurance-failure.json` SHA2563c990f4dbebaba0fa9b5c40a15c9b051ff181b565c84e5be8b59f68921450c72. Full node IDs/diagnostics in run.log, officialJUnit and fast311-failure-details.json. No later gate, mutation shard, certificate generation or childverification ran.
+Comparison to Round20:59shared failureIDs,4additional; different interpreter/deselections, so this is not causal equivalence or a no-regression claim. Two additional failures were introduced by the local bootstrap layout: repositoryownership and changeimpact scanners saw provider example files/interpreterlinks under .forge/runtime. Moved only owned runtime into existing .forge/venvs environment boundary, retained initialvenv, re-executed documentedprepare with /home/dev_kaeem/forge-gen2-authority-v1/.forge/venvs/r21-bootstrap/python/cpython-3.11.17-linux-x86_64-gnu/bin/python3.11:PASS22.31s. Both interpreterbinaryhashes and completepipfreezes equalinitial. Scanner/tests unchanged. Initial partial ngspice-only move control FAILED(1failed5.97s; Pythonlinks still visible); complete environment-root correction controls `.forge/venvs/3.11/bin/python -m pytest -q -p no:cacheprovider tests/test_repository_ownership.py::test_the_real_checkout_graph_never_contains_an_environment`:1passed4.85s and samecommand with `tests/test_change_impact.py::test_the_old_gap_a_domain_models_own_tests_are_now_selected`:1passed5.19s. All failures retained.
+The other two new failures are isolated testportability issues under independent review: deep2000 is unreadable on3.11 butreadable3.12 (both refuse redispatch/calls1); matrix decisions allmatch but6worldrevisionhashes differ because supportedPintversions have different registryfingerprints. Bounded expectation/referencequalification repair underway; no Coreidentitynormalization, thresholds, skips or scientificcontracts changed. The59shared failures include thermal guard, conservation/coupling semantic migration, frozenCore/N60d and replay expectations; fixing them remains outsideR21 scientificscope.
+
+### R21 bounded portability repair
+
+Independent diagnostic code/argv and both exit0 outputs preserved in /home/dev_kaeem/br11-r21/r21-version-probe-results.json and r21-version-probe.py; registrycomparison in r21-unit-registry-diagnosis.json. No falseadmission demonstrated: deep2000refused/calls1 onboth;3.11ownerJSONunreadable,3.12readable. Unitregistry snapshots differ1164entries acrossPint0.25.3/0.26.2; matrix differs only6worldrevisionfields. Repaired testexpectations with independent fresh-thread ownerreadability and an additive explicitly fingerprint/version/digest-qualified frozen reference. Existingsealedreference andproduction/Core unchanged; unknownbackends failclosed.
+Executed `.forge/venvs/3.11/bin/python -m pytest -q -p no:cacheprovider tests/mind/test_authority_review_r11.py benchmarks/mind_gen2_authority_v1/tests/test_mind_gen2_authority_v1.py -m "not expensive"`:44passed1deselected5.51s; identicalcommand with3.12:44passed1deselected5.57s. Independent technicalreview PASS at exacthashes in r21-integration-recovery/portability-review.md. Fullassurance must run on new immutable reviewedsource; prior63failure refusal is retained and is not rewritten.
+
+Executed `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests` after additive runtime reference:33passed47.58s, exit0. Exact log /home/dev_kaeem/br11-r21/portability-provenance.log. `git diff --cached --check`:exit0. Registry now1644explicitrecords; allprevious1643unchanged, one newderivedreference.
+
+### R21 final immutable-source assurance and stop boundary
+
+Independent final-source technical review PASS atd05abfdf8216eda24a6235a9c7565d276f9a7fcc; cleanbefore/after. Executed `.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python --workers 4 --mutation-workers 2`:exit1,265.02s; dependencyguardPASS; FAST31159failed12922passed176skipped in240.65s. LOCAL_ASSURANCE:REFUSED / EXPECTED_ASSURANCE_REFUSAL / SAFE_TO_PUSH:NO. Exact59failednodeIDs listed in docs/work/evidence/r21-integration-recovery/FINAL_REPORT.md; officialJUnit and full run-final.log retained. They exactlyequal the59sharedRound20IDs, with0of4first-runadditional failuresremaining; identitycomparison only, no causal-equivalence claim. Failure recordSHA25638a31d6f20f325e4ceed36dc4c45c49df8853c98b83a2a2dba3b9504444e9f21. LaterFAST312/SCIENTIFIC/campaign/regression/mutationgates/receipt/certificate/childverification NOT RUN becauseofficialrunnerstopped. No certificatebytes changed; no push/merge/PRupdates.
+Authorized boundedrepairs complete. BLOCKED on required59failure remediation outsideR21 scientific/OD3scope and separate private-protection/humanapproval owneractions. Do not rerun merely to relabelred; obtain explicit separate repairauthority, preservefailures, then newreviewedsource/fullworkflow. Finalreportcontains exactownerdecisions and reproduction/verification/reviewer/SHA table. No newBigRock, thermal/battery/UQimplementation or broadOD3change started.
+
+Final independent completeness review PASS for accurate BLOCKED closure (FINAL_REPORT SHA2568cd96b01d4fbefae9c5abe7e8a2836d06e1ef496aa84399ac76166e044dde1a7):59JUnitIDs, failure/ JUnithashes, unchangedcertificate and NOTRUNlatergates checked. Executed `.forge/venvs/3.12/bin/python docs/ai/check_docs.py`:AI_DOCS:PASS8documents; `git diff --check`:exit0. `git merge-base --is-ancestor 1202ea6c3d96f5c31d0b142a32438da75e020cae HEAD` and samewith5ac5267781b9310fa205e9f2c1d12b34aa86e235:bothexit0. FinalGitHubread:main5ac52677/unprotected;PR184OPENd40aff44/dirty;PR185OPEN1202ea6c;onlyCOMMENTEDbotreview. Documentationcheckpoint does not alter measuredtestsource or createassurancereceipt.
+
+## 2026-10-24 — R22 bounded required-gate repair authorized
+
+Owner explicitly authorized repair of59remaining failures, necessaryOD-3, independentreview and fullassurance; NO PUSH/MERGE. Startingclean05a9e4d4, priorofficialfailure evidence retained atd05abfdf. Read-only independent reviews begun for coupling/field and frozenCore/mutation groups; parent examines schema/threshold/replay. No gate weakening or historical evidence rewrite authorized.
+
+
+### R22 repair execution evidence (2026-10-24)
+
+All raw commands, exit codes and output are preserved outside the checkout in `/home/dev_kaeem/br11-r22`. Historical R21 evidence is unchanged.
+
+- `red-59`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/claims/test_offline_revalidation.py::test_offline_verification_never_returns_verified",
+    "tests/claims/test_offline_revalidation.py::test_replay_re_earns_what_offline_verification_cannot",
+    "tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds",
+    "tests/test_core_freeze_v4_manifest.py::test_the_deep_surface_carries_methods_and_member_positions",
+    "tests/test_core_guards.py::test_no_gate_lets_its_caller_set_the_threshold_it_awards_a_level_against",
+    "tests/test_core_scientific_audit_batch55.py::test_r67_every_folded_mutation_still_matches_the_live_source_exactly_once",
+    "tests/test_core_scientific_audit_batch56.py::test_r69_the_v4_surface_records_the_methods_the_digests_could_not_see",
+    "tests/test_core_semantic_invariants.py::test_every_reader_that_writes_a_schema_also_checks_one",
+    "tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module",
+    "tests/test_interface_flux_execution.py::test_unqualified_direct_mapper_escape_and_stale_support_refuse",
+    "tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable",
+    "tests/test_mutation_population_v4.py::test_every_folded_mutation_still_matches_the_source_it_names",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_constant_field_maps_to_the_same_constant",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_non_convex_quadrilateral_is_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_signed_field_that_integrates_to_zero_is_conserved_without_division_by_zero",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_source_partly_outside_the_target_support_is_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_a_target_outside_the_source_support_is_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_hexahedral_cells_are_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_node_fields_are_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_offset_scale_units_are_refused",
+    "tests/test_phase1_conservative_cell_mapping.py::test_structured_remap_between_unequal_cell_counts_per_axis",
+    "tests/test_phase1_conservative_cell_mapping.py::test_structured_remap_matches_hand_computed_overlaps",
+    "tests/test_phase1_conservative_cell_mapping.py::test_unequal_triangles_are_weighted_by_their_overlap_area",
+    "tests/test_phase1_coupling_convergence_coverage.py::test_a_self_loop_is_a_lagged_edge",
+    "tests/test_phase2_coupling_authority.py::test_a_relaxed_native_plan_is_built_with_torn_only_relaxation",
+    "tests/test_phase2_coupling_authority.py::test_an_iteration_limit_is_not_completed_on_both_paths",
+    "tests/test_phase2_coupling_authority.py::test_the_runtime_build_keeps_every_produced_result",
+    "tests/test_phase2_coupling_authority.py::test_the_runtime_build_reaches_the_native_outcome_iterations_and_values[nominal]",
+    "tests/test_phase2_coupling_authority.py::test_the_runtime_build_reaches_the_native_outcome_iterations_and_values[two_stage]",
+    "tests/test_phase2_coupling_authority.py::test_the_torn_edges_are_exactly_the_edges_the_runtime_requires_criteria_on",
+    "tests/test_phase2_external_coupling.py::test_a_crashed_provider_is_a_classified_refusal_not_a_numerical_failure",
+    "tests/test_phase2_external_coupling.py::test_a_field_coupled_run_maps_the_flux_conservatively_and_records_it",
+    "tests/test_phase2_external_coupling.py::test_a_flux_mapped_by_nearest_site_is_refused",
+    "tests/test_phase2_external_coupling.py::test_a_numerical_non_convergence_keeps_its_retryable_type",
+    "tests/test_phase2_external_coupling.py::test_the_authority_refuses_mock_external_participants_unless_allowed",
+    "tests/test_phase2_external_coupling.py::test_the_contract_is_honoured_by_a_conservative_flux_and_a_consistent_temperature",
+    "tests/test_phase2_field_transfer.py::test_a_constant_maps_to_the_same_constant_between_two_tetrahedralizations_of_a_cube",
+    "tests/test_phase2_field_transfer.py::test_a_degenerate_tetrahedron_is_refused",
+    "tests/test_phase2_field_transfer.py::test_a_vector_field_is_remapped_component_by_component",
+    "tests/test_phase2_field_transfer.py::test_tetrahedral_remap_conserves_the_integral_and_stays_within_the_source_range",
+    "tests/test_phase2_field_transfer.py::test_the_same_tetrahedra_in_another_order_map_as_a_permutation",
+    "tests/test_phase2_review_regressions.py::test_a_redundant_forward_tear_is_refused",
+    "tests/test_phase2_review_regressions.py::test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build",
+    "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[1]",
+    "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[2]",
+    "tests/test_phase2_review_regressions.py::test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal[3]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_a_refused_transfer_is_a_recorded_stop_on_both_paths",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_a_relaxed_plan_requires_criteria_on_the_torn_edges_only",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_an_iteration_limit_reproduces_the_native_final_iterate",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[nominal]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[nominal_relaxed]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[two_stage]",
+    "tests/test_phase35_ws2_electrothermal_migration.py::test_the_candidate_reproduces_the_native_loop[two_stage_relaxed]",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_an_explicit_plan_is_admitted_only_as_satisfied_to_its_splitting_error",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_an_honest_graph_is_admitted_and_states_both_conditions_and_what_it_does_not_establish",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_an_implicit_plan_must_measure_both_interface_edges",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_the_receiver_sign_flips_with_the_declared_normal",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-conservatively]",
+    "tests/test_phase35_ws3_conjugate_interface.py::test_wrong_interface_semantics_are_refused[<lambda>-heat flux dimension]"
+  ],
+  "exit": 1,
+  "seconds": 36.10102605819702,
+  "head": "05a9e4d43e60e5ab643d385c2f06c7adc8b5eeca",
+  "pending": "authorization docs only"
+}
+```
+
+- `authority-first`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_r22_integrity_guards.py",
+    "tests/test_core_semantic_invariants.py",
+    "tests/test_core_guards.py",
+    "tests/claims/test_offline_revalidation.py",
+    "tests/test_interface_flux_execution.py",
+    "tests/test_multiphysics_window_control.py",
+    "tests/test_electrothermal_vertical.py",
+    "tests/test_electrothermal_fixed_point_relaxation.py",
+    "-m",
+    "not expensive"
+  ],
+  "exit": 0,
+  "seconds": 31.99
+}
+```
+
+- `field-first`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_phase1_conservative_cell_mapping.py",
+    "tests/test_phase2_field_transfer.py"
+  ],
+  "exit": 0,
+  "seconds": 1.34
+}
+```
+
+- `adapter-first`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_phase2_coupling_authority.py",
+    "tests/test_phase35_ws2_runtime_migration.py",
+    "tests/test_phase2_review_regressions.py",
+    "tests/test_phase1_coupling_convergence_coverage.py"
+  ],
+  "exit": 5,
+  "seconds": 0.54
+}
+```
+
+- `adapter-second`: exact command/result record:
+```json
+{
+  "command": [
+    ".forge/venvs/3.12/bin/python",
+    "-m",
+    "pytest",
+    "-q",
+    "-n",
+    "4",
+    "--dist",
+    "loadfile",
+    "-p",
+    "no:cacheprovider",
+    "tests/test_phase2_coupling_authority.py",
+    "tests/test_phase35_ws2_electrothermal_migration.py",
+    "tests/test_phase2_review_regressions.py",
+    "tests/test_phase1_coupling_convergence_coverage.py"
+  ],
+  "exit": 1,
+  "seconds": 1.78
+}
+```
+
+Results: red-59 reproduced all 59 failures before repairs; authority-first 592 passed; field-first 26 passed. adapter-first ran no tests (incorrect WS2 filename, exit 5), corrected in adapter-second: 56 passed, one failed (`test_a_self_loop_is_refused_before_convergence_planning`, expected refusal diagnostic regex mismatch). The assertion now names the actual internal-physics boundary; rerun pending. None of these are physical-model validation or full-assurance completion.
+
+Replay diagnostic `/home/dev_kaeem/br11-r22/replay-id-red.json` showed a correct parent provenance run ID distinct from the selected thermal subreport ID; the old predicate rejected this valid binding. The window diagnostic measured 7 plain and 4 remembered rejections across eight quarter-second accepted windows ending at 2 seconds; the final plain window is already clipped to the stable step.
+
+
+R22 follow-up review and gate evidence:
+
+- The neighbor test named `test_a_redundant_forward_tear_is_refused` was a plan-construction mixed-dimension refusal; renamed it to state that scope. The separate `test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build` tampers a frozen native plan and asserts the runtime forward-tear refusal directly.
+- Added adapter regressions for Joule port meanings and preserved endpoints/conversion/transport declaration, both enumerated thermal result metrics, missing conversion, incompatible conversion forms, and an unrecognized same-dimension source metric.
+- Independent review found the schema guard accepted any attribute named `require_schema`. Narrowed it to direct calls through imports from the canonical serialization helper (and the explicitly inspected HybridUQ local helper), and added decoy-attribute and aliased-canonical-import controls. The first narrowed run exposed six legitimate HybridUQ local helper imports; the helper resolver was extended to that inspected module, and the corrected run passed.
+- Exact first focused command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_r22_integrity_guards.py tests/test_core_semantic_invariants.py tests/test_phase2_coupling_authority.py` — **175 passed, 1 failed** (schema guard correctly exposed six trusted local helper calls, causing the aggregate assertion failure; no defect in scientific records was alleged).
+- Exact corrected focused command (same argv): **176 passed in 13.35s**, exit 0.
+- Exact forward-tear + adapter command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_phase2_coupling_authority.py tests/test_phase2_review_regressions.py::test_a_mixed_dimension_forward_tear_is_refused_during_plan_construction tests/test_phase2_review_regressions.py::test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build` — **29 passed in 0.92s**, exit 0.
+- Exact adapter group command: `.forge/venvs/3.12/bin/python -m pytest -q -n 4 --dist loadfile -p no:cacheprovider tests/test_phase2_coupling_authority.py tests/test_phase35_ws2_electrothermal_migration.py tests/test_phase2_review_regressions.py tests/test_phase1_coupling_convergence_coverage.py` — **63 passed, 1 warning in 1.74s**, exit 0. Warning: expected overflow probe in `relaxation.py:203`.
+
+
+R22 freeze and assurance preparation:
+
+- Added `api_surface_v4.historical_surface_problems` and made the Core Freeze verifier use it to authenticate the stored deep surface against both candidate Git bytes and the manifest digest. Historical manifest/surface/certificate files were not regenerated or changed.
+- Added adversarial descendant-comparator controls for add-only acceptance versus exact-mode refusal; method removal/rename/role/signature/default/parameter-kind changes; symbol identity/kind; enum order; dataclass field order; duplicate identities; inconsistent symbol/method counts; and historical byte/digest mismatches.
+- Exact new-control command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_descendant_comparator_rejects_breaking_changes tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_history_requires_candidate_bytes_and_manifest_digest` — **2 passed in 0.06s**, exit 0.
+- Exact broad command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_core_freeze_v4_manifest.py tests/test_core_scientific_audit_batch56.py` — **27 passed, 2 failed in 156.13s**, exit 1. Both failures are the intended `tree.clean` binding assertions because this source-review run was performed with uncommitted changes; all reported freeze surface/history checks in the failure diagnostics passed. Rerun from a clean committed clone is required before interpreting this gate.
+- Independent follow-up reviews: coupling/runtime adapter **PASS**, schema/threshold/replay **PASS**. Freeze reviewer originally identified missing adversarial controls and correctly noted N60d runner was refused by `.git/worktrees` admission; controls are now added and read-only follow-up is pending.
+- Mutation attempt record: N60d was not executed. The first malformed ID file was refused as an unknown ID; the corrected request was then refused before mutation by the certified runner because `.git/worktrees` contains registered historical worktrees. No guard, registration, or checkout was changed to bypass this. The named-target mutation must run from a separate clean local clone with independent Git storage.
+
+
+Freeze-control follow-up and independent review closure:
+
+- Added the final two adversarial comparator controls requested by the freeze reviewer: candidate-byte-only tampering while stored bytes/digest still match, and a literal default `False`→`True` mutation while `has_default` remains true. Exact focused command: `.forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_descendant_comparator_rejects_breaking_changes tests/test_core_freeze_v4_manifest.py::test_r22_deep_surface_history_requires_candidate_bytes_and_manifest_digest` — **2 passed in 0.07s**, exit 0.
+- Freeze reviewer follow-up: **PASS** by read-only inspection. It confirms all requested negative controls, history authentication checks and exact-mode refusal are present. Limitation retained explicitly: historical V4 records default presence, not literal values; no frozen snapshot was rewritten.
+- Schema/threshold/replay reviewer follow-up: **PASS** by read-only inspection; coupling/runtime adapter reviewer follow-up: **PASS** by read-only inspection. These are source reviews, not test or scientific-validation evidence.
+
+
+R22 first full-assurance attempt (`a1ef9c990cf00ca44beb8d9ace8912605d5b55fe`):
+
+- `local_assurance prepare` passed in the isolated clone for Python 3.11/3.12 and ngspice. The first `run` admission refused because a local-path clone cannot infer OWNER/REPO; rerun supplied the source remote identity `sharq-labs/forge`.
+- The fast 3.11 gate ran **13,034 passed, 176 skipped, 6 failed** in 242.56s; assurance stopped before later gates, `SAFE_TO_PUSH: NO`. Four failures came from the new tolerance test setting constructor argument names as instance fields; Quantity-valued tolerances also needed conversion to the actual scalar fields in their configured units. The other two were inventory refusals: seven unchanged frozen V4/API artifacts had valid current bytes but provenance evidence pointed at historical code hashes without identifying the source commits.
+- Fixed the test to mutate exactly `_configuration()`'s stored fields (`rtol`, `atol`, `temperature_atol`, `local_power_atol`) and use J/K/W base magnitudes. Added the full immutable historical commit IDs to the relevant `CURRENT_PROVENANCE.json` evidence records: `8ab7dfba70199ee2cf120e86b6fcc1fca844364d` for `core_freeze_v4.py` and `08e1b02f1e2e639b3b72c1821bba977a99b6df61` for `api_surface_v4.py`. Verified each recorded digest against its exact commit blob. No frozen manifests, API snapshots, assurance record or historical scan bytes were rewritten.
+- Exact inventory command: `.forge/venvs/3.12/bin/python benchmarks/domain_real_data/audit/inventory_scan.py --check` — historical `REPOSITORY_SCAN.json` reproduced; live `UNKNOWN_PROVENANCE 0`.
+- Exact focused command: `.forge/venvs/3.11/bin/python -m pytest -q -p no:cacheprovider tests/test_m1c_transient_fv.py::test_numerical_tolerances_bind_configuration_without_awarding_assurance benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance` — **6 passed in 14.26s**, exit 0.
+- The failed fast gate's full output and runner failure record are preserved at `/home/dev_kaeem/br11-r22/full-assurance-a1ef9c99.log` and `/home/dev_kaeem/forge-r22-assurance/.forge/assurance/a1ef9c990cf00ca44beb8d9ace8912605d5b55fe/local-assurance-failure.json`. The corrected source needs an independent review, a new immutable SHA, and a complete rerun of local assurance; the partial `a1ef9c99` result is not reusable.
+
+
+R22 second full-assurance attempt (`e977ab0fef3b6fd41991998bd341654683210997`):
+
+- The corrected 3.11 fast gate completed with **13,039 passed, 176 skipped, 1 failed** in 238.09s, exit 1; all prior tolerance/provenance failures are resolved. It stopped before later assurance gates, `SAFE_TO_PUSH: NO`.
+- Remaining failure was `tests/foundations/test_discovery_deadline.py::test_timeout_covers_handshake_output_and_inherited_pipes[...]`: after killing the launcher's process group, cleanup reaped the leader immediately while an inherited-pipe child was still observed running. Fixed by waiting for live observed group members to stop before reaping the leader, failing closed on malformed `/proc` stat entries, including actual survivor PIDs in diagnostics, and attempting bounded leader reaping even if observation fails. The implementation describes this as process-group observation, not arbitrary descendant or namespace cleanup.
+- Added direct controls for survivor PID diagnostics, malformed `/proc` refusal, and leader reaping after observation failure. Exact command: `.forge/venvs/3.11/bin/python -m pytest -q -n 4 --dist loadfile -p no:cacheprovider tests/foundations/test_discovery_deadline.py` — **14 passed in 2.81s**, exit 0.
+- Repeated that exact test file five times under the same four-worker command; each round reported **14 passed** (2.80–2.82s), overall shell command exit 0.
+- Independent read-only authority review of the current isolation diff: **PASS**. It confirmed the process-group scope limitation and that malformed observations fail closed; it did not execute tests.
+- The complete failed run is retained at `/home/dev_kaeem/br11-r22/full-assurance-e977ab0f.log`, with runner failure record `/home/dev_kaeem/forge-r22-assurance/.forge/assurance/e977ab0fef3b6fd41991998bd341654683210997/local-assurance-failure.json`. This failure record is preserved; the new source requires a new commit and full assurance rerun.
+
+R22 scientific gate follow-up (`22181dc7`):
+
+- Full assurance reached the 3.12 scientific gate and found two failures: the ngspice warning-size assertion and the battery rediscovery leakage check. The warning payload contained six genuine module-load errors because the local `SPICE_LIB_DIR` pointed to `usr/share/ngspice`; setting it to the bundled `usr/lib/x86_64-linux-gnu/ngspice` directory removed those errors and retained the existing `<500` bound. No warnings were suppressed and no assertion was relaxed.
+- The leakage failure was a CPython bytecode-cache temporary write under the audited GEN1 candidate source. `sandbox_run.main` now disables automatic bytecode writes after installing its audit hook and before importing the candidate. Existing audit coverage and acceptance rules are unchanged.
+- Exact focused command in the isolated assurance clone: `.forge/venvs/3.12/bin/python -m pytest -q -n 4 benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_synthetic_end_to_end_and_replay_dry_run tests/test_heterogeneous_ngspice.py::test_n_substituting_the_provider_does_not_inflate_the_record` with bundled provider `PATH`, `LD_LIBRARY_PATH`, and corrected `SPICE_LIB_DIR` — **2 passed in 32.37s**, exit 0.
+- Independent read-only authority review of the sandbox change: **PASS**. It confirms no telemetry filter or gate change; it did not execute tests. Full assurance has not yet been rerun at the repaired immutable source SHA.
+- The complete failed attempt remains preserved at `/home/dev_kaeem/br11-r22/full-assurance-22181dc7.log` and its checksum-bound refusal record under `.forge/assurance/22181dc729594fb91f1b1142dd53c4b22c93b24a/local-assurance-failure.json`. The next full run must use the corrected provider module path and a newly committed source SHA.
+
+
+R22 assurance follow-up (caea0ff5e94f7547813cd632445a08c584039801):
+
+- Full local-assurance command in /home/dev_kaeem/forge-r22-assurance used Python 3.11/3.12, --workers 4 --mutation-workers 2, and the bundled ngspice PATH, LD_LIBRARY_PATH, SPICE_LIB_DIR, and PIP_CACHE_DIR. The run completed all execution gates, then recorded LOCAL_ASSURANCE: REFUSED at assurance_build; SAFE_TO_PUSH: NO. The source-bound log is /home/dev_kaeem/br11-r22/full-assurance-caea0ff5.log; refusal record is /home/dev_kaeem/forge-r22-assurance/.forge/assurance/caea0ff5e94f7547813cd632445a08c584039801/local-assurance-failure.json (SHA256 9934e87d7998d1c59e3b4754ff48ce5b081fa84d8dbcbeb28d77f44f2ffb89dc).
+- Completed gates: fast 3.11 (13,043 passed, 176 skipped), fast 3.12 (13,043 passed, 176 skipped), scientific 3.12 (13,624 passed, 177 skipped), campaign312, regression (279 passed), formal mutations (all 284/284 killed), V4 mutations (all eight shards), and trust mutations (13/13 killed). Every formal/V4/trust shard wrote its clean-tree gate record. The V4 population recorded 12 declared SURVIVED outcomes; no unexpected survival was reported. B32h, B34f, B37d and B33h remain explicitly documented reproduction/coverage gaps, not established production failures; no expectation or production rule was changed based on survival alone.
+- Assurance refusal lists the 20 exact PyBaMM checkpoint identity cases in fast 3.11, fast 3.12 and scientific 3.12 because they have no committed provider skip rule. It also lists benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_bundle_rebuilds_byte_identically_and_static_audit_passes because its configured local archive path is unavailable. Directly invoking that test body with .forge/venvs/3.12/bin/python failed with FileNotFoundError for D:/forge-data/kirkaldy2024/v3_rpt/Expt 4 - cell A - RPT0 - 25-pulse GITT 0.5C discharge data.csv; the corresponding /mnt/d/forge-data/... file is absent. This is an input-availability limitation, not a passing provenance-rebuild result.
+- Added pybamm-checkpoint-identity to tools/certification/skip_admission.py, binding the existing provider probes, exact skip reason and all 20 exact node names. Added a regression test that admits the listed unavailable-provider test and refuses an unlisted future test. No campaign/regression admission or skip enforcement was changed.
+- Exact focused command: .forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider tests/test_skip_admission.py; 89 passed in 1.74s, exit 0.
+- Independent read-only review of this skip-policy diff: PASS. It confirmed exact scope, existing registry/module-spec corroboration, fail-closed handling of UNKNOWN or AVAILABLE providers, and unchanged protected-test/suite restrictions.
+- A follow-up source SHA and full assurance rerun are pending the owner decision on the missing V3 raw archive: mount the pinned archive in WSL, or authorize a single exact conditional skip and a narrowly scoped benchmarks/ path allowance. The old refusal and all campaign evidence remain preserved; no push or merge was performed.
+
+
+R22 WSL raw-archive resolution (owner selected the mounted-archive option):
+
+- Confirmed the pinned data are present on Windows at D:\forge-data\kirkaldy2024\v3_rpt and the complete D:\forge-data root also contains the pinned NASA PCoE and Chen 2020 inputs. Mounted D: as /mnt/d with drvfs. WSL terminates the mount when the invocation exits, so data-dependent WSL gates must mount D: in the same invocation that runs the gate.
+- Added benchmarks/battery_rediscovery_v3/data_root.py. Windows keeps D:/forge-data; Microsoft-tagged WSL kernels use /mnt/d/forge-data; ordinary non-WSL platforms keep the prior D:/forge-data setting. The V3 builder, extractor, census and archive-availability check use the shared root. No data selection, pins, equations or scientific acceptance rules changed.
+- Added a platform path assertion to the V3 pipeline tests. Exact command, run with the WSL mount and test in one invocation: wsl.exe -u root -e bash -lc 'mount -t drvfs D: /mnt/d && cd /home/dev_kaeem/forge-gen2-authority-v1 && runuser -u dev_kaeem -- .forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_data_root_uses_the_native_or_wsl_drive_mount benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_bundle_rebuilds_byte_identically_and_static_audit_passes' ; 2 passed in 63.75s, exit 0. This executes the byte-identical pinned-input rebuild and static leakage audit; it does not establish physical-model validation or scientific certification.
+- Independent read-only review of the WSL path repair: PASS. It confirmed unchanged data selection and acceptance logic and that only Microsoft-tagged non-Windows kernels choose /mnt/d. Limitation: the resolver assumes WSL's default D: mount at /mnt/d.
+- The source needs a new immutable commit containing this path repair and a complete local-assurance rerun with the drvfs mount kept alive. No push or merge was performed.
+
+
+R22 full-assurance rerun follow-up (a257bc4fb10515a9f870d9b2c9941a89126a7d77):
+
+- With the WSL data mount active, the run reached the fast 3.11 gate and stopped on two inventory provenance assertions: tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured and ::test_current_repository_inventory_has_no_unreviewed_provenance. The gate reported 13,043 passed, 176 skipped, 2 failed in 233.64s. Failure record: /home/dev_kaeem/forge-r22-assurance/.forge/assurance/a257bc4fb10515a9f870d9b2c9941a89126a7d77/local-assurance-failure.json (SHA256 c9fb81e22392087191cd9528771a142c80cc59bb8261f5c42bd6e9c6736ba61d); full log: /home/dev_kaeem/br11-r22/full-assurance-a257bc4f.log.
+- The exact UNKNOWN_PROVENANCE item was tests/certification_data/skip_inventory_d5d886f9.json. Its artifact bytes remain unchanged at SHA256 9b603da083c7f4eb6cb8a59db492affa2b54d673b921d45870a95cb41995ada5. The existing provenance record's source digest 4ef5fedb98a50cb1db757e9ecb89d58274a426aed5b41e3100ae77e066e08df1 matches tests/test_skip_admission.py at immutable commit 6a7c785694edff414f6f224ed7d634f837cccc92. Added that commit identity to the evidence reference; the historical artifact and REPOSITORY_SCAN.json were not modified.
+- Exact scanner command: .forge/venvs/3.12/bin/python benchmarks/domain_real_data/audit/inventory_scan.py --check; historical report reproduced; live UNKNOWN_PROVENANCE 0, exit 0.
+- Exact focused command: .forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance; 2 passed in 13.48s, exit 0.
+- Independent read-only provenance review: PASS. It confirmed the artifact digest is unchanged, the historical source blob matches the recorded digest, and the new commit identity binds that source. The review does not claim to establish the original producer invocation.
+- This source needs a new immutable commit and complete local-assurance rerun. The failed run remains preserved; SAFE_TO_PUSH is NO, and no push or merge was performed.

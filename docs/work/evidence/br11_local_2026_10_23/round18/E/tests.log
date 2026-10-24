@@ -1,0 +1,4 @@
+..............{'detached': False, 'injections': ['capture', 'recovery'], 'refused': False, 'calls': 2}
+.{'detached': True, 'injections': ['capture', 'recovery'], 'refused': True, 'calls': 1}
+.................................
+48 passed in 1.92s

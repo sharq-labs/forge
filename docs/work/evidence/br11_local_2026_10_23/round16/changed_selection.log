@@ -1,0 +1,5 @@
+git diff --name-status -M main...HEAD failed:
+fatal: ambiguous argument 'main...HEAD': unknown revision or path not in the working tree.
+Use '--' to separate paths from revisions, like this:
+'git <command> [<revision>...] -- [<file>...]'
+Pass --base <ref> naming a locally available base ref.

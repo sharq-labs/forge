@@ -1,0 +1,6 @@
+plain metadata, verification between=False: after restore: DISPATCHED AGAIN | ran 2
+plain metadata, verification between=True: after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+nested list | to_dict metadata value types: {'seeds': 'FrozenList'}
+nested list | owner's canonical to_json of the experiment: ok
+datetime | to_dict metadata value types: {'t': 'datetime'}
+datetime | owner's canonical to_json of the experiment raises: TypeError Object of type datetime is not JSON serializable

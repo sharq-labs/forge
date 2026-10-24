@@ -1,0 +1,18 @@
+S1 dispatch #1: DISPATCHED | observe: MISSING_INFORMATION ('AUTHORITY_STALE',)
+S1 after rollback: observe MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | dispatch A: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE))
+S1 identical re-extension: observe MISSING_INFORMATION ('AUTHORITY_STALE',) | dispatch A: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_STALE))
+S1 executor ran 1
+S2 dispatch #1: DISPATCHED | observe: MISSING_INFORMATION ('AUTHORITY_STALE',)
+S2 rolled back: observe MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',)
+S2 other same-length history: observe MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',)
+S2 back to the admitted state: observe MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | dispatch A: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE))
+S2 executor ran 1
+S3 dispatch #1: DISPATCHED | observe: MISSING_INFORMATION ('AUTHORITY_STALE',)
+S3 removed: observe MISSING_INFORMATION ('AUTHORITY_MISSING',)
+S3 re-added rolled back: observe MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | dispatch A: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE))
+S3 executor ran 1
+S4 recorded one evaluation: observe MISSING_INFORMATION ('AUTHORITY_STALE',)
+S4 restored: observe MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | dispatch A: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE))
+S4 restored + metadata move: observe MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | dispatch A: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE))
+S4 executor ran 0
+exit 0

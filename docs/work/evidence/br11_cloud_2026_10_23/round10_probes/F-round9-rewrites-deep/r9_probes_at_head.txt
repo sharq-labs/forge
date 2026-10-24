@@ -1,0 +1,84 @@
+=== F-round8-rewrites-deep/g02_bind_accepts_check_refuses.py
+engcore from /home/user/forge/src/engcore/__init__.py
+honest: fixed T = 659.8016539685 bar -> bind REFUSES: action 'a': fixed 'T' = Quantity(magnitude=659.8016539685, units='bar') is outside its declared domain (as executed, in the variable's unit)
+other: fixed T = 9569.61392422404 pound_force_per_square_inch -> bind REFUSES: action 'a': fixed 'T' = Quantity(magnitude=9569.61392422404, units='pound_force_per_square_inch') is outside its declared domain (as executed, in the 
+=== F-round8-rewrites-deep/g08_check_accepts_bind_refuses.py
+FOUND var bar, level 4915.886356465 bar; fixed f = 71298.90360804842 psi: matched to L, as_unit(f) = 4915.886356465001 bar is no member; L's own conversion is L
+FOUND var bar, level 8289.604878735 bar; fixed f = 120230.55382890294 psi: matched to L, as_unit(f) = 8289.604878735001 bar is no member; L's own conversion is L
+hits 2
+=== F-round8-rewrites-deep/g05_hook_under_lock_deadlock.py
+engcore from /home/user/forge/src/engcore/__init__.py
+D1 same-thread read through the follower from a metadata value:  returned {'V': True}
+D2 metadata value takes the execution side's lock under the follower's lock: completed {'V': 'FEASIBLE'}
+=== C-adversarial-bypass/c01_locked_readback_runs_execution_code.py
+    self._reads[key] = self._current().read(kind, record_id)
+                       ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 484, in read
+    return self._read(kind, record_id)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 519, in _read
+    raise OwnerUnavailable(observed)
+engcore.mind.world.authority.OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: its serialization is not plain JSON data (exactly dict with str keys, list, str, int, float, bool or None)
+=== C-adversarial-bypass/c02_handed_before_rollback_read_after.py
+    current._observed = self._observe_all(current, ticket)
+                        ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+TypeError: paused() takes 2 positional arguments but 3 were given
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r9/C-adversarial-bypass/c02_handed_before_rollback_read_after.py", line 44, in <module>
+    assert handed.wait(10)
+           ~~~~~~~~~~~^^^^
+AssertionError
+=== D-replay-stale/e04_lock_across_readback_deadlock.py
+    self._reads[key] = self._current().read(kind, record_id)
+                       ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 484, in read
+    return self._read(kind, record_id)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 519, in _read
+    raise OwnerUnavailable(observed)
+engcore.mind.world.authority.OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: its serialization is not plain JSON data (exactly dict with str keys, list, str, int, float, bool or None)
+=== D-replay-stale/e04b_same_thread_reentrance.py
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 484, in read
+    return self._read(kind, record_id)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 519, in _read
+    raise OwnerUnavailable(observed)
+engcore.mind.world.authority.OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: its serialization is not plain JSON data (exactly dict with str keys, list, str, int, float, bool or None)
+hung: False | nested: [] | out: {}
+=== D-replay-stale/e01_experiment_metadata_int_keys_replay.py
+[gen1_pool unchanged] admission FEASIBLE () admitted=True; replay reproduced: 
+[gen1_pool metadata {2:'a', 10:'b'}] projection refused: OwnerUnavailable: experiment 'synthetic.gen1.two-level-protocol.experiment' is not one its owner reads back: its serialization is not plai
+[gen1_pool metadata {'x': {2:1, 10:2}}] projection refused: OwnerUnavailable: experiment 'synthetic.gen1.two-level-protocol.experiment' is not one its owner reads back: its serialization is not plai
+[battery unchanged] live digest 836818aa4bb8 | rederived after JSON 836818aa4bb8 equal=True
+[battery unchanged] world binds the experiment: True
+[battery unchanged] admission FEASIBLE () admitted=True; replay reproduced: 
+[battery metadata {2:'a', 10:'b'}] projection refused: OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: its serialization is not plain JSO
+[battery metadata {'x': {2:1, 10:2}}] projection refused: OwnerUnavailable: experiment 'synthetic.battery.pulse-cell.experiment' is not one its owner reads back: its serialization is not plain JSO
+=== D-replay-stale/d06c_older_concurrent_snapshot_deterministic.py
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 484, in read
+    return self._read(kind, record_id)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/home/user/forge/src/engcore/mind/world/owners.py", line 519, in _read
+    raise OwnerUnavailable(observed)
+engcore.mind.world.authority.OwnerUnavailable: an earlier verification of this budget reader is still in flight (it may carry a later state of the accounts): this verification decides on no account; refused for this verification only
+=== F-round8-rewrites-deep/g09_i2_under_contention.py
+engcore from /home/user/forge/src/engcore/__init__.py
+=== D-replay-stale/d03_readback_cache_growth.py
+after 75 evaluations: cache entries 2, history hashes held 8, traced MB 0.8, elapsed s 10.2
+after 150 evaluations: cache entries 2, history hashes held 8, traced MB 0.8, elapsed s 22.2
+after 300 evaluations: cache entries 2, history hashes held 8, traced MB 1.0, elapsed s 52.0
+=== B-architecture/p06_pin_error_served_replay.py
+(a) admission with the budget pin failing: MISSING_INFORMATION ['AUTHORITY_OWNER_UNAVAILABLE']
+    snapshot unavailable: ['budget_ledger', 'experiment'] | records: ['declaration', 'model_record', 'provider_status', 'system_state', 'unit_registry']
+    replay: reproduced
+=== A-scientific-authority/a908_memo_repin.py
+read a -> refused: first pin refused
+read b -> refused: first pin refused
+read a -> refused: first pin refused
+pins of one owner inside ONE memoized verification: 1
+=== A-scientific-authority/a910_forged_declaration_label.py
+declaration binding keys: ['bound_at', 'fields', 'owner_id', 'owner_kind', 'projection', 'record_digest', 'record_id', 'revision', 'schema']
+admission: MISSING_INFORMATION ['AUTHORITY_MISMATCH', 'AUTHORITY_STALE']
+  declaration  synthetic.battery.pulse-cell stale              the owner now states another record under this identity; it keeps no history, so whether the bound record was superseded or never held cannot be told 
+  provider_status sim.secret                   mismatch           the world's declaration (revision 1) is not one the declaration owner holds (in force: revision 1, other content), and the one in force names no such 

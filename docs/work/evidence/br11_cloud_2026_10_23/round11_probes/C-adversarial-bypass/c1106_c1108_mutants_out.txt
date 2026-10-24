@@ -1,0 +1,18 @@
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r11/C-adversarial-bypass/run_under_mutant.py", line 9, in <module>
+    exec(src_text, ns)
+    ~~~~^^^^^^^^^^^^^^
+  File "<string>", line 6, in <module>
+NameError: name '__file__' is not defined. Did you mean: '__name__'?
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r11/C-adversarial-bypass/run_under_mutant.py", line 9, in <module>
+    exec(src_text, ns)
+    ~~~~^^^^^^^^^^^^^^
+  File "<string>", line 6, in <module>
+NameError: name '__file__' is not defined. Did you mean: '__name__'?
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user-forge/e352a8b8-4d77-5787-bd23-1bcc1dda83b7/scratchpad/review_r11/C-adversarial-bypass/run_under_mutant.py", line 9, in <module>
+    exec(src_text, ns)
+    ~~~~^^^^^^^^^^^^^^
+  File "<string>", line 6, in <module>
+NameError: name '__file__' is not defined. Did you mean: '__name__'?

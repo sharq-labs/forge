@@ -1,0 +1,148 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "A authority/currentness",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_scope": "Q4 directly exercised; Q1-Q3/Q5-Q7 NO means no demonstrated finding in the bounded changed-path lens, not comprehensive absence proof.",
+  "findings": [
+    {
+      "id": "R18-A-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Native pre-capture resource failure still forgets handed spend after owner mapping replacement and permits duplicate dispatch",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1007,
+      "related_lines": [
+        1008,
+        1042,
+        1043
+      ],
+      "smallest_reproduction": "probe_native.py run(994) under recorded CPython3.12.3/default recursion limit1000: create ordinary synthetic battery desk, dispatch once and settle charge, call reader.pinned through deep recursion, catch native RecursionError, replace owner mapping ledger with saved pre-spend BudgetLedger checkpoint, dispatch original admitted action again. Adjacent depth995 reproduces; depth993 refuses.",
+      "actual_result": "At depth994 and995 _uncompared retains raw tuple referencing live owner mappings; _unread_entries empty. After replacement redispatch_refused=false and calls=2. No monkeypatch, private reader state mutation, signals, timing race, or forged owner involved. All printed state is observation only.",
+      "expected_result": "A returned spend-bearing handing cannot disappear before authoritative comparison and restore the original action currentness; retry must recover handed spend or remain transiently refused without permanently poisoning honest readers.",
+      "threat_families": [
+        "known pre-capture information loss",
+        "native resource exhaustion",
+        "checkpoint mapping replacement",
+        "hidden spend enabling redispatch"
+      ],
+      "in_process_trust_scope": "Within documented in-process handoff boundary: exact native BudgetLedger, ordinary execution-side settlement and checkpoint replacement. Not execution-private introspection/mutation, not an entirely between-verifications unobserved spend. The tuple was demonstrably returned and retained before owner replacement.",
+      "proposed_correction": "Choose and specify execution-side handing lifetime/publication semantics that preserve mapping bindings until reader retention/comparison. Concrete bounded option: each callback publishes new native dict snapshots and never mutates those published dictionaries; owner checkpoint replacements affect only current owner dictionaries. Matched fresh-dict control refuses the identical depths994/995. Retain existing owner classes/history normalization, no parallel budget state. Decide account/entry lifetime rules explicitly for any supported non-monotonic owner mutation. Do not declare generic acknowledgement mandatory solely from this experiment.",
+      "evidence": [
+        "native.log",
+        "stable_mapping.log",
+        "probe_native.py",
+        "probe_stable_mapping.py"
+      ]
+    }
+  ],
+  "correction_assessment": {
+    "json_parity": "Locally corrected. _retained_entry uses BudgetCharge.from_dict before ledger sorted JSON/default=str and final from_dict, versus ScientificEvaluation JSON before readback plus writability for experiment. R16/R17 32 controls and eight independent composite transitions pass. No new serializer widening or false detached divergence established.",
+    "doc_correction": "owners.py449-456 explicitly treats pre-capture loss as unresolved defect; old caller-stack exclusion removed from current class contract.",
+    "owner_decision": "A precise publication lifetime decision remains necessary if current callbacks may return mutable live maps. Experiment demonstrates a simple owner-side fresh-dict publication control; does not establish a need for generalized reservation, persistent journal, or acknowledgement subsystem.",
+    "generic_local_alternatives": "Additional local retries/copies reduce failure windows but can themselves be interrupted before stable retention. Permanent retirement from interruption alone violates honest-reader recovery invariant. Blind retry against current mutable map loses history as reproduced. Durable at-most-once at desk is a different explicitly absent contract. A fresh-thread approach might mitigate bounded recursion but is not demonstrated sufficient against repeated interruption/allocation failure or caller-held-lock lifetime and would require its own bounded review.",
+    "lifetime_detail": "For shown native-ledger checkpoint replacement, retaining a fresh binding snapshot keeps original append-only ledger reachable even when active mapping changes; full owner checkpoint cloning or acknowledgement is not needed by this reproduction. A broader publication contract must state whether nested entry payload mutation is in trusted execution-private scope, rather than claim graph immutability from shallow dict copying."
+  },
+  "tested_transitions": [
+    "R16 controls: normalization; repeated detached interruptions; post-return single interruption; pending rollback/different histories; interrupted reconciliation; exact-barrier invalidation; malformed owner entries; experiment histories.",
+    "R17 controls: numeric/string JSON keys, tuple/list normalization, ledger default=str/nonfinite/order, experiment rejected serialization, true rollback/rewrite refusal.",
+    "Independent eight cases: three successive interrupted detached JSON checkpoints for both ledger and experiment, then equal/extend/rollback/rewrite; equal/extensions match fresh owner reader, rollback/rewrite refuse twice.",
+    "Native deep-stack scan975..996; confirmed returned raw mapping and duplicate calls at994/995. Depth996 lacks retained tuple and is not relied on as evidence of returned handing.",
+    "Matched fresh-dict publication control depths992..995; all redispatch refused, calls1; same resource exhaustion/raw tuple at994/995."
+  ],
+  "missing_coverage": [
+    "Not exhaustive concurrency or asynchronous signal exploration.",
+    "No MemoryError injection here; native evidence is CPython recursion resource exhaustion.",
+    "No comprehensive retest of Q1-Q3/Q5-Q7 unrelated authority layers.",
+    "No generic owner publication/ack implementation tested or approved.",
+    "No scientific validation, certification, full FAST, performance or remote checks."
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import subprocess; from engcore.mind.world import owners; print(owners.__file__); print(subprocess.check_output(['git','rev-parse','HEAD'],text=True)); assert owners.__file__ == '/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py'; assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == 'cc7ef06b0d08398173d9448ff47d8abb7e375d44'"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/A/identity.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt",
+        "tests/mind/test_authority_review_r16.py",
+        "tests/mind/test_authority_review_r17.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/A/controls.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r18/A/probe_native.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/A/native.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r18/A/pt_new",
+        "/home/dev_kaeem/br11-review/r18/A/test_new_transitions.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/A/new_transitions.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r18/A/probe_stable_mapping.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/A/stable_mapping.log"
+    }
+  ]
+}

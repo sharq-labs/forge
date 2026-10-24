@@ -1,0 +1,92 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "E replay/read-back/restore",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [
+    {
+      "id": "R17-E-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Unretained returned mapping forgets handed spend after two native capture interruptions and owner restore",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 911,
+      "additional_lines": [
+        919,
+        920,
+        1000,
+        1025
+      ],
+      "smallest_reproduction": "test_replay.py::test_open_native_two_interrupts_preserve_spend[ledgers]; alternate [experiments]. Dispatch once and settle public ledger. Trace interrupts _items on first mapping; independent profile callback interrupts immediate recovery. No monkeypatch of production code. Restore mapping entry to earlier owner-built BudgetLedger then dispatch the original admitted action.",
+      "actual_result": "Both checkpoints: KeyboardInterrupt propagates; pending buffer contains raw tuple; seal None. After restore dispatch is accepted, executor call count 2. Expected-refusal assertion fails.",
+      "expected_result": "Previously handed spend must prevent second dispatch; an interrupt itself must neither accept nor permanently poison an unchanged honest reader.",
+      "threat_families": [
+        "pre-capture interruption",
+        "interrupted recovery",
+        "live mapping replacement",
+        "checkpoint rollback",
+        "hidden spend",
+        "duplicate execution"
+      ],
+      "trust_scope": "Documented in-process execution-owner handed mapping and ordinary public owner restore. Trace/profile only choose asynchronous exception checkpoints; no production state introspection mutation or forged admission. Known open family independently reproduced, not a new independent root cause.",
+      "proposed_correction": "Requires a selected stable owner handoff/lifetime/publication guarantee (or explicit relaxation of all-returned-handings promise). Incremental retention could preserve the already copied ledger map in the experiments variant, but cannot recover the ledgers variant interrupted before any first entry retention. More finite retries shift the hole; later mapping reread lacks overwritten history; permanent poison without corruption violates honest recovery. No generic local correction demonstrated sufficient for both obligations.",
+      "evidence": "/home/dev_kaeem/br11-review/r17/E/tests.log"
+    }
+  ],
+  "tested_transitions": [
+    "All six orders of three detached identity-incomparable prefix histories: younger retained spend refuses intermediate restore, longest canonical current version recovers without divergence (6 pass).",
+    "All six orders of conflicting left/right/extended-left detached observations: no middle conflicting history disappears, every branch refused (6 pass).",
+    "Two retained detached handings, omission of account, interrupted normalization, old checkpoint restoration then current restoration: absent returns None; unread barrier survives; old refused; current recovers (1 pass).",
+    "Native capture and immediate recovery interruptions at first and second mapping, followed by restore and real gateway dispatch: 2 expected-refusal failures, duplicate calls.",
+    "All 16 existing R16 controls executed including ledger normalization scalars, experiments, registration interruption, repeated detached handings, malformed histories, exact barrier stale reconciliation and conflicting observations: 16 pass."
+  ],
+  "missing_coverage": [
+    "No exhaustive asynchronous bytecode interruption proof.",
+    "No full FAST/regression/certification; no scientific validation.",
+    "No new concurrent stale-barrier schedule beyond executed existing R16 Event-based control.",
+    "No exhaustive arbitrary nested owner normalization values. F normalization lead is being independently examined by D; not counted as an E finding without E evidence.",
+    "Q1/Q2/Q3/Q5/Q6/Q7 NO is bounded to this diff and replay lens; no exhaustive system review or unadmitted-action bypass claim."
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r17/E/pt",
+        "-q",
+        "-s",
+        "/home/dev_kaeem/br11-review/r17/E/test_replay.py",
+        "tests/mind/test_authority_review_r16.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "exit_code": 1,
+      "log": "/home/dev_kaeem/br11-review/r17/E/tests.log",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "result": "2 failed, 29 passed in 1.73s; both failures are explicit expected-refusal assertions for the known OPEN capture family.",
+      "launcher": "wsl -d Ubuntu-24.04 -- env PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r17/E/run.py"
+    }
+  ],
+  "prior_execution": {
+    "same_launcher": true,
+    "difference": "Before adding ledgers parameter, experiments-only probe plus 13 new controls and16 existing R16 controls",
+    "result": "1 failed,29 passed in1.69s",
+    "exit_code": 1,
+    "log_note": "Tool output captured in session; final expanded run log supersedes this run."
+  },
+  "source_identity": "/home/dev_kaeem/br11-review/r17/E/identity.json",
+  "scope": "Read-only exact source; writes only E scratch. Review software evidence, not scientific validation/certification.",
+  "contract_assessment": "Agree explicit owner handoff decision is needed for complete all-returned-handings preservation under arbitrary pre-capture interruption. Tested first-map failure establishes that retaining per-map progress only addresses a later checkpoint, not full guarantee."
+}

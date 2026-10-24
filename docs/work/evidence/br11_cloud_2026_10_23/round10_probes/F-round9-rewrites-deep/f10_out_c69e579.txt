@@ -1,0 +1,4 @@
+engcore from /home/user/forge/src/engcore/__init__.py
+pinned record detail: {'runs': ['r1']}
+same pinned snapshot, read again: {'runs': ['r1', 'EDITED-AFTER-THE-PIN']}
+pinned record still re-derives its digest: False

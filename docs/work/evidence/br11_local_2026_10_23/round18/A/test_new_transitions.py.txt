@@ -1,0 +1,33 @@
+import pytest
+from engcore.mind.world import BudgetReader, OwnerKind
+from engcore.mind.world.authority import OwnerUnavailable
+from tests.mind.test_authority_review_r16 import _interrupt_handing
+from tests.mind.test_authority_review_r17 import _fixture, _append, _checkpoint
+
+@pytest.mark.parametrize("kind", ["ledger", "experiment"])
+@pytest.mark.parametrize("outcome", ["equal", "extend", "rollback", "rewrite"])
+def test_three_detached_json_histories(kind, outcome):
+    account, held, follow, reader, owner_kind = _fixture(kind)
+    old = _checkpoint(account, kind)
+    _append(account, kind, {2: "a", 10: "b"})
+    for _ in range(3):
+        _interrupt_handing(reader)
+        held[0] = _checkpoint(held[0], kind)
+    if outcome == "extend":
+        if kind == "ledger":
+            held[0].settle(charge_id="later", action_id="later", iteration=2, family="explore", realized=1., detail={"nested": (3, 4)})
+        else:
+            from engcore.scientific.experiments.evaluation import ScientificEvaluation, EvaluationStatus
+            held[0].record(ScientificEvaluation("later", {}, status=EvaluationStatus.NOT_CONVERGED, metadata={"nested": (3, 4)}))
+        held[0] = _checkpoint(held[0], kind)
+    elif outcome in ("rollback", "rewrite"):
+        held[0] = old
+        if outcome == "rewrite":
+            _append(old, kind, {2: "different", 10: "b"})
+    for _ in range(2):
+        if outcome in ("equal", "extend"):
+            assert reader.read(owner_kind, "a") == BudgetReader.following(follow).read(owner_kind, "a")
+            assert not reader._unread_entries and not reader._diverged
+        else:
+            with pytest.raises(OwnerUnavailable):
+                reader.read(owner_kind, "a")

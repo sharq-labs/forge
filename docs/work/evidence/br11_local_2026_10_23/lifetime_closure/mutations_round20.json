@@ -1,0 +1,340 @@
+[
+  {
+    "name": "positive_before",
+    "status": "PASS",
+    "exit": 0,
+    "failures": [],
+    "summary": "72 passed in 10.10s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3"
+  },
+  {
+    "name": "skip_final_generation_check",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_publication_currency_r19.py::test_completed_spend_published_before_comparison_refuses_dispatch[False]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[identical-ledger-False]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[identical-ledger-True]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[identical-experiment-False]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[identical-experiment-True]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[forward-ledger-False]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[forward-ledger-True]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[forward-experiment-False]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_new_generation_is_reconciled_without_rejecting_honest_progress[forward-experiment-True]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_reconciliation_retry_is_bounded_and_retains_lifetime[interrupt]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_reconciliation_retry_is_bounded_and_retains_lifetime[close]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_reconciliation_retry_is_bounded_and_retains_lifetime[churn]"
+    ],
+    "summary": "12 failed, 60 passed in 9.20s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "94846e39ee7ca443aa1ad9f0a93e8f63017a9676a92437d14d1155714909c3e5"
+  },
+  {
+    "name": "identity_is_divergence",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_review_r19.py::test_changed_unread_barrier_keeps_monotonic_replacement_recoverable[True]"
+    ],
+    "summary": "1 failed, 71 passed in 10.18s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "b1c6ebd10b1d51803d0c9c8df23fd05366067b05ce742a11eca9d53d34a3c091"
+  },
+  {
+    "name": "drop_replaced_bindings",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[before_handoff-True]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[after_publish-True]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[reconcile-True]",
+      "tests/mind/test_authority_lifetime.py::test_earlier_success_does_not_retire_a_later_spend",
+      "tests/mind/test_authority_lifetime.py::test_publication_precedes_handoff_and_new_reader_recovers_prior_spend",
+      "tests/mind/test_authority_lifetime.py::test_missing_current_account_is_never_an_unspent_record",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-spent-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-spent-2-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-unknown-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-unknown-2-restore]"
+    ],
+    "summary": "10 failed, 62 passed in 10.75s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "404cb85addc77b0ee921fcba4c1c34f3760505a0a53c2c88aa7e336ab2b968f2"
+  },
+  {
+    "name": "skip_retained_reconciliation",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[before_handoff-True]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[after_publish-True]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[reconcile-True]",
+      "tests/mind/test_authority_lifetime.py::test_earlier_success_does_not_retire_a_later_spend",
+      "tests/mind/test_authority_lifetime.py::test_publication_precedes_handoff_and_new_reader_recovers_prior_spend",
+      "tests/mind/test_authority_lifetime.py::test_missing_current_account_is_never_an_unspent_record",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-spent-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-spent-2-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-unknown-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-unknown-2-restore]",
+      "tests/mind/test_authority_review_r19.py::test_changed_unread_barrier_keeps_monotonic_replacement_recoverable[False]",
+      "tests/mind/test_authority_review_r19.py::test_changed_unread_barrier_keeps_monotonic_replacement_recoverable[True]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_completed_spend_published_before_comparison_refuses_dispatch[False]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_completed_spend_published_before_comparison_refuses_dispatch[True]"
+    ],
+    "summary": "14 failed, 58 passed in 9.19s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "b18c2b17cc8624b7da99ed25759bbe4f54571520b5c0908df703471851b7ebd0"
+  },
+  {
+    "name": "accept_source_override",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_raw_callback_and_subclass_source_cannot_claim_publication_authority"
+    ],
+    "summary": "1 failed, 71 passed in 10.27s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "17703d85da4cb11c429098910495da076f01d8972361bd225069d4418c8d428d"
+  },
+  {
+    "name": "mutable_publication_token",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_publication_cannot_be_rewritten_through_returned_token"
+    ],
+    "summary": "1 failed, 71 passed in 9.65s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "ce1287f6957116c473f0cf3da90a8b72774de45cfaabb25de2e91507724f361d"
+  },
+  {
+    "name": "retire_open_source",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_earlier_success_does_not_retire_a_later_spend"
+    ],
+    "summary": "1 failed, 71 passed in 9.72s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "89cdfa2f28b3826037aa7e9d4fcd0c0070228c2d368ab86261fd4efef55888a7"
+  },
+  {
+    "name": "retire_pending_source",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_retirement_waits_for_closed_pending_reader_and_stale_snapshot_refuses",
+      "tests/mind/test_authority_publication_currency_r19.py::test_reconciliation_retry_is_bounded_and_retains_lifetime[close]"
+    ],
+    "summary": "2 failed, 70 passed in 10.08s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "573e76625bca085e116e4a2aaa69f72dbd53f6b03a731ae588e4b00b89133f9a"
+  },
+  {
+    "name": "allow_closed_snapshot",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_retirement_waits_for_closed_pending_reader_and_stale_snapshot_refuses"
+    ],
+    "summary": "1 failed, 71 passed in 10.39s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "a7ab87cd890d43b333a10bebafcd1471131a8742b80cee045c77b3ce047c01ce"
+  },
+  {
+    "name": "forget_retained_spend",
+    "status": "KILLED",
+    "exit": 1,
+    "failures": [
+      "tests/mind/test_authority_lifetime.py::test_pre_capture_restore_does_not_restore_authority[1]",
+      "tests/mind/test_authority_lifetime.py::test_pre_capture_restore_does_not_restore_authority[2]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[before_handoff-True]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[after_publish-True]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[capture-True]",
+      "tests/mind/test_authority_lifetime.py::test_interruption_lifetime_and_repeated_restore[reconcile-True]",
+      "tests/mind/test_authority_lifetime.py::test_earlier_success_does_not_retire_a_later_spend",
+      "tests/mind/test_authority_lifetime.py::test_publication_precedes_handoff_and_new_reader_recovers_prior_spend",
+      "tests/mind/test_authority_lifetime.py::test_missing_current_account_is_never_an_unspent_record",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-spent-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-spent-2-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-unknown-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[before_handoff-unknown-2-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[capture-spent-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[capture-spent-2-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[capture-unknown-1-restore]",
+      "tests/mind/test_authority_lifetime_state_machine.py::test_lifetime_trace[capture-unknown-2-restore]",
+      "tests/mind/test_authority_review_r19.py::test_changed_unread_barrier_keeps_monotonic_replacement_recoverable[False]",
+      "tests/mind/test_authority_review_r19.py::test_changed_unread_barrier_keeps_monotonic_replacement_recoverable[True]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_completed_spend_published_before_comparison_refuses_dispatch[False]",
+      "tests/mind/test_authority_publication_currency_r19.py::test_completed_spend_published_before_comparison_refuses_dispatch[True]"
+    ],
+    "summary": "21 failed, 51 passed in 6.33s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "b0d35c7677def36fb5dd360bbb288eac398fef2664eb60c68e859d2758509a58"
+  },
+  {
+    "name": "positive_after",
+    "status": "PASS",
+    "exit": 0,
+    "failures": [],
+    "summary": "72 passed in 9.23s",
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_lifetime.py",
+      "tests/mind/test_authority_lifetime_state_machine.py",
+      "tests/mind/test_authority_review_r19.py",
+      "tests/mind/test_authority_publication_currency_r19.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "-o",
+      "pythonpath=/home/dev_kaeem/br11-review/lifetime-closure/mutations-r20/isolated/src"
+    ],
+    "source_sha256": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3"
+  }
+]

@@ -1,0 +1,238 @@
+{
+  "reviewed_sha": "b8a65bb9d02b5a18e0a8b26779773c1552204dc1",
+  "comparison_base": "95f3869ed020b04c36c098f0c33050aa009212b6",
+  "lens": "D \u2014 Python object identity, serialization, native mapping semantics",
+  "status": "COMPLETED",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_notes": {
+    "Q1": "No second state authority found in this bounded ownership/identity lens.",
+    "Q2": "No applicability authority change in inspected R15 production diff.",
+    "Q3": "No second unit authority in inspected diff.",
+    "Q4": "Two executed MAJOR hidden-spend/redispatch paths, plus two substantive false-retirement MINORs.",
+    "Q5": "No scientific verdict or probabilistic-to-deterministic promotion in inspected diff.",
+    "Q6": "Probes use admitted synthetic fixtures, not external proposer bypass.",
+    "Q7": "Duplicate executions use a previously admitted action with lost budget observation; categorized under Q4, not an unadmitted-action injection."
+  },
+  "findings": [
+    {
+      "id": "R16-D-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "An interrupt after accounts returns but before pending registration loses the handed spend and permits duplicate dispatch",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 974,
+      "related_lines": [
+        970,
+        974,
+        977,
+        995,
+        1000
+      ],
+      "evidence_kind": "EXECUTED deterministic source-line interruption, no owner or reader method replacement",
+      "smallest_reproduction": [
+        "Build the existing synthetic battery ExecutionDesk with BudgetReader.following returning its live account dictionaries.",
+        "Keep an owner-created pre-execution BudgetLedger.from_dict checkpoint. Dispatch the admitted simulate_pulse action once; the executor settles the charge.",
+        "At the next pin, inject one KeyboardInterrupt with sys.settrace at owners.py:977. The accounts callback already returned and handed=True, but the mapping is not registered in _uncompared.",
+        "Catch the interruption, replace the owner dictionary entry with the checkpoint through normal dictionary assignment, and dispatch the same admitted action."
+      ],
+      "actual_result": "At both source lines 974 and 977, pending=0, unread={}, refused=false, executions=2. Source-line controls at 978 and 979 retain the spend and refuse redispatch with executions=1.",
+      "expected_result": "The interrupted handed observation must remain unresolved or retain its entry information so a later pin cannot accept a restored pre-spend account. An interrupted pin itself must not grant acceptance.",
+      "threat_families": [
+        "missing lifecycle registration transition",
+        "asynchronous interruption",
+        "observed rollback",
+        "duplicate execution"
+      ],
+      "trust_boundary": "No private owner or reader state is edited. sys.settrace models a genuine asynchronous KeyboardInterrupt at an exact production statement. The execution side hands native dicts and restores a checkpoint using supported owner constructors and dictionary replacement. This is within the documented interrupted-handing contract; it is not an entirely unobserved spend/rollback between verifications.",
+      "proposed_correction": "For the demonstrated post-return gap, a local exception path can recover from the already returned local handing even when _uncompared registration has not occurred. Establish the exact callback/handing ownership transition before promising arbitrary-interruption continuity. Stronger guarantees across interruption of capture itself may require an execution-owner immutable handoff/acknowledgement contract; this review does not authorize that contract change. Do not convert a bare interrupt into permanent structural corruption.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/D/probe_trace_capture.py",
+        "/home/dev_kaeem/br11-review/r16/D/probe_trace_capture.log"
+      ]
+    },
+    {
+      "id": "R16-D-2",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Repeated interruption of native capture leaves a live mapping pending; checkpoint replacement erases its spend",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 977,
+      "related_lines": [
+        891,
+        899,
+        919,
+        962,
+        978,
+        1001,
+        1002
+      ],
+      "evidence_kind": "EXECUTED deterministic fault injection at native snapshot boundary",
+      "smallest_reproduction": [
+        "Build the same synthetic ExecutionDesk and dispatch once, saving the earlier owner checkpoint.",
+        "At the next pin, raise KeyboardInterrupt from _retain_handing twice: once during capture, once during immediate cleanup recovery. Restore the method afterward.",
+        "The reader now retains a raw tuple containing the execution side live dictionary in _uncompared, not _RetainedHanding.",
+        "Replace the live dictionary ledger entry with the earlier checkpoint and dispatch the same admitted action."
+      ],
+      "actual_result": "For KeyboardInterrupt, MemoryError and RecursionError, directly handed live dicts yield pending_type=[tuple], refused=false and executions=2. Identical detached-dict controls yield refused=true and executions=1.",
+      "expected_result": "An unfinished native capture cannot be treated as an immutable handed observation. Later replacement of the live mapping must not erase spend or make recovery declare the restored account current.",
+      "threat_families": [
+        "interrupted recovery",
+        "live mapping replacement",
+        "native mapping snapshot boundary",
+        "hidden spend permitting redispatch"
+      ],
+      "trust_boundary": "The monkeypatch only injects standard interruption/resource exceptions at a native allocation/capture phase; it does not forge results, mutate owner internals, or change comparison logic. Owner mutations are normal dict entry replacement and BudgetLedger.from_dict restore. The defect is the production fallback retaining the original live mapping after interrupted capture.",
+      "proposed_correction": "Distinguish incomplete native capture from a stable retained handing; never certify a later reading of its mutable map as the previously handed state. Local incremental retention can protect entries already captured, but cannot recreate entries never captured before both interruptions. A complete remedy may require an execution-owner immutable handoff/acknowledgement contract or a specifically approved unresolved-state policy. This is a design decision, not permission to invent another budget ledger or permanently label honest interrupted content corrupt.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/D/probe_identity.py",
+        "/home/dev_kaeem/br11-review/r16/D/probe_identity.log"
+      ]
+    },
+    {
+      "id": "R16-D-3",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Retained raw entry hashing bypasses owner normalization and permanently rejects an unchanged honest checkpoint",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 745,
+      "related_lines": [
+        482,
+        483,
+        495,
+        501,
+        758,
+        764,
+        790,
+        792
+      ],
+      "evidence_kind": "EXECUTED deterministic interrupted-read probe with canonical owner checkpoint restore",
+      "smallest_reproduction": [
+        "Start a following BudgetReader over an ordinary ledger with one observed charge.",
+        "Append a normal settled charge with iteration=1.0 (or \"1\"), both accepted by BudgetLedger.settle and normalized to integer 1 by BudgetCharge.from_dict.",
+        "Interrupt the next _account read once; it retains the newly appended entry.",
+        "Replace the account with BudgetLedger.from_dict(account.to_dict()), an unchanged checkpoint according to the owner readback rule, then read it."
+      ],
+      "actual_result": "Integer iteration=1 control recovers. iteration=1.0 and iteration=\"1\" permanently populate _diverged with \"rewrote its history\". _history(entries) hashes raw iteration while ordinary readback hashes owner-normalized iteration.",
+      "expected_result": "The same owner-normalized checkpoint should recover without permanent corruption classification. Any retained-entry canonical history must apply the same owner normalization as successful readback.",
+      "threat_families": [
+        "serialization identity",
+        "owner normalization drift",
+        "false permanent retirement after interruption"
+      ],
+      "trust_boundary": "Only public BudgetLedger.settle and BudgetLedger.from_dict are used. No malformed owner state or private mutation; the API accepts these spellings and its existing readback explicitly normalizes them.",
+      "proposed_correction": "Reuse each owner entry readback/normalization before computing retained history. Do not advance _seen with hashes produced by a different normalization route.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/D/probe_identity.py",
+        "/home/dev_kaeem/br11-review/r16/D/probe_identity.log"
+      ]
+    },
+    {
+      "id": "R16-D-4",
+      "severity": "MINOR",
+      "question": "Q4",
+      "title": "Two interrupted detached handings permanently retire identical honest history before canonical reconciliation can run",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 912,
+      "related_lines": [
+        682,
+        687,
+        689,
+        690,
+        900,
+        912,
+        735,
+        736
+      ],
+      "evidence_kind": "EXECUTED deterministic repeated-interruption probe",
+      "smallest_reproduction": [
+        "Use accounts() that hands BudgetLedger.from_dict copies of the current honest ledger at every call.",
+        "After the initial observed charge, append one ordinary integer-iteration charge.",
+        "On each of two consecutive pins, interrupt _handed once; immediate cleanup recovery succeeds and records its retained entries. The account content stays identical between calls.",
+        "Remove fault injection and perform an ordinary read."
+      ],
+      "actual_result": "Two detached interrupted handings permanently set _diverged to \"rewrote the entries\". A single detached interruption recovers; one or two interruptions with the same live objects recover.",
+      "expected_result": "Equivalent detached handings must remain unresolved until owner-canonical reconciliation can establish equality. Identity mismatch alone following asynchronous interruptions must not permanently poison an honest reader.",
+      "threat_families": [
+        "identity aliases",
+        "repeated interrupted recovery",
+        "restored checkpoint equivalence",
+        "false permanent retirement"
+      ],
+      "trust_boundary": "Execution side uses only normal owner round trips and supplies identical content. Fault injection raises an interrupt at parsing; it does not alter entry identities beyond the documented checkpoint-copy behavior.",
+      "proposed_correction": "Preserve unresolved detached alternatives until canonical reconciliation outside the lock can compare them, rather than writing permanent divergence from _note_unread identity mismatch alone. Retired-account skipping currently prevents later reconciliation from repairing the false retirement.",
+      "evidence": [
+        "/home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.py",
+        "/home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.log"
+      ]
+    }
+  ],
+  "inspected_source": {
+    "owners_file": "/home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py",
+    "interpreter": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+    "verified_import_identity": "Every probe logs and asserts owners.__file__ and exact git HEAD before execution.",
+    "paths": [
+      "CLAUDE.md",
+      "docs/architecture/README.md",
+      "docs/work/ACTIVE_PLAN.md (current BR1.1 entry)",
+      "benchmarks/mind_gen2_authority_v1/README.md (current lifecycle, ownership, and R15 dispositions)",
+      "docs/work/evidence/br11_local_2026_10_23/round15/threat_disposition_matrix.json",
+      "src/engcore/mind/world/owners.py (production diff 95f3869e..reviewed SHA and budget reader paths)",
+      "src/engcore/sria/campaign/budget.py (BudgetCharge/BudgetLedger and owner readback normalization)",
+      "src/engcore/scientific/experiments/evaluation.py (entry immutability and serialization context)",
+      "tests/mind/test_authority_review_r15.py",
+      "tests/mind/test_authority_state_machine_r15.py",
+      "tests/mind/test_authority_review_r14.py (desk/settlement/refusal helpers)"
+    ]
+  },
+  "tested_transitions": [
+    "Accounts returned -> handed flag -> pending registration -> native capture -> parsing: individual source-line interrupts at 974/977/978/979.",
+    "Capture interruption -> immediate recovery interruption -> owner live mapping replacement -> later recovery -> redispatch, compared with detached mapping control and three exception classes.",
+    "Unread appended owner charge -> detached owner checkpoint -> canonical history comparison, with int/float/string iteration spellings.",
+    "First interrupted detached handing -> second interrupted equivalent detached handing -> clean read; same-object and one-interrupt controls.",
+    "Existing deterministic R15 lifecycle and generated transition controls: 87 passed."
+  ],
+  "missing_coverage": [
+    "No process crash, cross-process coordination or durable at-most-once guarantee assessed.",
+    "No physical validation, certification, full FAST, dependency changes or source mutations.",
+    "No exhaustive bytecode-level interruption enumeration; selected exact lifecycle statements only.",
+    "No new experiment-specific runtime probes beyond existing R15 controls; new probes target budget ledgers.",
+    "No claim that Q1-Q3/Q5-Q7 are globally proved; NO means no substantive defect found in this independent bounded lens.",
+    "Existing R15 native-capture controls interrupt _handed after immutable capture; they do not exercise missing registration or capture itself. Existing restore controls use ordinary integer iteration and one interrupted detached handing."
+  ],
+  "executions": [
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_identity.py > /home/dev_kaeem/br11-review/r16/D/probe_identity.log 2>&1",
+      "exit_code": 0,
+      "result": "6 native-capture cases and 3 normalization cases completed; two MAJOR outcome families and raw normalization MINOR observed",
+      "log_path": "/home/dev_kaeem/br11-review/r16/D/probe_identity.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_trace_capture.py > /home/dev_kaeem/br11-review/r16/D/probe_trace_capture.log 2>&1",
+      "exit_code": 0,
+      "result": "4 source-line checkpoints completed; lines 974/977 redispatch, 978/979 refuse",
+      "log_path": "/home/dev_kaeem/br11-review/r16/D/probe_trace_capture.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.py > /home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.log 2>&1",
+      "exit_code": 0,
+      "result": "4 cases completed; only two detached interrupted handings permanently diverged",
+      "log_path": "/home/dev_kaeem/br11-review/r16/D/probe_repeat_detached.log"
+    },
+    {
+      "command": "cd /home/dev_kaeem/forge-r16-review && PYTHONPATH=/home/dev_kaeem/forge-r16-review/src:/home/dev_kaeem/forge-r16-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r16/D/pt -q -n 1 tests/mind/test_authority_review_r15.py tests/mind/test_authority_state_machine_r15.py > /home/dev_kaeem/br11-review/r16/D/r15_controls.log 2>&1",
+      "exit_code": 0,
+      "result": "87 passed in 3.44s",
+      "log_path": "/home/dev_kaeem/br11-review/r16/D/r15_controls.log"
+    }
+  ],
+  "limitations": "Synthetic contract evidence and read-only review only, not scientific validation/certification/formal proof. Standard interruption exceptions are injected deterministically; this is not a claim to reproduce an actual physical SIGINT timing distribution. Execution-side private mutation/introspection, unobserved spend/rollback wholly between verifications, and desk-level durable reservation remain outside this review guarantee.",
+  "correction_scope": "R16-D-3 normalization and R16-D-4 detached-barrier reconciliation admit local owner-rule reuse fixes. R16-D-1 has a demonstrated local post-return registration gap; R16-D-2 exposes the stronger interrupted-capture contract question. No production correction or owner-contract decision was made during review."
+}

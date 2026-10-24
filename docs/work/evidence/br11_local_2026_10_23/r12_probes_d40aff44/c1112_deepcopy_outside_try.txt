@@ -1,0 +1,15 @@
+recursion limit 1000
+(1)
+  unbound side experiment, metadata depth 100: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 200: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 250: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 300: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 350: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 400: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 500: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 700: admission of a world that never reads it -> FEASIBLE
+  unbound side experiment, metadata depth 1000: admission of a world that never reads it -> FEASIBLE
+(2)
+  metadata depth 3: requests on the spent state: ["MISSING_INFORMATION ('AUTHORITY_STALE',)", "MISSING_INFORMATION ('AUTHORITY_STALE',)"] | re-dispatch after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+  metadata depth 1000: requests on the spent state: ["MISSING_INFORMATION ('AUTHORITY_STALE',)", "MISSING_INFORMATION ('AUTHORITY_STALE',)"] | re-dispatch after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+  metadata depth 600: requests on the spent state: ["MISSING_INFORMATION ('AUTHORITY_STALE',)", "MISSING_INFORMATION ('AUTHORITY_STALE',)"] | re-dispatch after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1

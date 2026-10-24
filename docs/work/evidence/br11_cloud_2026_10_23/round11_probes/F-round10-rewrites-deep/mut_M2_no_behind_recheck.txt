@@ -1,0 +1,3 @@
+FAILED tests/mind/test_authority_review_r10.py::test_a_compared_verification_decides_on_what_the_ones_in_flight_record[True]
+FAILED tests/mind/test_authority_review_r8.py::test_a_spend_one_verification_read_is_observed_before_a_rollback_can_be_read
+2 failed, 596 passed in 21.56s

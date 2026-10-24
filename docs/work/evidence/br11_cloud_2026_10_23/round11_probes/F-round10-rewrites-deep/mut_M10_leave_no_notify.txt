@@ -1,0 +1,2 @@
+FAILED tests/mind/test_authority_review_r10.py::test_a_compared_verification_decides_on_what_the_ones_in_flight_record[W fails]
+1 failed, 597 passed in 21.76s

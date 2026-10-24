@@ -1,0 +1,19 @@
+{
+ "P1": {
+  "pack_sha256": "2fb15f7f39a52635e8e6fe741c38dbcdec5df9f6868fa664ec7cd34c48466657",
+  "source_data_sha256": {
+   "calibration.json": "f295bebcd23cbe9a97d53fd953a3d3606e4c6a079edb79b491c29fac8b0151e2",
+   "cross_cell_validation.json": "1db6db358bc644cb0629f9c479f60ce2d4458429ff5a501b9559a4fe7eefcd7e",
+   "within_cell_holdout.json": "af31c9448dfb2512522a2641cb15b49703026861ac3294a0335291797baeaa27"
+  }
+ },
+ "P2": {
+  "pack_sha256": "864eea4de4e5977d20ee76ba146aa0f711cfc3d34ae343ff8d6ae8d0abeffd2d",
+  "source_data_sha256": {
+   "calibration.json": "c8de4415eed8f80e6824496232943eabd558f29e6c16fda11317a99b0001174e",
+   "heldout_cc.json": "88111325f18b723a342ab990acb5c19b73a0007aea148f87697bbafa4d58cd07",
+   "heldout_pulses.json": "f5251c1e00a74ba11079e973c2c64327bff4550a903787390bacfe7dd5798d0e",
+   "ocv.json": "e0bfc9bd4a30eb6c11114e2ed94399cdfc4357225f473d102b30db504bcdefb4"
+  }
+ }
+}

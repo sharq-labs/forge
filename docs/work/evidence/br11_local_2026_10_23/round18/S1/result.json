@@ -1,0 +1,167 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "S1 independent skeptic",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_scope": "Q4 directly tested; other NO answers scoped to reviewed changed paths, not exhaustive authority proof.",
+  "alias_dispositions": [
+    {
+      "id": "R18-A-1",
+      "disposition": "CONFIRMED",
+      "family": "R18-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "basis": "Independent native matched reproduction at exact SHA; alias source inspected. F is static-only and its historical evidence is not misreported as a current F execution.",
+      "counterargument": "Previously admitted action and absent at-most-once desk do not excuse this observed-handing currentness loss. No separate Q7 unadmitted-action execution demonstrated."
+    },
+    {
+      "id": "R18-B-1",
+      "disposition": "CONFIRMED",
+      "family": "R18-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "basis": "Independent native matched reproduction at exact SHA; alias source inspected. F is static-only and its historical evidence is not misreported as a current F execution.",
+      "counterargument": "Previously admitted action and absent at-most-once desk do not excuse this observed-handing currentness loss. No separate Q7 unadmitted-action execution demonstrated."
+    },
+    {
+      "id": "R18-C-1",
+      "disposition": "CONFIRMED",
+      "family": "R18-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "basis": "Independent native matched reproduction at exact SHA; alias source inspected. F is static-only and its historical evidence is not misreported as a current F execution.",
+      "counterargument": "Previously admitted action and absent at-most-once desk do not excuse this observed-handing currentness loss. No separate Q7 unadmitted-action execution demonstrated."
+    },
+    {
+      "id": "R18-D-1",
+      "disposition": "CONFIRMED",
+      "family": "R18-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "basis": "Independent native matched reproduction at exact SHA; alias source inspected. F is static-only and its historical evidence is not misreported as a current F execution.",
+      "counterargument": "Previously admitted action and absent at-most-once desk do not excuse this observed-handing currentness loss. No separate Q7 unadmitted-action execution demonstrated."
+    },
+    {
+      "id": "R18-E-1",
+      "disposition": "CONFIRMED",
+      "family": "R18-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "basis": "Independent native matched reproduction at exact SHA; alias source inspected. F is static-only and its historical evidence is not misreported as a current F execution.",
+      "counterargument": "Previously admitted action and absent at-most-once desk do not excuse this observed-handing currentness loss. No separate Q7 unadmitted-action execution demonstrated."
+    },
+    {
+      "id": "R18-F-1",
+      "disposition": "CONFIRMED",
+      "family": "R18-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "basis": "Independent native matched reproduction at exact SHA; alias source inspected. F is static-only and its historical evidence is not misreported as a current F execution.",
+      "counterargument": "Previously admitted action and absent at-most-once desk do not excuse this observed-handing currentness loss. No separate Q7 unadmitted-action execution demonstrated."
+    }
+  ],
+  "findings": [
+    {
+      "id": "R18-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Returned live mapping loses observed spend after native capture/recovery exhaustion and owner replacement",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1015,
+      "related_lines": [
+        932,
+        936,
+        955,
+        1016,
+        1042
+      ],
+      "smallest_reproduction": "S1/matched.py, recursionlimit150 depths144/145: save ledger checkpoint; dispatch and settle once; call pinned through native deep stack; raw tuple survives in _uncompared; replace registry ledger by checkpoint; dispatch original admitted action.",
+      "actual_result": "Live mapping: calls2, redispatch_refused false, pending raw tuple, unread empty. Same depths with owner-published dict copies: calls1, redispatch_refused true, seal None.",
+      "expected_result": "Previously handed spend cannot disappear into authoritative equality after interrupted capture; honest readers remain recoverable.",
+      "threat_families": [
+        "pre-capture information loss",
+        "checkpoint mapping replacement",
+        "hidden spend redispatch"
+      ],
+      "trust_boundary": "Native BudgetLedger settlement and public checkpoint restoration through owner registry. RecursionError is native; no private owner mutation, production monkeypatch, sleeps, or forged evidence. Diagnostics inspect private reader fields but do not write them.",
+      "proposed_correction": "Decide stable owner publication lifetime; detached mapping membership plus preserved original account histories is sufficient for demonstrated replacement. Then add bounded no-lost-handing and honest recovery controls. Do not mandate acknowledgement subsystem from this reproduction."
+    }
+  ],
+  "repair_assessment": {
+    "json_parity": "CONFIRMED in bounded controls: 32 R16/R17 tests passed, including numeric-key/sequence detached equivalence, owner order/default=str, genuine rollback/rewrite refusal and invalid-owner unresolved barriers. Static comparison confirms _retained_entry follows each owner write/read ordering, and complete-account checks remain in _read_once.",
+    "seal": "Existing R16 concurrency controls executed; changed helper still resolves outside lock and exact barrier/seal checks remain. No new seal bypass established.",
+    "documentation": "Current class explicitly calls pre-capture loss unresolved; no accepted stack exclusion."
+  },
+  "minimum_correction_assessment": {
+    "concrete_blocker": "After both retention attempts fail, only raw live registry survives. Registry replacement destroys its old binding. A later reader now sees the same state as an unchanged honest callback trace; no generic later normalization or retry can infer whether erased spend existed. This is a concrete lost-information boundary, not a universal impossibility theorem.",
+    "reader_only": "Additional retries, moving dict copy earlier, fresh-stack capture, or catching narrower failures can fix bounded schedules and may be useful local improvements. None demonstrated preservation across repeated failure before capture under unchanged arbitrary mutable-return contract. A permanent unresolved marker prevents redispatch but can permanently poison an honest reader without corruption, violating the second requirement. A bounded timeout that later accepts has no lost information to justify acceptance.",
+    "minimum_owner_decision": "Execution owner publishes a new dictionary pair whose ID-to-account bindings remain stable while referenced by reader; checkpoint replacement changes only current registry. Existing native account records remain the authority. Callback signature may stay identical, but stable publication/lifetime is an added semantic obligation and is not silently assumed.",
+    "wrapper_limit": "A generic reader wrapper calling the old arbitrary callback then copying its returned maps has a post-inner-return/pre-copy window. This is not equivalent to owner-produced detached publication. A bounded recursion-depth workaround is not evidence of all-interruption preservation.",
+    "acknowledgement": "Explicit acknowledgement may bound retention or support more mutable owners, but is not established necessary. Python reference lifetime can preserve detached dictionaries for this demonstrated replacement. C1 defect confirmed; any claim that full acknowledgement is mandatory is not supported by controls.",
+    "nested_state": "Shallow copies preserve binding only. Append-only old histories survive replacement; arbitrary in-place mutation/rewrite of referenced accounts or entry payloads needs scoped trust/lifetime semantics or stronger owner snapshot. Do not conflate shallow map stability with entire graph immutability.",
+    "limits": "No implementation or approval of owner contract. Whole arbitrary asynchronous-interruption and pre-registration proof absent. Current controls show a viable bounded correction, not closure."
+  },
+  "tested_transitions": [
+    "14 native matched cases: live versus copied callback maps, depths140..146",
+    "Native raw pending cases144/145 establish handed tuple and matched divergence",
+    "Depth146 has no retained tuple and is excluded as evidence that callback returned",
+    "32 R16/R17 normalization/interruption/reconciliation/rollback controls"
+  ],
+  "missing_coverage": [
+    "No exhaustive instruction-point asynchronous interruption proof",
+    "No fresh owner lifetime implementation or multiple-reader publication contract tested",
+    "No full FAST, scientific validation, certification, physical evidence, or remote checks",
+    "Passing asserted-defect probe means defect reproduced, not safe behavior"
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "/home/dev_kaeem/br11-review/r18/S1/matched.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/S1/matched.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r18/S1/pt",
+        "tests/mind/test_authority_review_r16.py",
+        "tests/mind/test_authority_review_r17.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/S1/controls.log"
+    }
+  ],
+  "source_reports": {
+    "A": "/home/dev_kaeem/br11-review/r18/A/result.json",
+    "B": "/home/dev_kaeem/br11-review/r18/B/result.json",
+    "C": "/home/dev_kaeem/br11-review/r18/C/result.json",
+    "D": "/home/dev_kaeem/br11-review/r18/D/result.json",
+    "E": "/home/dev_kaeem/br11-review/r18/E/result.json",
+    "F": "/home/dev_kaeem/br11-review/r18/F/result.json"
+  },
+  "verdict": "CHANGES REQUIRED; one known unique MAJOR, six confirmed aliases; no new family found"
+}

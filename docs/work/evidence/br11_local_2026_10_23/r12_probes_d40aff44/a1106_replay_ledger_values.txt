@@ -1,0 +1,5 @@
+plain                  admission FEASIBLE               replay reproduced
+predicted Decimal      admission FEASIBLE               replay reproduced
+predicted np.float32   admission FEASIBLE               replay reproduced
+iteration np.int64     admission FEASIBLE               replay reproduced
+charge_id uuid         admission FEASIBLE               replay reproduced

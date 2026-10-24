@@ -1,0 +1,96 @@
+"""Independent R16 lens E deterministic replay/restore probes; synthetic only."""
+import json
+import pytest
+from engcore.mind.world import BudgetReader, OwnerKind
+from engcore.mind.world import owners as ow
+from engcore.mind.world.authority import OwnerUnavailable
+from engcore.sria.campaign.budget import BudgetLedger, BudgetCharge
+from engcore.sria.decision import ActionFamily
+from tests.mind.test_authority_review_r14 import _desk, _solver, _settle, _refused, ax
+
+K = OwnerKind.BUDGET_LEDGER
+
+@pytest.mark.parametrize("interrupt", [False, True])
+def test_integer_charge_checkpoint_recovers(monkeypatch, interrupt):
+    held = {"a": BudgetLedger(total_budget=100)}
+    reader = BudgetReader.following(lambda: (held, {}))
+    # Public owner constructors accept ordinary numeric values and normalize on load.
+    charge = BudgetCharge(charge_id="run.1", action_id="simulate", iteration=1,
+                          family=ActionFamily.EXPLORE, realized=1, from_general_pool=1)
+    held["a"] = BudgetLedger(total_budget=100, charges=(charge,))
+    payload = held["a"].to_dict()
+    original = BudgetReader._account
+    if interrupt:
+        armed = [True]
+        def fail_once(self, key):
+            if armed:
+                armed.pop()
+                raise KeyboardInterrupt("explicit pre-read checkpoint")
+            return original(self, key)
+        with monkeypatch.context() as m:
+            m.setattr(BudgetReader, "_account", fail_once)
+            with pytest.raises(KeyboardInterrupt):
+                reader.pinned()
+    else:
+        assert reader.read(K, "a") is not None
+    held["a"] = BudgetLedger.from_dict(payload)
+    print("raw_history", BudgetReader._history((charge,)))
+    print("restored_history", BudgetReader._history(held["a"].charges))
+    try:
+        record = reader.read(K, "a")
+    except OwnerUnavailable as exc:
+        print("restored_result", str(exc))
+        print("diverged", reader._diverged)
+        raise
+    assert record is not None and not reader._diverged
+
+@pytest.mark.parametrize("phase", ["first_mapping", "second_mapping"])
+@pytest.mark.parametrize("repeated", [False, True])
+@pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+def test_retention_interrupted_twice_keeps_spend(monkeypatch, phase, repeated, failure):
+    o = ax.owned("battery")
+    lid = _solver(o)
+    calls = []
+    def executor(authorization):
+        calls.append(1)
+        _settle(o.ledgers[lid], f"run.{len(calls)}")
+    reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers, o.experiments), executor)
+    checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+    gateway.dispatch(result.admitted)
+    original = ow._items
+    chosen = o.ledgers if phase == "first_mapping" else o.experiments
+    remaining = [1, 1] if repeated else [1]
+    def interrupted_items(mapping):
+        if mapping is chosen and remaining:
+            remaining.pop()
+            raise failure("explicit native retention checkpoint")
+        return original(mapping)
+    with monkeypatch.context() as m:
+        m.setattr(ow, "_items", interrupted_items)
+        with pytest.raises(failure):
+            reader.pinned()
+    print("pending_types", [type(x).__name__ for x in reader._uncompared.values()])
+    assert bool(reader._uncompared) is repeated and reader._sealed is None
+    o.ledgers[lid] = checkpoint
+    refused = _refused(gateway, result.admitted)
+    print("dispatch_refused", refused, "executor_calls", len(calls), "diverged", reader._diverged)
+    assert refused and calls == [1]
+
+@pytest.mark.parametrize("recovery_interrupted", [False, True])
+def test_completed_retention_handles_repeated_detached_honest_readback(monkeypatch, recovery_interrupted):
+    held = {"a": BudgetLedger(total_budget=100)}
+    _settle(held["a"], "initial")
+    reader = BudgetReader.following(lambda: ({k: BudgetLedger.from_dict(v.to_dict()) for k,v in held.items()}, {}))
+    original = BudgetReader._handed.__func__
+    remaining = [1, 1] if recovery_interrupted else [1]
+    def interrupted(cls, *args):
+        if remaining:
+            remaining.pop()
+            raise KeyboardInterrupt("completed native retention checkpoint")
+        return original(cls, *args)
+    with monkeypatch.context() as m:
+        m.setattr(BudgetReader, "_handed", classmethod(interrupted))
+        with pytest.raises(KeyboardInterrupt):
+            reader.pinned()
+    assert reader.read(K, "a") is not None
+    assert not reader._diverged and reader._sealed is None

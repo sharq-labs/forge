@@ -1,0 +1,112 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_interrupted_handing_preserves_spend_before_detached_restore[KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71e061532510>
+failure = <class 'KeyboardInterrupt'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+        o.ledgers[lid] = checkpoint
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x71e06114fd90>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71e06114f680>
+failure = <class 'RecursionError'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+        o.ledgers[lid] = checkpoint
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x71e0ce5cdd20>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71e0ce4bb8c0>
+failure = <class 'MemoryError'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+        assert reader._sealed is None
+        o.ledgers[lid] = checkpoint
+>       assert _refused(gateway, result.admitted) and calls == [1]
+E       AssertionError: assert (False)
+E        +  where False = _refused(<engcore.mind.world.admission.AdmissionGateway object at 0x71e0ce2c43d0>, AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True))
+E        +    where AdmittedAction(proposal=ProposedAction(action_id='simulate_pulse', world_revision='a5ebc04e65dcbee2df93ec3e90d68ce5965...'projection': '72a788425315fa6786ea11a13dc54c0a36a4355299458a7589386bcfe40fd106'}), 'gating': True}),), synthetic=True) = AdmissionResult(status=<FeasibilityStatus.FEASIBLE: 'FEASIBLE'>, reasons=(), verification=AuthorityReport(world_revisi...ng': True}),), synthetic=True), space_id='de7ab76a2b220046c3364eca93935788c490df43bdbfcfc5847c983e72d5aaea', live=True).admitted
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[MemoryError]
+3 failed, 21 deselected in 1.65s

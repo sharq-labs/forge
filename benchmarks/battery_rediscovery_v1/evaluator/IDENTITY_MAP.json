@@ -1,0 +1,722 @@
+{
+ "P1": {
+  "P1-c01": {
+   "cell": "B0005",
+   "cycle_index": 3,
+   "ordinal": 2,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c02": {
+   "cell": "B0005",
+   "cycle_index": 5,
+   "ordinal": 3,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c03": {
+   "cell": "B0005",
+   "cycle_index": 7,
+   "ordinal": 4,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c04": {
+   "cell": "B0005",
+   "cycle_index": 9,
+   "ordinal": 5,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c05": {
+   "cell": "B0005",
+   "cycle_index": 11,
+   "ordinal": 6,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c06": {
+   "cell": "B0005",
+   "cycle_index": 13,
+   "ordinal": 7,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c07": {
+   "cell": "B0005",
+   "cycle_index": 15,
+   "ordinal": 8,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c08": {
+   "cell": "B0005",
+   "cycle_index": 17,
+   "ordinal": 9,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c09": {
+   "cell": "B0005",
+   "cycle_index": 19,
+   "ordinal": 10,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c10": {
+   "cell": "B0005",
+   "cycle_index": 21,
+   "ordinal": 11,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c11": {
+   "cell": "B0005",
+   "cycle_index": 24,
+   "ordinal": 12,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c12": {
+   "cell": "B0005",
+   "cycle_index": 26,
+   "ordinal": 13,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c13": {
+   "cell": "B0005",
+   "cycle_index": 28,
+   "ordinal": 14,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c14": {
+   "cell": "B0005",
+   "cycle_index": 30,
+   "ordinal": 15,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c15": {
+   "cell": "B0005",
+   "cycle_index": 32,
+   "ordinal": 16,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c16": {
+   "cell": "B0005",
+   "cycle_index": 34,
+   "ordinal": 17,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c17": {
+   "cell": "B0005",
+   "cycle_index": 36,
+   "ordinal": 18,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c18": {
+   "cell": "B0005",
+   "cycle_index": 38,
+   "ordinal": 19,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c19": {
+   "cell": "B0005",
+   "cycle_index": 41,
+   "ordinal": 20,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c20": {
+   "cell": "B0007",
+   "cycle_index": 3,
+   "ordinal": 2,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c21": {
+   "cell": "B0007",
+   "cycle_index": 5,
+   "ordinal": 3,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c22": {
+   "cell": "B0007",
+   "cycle_index": 7,
+   "ordinal": 4,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c23": {
+   "cell": "B0007",
+   "cycle_index": 9,
+   "ordinal": 5,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c24": {
+   "cell": "B0007",
+   "cycle_index": 11,
+   "ordinal": 6,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c25": {
+   "cell": "B0007",
+   "cycle_index": 13,
+   "ordinal": 7,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c26": {
+   "cell": "B0007",
+   "cycle_index": 15,
+   "ordinal": 8,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c27": {
+   "cell": "B0007",
+   "cycle_index": 17,
+   "ordinal": 9,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c28": {
+   "cell": "B0007",
+   "cycle_index": 19,
+   "ordinal": 10,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c29": {
+   "cell": "B0007",
+   "cycle_index": 21,
+   "ordinal": 11,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c30": {
+   "cell": "B0007",
+   "cycle_index": 24,
+   "ordinal": 12,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c31": {
+   "cell": "B0007",
+   "cycle_index": 26,
+   "ordinal": 13,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c32": {
+   "cell": "B0007",
+   "cycle_index": 28,
+   "ordinal": 14,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c33": {
+   "cell": "B0007",
+   "cycle_index": 30,
+   "ordinal": 15,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c34": {
+   "cell": "B0007",
+   "cycle_index": 32,
+   "ordinal": 16,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c35": {
+   "cell": "B0007",
+   "cycle_index": 34,
+   "ordinal": 17,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c36": {
+   "cell": "B0007",
+   "cycle_index": 36,
+   "ordinal": 18,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c37": {
+   "cell": "B0007",
+   "cycle_index": 38,
+   "ordinal": 19,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-c38": {
+   "cell": "B0007",
+   "cycle_index": 41,
+   "ordinal": 20,
+   "source_file": "benchmarks/battery_1rc_closure/data/calibration.json"
+  },
+  "P1-w01": {
+   "cell": "B0005",
+   "cycle_index": 45,
+   "ordinal": 21,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w02": {
+   "cell": "B0005",
+   "cycle_index": 49,
+   "ordinal": 22,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w03": {
+   "cell": "B0005",
+   "cycle_index": 53,
+   "ordinal": 23,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w04": {
+   "cell": "B0005",
+   "cycle_index": 57,
+   "ordinal": 24,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w05": {
+   "cell": "B0005",
+   "cycle_index": 61,
+   "ordinal": 25,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w06": {
+   "cell": "B0005",
+   "cycle_index": 65,
+   "ordinal": 26,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w07": {
+   "cell": "B0005",
+   "cycle_index": 69,
+   "ordinal": 27,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w08": {
+   "cell": "B0005",
+   "cycle_index": 73,
+   "ordinal": 28,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w09": {
+   "cell": "B0005",
+   "cycle_index": 77,
+   "ordinal": 29,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w10": {
+   "cell": "B0005",
+   "cycle_index": 81,
+   "ordinal": 30,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w11": {
+   "cell": "B0007",
+   "cycle_index": 45,
+   "ordinal": 21,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w12": {
+   "cell": "B0007",
+   "cycle_index": 49,
+   "ordinal": 22,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w13": {
+   "cell": "B0007",
+   "cycle_index": 53,
+   "ordinal": 23,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w14": {
+   "cell": "B0007",
+   "cycle_index": 57,
+   "ordinal": 24,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w15": {
+   "cell": "B0007",
+   "cycle_index": 61,
+   "ordinal": 25,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w16": {
+   "cell": "B0007",
+   "cycle_index": 65,
+   "ordinal": 26,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w17": {
+   "cell": "B0007",
+   "cycle_index": 69,
+   "ordinal": 27,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w18": {
+   "cell": "B0007",
+   "cycle_index": 73,
+   "ordinal": 28,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w19": {
+   "cell": "B0007",
+   "cycle_index": 77,
+   "ordinal": 29,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-w20": {
+   "cell": "B0007",
+   "cycle_index": 81,
+   "ordinal": 30,
+   "source_file": "benchmarks/battery_1rc_closure/data/within_cell_holdout.json"
+  },
+  "P1-x01": {
+   "cell": "B0006",
+   "cycle_index": 3,
+   "ordinal": 2,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x02": {
+   "cell": "B0006",
+   "cycle_index": 5,
+   "ordinal": 3,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x03": {
+   "cell": "B0006",
+   "cycle_index": 7,
+   "ordinal": 4,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x04": {
+   "cell": "B0006",
+   "cycle_index": 9,
+   "ordinal": 5,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x05": {
+   "cell": "B0006",
+   "cycle_index": 11,
+   "ordinal": 6,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x06": {
+   "cell": "B0006",
+   "cycle_index": 13,
+   "ordinal": 7,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x07": {
+   "cell": "B0006",
+   "cycle_index": 15,
+   "ordinal": 8,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x08": {
+   "cell": "B0006",
+   "cycle_index": 17,
+   "ordinal": 9,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x09": {
+   "cell": "B0006",
+   "cycle_index": 19,
+   "ordinal": 10,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x10": {
+   "cell": "B0006",
+   "cycle_index": 21,
+   "ordinal": 11,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x11": {
+   "cell": "B0006",
+   "cycle_index": 24,
+   "ordinal": 12,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x12": {
+   "cell": "B0006",
+   "cycle_index": 26,
+   "ordinal": 13,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x13": {
+   "cell": "B0006",
+   "cycle_index": 28,
+   "ordinal": 14,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x14": {
+   "cell": "B0006",
+   "cycle_index": 30,
+   "ordinal": 15,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x15": {
+   "cell": "B0006",
+   "cycle_index": 32,
+   "ordinal": 16,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x16": {
+   "cell": "B0006",
+   "cycle_index": 34,
+   "ordinal": 17,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x17": {
+   "cell": "B0006",
+   "cycle_index": 36,
+   "ordinal": 18,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x18": {
+   "cell": "B0006",
+   "cycle_index": 38,
+   "ordinal": 19,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x19": {
+   "cell": "B0006",
+   "cycle_index": 41,
+   "ordinal": 20,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x20": {
+   "cell": "B0006",
+   "cycle_index": 45,
+   "ordinal": 21,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x21": {
+   "cell": "B0006",
+   "cycle_index": 49,
+   "ordinal": 22,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x22": {
+   "cell": "B0006",
+   "cycle_index": 53,
+   "ordinal": 23,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x23": {
+   "cell": "B0006",
+   "cycle_index": 57,
+   "ordinal": 24,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x24": {
+   "cell": "B0006",
+   "cycle_index": 61,
+   "ordinal": 25,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x25": {
+   "cell": "B0006",
+   "cycle_index": 65,
+   "ordinal": 26,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x26": {
+   "cell": "B0006",
+   "cycle_index": 69,
+   "ordinal": 27,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x27": {
+   "cell": "B0006",
+   "cycle_index": 73,
+   "ordinal": 28,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x28": {
+   "cell": "B0006",
+   "cycle_index": 77,
+   "ordinal": 29,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  },
+  "P1-x29": {
+   "cell": "B0006",
+   "cycle_index": 81,
+   "ordinal": 30,
+   "source_file": "benchmarks/battery_1rc_closure/data/cross_cell_validation.json"
+  }
+ },
+ "P2": {
+  "P2-c01": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c02": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c03": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c04": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c05": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c06": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c07": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c08": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c09": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c10": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c11": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c12": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c13": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c14": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c15": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c16": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-c17": {
+   "level_A": 18.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 23
+  },
+  "P2-c18": {
+   "level_A": 3.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/calibration.json",
+   "step": 2
+  },
+  "P2-h01": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h02": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h03": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h04": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h05": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h06": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h07": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h08": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h09": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h10": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h11": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h12": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h13": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h14": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h15": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h16": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h17": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h18": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-h19": {
+   "level_A": 6.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 9
+  },
+  "P2-h20": {
+   "level_A": 12.0,
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_pulses.json",
+   "step": 16
+  },
+  "P2-k01": {
+   "source_file": "benchmarks/battery_1rc_identifiability/data/heldout_cc.json",
+   "test": "551_Cap_1C"
+  }
+ }
+}

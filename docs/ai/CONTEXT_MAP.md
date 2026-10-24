@@ -19,7 +19,7 @@ supersedes: none
 **If the owner says "كمل آخر حاجة":**
 1. Read root [CLAUDE.md](../../CLAUDE.md) first (repository behavior/limits), then the **current** [Active Plan](../work/ACTIVE_PLAN.md) top active slice and approval block.
 2. Read the [pause checkpoint](../work/PAUSE_RESUME_CHECKPOINT_2026_10_19.md) as a **historical snapshot**, followed by the [resume dashboard](../work/RESUME_DASHBOARD_2026_10_19.md) and [decision index](../work/RESUME_DECISION_REGISTER_2026_10_19.md). Check the current GitHub HEAD, PRs and intended local worktree before reporting a live state.
-3. Read [PROGRESS INDEX](PROGRESS_INDEX.md) first; search [PROGRESS.md](../work/PROGRESS.md) for **relevant evidence only** (avoid loading ~6,600 lines by default).
+3. Read [PROGRESS INDEX](PROGRESS_INDEX.md) first; search [PROGRESS.md](../work/PROGRESS.md) for **relevant evidence only** (avoid loading the whole file by default: over 8,000 lines, 8,095 at `12862b0b`). Before treating a red test tier as new, read [FAILURE_BASELINE_2026-10-20](../work/FAILURE_BASELINE_2026-10-20.md).
 4. Load the scientific/architectural contract **owning the requested topic**, then exact audit evidence and affected code; list missing sources as **UNVERIFIED**.
 5. Output a dated status table `workstream | evidence SHA | state | blocker | approval | next bounded task | ★` and updated dependency map. Continue only an **already-authorized** task. A generic "continue" is not permission for execution, installs, merge, OD-3 or formal measurements.
 

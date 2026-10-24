@@ -1,0 +1,13 @@
+{
+ "problems": {
+  "P1": {
+   "file": "P1.json",
+   "sha256": "2fb15f7f39a52635e8e6fe741c38dbcdec5df9f6868fa664ec7cd34c48466657"
+  },
+  "P2": {
+   "file": "P2.json",
+   "sha256": "864eea4de4e5977d20ee76ba146aa0f711cfc3d34ae343ff8d6ae8d0abeffd2d"
+  }
+ },
+ "schema": "forge.battery_rediscovery.pack_manifest/1"
+}

@@ -1,0 +1,103 @@
+{
+ "arms": {
+  "ALWAYS_FIT__P1.json": {
+   "identical": true,
+   "rerun_digest": "1c06b7d921859fd415fe9e6ee6f37997fa7d57d8557d0ef198a473e1ec3b0609",
+   "sealed_digest": "1c06b7d921859fd415fe9e6ee6f37997fa7d57d8557d0ef198a473e1ec3b0609"
+  },
+  "ALWAYS_FIT__P2.json": {
+   "identical": true,
+   "rerun_digest": "e4d169b0e4443aa1706de51892a11ccf84492c263e94f996dbf261ff89acf7bb",
+   "sealed_digest": "e4d169b0e4443aa1706de51892a11ccf84492c263e94f996dbf261ff89acf7bb"
+  },
+  "ALWAYS_REFUSE__P1.json": {
+   "identical": true,
+   "rerun_digest": "bc5721d2114e13a534e5ca911763af4eba0d00fc8bdd9206a1d0f514d266b285",
+   "sealed_digest": "bc5721d2114e13a534e5ca911763af4eba0d00fc8bdd9206a1d0f514d266b285"
+  },
+  "ALWAYS_REFUSE__P2.json": {
+   "identical": true,
+   "rerun_digest": "591f5dee087428a0506901f3f2015993fc7e14527160cbbdd8e61f754f094bd7",
+   "sealed_digest": "591f5dee087428a0506901f3f2015993fc7e14527160cbbdd8e61f754f094bd7"
+  },
+  "CAREFUL_BASELINE__P1.json": {
+   "identical": true,
+   "rerun_digest": "95b99d05c8e09c2dc175563360601e7953ea6c347969f3bd81f259252cc3684c",
+   "sealed_digest": "95b99d05c8e09c2dc175563360601e7953ea6c347969f3bd81f259252cc3684c"
+  },
+  "CAREFUL_BASELINE__P2.json": {
+   "identical": true,
+   "rerun_digest": "8f2d4994091b74bb9f0c07f0744b0f7df5008fa703bfefefaca9d0dac73d8fd4",
+   "sealed_digest": "8f2d4994091b74bb9f0c07f0744b0f7df5008fa703bfefefaca9d0dac73d8fd4"
+  },
+  "FIXED_FIT__P1.json": {
+   "identical": true,
+   "rerun_digest": "b907eee646386c7eb797a14edfa44659866088e01db96405ced238879b510845",
+   "sealed_digest": "b907eee646386c7eb797a14edfa44659866088e01db96405ced238879b510845"
+  },
+  "FIXED_FIT__P2.json": {
+   "identical": true,
+   "rerun_digest": "094d48d755a166cc0ee360a6c65fe89e7af16166b1d07910f5618abb957b6416",
+   "sealed_digest": "094d48d755a166cc0ee360a6c65fe89e7af16166b1d07910f5618abb957b6416"
+  },
+  "MIND_TRACES__P1.json": {
+   "identical": true,
+   "sealed_digest": "199de0dda182711d2544a6ba936514345ca2f0f7133baee66596ccccea720342"
+  },
+  "MIND_TRACES__P2.json": {
+   "identical": true,
+   "sealed_digest": "79de1b7a4ead5a844bd36bd2cfbb6ba8eaf4a4a49328d1c17ee170be21dee6e1"
+  },
+  "MIND__P1.json": {
+   "identical": true,
+   "rerun_digest": "e83add92473da654ea2c397219875e36adbc4baaeefc89bbee0958ebb3fda100",
+   "sealed_digest": "e83add92473da654ea2c397219875e36adbc4baaeefc89bbee0958ebb3fda100"
+  },
+  "MIND__P2.json": {
+   "identical": true,
+   "rerun_digest": "14dd4c403e0a481e5f1260f7e7925db2a6773e8895641bca73b7d7ccea0097b0",
+   "sealed_digest": "14dd4c403e0a481e5f1260f7e7925db2a6773e8895641bca73b7d7ccea0097b0"
+  }
+ },
+ "mind_traces": {
+  "P1": {
+   "PREDICTION[cross_cell_heldout/other_cell]": {
+    "detail": "",
+    "first_divergence": null,
+    "problem_digest_matches": true,
+    "status": "VERIFIED",
+    "steps": 40
+   },
+   "PREDICTION[within_cell_heldout/later_cycles]": {
+    "detail": "",
+    "first_divergence": null,
+    "problem_digest_matches": true,
+    "status": "VERIFIED",
+    "steps": 40
+   }
+  },
+  "P2": {
+   "PREDICTION[within_cell_heldout/cc]": {
+    "detail": "",
+    "first_divergence": null,
+    "problem_digest_matches": true,
+    "status": "VERIFIED",
+    "steps": 40
+   },
+   "PREDICTION[within_cell_heldout/pulses]": {
+    "detail": "",
+    "first_divergence": null,
+    "problem_digest_matches": true,
+    "status": "VERIFIED",
+    "steps": 40
+   },
+   "RELAXATION": {
+    "detail": "",
+    "first_divergence": null,
+    "problem_digest_matches": true,
+    "status": "VERIFIED",
+    "steps": 40
+   }
+  }
+ }
+}

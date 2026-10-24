@@ -97,3 +97,53 @@ def test_deadline_also_bounds_task_writes_and_exit_after_output_eof(monkeypatch,
 def test_invalid_deadline_is_refused_before_launch(timeout):
     with pytest.raises(ValueError, match="finite and positive"):
         object.__new__(isolation.IsolatedEscrow).run_discovery({}, timeout=timeout)
+
+
+def test_process_group_wait_reports_survivor_pid(monkeypatch):
+    from pathlib import Path
+    from engcore.blindfold import isolation
+
+    original_glob = Path.glob
+    original_read = Path.read_text
+    stat_path = Path("/proc/4242/stat")
+    monkeypatch.setattr(Path, "glob", lambda self, pattern: [stat_path] if self == Path("/proc") else original_glob(self, pattern))
+    monkeypatch.setattr(Path, "read_text", lambda self, *a, **k: "4242 (hostile child) R 1 99 77 0" if self == stat_path else original_read(self, *a, **k))
+    ticks = [0.0]
+    def advance_clock():
+        ticks[0] += 6.0
+        return ticks[0]
+    monkeypatch.setattr(isolation.time, "monotonic", advance_clock)
+    with pytest.raises(RuntimeError, match=r"live members \['4242'\]"):
+        isolation._wait_process_group_stopped(99, timeout=5)
+
+
+def test_process_group_wait_fails_closed_on_malformed_proc_observation(monkeypatch):
+    from pathlib import Path
+    from engcore.blindfold import isolation
+
+    original_glob = Path.glob
+    original_read = Path.read_text
+    stat_path = Path("/proc/4242/stat")
+    monkeypatch.setattr(Path, "glob", lambda self, pattern: [stat_path] if self == Path("/proc") else original_glob(self, pattern))
+    monkeypatch.setattr(Path, "read_text", lambda self, *a, **k: "malformed" if self == stat_path else original_read(self, *a, **k))
+    with pytest.raises(RuntimeError, match="cannot parse process-group observation"):
+        isolation._wait_process_group_stopped(77, timeout=5)
+
+
+def test_process_group_cleanup_reaps_leader_even_when_observation_fails(monkeypatch):
+    from engcore.blindfold import isolation
+
+    waited = []
+    class Process:
+        pid = 4242
+        def wait(self, *, timeout):
+            waited.append(timeout)
+            return -9
+
+    monkeypatch.setattr(isolation.os, "killpg", lambda pid, sig: None)
+    def fail_observation(*args, **kwargs):
+        raise RuntimeError("synthetic observation failure")
+    monkeypatch.setattr(isolation, "_wait_process_group_stopped", fail_observation)
+    with pytest.raises(RuntimeError, match="group observation failed"):
+        isolation._stop_discovery_process_group(Process())
+    assert waited == [5]

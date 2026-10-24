@@ -1,0 +1,2469 @@
+{
+ "bridge_problems": [
+  "Q1",
+  "Q2"
+ ],
+ "primary_problems": [
+  "P01",
+  "P02",
+  "P03",
+  "P04",
+  "P05",
+  "P06",
+  "P07",
+  "P08",
+  "P09",
+  "P10",
+  "P11",
+  "P12",
+  "P13",
+  "P14",
+  "P15",
+  "P16",
+  "P17",
+  "P18",
+  "P19",
+  "P20",
+  "P21",
+  "P22",
+  "P23",
+  "P24",
+  "P25",
+  "P26",
+  "P27",
+  "P28",
+  "P29",
+  "P31",
+  "P32"
+ ],
+ "problems": {
+  "P01": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 10,
+    "within": 11
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.922253047203,
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 11683.667218696704,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 106443.80310287792,
+      "why": [
+       "pulse lasts 62.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 22,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 11783.939229154697,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 102598.8847018108,
+      "why": [
+       "pulse lasts 268.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106527.1051115543,
+      "why": [
+       "pulse lasts 43.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P02": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 11,
+    "within": 10
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.92825304513,
+    "pulses_admitted": 22,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 11783.939229154697,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 102598.8847018108,
+      "why": [
+       "pulse lasts 268.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106527.1051115543,
+      "why": [
+       "pulse lasts 43.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 11909.847242288699,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 106669.82512644262,
+      "why": [
+       "pulse lasts 47.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P03": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 11,
+    "within": 11
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.92225304639,
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 11909.847242288699,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 106669.82512644262,
+      "why": [
+       "pulse lasts 47.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 11683.667218696704,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 106443.80310287792,
+      "why": [
+       "pulse lasts 62.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P04": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 10,
+    "within": 10
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.925086291492,
+    "pulses_admitted": 22,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 8312.032394800335,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 99125.30080273515,
+      "why": [
+       "pulse lasts 278.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 103063.33500078716,
+      "why": [
+       "pulse lasts 46.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 22,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 8127.5023860356305,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 98939.24079337738,
+      "why": [
+       "pulse lasts 265.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102864.12699076885,
+      "why": [
+       "pulse lasts 44.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P05": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 11,
+    "within": 10
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.919086291688,
+    "pulses_admitted": 22,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 8127.5023860356305,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 98939.24079337738,
+      "why": [
+       "pulse lasts 265.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102864.12699076885,
+      "why": [
+       "pulse lasts 44.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 8332.640395779163,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 103093.17900228847,
+      "why": [
+       "pulse lasts 46.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P06": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 10,
+    "within": 11
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.9230862923,
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 8332.640395779163,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 103093.17900228847,
+      "why": [
+       "pulse lasts 46.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 22,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 8312.032394800335,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 99125.30080273515,
+      "why": [
+       "pulse lasts 278.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 103063.33500078716,
+      "why": [
+       "pulse lasts 46.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P07": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 11,
+    "cross": 7,
+    "within": 9
+   },
+   "ocv_knots": 12,
+   "own": {
+    "final_rest_s": 21599.948253047914,
+    "pulses_admitted": 20,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 12293.145282273588,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 95211.38793130888,
+      "why": [
+       "pulse lasts 198.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 99069.47233373809,
+      "why": [
+       "pulse lasts 48.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102777.5067205161,
+      "why": [
+       "pulse lasts 27.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106464.84910513481,
+      "why": [
+       "pulse lasts 18.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 16,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 15828.781651066587,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 82949.7546523186,
+      "why": [
+       "pulse lasts 188.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 86797.8290537028,
+      "why": [
+       "pulse lasts 66.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 90523.86744235779,
+      "why": [
+       "pulse lasts 38.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 94222.22982812679,
+      "why": [
+       "pulse lasts 26.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 97908.4882126339,
+      "why": [
+       "pulse lasts 19.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 101588.34059647101,
+      "why": [
+       "pulse lasts 15.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 105264.17697989079,
+      "why": [
+       "pulse lasts 12.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108937.1313630098,
+      "why": [
+       "pulse lasts 10.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P08": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 9,
+    "cross": 7,
+    "within": 7
+   },
+   "ocv_knots": 10,
+   "own": {
+    "final_rest_s": 21599.946253049915,
+    "pulses_admitted": 16,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 15828.781651066587,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 82949.7546523186,
+      "why": [
+       "pulse lasts 188.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 86797.8290537028,
+      "why": [
+       "pulse lasts 66.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 90523.86744235779,
+      "why": [
+       "pulse lasts 38.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 94222.22982812679,
+      "why": [
+       "pulse lasts 26.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 97908.4882126339,
+      "why": [
+       "pulse lasts 19.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 101588.34059647101,
+      "why": [
+       "pulse lasts 15.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 105264.17697989079,
+      "why": [
+       "pulse lasts 12.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108937.1313630098,
+      "why": [
+       "pulse lasts 10.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 15,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 18632.58193801409,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 81807.1985276341,
+      "why": [
+       "pulse lasts 237.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 85704.6989341748,
+      "why": [
+       "pulse lasts 82.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 89447.187324546,
+      "why": [
+       "pulse lasts 49.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93156.7137114787,
+      "why": [
+       "pulse lasts 34.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96851.40209686449,
+      "why": [
+       "pulse lasts 26.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100537.7764813825,
+      "why": [
+       "pulse lasts 21.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104218.89686535338,
+      "why": [
+       "pulse lasts 17.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107896.4892489554,
+      "why": [
+       "pulse lasts 14.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111571.30963226849,
+      "why": [
+       "pulse lasts 12.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P09": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 8,
+    "cross": 9,
+    "within": 7
+   },
+   "ocv_knots": 9,
+   "own": {
+    "final_rest_s": 21599.946253043556,
+    "pulses_admitted": 15,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 18632.58193801409,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 81807.1985276341,
+      "why": [
+       "pulse lasts 237.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 85704.6989341748,
+      "why": [
+       "pulse lasts 82.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 89447.187324546,
+      "why": [
+       "pulse lasts 49.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93156.7137114787,
+      "why": [
+       "pulse lasts 34.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96851.40209686449,
+      "why": [
+       "pulse lasts 26.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100537.7764813825,
+      "why": [
+       "pulse lasts 21.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104218.89686535338,
+      "why": [
+       "pulse lasts 17.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107896.4892489554,
+      "why": [
+       "pulse lasts 14.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111571.30963226849,
+      "why": [
+       "pulse lasts 12.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 20,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 12293.145282273588,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 95211.38793130888,
+      "why": [
+       "pulse lasts 198.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 99069.47233373809,
+      "why": [
+       "pulse lasts 48.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102777.5067205161,
+      "why": [
+       "pulse lasts 27.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106464.84910513481,
+      "why": [
+       "pulse lasts 18.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P10": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 9,
+    "within": 9
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.940253046312,
+    "pulses_admitted": 19,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 14142.635475191695,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 93104.0297114712,
+      "why": [
+       "pulse lasts 119.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96883.83810573138,
+      "why": [
+       "pulse lasts 43.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100587.29849202908,
+      "why": [
+       "pulse lasts 26.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104274.23487660379,
+      "why": [
+       "pulse lasts 19.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107953.9172604247,
+      "why": [
+       "pulse lasts 15.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 19,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 13660.595424911007,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 92620.5056610704,
+      "why": [
+       "pulse lasts 81.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96361.53205128951,
+      "why": [
+       "pulse lasts 36.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100058.15843687771,
+      "why": [
+       "pulse lasts 23.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 103741.99882113209,
+      "why": [
+       "pulse lasts 17.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107419.5832047342,
+      "why": [
+       "pulse lasts 13.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P11": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 9,
+    "within": 9
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.9642530517,
+    "pulses_admitted": 19,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 13660.595424911007,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 92620.5056610704,
+      "why": [
+       "pulse lasts 81.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96361.53205128951,
+      "why": [
+       "pulse lasts 36.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100058.15843687771,
+      "why": [
+       "pulse lasts 23.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 103741.99882113209,
+      "why": [
+       "pulse lasts 17.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107419.5832047342,
+      "why": [
+       "pulse lasts 13.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 19,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 14082.503468918614,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 93029.81970373521,
+      "why": [
+       "pulse lasts 127.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96817.44809881342,
+      "why": [
+       "pulse lasts 44.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100522.40248526941,
+      "why": [
+       "pulse lasts 27.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104209.83886989791,
+      "why": [
+       "pulse lasts 19.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107889.77925373992,
+      "why": [
+       "pulse lasts 15.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P12": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 9,
+    "within": 9
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.934253048792,
+    "pulses_admitted": 19,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 14082.503468918614,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 93029.81970373521,
+      "why": [
+       "pulse lasts 127.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96817.44809881342,
+      "why": [
+       "pulse lasts 44.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100522.40248526941,
+      "why": [
+       "pulse lasts 27.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104209.83886989791,
+      "why": [
+       "pulse lasts 19.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107889.77925373992,
+      "why": [
+       "pulse lasts 15.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 19,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 14142.635475191695,
+      "why": [
+       "pre-rest shorter than 600 s"
+      ]
+     },
+     {
+      "pulse_start_s": 93104.0297114712,
+      "why": [
+       "pulse lasts 119.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96883.83810573138,
+      "why": [
+       "pulse lasts 43.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100587.29849202908,
+      "why": [
+       "pulse lasts 26.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104274.23487660379,
+      "why": [
+       "pulse lasts 19.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107953.9172604247,
+      "why": [
+       "pulse lasts 15.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P13": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 13,
+    "cross": 11,
+    "within": 11
+   },
+   "ocv_knots": 14,
+   "own": {
+    "final_rest_s": 21599.92625304847,
+    "pulses_admitted": 24,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 106683.7891279014,
+      "why": [
+       "pulse lasts 43.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 102592.54270114593,
+      "why": [
+       "pulse lasts 271.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106524.38511126232,
+      "why": [
+       "pulse lasts 44.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P14": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 11,
+    "within": 11
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.928253047838,
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 102592.54270114593,
+      "why": [
+       "pulse lasts 271.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106524.38511126232,
+      "why": [
+       "pulse lasts 44.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 24,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 106543.83911330579,
+      "why": [
+       "pulse lasts 48.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P15": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 13,
+    "cross": 11,
+    "within": 11
+   },
+   "ocv_knots": 14,
+   "own": {
+    "final_rest_s": 21599.918253046897,
+    "pulses_admitted": 24,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 106543.83911330579,
+      "why": [
+       "pulse lasts 48.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 24,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 106683.7891279014,
+      "why": [
+       "pulse lasts 43.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P16": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 11,
+    "within": 11
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.92508629292,
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 98940.95079345863,
+      "why": [
+       "pulse lasts 269.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102869.87499105136,
+      "why": [
+       "pulse lasts 44.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 99010.10879693531,
+      "why": [
+       "pulse lasts 283.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102953.16699523825,
+      "why": [
+       "pulse lasts 44.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P17": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 11,
+    "within": 11
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.927086291602,
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 99010.10879693531,
+      "why": [
+       "pulse lasts 283.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102953.16699523825,
+      "why": [
+       "pulse lasts 44.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 99041.69679852623,
+      "why": [
+       "pulse lasts 276.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102977.59099647027,
+      "why": [
+       "pulse lasts 44.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P18": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 12,
+    "cross": 11,
+    "within": 11
+   },
+   "ocv_knots": 13,
+   "own": {
+    "final_rest_s": 21599.921086291084,
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 99041.69679852623,
+      "why": [
+       "pulse lasts 276.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102977.59099647027,
+      "why": [
+       "pulse lasts 44.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 23,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 98940.95079345863,
+      "why": [
+       "pulse lasts 269.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102869.87499105136,
+      "why": [
+       "pulse lasts 44.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P19": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 9,
+    "cross": 8,
+    "within": 8
+   },
+   "ocv_knots": 10,
+   "own": {
+    "final_rest_s": 21599.934253045387,
+    "pulses_admitted": 17,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 86312.7990030488,
+      "why": [
+       "pulse lasts 168.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 90141.26140238432,
+      "why": [
+       "pulse lasts 68.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93869.40579125649,
+      "why": [
+       "pulse lasts 40.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 97569.6201772186,
+      "why": [
+       "pulse lasts 27.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 101256.82456181943,
+      "why": [
+       "pulse lasts 20.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104937.16894570732,
+      "why": [
+       "pulse lasts 16.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108613.3113291543,
+      "why": [
+       "pulse lasts 13.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 112286.69171230932,
+      "why": [
+       "pulse lasts 11.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 87982.78117723233,
+      "why": [
+       "pulse lasts 223.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 91866.53758233649,
+      "why": [
+       "pulse lasts 56.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 95582.86396997841,
+      "why": [
+       "pulse lasts 30.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 99273.52035493919,
+      "why": [
+       "pulse lasts 20.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102954.19273885939,
+      "why": [
+       "pulse lasts 15.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106629.71712224491,
+      "why": [
+       "pulse lasts 12.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 110302.05550529482,
+      "why": [
+       "pulse lasts 10.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P20": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 8,
+    "within": 8
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.938253046916,
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 87982.78117723233,
+      "why": [
+       "pulse lasts 223.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 91866.53758233649,
+      "why": [
+       "pulse lasts 56.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 95582.86396997841,
+      "why": [
+       "pulse lasts 30.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 99273.52035493919,
+      "why": [
+       "pulse lasts 20.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102954.19273885939,
+      "why": [
+       "pulse lasts 15.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106629.71712224491,
+      "why": [
+       "pulse lasts 12.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 110302.05550529482,
+      "why": [
+       "pulse lasts 10.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 87452.93712198728,
+      "why": [
+       "pulse lasts 269.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 91382.6695318865,
+      "why": [
+       "pulse lasts 56.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 95099.6539195962,
+      "why": [
+       "pulse lasts 30.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 98790.57430458159,
+      "why": [
+       "pulse lasts 20.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102471.3766885137,
+      "why": [
+       "pulse lasts 15.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106146.9690719033,
+      "why": [
+       "pulse lasts 12.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 109819.25745495042,
+      "why": [
+       "pulse lasts 9.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P21": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 8,
+    "within": 8
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.93625304388,
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 87452.93712198728,
+      "why": [
+       "pulse lasts 269.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 91382.6695318865,
+      "why": [
+       "pulse lasts 56.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 95099.6539195962,
+      "why": [
+       "pulse lasts 30.8 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 98790.57430458159,
+      "why": [
+       "pulse lasts 20.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 102471.3766885137,
+      "why": [
+       "pulse lasts 15.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 106146.9690719033,
+      "why": [
+       "pulse lasts 12.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 109819.25745495042,
+      "why": [
+       "pulse lasts 9.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 17,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 86312.7990030488,
+      "why": [
+       "pulse lasts 168.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 90141.26140238432,
+      "why": [
+       "pulse lasts 68.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93869.40579125649,
+      "why": [
+       "pulse lasts 40.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 97569.6201772186,
+      "why": [
+       "pulse lasts 27.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 101256.82456181943,
+      "why": [
+       "pulse lasts 20.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104937.16894570732,
+      "why": [
+       "pulse lasts 16.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108613.3113291543,
+      "why": [
+       "pulse lasts 13.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 112286.69171230932,
+      "why": [
+       "pulse lasts 11.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P22": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 8,
+    "within": 8
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.936253040127,
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 89331.91931798993,
+      "why": [
+       "pulse lasts 228.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93220.02772355013,
+      "why": [
+       "pulse lasts 73.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96953.52211297891,
+      "why": [
+       "pulse lasts 42.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100655.92849916904,
+      "why": [
+       "pulse lasts 28.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104344.2708838904,
+      "why": [
+       "pulse lasts 20.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108025.29726784962,
+      "why": [
+       "pulse lasts 16.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111702.13965137332,
+      "why": [
+       "pulse lasts 13.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 89437.34932897871,
+      "why": [
+       "pulse lasts 241.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93338.57973590467,
+      "why": [
+       "pulse lasts 70.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 97069.58212507499,
+      "why": [
+       "pulse lasts 40.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100770.1065110669,
+      "why": [
+       "pulse lasts 27.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104457.18689565739,
+      "why": [
+       "pulse lasts 20.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108137.42927953578,
+      "why": [
+       "pulse lasts 16.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111813.59766298608,
+      "why": [
+       "pulse lasts 13.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P23": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 8,
+    "within": 8
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.93625304487,
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 89437.34932897871,
+      "why": [
+       "pulse lasts 241.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93338.57973590467,
+      "why": [
+       "pulse lasts 70.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 97069.58212507499,
+      "why": [
+       "pulse lasts 40.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100770.1065110669,
+      "why": [
+       "pulse lasts 27.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104457.18689565739,
+      "why": [
+       "pulse lasts 20.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108137.42927953578,
+      "why": [
+       "pulse lasts 16.1 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111813.59766298608,
+      "why": [
+       "pulse lasts 13.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 89025.4752860349,
+      "why": [
+       "pulse lasts 273.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 92958.83769631552,
+      "why": [
+       "pulse lasts 74.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96692.93608581001,
+      "why": [
+       "pulse lasts 41.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100394.664471925,
+      "why": [
+       "pulse lasts 27.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104082.37085657899,
+      "why": [
+       "pulse lasts 20.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107762.97124049347,
+      "why": [
+       "pulse lasts 16.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111439.42162397597,
+      "why": [
+       "pulse lasts 13.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P24": {
+   "kind": "gitt_measured_ocv",
+   "n": {
+    "calibration": 10,
+    "cross": 8,
+    "within": 8
+   },
+   "ocv_knots": 11,
+   "own": {
+    "final_rest_s": 21599.940253046603,
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 89025.4752860349,
+      "why": [
+       "pulse lasts 273.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 92958.83769631552,
+      "why": [
+       "pulse lasts 74.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96692.93608581001,
+      "why": [
+       "pulse lasts 41.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100394.664471925,
+      "why": [
+       "pulse lasts 27.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104082.37085657899,
+      "why": [
+       "pulse lasts 20.5 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 107762.97124049347,
+      "why": [
+       "pulse lasts 16.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111439.42162397597,
+      "why": [
+       "pulse lasts 13.6 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   },
+   "partner": {
+    "pulses_admitted": 18,
+    "pulses_excluded": [
+     {
+      "pulse_start_s": 89331.91931798993,
+      "why": [
+       "pulse lasts 228.0 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 93220.02772355013,
+      "why": [
+       "pulse lasts 73.4 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 96953.52211297891,
+      "why": [
+       "pulse lasts 42.3 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 100655.92849916904,
+      "why": [
+       "pulse lasts 28.2 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 104344.2708838904,
+      "why": [
+       "pulse lasts 20.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 108025.29726784962,
+      "why": [
+       "pulse lasts 16.7 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     },
+     {
+      "pulse_start_s": 111702.13965137332,
+      "why": [
+       "pulse lasts 13.9 s, not the protocol 288 s (ends at the cutoff)"
+      ]
+     }
+    ]
+   }
+  },
+  "P25": {
+   "excluded": {
+    "LGM50_cell02": [
+     {
+      "rate_A": 0.500038,
+      "start_s": 1800.04002,
+      "why": [
+       "not preceded by a CC-CV charge ending at C/100 + 10 mA"
+      ]
+     }
+    ],
+    "LGM50_cell03": [
+     {
+      "rate_A": 0.499886,
+      "start_s": 1800.04002,
+      "why": [
+       "not preceded by a CC-CV charge ending at C/100 + 10 mA"
+      ]
+     }
+    ]
+   },
+   "kind": "rate_tests_fitted_ocv",
+   "n": {
+    "calibration": 2,
+    "cross": 2,
+    "within": 2
+   },
+   "runs": {
+    "LGM50_cell02": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ],
+    "LGM50_cell03": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ]
+   }
+  },
+  "P26": {
+   "excluded": {
+    "LGM50_cell03": [
+     {
+      "rate_A": 0.499886,
+      "start_s": 1800.04002,
+      "why": [
+       "not preceded by a CC-CV charge ending at C/100 + 10 mA"
+      ]
+     }
+    ],
+    "LGM50_cell04": [
+     {
+      "rate_A": 0.499886,
+      "start_s": 1800.04002,
+      "why": [
+       "not preceded by a CC-CV charge ending at C/100 + 10 mA"
+      ]
+     }
+    ]
+   },
+   "kind": "rate_tests_fitted_ocv",
+   "n": {
+    "calibration": 2,
+    "cross": 2,
+    "within": 2
+   },
+   "runs": {
+    "LGM50_cell03": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ],
+    "LGM50_cell04": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ]
+   }
+  },
+  "P27": {
+   "excluded": {
+    "LGM50_cell02": [
+     {
+      "rate_A": 0.500038,
+      "start_s": 1800.04002,
+      "why": [
+       "not preceded by a CC-CV charge ending at C/100 + 10 mA"
+      ]
+     }
+    ],
+    "LGM50_cell04": [
+     {
+      "rate_A": 0.499886,
+      "start_s": 1800.04002,
+      "why": [
+       "not preceded by a CC-CV charge ending at C/100 + 10 mA"
+      ]
+     }
+    ]
+   },
+   "kind": "rate_tests_fitted_ocv",
+   "n": {
+    "calibration": 2,
+    "cross": 2,
+    "within": 2
+   },
+   "runs": {
+    "LGM50_cell02": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ],
+    "LGM50_cell04": [
+     0.5,
+     2.5,
+     5.0,
+     7.5
+    ]
+   }
+  },
+  "P28": {
+   "admitted": 36,
+   "calibration_ordinals": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "discharges": 40,
+   "excluded": [
+    {
+     "ordinal": 0,
+     "why": [
+      "preceding charge does not end at <= 30 mA",
+      "does not end in rest",
+      "no earlier discharge for the causal capacity basis"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 15,
+     "why": [
+      "does not end in rest"
+     ]
+    }
+   ],
+   "heldout_ordinals": [
+    20,
+    21,
+    22,
+    23
+   ],
+   "kind": "aging_archive_fitted_ocv",
+   "n": {
+    "calibration": 4,
+    "within": 4
+   }
+  },
+  "P29": {
+   "admitted": 39,
+   "calibration_ordinals": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "discharges": 40,
+   "excluded": [
+    {
+     "ordinal": 0,
+     "why": [
+      "preceding charge does not end at <= 30 mA",
+      "no earlier discharge for the causal capacity basis"
+     ]
+    }
+   ],
+   "heldout_ordinals": [
+    20,
+    21,
+    22,
+    23
+   ],
+   "kind": "aging_archive_fitted_ocv",
+   "n": {
+    "calibration": 4,
+    "within": 4
+   }
+  },
+  "P31": {
+   "admitted": 28,
+   "calibration_ordinals": [
+    11,
+    12,
+    13,
+    14
+   ],
+   "discharges": 40,
+   "excluded": [
+    {
+     "ordinal": 0,
+     "why": [
+      "preceding charge does not end at <= 30 mA",
+      "no earlier discharge for the causal capacity basis"
+     ]
+    },
+    {
+     "ordinal": 1,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 6,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 15,
+     "why": [
+      "does not end in rest"
+     ]
+    }
+   ],
+   "heldout_ordinals": [
+    20,
+    21,
+    22,
+    23
+   ],
+   "kind": "aging_archive_fitted_ocv",
+   "n": {
+    "calibration": 4,
+    "within": 4
+   }
+  },
+  "P32": {
+   "admitted": 11,
+   "calibration_ordinals": [
+    11,
+    12,
+    15,
+    17
+   ],
+   "discharges": 25,
+   "excluded": [
+    {
+     "ordinal": 0,
+     "why": [
+      "preceding charge does not end at <= 30 mA",
+      "no earlier discharge for the causal capacity basis"
+     ]
+    },
+    {
+     "ordinal": 1,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 2,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 3,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 4,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 5,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 6,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 7,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 13,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 14,
+     "why": [
+      "preceding charge does not end at <= 30 mA"
+     ]
+    },
+    {
+     "ordinal": 16,
+     "why": [
+      "does not end in rest"
+     ]
+    }
+   ],
+   "heldout_ordinals": [
+    18,
+    19,
+    20,
+    21
+   ],
+   "kind": "aging_archive_fitted_ocv",
+   "n": {
+    "calibration": 4,
+    "within": 4
+   }
+  }
+ },
+ "refused_problems": {
+  "P30": {
+   "admitted": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    15
+   ],
+   "design": {
+    "cell": "B0031",
+    "kind": "nasa",
+    "pid": "P30",
+    "unit": "u18"
+   },
+   "discharges": 40,
+   "excluded": [
+    {
+     "ordinal": 0,
+     "why": [
+      "preceding charge does not end at <= 30 mA",
+      "no earlier discharge for the causal capacity basis"
+     ]
+    },
+    {
+     "ordinal": 8,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 9,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 10,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 11,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 12,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 13,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 14,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 16,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 17,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 18,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 19,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 20,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 21,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 22,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 23,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 24,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 25,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 26,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 27,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 28,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 29,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 30,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 31,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 32,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 33,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 34,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 35,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 36,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 37,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 38,
+     "why": [
+      "does not end in rest"
+     ]
+    },
+    {
+     "ordinal": 39,
+     "why": [
+      "does not end in rest"
+     ]
+    }
+   ],
+   "why": "4 calibration and 0 held-out discharges admitted; the fixed design needs 4 and 4"
+  }
+ },
+ "rules": "Build the v3 CandidateBundle (evaluator side; the candidate never imports this module).\n\n    python -m benchmarks.battery_rediscovery_v3.build_pack\n\nInputs are the ELIGIBLE_PRIMARY_V3 units of ``EvaluatorVault/CENSUS.json`` plus the two v2 problems as the SECONDARY\nBRIDGE SET, each verified against a pinned digest before it is read.  Nothing is fitted here and no voltage is compared\nwith any model.  Every rule below is structural (protocol segments, sample timing, charge counting, protocol order) and\nwas fixed before the pack was built; a trajectory that fails a rule is excluded with its reason in\n``EvaluatorVault/ELIGIBILITY.json``, never repaired.\n\nProblem kinds (all in the GEN1 problem schema ``forge.mind.repsem.problem/1``):\n\n* **GITT pulses, measured OCV** (24 problems: 12 cells x {beginning of life, latest common RPT}).  One cell per problem.\n  A window is the last 600 s of the rest before a 2.5 A, 288 s pulse, the pulse, and the first 3000 s of the following\n  rest.  A window is admitted iff its pre-rest is >= 600 s at |I| <= 0.01 A, its pulse lasts the protocol duration\n  (288 +- 2 s) with every sample within 2 % of 2.5 A, and its post-rest is >= 3000 s.  The full pulses are ranked from\n  the highest charge state (rank 0) down; calibration = even ranks plus the lowest rank, within-cell held-out = the\n  others (the v2 rule, inherited).  Cross-cell held-out = the partner cell's within-cell windows at the same RPT (partner:\n  the next cell in its rig/ageing group, A->B->C->A and F->G->H->F, fixed from metadata).\n  Charge state: 1 at the end of the pre-GITT rest, coulomb-counted (backward hold, full resolution) over the GITT's total\n  discharged charge, so 0 at the end of the file.  Measured OCV: the voltage of the last sample before each CALIBRATION\n  pulse (>= 3600 s relaxed) and the last sample of the file (6 h relaxed, charge state 0); no held-out voltage enters the\n  OCV.  Decimation: all samples within 2 s after any current change, the 2 samples before any change, and one sample per\n  2 s of pulse, per 20 s of post-rest and per 60 s of pre-rest.  Voltage uncertainty UNKNOWN.  Bars: the pulse class,\n  15 / 30 mV (inherited verbatim from v1/v2).  Bounds and scope margins inherited from v2 (Q2 bounds; Q1 margins).\n* **Constant-current rate tests, fitted OCV** (3 problems, one cell each).  Each run: discharge from full charge (CC-CV\n  to 4.2 V, C/100 termination, 2 h rest) to 2.5 V at a protocol rate, then the following rest until the next current.\n  Calibration = the cell's 0.5 A and 7.5 A runs; within-cell held-out = its 2.5 A and 5 A runs (rate interpolation);\n  cross-cell held-out = the partner cell's 2.5 A and 5 A runs (02->03->04->02).  Capacity basis per cell: the charge\n  delivered by that cell's 0.5 A run (the protocol's capacity check, which precedes the other rates).  Bars: the\n  aging-archive class, 50 / 90 mV (inherited).  Fitted OCV on the GEN1 knots.  Uncertainty UNKNOWN.\n* **Aging-archive discharges, fitted OCV** (5 problems, one cell each, no cross-cell set: the sibling cells' cutoff\n  voltages differ, so their charge-state coordinate means something different).  A discharge is admitted iff the\n  preceding charge ends at <= 30 mA (protocol 20 mA + 10 mA band), its loaded median is within 5 % of the declared level,\n  and it ends in rest.  Calibration = the first 4 admitted discharges with ordinal >= 1; within-cell held-out = the first 4\n  admitted discharges with ordinal >= half the cell's discharge count.  Capacity basis: the largest charge delivered by an\n  earlier discharge of the same cell (causal, v2).  Bars 50 / 90 mV.  Uncertainty UNKNOWN.\n* **Bridge** (2 problems): the v2 pack's Q1 and Q2, byte-identical.  Never counted in the primary conclusion.\n\nEvery source identity is replaced by a pseudonym; the mapping goes to ``EvaluatorVault/IDENTITY_MAP.json`` and the input\ndigests to ``EvaluatorVault/PACK_PROVENANCE.json`` (both evaluator-only).\n",
+ "schema": "forge.battery_rediscovery_v3.eligibility/1"
+}

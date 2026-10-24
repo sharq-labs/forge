@@ -1,0 +1,4 @@
+detail __str__ raises NotImplementedError: after the spend: OwnerUnavailable: budget ledger 'synthetic.battery.pulse-cell.solver' is not one its owner writes down and reads back (3 read-backs failed
+   after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)); executor calls 1
+detail __str__ raises TypeError: after the spend: OwnerUnavailable: budget ledger 'synthetic.battery.pulse-cell.solver' is not one its owner writes down and reads back (3 read-backs failed
+   after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)); executor calls 1

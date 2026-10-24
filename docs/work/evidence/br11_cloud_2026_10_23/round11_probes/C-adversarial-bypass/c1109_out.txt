@@ -1,0 +1,2 @@
+TypeError (control)    | admissions on the spend: ['er from then on (a new timeline is stated with a new reader)'] | after restore: refused | executor ran 1
+NotImplementedError    | admissions on the spend: ["r' moved while it was serialized: this note has no text form"] | after restore: DISPATCHED AGAIN | executor ran 2

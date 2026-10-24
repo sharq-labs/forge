@@ -1,0 +1,34 @@
+import sys,json
+from engcore.sria.campaign.budget import BudgetLedger
+from tests.mind.test_authority_review_r14 import _desk,_solver,_settle,_refused,ax
+
+def descend(n,r):
+    if n: return descend(n-1,r)
+    return r.pinned()
+
+def test_matched_native_publication():
+    outcomes=[]
+    for detached in (False,True):
+        for depth in range(95,150):
+            o=ax.owned("battery");lid=_solver(o);calls=[]
+            def follow(): return (dict(o.ledgers),dict(o.experiments)) if detached else (o.ledgers,o.experiments)
+            def execute(auth):
+                calls.append(1);_settle(o.ledgers[lid],f"run.{len(calls)}")
+            reader,_,gateway,result=_desk(o,follow,execute)
+            saved=BudgetLedger.from_dict(o.ledgers[lid].to_dict());gateway.dispatch(result.admitted)
+            limit=sys.getrecursionlimit();error=None
+            try:
+                sys.setrecursionlimit(180);descend(depth,reader)
+            except RecursionError: error="RecursionError"
+            finally: sys.setrecursionlimit(limit)
+            raw=any(type(v) is tuple for v in reader._uncompared.values())
+            o.ledgers[lid]=saved
+            refused=_refused(gateway,result.admitted)
+            row=dict(detached=detached,depth=depth,error=error,raw=raw,refused=refused,calls=len(calls))
+            outcomes.append(row)
+            if raw: print(json.dumps(row))
+    bad=[x for x in outcomes if not x['detached'] and x['raw'] and not x['refused'] and x['calls']==2]
+    assert bad, "Native returned handing defect must actually reproduce"
+    for row in bad:
+        control=next(x for x in outcomes if x['detached'] and x['depth']==row['depth'])
+        assert control['raw'] and control['refused'] and control['calls']==1

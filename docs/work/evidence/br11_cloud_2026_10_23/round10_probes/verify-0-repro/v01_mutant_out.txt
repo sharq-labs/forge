@@ -1,0 +1,6 @@
+no metadata              plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+flat {'seed': 1}         plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+nested list              plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+nested dict              plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+tuple                    plain=True  owner_reads_back=4 | verification on spend: MISSING_INFORMATION ('AUTHORITY_STALE',) | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | executor ran 1
+V6 JSON-restored experiment with nested eval metadata: admission FEASIBLE ()

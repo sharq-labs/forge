@@ -1,0 +1,68 @@
+[
+  {
+    "order": [
+      "base",
+      "spent",
+      "extended"
+    ],
+    "refused": true,
+    "readmitted": false,
+    "calls": 1,
+    "diverged": false
+  },
+  {
+    "order": [
+      "base",
+      "extended",
+      "spent"
+    ],
+    "refused": true,
+    "readmitted": false,
+    "calls": 1,
+    "diverged": false
+  },
+  {
+    "order": [
+      "spent",
+      "base",
+      "extended"
+    ],
+    "refused": true,
+    "readmitted": false,
+    "calls": 1,
+    "diverged": false
+  },
+  {
+    "order": [
+      "spent",
+      "extended",
+      "base"
+    ],
+    "refused": true,
+    "readmitted": false,
+    "calls": 1,
+    "diverged": false
+  },
+  {
+    "order": [
+      "extended",
+      "base",
+      "spent"
+    ],
+    "refused": true,
+    "readmitted": false,
+    "calls": 1,
+    "diverged": false
+  },
+  {
+    "order": [
+      "extended",
+      "spent",
+      "base"
+    ],
+    "refused": true,
+    "readmitted": false,
+    "calls": 1,
+    "diverged": false
+  }
+]

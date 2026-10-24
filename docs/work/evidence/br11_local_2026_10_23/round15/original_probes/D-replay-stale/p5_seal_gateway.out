@@ -1,0 +1,6 @@
+(a) gateway.admit at caller depth n, then a shallow admission:
+   RecursionError  -> FEASIBLE                24 depths: (973, 999)
+   WorldRefused    -> FEASIBLE                 1 depths: [982]
+   returned        -> FEASIBLE               235 depths: (740, 975)
+(b) SIGINT raised as accounts() returns (40 trials): innermost frame -> later shallow admission
+   ('accounts', 'FEASIBLE') 40

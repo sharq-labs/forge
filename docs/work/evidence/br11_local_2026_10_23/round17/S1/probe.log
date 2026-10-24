@@ -1,0 +1,15 @@
+{"sha": "98d72b2ef854012780f4222706884b911c4a2f03", "import_path": "/home/dev_kaeem/forge-r17-review/src/engcore/mind/world/owners.py", "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]"}
+{"depth": 138, "error": null, "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": true, "calls": 1, "sealed": null}
+{"depth": 139, "error": null, "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": true, "calls": 1, "sealed": null}
+{"depth": 140, "error": null, "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": true, "calls": 1, "sealed": null}
+{"depth": 141, "error": "RecursionError", "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": true, "calls": 1, "sealed": null}
+{"depth": 142, "error": "RecursionError", "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": true, "calls": 1, "sealed": null}
+{"depth": 143, "error": "RecursionError", "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": true, "calls": 1, "sealed": null}
+{"depth": 144, "error": "RecursionError", "raw_returned_handing": false, "pending_types": ["_RetainedHanding"], "spent_revision": 2, "restored_revision": 1, "refused": true, "calls": 1, "sealed": null}
+{"depth": 145, "error": "RecursionError", "raw_returned_handing": true, "pending_types": ["tuple"], "spent_revision": 2, "restored_revision": 1, "refused": false, "calls": 2, "sealed": null}
+{"depth": 146, "error": "RecursionError", "raw_returned_handing": true, "pending_types": ["tuple"], "spent_revision": 2, "restored_revision": 1, "refused": false, "calls": 2, "sealed": null}
+{"depth": 147, "error": "RecursionError", "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": false, "calls": 2, "sealed": null}
+{"depth": 148, "error": "RecursionError", "raw_returned_handing": false, "pending_types": [], "spent_revision": 2, "restored_revision": 1, "refused": false, "calls": 2, "sealed": null}
+{"kind": "ledger", "fresh_accepts": true, "interrupted_original": "budget ledger 'account' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)", "permanent_divergence": true}
+{"kind": "experiment", "fresh_accepts": true, "interrupted_original": "budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)", "permanent_divergence": true}
+S1 counterexamples confirmed: native lost handing and both numeric-key owner histories

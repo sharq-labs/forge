@@ -1,0 +1,4 @@
+(1) handed entries: 2
+(2) strict constructor accepted; ledgers held: {'L': 99.0}
+(1) following reader serves ledger 'L' with total 99.0
+(3) verifications after the spend: ['served 1 charges', 'served 1 charges']; history recorded 1; after the restore: DISPATCHED AGAIN; executor ran 2

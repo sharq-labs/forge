@@ -1,0 +1,121 @@
+...............................FF                                        [100%]
+=================================== FAILURES ===================================
+__________ test_numeric_nested_keys_owner_json_normalization[ledger] ___________
+
+kind = 'ledger'
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    def test_numeric_nested_keys_owner_json_normalization(kind):
+        if kind == "ledger":
+            account = BudgetLedger(total_budget=100.)
+            held = [account]
+            reader = BudgetReader.following(lambda: ({"a":held[0]}, {}))
+            account.settle(charge_id="new", action_id="new", iteration=1, family="explore", realized=1., detail={2:"a",10:"b"})
+            clone=lambda: BudgetLedger.from_dict(json.loads(json.dumps(account.to_dict(), sort_keys=True, default=str)))
+            owner_kind=OwnerKind.BUDGET_LEDGER
+            eid="a"
+        else:
+            o=ax.owned("battery")
+            eid,account=next(iter(o.experiments.items()))
+            held=[account]
+            reader=BudgetReader.following(lambda: ({},{eid:held[0]}))
+            account.record(ScientificEvaluation("new",{},status=EvaluationStatus.NOT_CONVERGED,metadata={"keys":{2:"a",10:"b"}}))
+            clone=lambda: ScientificExperiment.from_dict(json.loads(to_json(account)))
+            owner_kind=OwnerKind.EXPERIMENT
+        _interrupt_handing(reader)
+        held[0]=clone()
+        # Fresh reader demonstrates the exact owner roundtrip is independently readable.
+        fresh=BudgetReader.following(lambda: ({eid:held[0]}, {}) if kind=="ledger" else ({},{eid:held[0]}))
+        assert fresh.read(owner_kind,eid) is not None
+>       assert reader.read(owner_kind,eid) is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../br11-review/r17/D/test_identity.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7e7168ea0380>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+________ test_numeric_nested_keys_owner_json_normalization[experiment] _________
+
+kind = 'experiment'
+
+    @pytest.mark.parametrize("kind", ["ledger", "experiment"])
+    def test_numeric_nested_keys_owner_json_normalization(kind):
+        if kind == "ledger":
+            account = BudgetLedger(total_budget=100.)
+            held = [account]
+            reader = BudgetReader.following(lambda: ({"a":held[0]}, {}))
+            account.settle(charge_id="new", action_id="new", iteration=1, family="explore", realized=1., detail={2:"a",10:"b"})
+            clone=lambda: BudgetLedger.from_dict(json.loads(json.dumps(account.to_dict(), sort_keys=True, default=str)))
+            owner_kind=OwnerKind.BUDGET_LEDGER
+            eid="a"
+        else:
+            o=ax.owned("battery")
+            eid,account=next(iter(o.experiments.items()))
+            held=[account]
+            reader=BudgetReader.following(lambda: ({},{eid:held[0]}))
+            account.record(ScientificEvaluation("new",{},status=EvaluationStatus.NOT_CONVERGED,metadata={"keys":{2:"a",10:"b"}}))
+            clone=lambda: ScientificExperiment.from_dict(json.loads(to_json(account)))
+            owner_kind=OwnerKind.EXPERIMENT
+        _interrupt_handing(reader)
+        held[0]=clone()
+        # Fresh reader demonstrates the exact owner roundtrip is independently readable.
+        fresh=BudgetReader.following(lambda: ({eid:held[0]}, {}) if kind=="ledger" else ({},{eid:held[0]}))
+        assert fresh.read(owner_kind,eid) is not None
+>       assert reader.read(owner_kind,eid) is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+../br11-review/r17/D/test_identity.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7e7168ecc500>
+kind = <OwnerKind.EXPERIMENT: 'experiment'>
+record_id = 'synthetic.battery.pulse-cell.experiment'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+=========================== short test summary info ============================
+FAILED ::test_numeric_nested_keys_owner_json_normalization[ledger] - engcore....
+FAILED ::test_numeric_nested_keys_owner_json_normalization[experiment] - engc...
+2 failed, 31 passed in 1.72s

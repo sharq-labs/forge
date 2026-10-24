@@ -1,0 +1,8 @@
+{"detached": false, "depth": 143, "error": "RecursionError", "raw": true, "refused": false, "calls": 2}
+{"detached": false, "depth": 144, "error": "RecursionError", "raw": true, "refused": false, "calls": 2}
+{"detached": true, "depth": 143, "error": "RecursionError", "raw": true, "refused": true, "calls": 1}
+{"detached": true, "depth": 144, "error": "RecursionError", "raw": true, "refused": true, "calls": 1}
+...............{'detached': False, 'injections': ['capture', 'recovery'], 'refused': False, 'calls': 2}
+.{'detached': True, 'injections': ['capture', 'recovery'], 'refused': True, 'calls': 1}
+.................................
+49 passed in 8.07s

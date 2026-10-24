@@ -1,0 +1,55 @@
+{
+  "sha": "b4bbee0f6df40b7dd0de9b0739beef392dab6be5",
+  "source_sha256": "efad8b564d00331877308151648554970222652a3249220c7fe934d4118eb7a3",
+  "verdict": "PASS",
+  "closure": "CONDITIONAL_ON_EVIDENCE_COMMIT",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "NO",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "findings": [],
+  "counts": {
+    "BLOCKER": 0,
+    "MAJOR": 0,
+    "substantive_MINOR": 0
+  },
+  "tests_run_by_critic": false,
+  "trusted_review_results_read": [
+    87,
+    129,
+    57
+  ],
+  "fresh_probes": 26,
+  "independent_contexts": 3,
+  "perspectives": 6,
+  "limitations": [
+    "Bounded software verification only",
+    "Evidence curation commit pending",
+    "Existing unknown provenance count changed456 to1202 on clean FAST; reason not identical",
+    "No full traceback equivalence claim",
+    "No reservation or durable persistence guarantee"
+  ],
+  "commands": [
+    "Read-only Python/pathlib inspections via wsl -d Ubuntu-24.04 -- python3 -",
+    "git rev-parse HEAD",
+    "git diff --name-status 1202ea6c3d96f5c31d0b142a32438da75e020cae b4bbee0f6df40b7dd0de9b0739beef392dab6be5",
+    "git diff base reviewed-head -- scanner/test paths"
+  ],
+  "repo_modified": false,
+  "clean_fast": {
+    "failed": 67,
+    "passed": 12896,
+    "skipped": 190,
+    "new_failed_nodes": 0,
+    "fixed_failed_nodes": 0,
+    "normalized_reasons_matching": 66,
+    "normalized_reasons_total": 67,
+    "provenance_base": 456,
+    "provenance_current": 1202
+  }
+}

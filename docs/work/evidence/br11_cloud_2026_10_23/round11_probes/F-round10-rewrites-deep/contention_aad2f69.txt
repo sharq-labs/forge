@@ -1,0 +1,7 @@
+== p10c_cache_race_gateway_wide
+ 160  FEASIBLE admitted
+== p18b_contention_unbound_spender
+v0 {'FEASIBLE': 30}
+v1 {'FEASIBLE': 30}
+v2 {'FEASIBLE': 30}
+K=3 spender=True: total {'FEASIBLE': 90} in 2.2s

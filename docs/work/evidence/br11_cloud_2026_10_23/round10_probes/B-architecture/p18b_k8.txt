@@ -1,0 +1,9 @@
+v0 {'FEASIBLE': 24, 'MISSING_INFORMATION in flight': 6}
+v1 {'FEASIBLE': 25, 'MISSING_INFORMATION in flight': 5}
+v2 {'FEASIBLE': 25, 'MISSING_INFORMATION in flight': 5}
+v3 {'FEASIBLE': 27, 'MISSING_INFORMATION in flight': 3}
+v4 {'FEASIBLE': 25, 'MISSING_INFORMATION in flight': 5}
+v5 {'FEASIBLE': 27, 'MISSING_INFORMATION in flight': 3}
+v6 {'FEASIBLE': 26, 'MISSING_INFORMATION in flight': 4}
+v7 {'FEASIBLE': 22, 'MISSING_INFORMATION in flight': 8}
+K=8 spender=True: total {'FEASIBLE': 201, 'MISSING_INFORMATION in flight': 39} in 6.3s

@@ -668,13 +668,20 @@ def _has_bound_replay_result(record: Mapping[str, Any]) -> bool:
     if not isinstance(report, Mapping):
         return False
     run_id = execution.get("run_id")
+    report_id = execution.get("report_run_id")
+    provenance = report.get("provenance")
+    if not isinstance(provenance, Mapping):
+        return False
     return (
         isinstance(run_id, str) and bool(run_id.strip())
         and execution.get("outcome") == "completed"
         and execution.get("binding_problems") == []
-        and execution.get("report_run_id") == run_id
-        and result.get("report_run_id") == run_id
-        and report.get("run_id") == run_id
+        # Coupled executions select a sub-result: its report identity is distinct
+        # from the parent run bound by provenance (the execution owner's contract).
+        and provenance.get("run_id") == run_id
+        and isinstance(report_id, str) and bool(report_id.strip())
+        and result.get("report_run_id") == report_id
+        and report.get("run_id") == report_id
         and basis.get("executed") is True
         and basis.get("bound") is True
     )

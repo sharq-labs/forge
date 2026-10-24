@@ -1,10 +1,168 @@
 # Active Plan
 
-Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force when branch
-`feat/od6-engineering-program-epic` merges). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
-as open, or list EXC-1 as an open exception are superseded by that decision on merge. The program's gates M1-E3 are
+Active epic: `engrt.numerical_foundations` (research program; OD-6 decided 2026-10-18; in force since branch
+`feat/od6-engineering-program-epic` (`a40ddc5d`/`670d94a0`) merged via PR #157 `0284ae16` on 2026-10-18). Earlier entries below that call `battery.thevenin_1rc` the epic, list OD-6
+as open, or list EXC-1 as an open exception are superseded by that decision. The program's gates M1-E3 are
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
+
+## Current bounded task — R22 required-gate repair (2026-10-24)
+
+Owner explicitly authorized bounded repair of the59 remaining R21 failures,
+including necessary OD-3 work, independent review and full assurance. This supersedes
+the R21 stop on these repairs only. Preserve all historical failures, scientific
+invariants, evidence identities and gates. No new Big Rock. **No push or merge.**
+
+Start: clean05a9e4d43e60e5ab643d385c2f06c7adc8b5eeca; R21 measured source d05abfdf.
+Plan: classify59 by rootcause -> red-first bounded repair groups -> affected gates
+and independent scientific/compatibility review -> clean immutable reviewed source
+-> full documented local assurance -> certificate-only child/verify only after
+SOURCE_PASS. Stop only for a concrete unresolved scientific/architectural decision.
+Raw evidence stays outside checkout at /home/dev_kaeem/br11-r22/; R21 evidence is
+preserved. GitHub governance is not changed and cannot authorize publication.
+
+## Current bounded task - R21 integration gate recovery (2026-10-24)
+
+**R21 status: BLOCKED after completed bounded integration repairs.** Main-history reconciliation, all1211unknown provenance entries, complete746classification, retention/secret audit, local runtime setup and two required-runtime test portability repairs are complete. Final reviewed measured source`d05abfdf8216eda24a6235a9c7565d276f9a7fcc`:officialassurance REFUSED atFAST311 (59failed12922passed176skipped), SAFE_TO_PUSH:NO. Allfourinitialadditionalfailuresresolved;59remainingIDs matchRound20comparison, not a causal-equivalence claim. No receipt/certificatechild/push/merge. Stop for separate scientific/Core/OD3 repair authorization and private-protection/independent-human-review owneractions. Exact evidence and59nodeIDs: `docs/work/evidence/r21-integration-recovery/FINAL_REPORT.md`. No automatic retry, gate weakening or newBigRock.
+
+R21 is the current executable task. BR1.1 remains locally CLOSED; Kernel v0 and all
+new scientific implementation remain NOT STARTED. The owner explicitly authorized
+the documented full local-assurance workflow, campaigns, mutation shards and its
+certificate-only child, solely as prerequisites for a valid receipt. This supersedes
+the earlier assurance prohibition only for this bounded workflow. Repair and verify
+source/provenance first; freeze an independently technically reviewed source SHA;
+use controlled local WSL resources; preserve every failure; do not expand into OD-3,
+thermal, battery or UQ repairs. No push/merge unless SAFE_TO_PUSH is explicitly YES
+and every other mandatory gate is satisfied.
+
+Execution: reconcile main history (done at41663479) -> explicit provenance inventory
+repair and review -> immutable source -> documented local assurance -> certificate-only
+child and verification only if SOURCE_PASS -> publication only with protection and
+independent human approval. A technical AI review is not GitHub approving review.
+Current owner actions outstanding: supported private-repository protection capability
+(API403) and an independent human reviewer (only author sharq-labs is listed).
+No purchase, visibility change, governance change or self-approval is authorized.
+Evidence: docs/work/evidence/r21-integration-recovery/ and /home/dev_kaeem/br11-r21/.
+
+## Current bounded task - GEN2-BR1.1 authority-bound ScientificWorld + non-bypassable admission (2026-10-22)
+
+**Current continuation (2026-10-24): CLOSED within BR1.1 development scope.** Approved lifetime contract implemented in0b605b4; Round19's two substantive families repaired inb4bbee0f with red-first controls. Fresh Round20 sixperspective review plus scientific skill and completeness critic: Q1–Q7 allNO,0BLOCKER/0MAJOR/0substantiveMINOR. Targeted885pass; cleanFAST12896pass/67basefailureIDs/190skip; provenance diagnostic differs1202vs456 and remains debt. Gen1 INTACT. Evidence `docs/work/evidence/br11_local_2026_10_23/round20/README.md`. No new owner decision. Scientific Contract Kernel v0 is next authorized Big Rock; NOT STARTED per mission stop boundary. No push/PR/merge/OD3/certification. Earlier round statuses below are historical checkpoints.
+
+Development repair of GEN2-BR1's AUTHORITY_DUPLICATION_BLOCKER on `research/mind-gen2-authority-binding-v1` (base
+`1202ea6c`, BR1's report commit). Pushed to `origin` at the 2026-10-23 cloud handoff for local resumption: no PR, not
+merged, not certified. **Status: IN_PROGRESS** (not closed): review round 11 found MAJORs, fixed in `d5ef1e3`; round 12
+(at `a96baa6`) was INTERRUPTED with no result, and its two started lenses left unverified MAJOR-class leads in
+`owners.BudgetReader`. Resume index: `docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md`.
+
+R12-T1 done locally (2026-10-23, WSL2, CPython 3.12.3; PROGRESS item 28): every round-12 lead reproduced at
+`d40aff44`; R12-1..R12-6 confirmed and fixed in `33258438` with failing-first controls
+(`tests/mind/test_authority_review_r12.py`) and mutants (17 of 18 caught; the race-only `shared_cache` recorded as
+uncontrolled); dispositions in README §9. Local commits are not pushed (WSL has no GitHub access; a bundle is handed to
+the Windows side).
+
+Fresh review round 13 at `3b407ddb` did not meet the gate (Q4 YES: MAJORs F13-02 = R13-C-F1, R13-B-F1, R13-C-F2 =
+R13-A-F1, critic R13-CRIT-1); all fixed in `13051154` with controls (`test_authority_review_r13.py`) and 32 mutants
+each caught; gates show no new failures vs base (PROGRESS item 29).
+
+Fresh review round 14 at `1c9fdd84` did not meet the gate (Q4 YES: a not-read-back state shorter than the observed
+history was never recorded, five lenses; critic CRIT14-1, a regression of the dict-only rule); fixed in `7b4a0de8`
+with controls (`test_authority_review_r14.py`) and 38 mutants each caught; gates show no new failures vs base
+(PROGRESS item 30).
+
+**R15 continuation (Codex, 2026-10-23):** recovered the clean native WSL clone at exact reviewed
+`95f3869ed020b04c36c098f0c33050aa009212b6`. Round 15 is complete (15 agents), aggregate Q4 YES.
+Its 25 findings are dispositioned in `docs/work/evidence/br11_local_2026_10_23/round15/threat_disposition_matrix.json`.
+The repair has 33 deterministic controls plus 54 bounded generated traces (87 pass), and two existing R13 dictionary controls
+in mutation proof (89 pass; 36 fail on reviewed source). 16 correctness mutants killed; one redundant guard
+removal justified by an independent recovery path and its killed compound mutant. L2: 781 passed.
+Repeated affected-path measurements completed. Clean gate source commit `ec4d23dc238d2e8818170a4029a010538e23af72`: L1 115 passed,
+regression 279 passed; guards 1496 pass / 2 base failures; expensive subset 335 pass / 13 failures / 14 errors;
+FAST 12792 pass / 67 base failures / 190 skipped. Exact failure-ID comparison: NO NEW FAILURES VS BASE.
+Rescore/benchmark MATCHES; Gen1 INTACT. Complete repair/evidence batch committed locally.
+**Round 16 RUNNING:** exact evidence-complete commit `b8a65bb9d02b5a18e0a8b26779773c1552204dc1`,
+read-only checkout `/home/dev_kaeem/forge-r16-review`; scratch results `/home/dev_kaeem/br11-review/r16/`.
+Six independent lenses, then two independent skeptics per proposed BLOCKER/MAJOR and a completeness critic.
+Source/tests are identical to clean gate commit `ec4d23dc`. No source changes during review.
+Six lens reports collected: 8 MAJOR aliases / 2 unique families and 6 MINOR aliases / 2 unique families; Q4 YES. Both independent skeptics reproduced the two MAJOR families; completeness critic complete. Next: failing-first and separable local repairs (canonical retained history, interrupted detached reconciliation, post-return registration); preserve the pre-capture information-loss family as OPEN pending an explicit handoff/lifetime contract decision. Local repairs: 16 new controls; 6 semantic mutants killed; L2 797 passed; regression279; FAST12808 passed/67 base failures/190 skipped at clean source68db8819. Guards/expensive/FAST exact failure IDs show NO NEW FAILURES VS BASE; rescore/benchmark MATCHES, Gen1 INTACT. Round17 RUNNING on evidence-complete committed repair98d72b2ef854012780f4222706884b911c4a2f03, read-only checkout /home/dev_kaeem/forge-r17-review. Six fresh lenses complete; one known pre-capture MAJOR family (six aliases) and one new JSON-roundtrip normalization MINOR family (D2/F2). Skeptics/critic complete. JSON parity repaired with4 failing-first cases,16 new controls and7 killed mutants; L1 201pass, L2 813pass, regression279. Guards/expensive exact base failureIDs unchanged; references MATCHES/INTACT. Clean FAST at41a763a697707db1897ee1fcbf1365495875e45b:12824passed/67basefailures/190skipped. Exact guard/expensive/FAST failureIDs add0 failures. Round18 COMPLETE atcc7ef06b0d08398173d9448ff47d8abb7e375d44 (source/tests identical41a763a6): six lenses, two independent skeptics per MAJOR alias, completeness critic. Q4YES; Q1–Q3/Q5–Q7 NO within bounded review. One known MAJOR/6 aliases,0 BLOCKER,0 open substantive MINOR; no new separable defect. **PRECISELY BLOCKED / NOT CLOSED:** OWNER_DECISION_REQUIRED on stable published account bindings and recoverable history across restore while retention/reconciliation is pending. Fresh detached dict publication is a demonstrated option; full acknowledgement not required by evidence. Read docs/work/evidence/br11_local_2026_10_23/round18/OWNER_DECISION.md. Do not implement a new owner contract or weaken observation guarantee without that decision. Next: owner decision, then bounded failing-first implementation and fresh review. No closure inferred from partial repairs.
+Owner-lifetime closure 2026-10-24: the owner APPROVED stable publication/history lifetime; the prior decision stop is superseded. IN_PROGRESS: reproduce → failing-first → generic publication lifecycle → bounded mutants/state traces → established ladder → commit → fresh independent Round19. One implementation branch/check-out only; logs outside repository. BR1.1 remains NOT CLOSED. No push, PR, merge, certification, OD-3, Portfolio or Kernel implementation.
+
+Synthetic contract fixtures only; Gen1 byte-identical (`gen1_reference --check`: INTACT). Report:
+`benchmarks/mind_gen2_authority_v1/README.md`; conclusion in its §12 and in `docs/work/PROGRESS.md`.
+
+The world is now a projection of FORGE's owners, verified against them at every admission and dispatch; admission
+decides on exactly the setting an executor receives (as requested: realization uncertainty is not assessed). Independent review rounds run until 0 BLOCKER / 0 MAJOR; after BR1.1 closes or is
+precisely blocked: STOP.
+
+OWNER_DECISION_REQUIRED (BR1.1 does not decide these):
+- `src/engcore/sria/campaign/budget.py` gained read-only `BudgetLedger.digest` / `.revision` (CORE_CERTIFIED,
+  `assurance_admission`), and the changed-file gate marks the certified harness tests BR1.1 adds or changes
+  (`tests/mind/test_authority_*.py`, `tests/mind/test_world_contract.py`, `tests/mind/test_world_failing_first.py`,
+  `tests/test_sria_budget_ledger_identity.py`): hardened recertification is required before merge and was NOT RUN
+  (OD-3 boundary).
+- Confirm where admission verification lives: BR1.1 puts it in `engcore.mind.world.admission`, behind the execution
+  side's `ExecutionDesk` (BR1 left this as an owner question).
+- A hard-enclosure uncertainty form or a core decision-coverage policy: without it no current value decides a
+  containment, so 9 of 21 BR1 base proposals are MISSING_INFORMATION (failed closed, nothing worked around).
+- A canonical protocol owner: protocol declarations stay caller-declared, held in force by the execution side.
+- Budget reservation and at-most-once execution at the execution owner (the desk reserves nothing).
+- A provider status loader (`ProviderStatus.from_dict`) on the providers owner.
+- Protocol level semantics across units: an action level declared in another unit executes as its conversion into
+  the variable's unit, off any other spelling of that level (the variable's own, or a bound's) by conversion rounding
+  (one or several ulps: 8 for 95 degF in degC), so a
+  bound placed at that level decides on the converted value and can go either way; this holds whether or not the
+  variable declares a level set, and an action that declares -0.0 executes -0.0 (README §4). Should bind refuse an
+  action level whose conversion into the variable's unit does not round-trip bit-exactly to the action's own spelling
+  (and, where the variable declares levels, is not bit-equal to the variable's own spelling, sign of zero included),
+  failing closed at bind, or keep deciding on the level as executed (BR1.1 does the latter)?
+- Merge requires the changed-file gate's SCIENTIFIC tier for `src/engcore/mind/world` (classification
+  `scientific_shared`) and the FAST differential at the merge SHA.
+
+Do not start the Hypothesis Portfolio, the Search Tree, Attempt Memory, the Model Critic or causal reasoning. Do not
+install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification without the owner.
+
+## Current bounded task - GEN2-BR1 ScientificWorld + Feasible ActionSpace v1 (2026-10-22)
+
+Development research on `research/mind-gen2-scientific-world-v1` (worktree `D:/forge-gen2-world`, local, base
+`da932552`, the sealed Gen1 head). It adds `engcore.mind.world`, imported by its own path. Gen1 is byte-identical.
+Synthetic fixtures only. The result is AUTHORITY_DUPLICATION_BLOCKER (see `benchmarks/mind_gen2_world_v1/README.md`):
+the check works, but admission is decided on world copies of owner records that nothing verifies with their owners.
+
+STOPPED by the pre-committed stopping rule. The next step needs owner decisions, not more Mind-side rules:
+- a verifiable budget ledger (`BudgetLedger` digest);
+- a head-state view;
+- a core coverage policy for interval uncertainty;
+- where admission verification lives.
+
+README section 6 lists the eight requirements. GEN2-BR1.1 (above) proposes answers in code to three of the four, each
+for the owner to confirm: the ledger digest (an additive read-only owner change, recertification pending), the
+head-state view (the run record's own head, read through `RunStateReader`), and where admission verification lives
+(`engcore.mind.world.admission`, behind the execution side's `ExecutionDesk`). The coverage policy stays an owner
+decision. Do not start the Hypothesis Portfolio, the Search
+Tree or Attempt Memory. Do not install Ax, BoTorch, PySINDy or PySR, and do not run Battery v4. No push, merge or certification
+without the owner.
+
+## Current bounded task - BR-MIND-REPSEM-01 representation + semantic roles repair (2026-10-22)
+
+Development-only repair on `research/mind-representation-semantics-v1` (worktree `D:/forge-repsem`, local, based on
+the v1 evaluation commit `d516e681`). It adds `engcore.mind.repsem` (declared variable roles, scoped claim states,
+named refusal conditions, a structured hypothesis record, role-typed binding of declared families, replayable
+judgments) and leaves `engcore.mind.minimal` and every battery v1 artifact unchanged. Synthetic fixtures only; no
+battery data was evaluated. Result: READY_FOR_BATTERY_V2 against the task's own criteria (see
+`benchmarks/mind_repsem_v1/README.md`).
+
+Next executable step: a battery v2 plan. It must freeze role declarations in the pack as protocol metadata, implement
+the fitted-OCV declared family (P1), and state up front that P1's UNKNOWN voltage uncertainty forces refusals by
+design. No push and no merge without the owner.
+
+## Current bounded task - BR-BATT-REDISC-01 battery rediscovery pilot (2026-10-21)
+
+Development pilot on `research/battery-rediscovery-pilot-v0` (local). The sealed run's preregistered conclusion is
+LEAKAGE_INVALIDATED, from an audit false positive: a 760.006 s timestamp matched the 760 F value pattern. At the
+owner's request, AMENDMENT_01 (post-seal, disclosed) fixed the regex and reran only the audit and the evaluation:
+amended conclusion REPRESENTATION_BOTTLENECK. A clean confirmation would need a v0.1 plan and a fresh sealed run.
+No Mind tuning, no formal run, no D5/N-1/Family-3a work.
+
+BR-BATT-REDISC-02 (battery_rediscovery_v1, clean re-execution with scanner v1 and a preregistered representability analysis): REPRESENTATION_CONTRIBUTES_BUT_NOT_PRIMARY. This is not an independent replication (same data and code). No Mind upgrade was made in this task.
 
 ## Current bounded task - remaining branches and post-merge CI (2026-10-20)
 
@@ -124,7 +282,7 @@ This task does not expand the active epic or scientific roadmap.
 - [x] Independently derive and execute source-extracted energy admission diagnostic: 1e-7 J leak rejected at4 cells, admitted at256/512 due to N² arithmetic floor.
 - [x] Record owner decisions, source digests, OD-3 procedure, Phase3.5 and Genesis assessment.
 - [ ] SCIENTIFIC_DESIGN_REQUIRED: conservation floor must not become permissive under refinement; no tolerance adjustment approved.
-- [ ] OWNER_DECISION_REQUIRED (OD-31): invalid M1C realization lacks provided capability; resolve scientific declaration/identity before model census pin change.
+- [ ] OWNER_DECISION_REQUIRED (OD-31): invalid M1C realization lacks provided capability; resolve scientific declaration/identity before model census pin change. (2026-10-23: the declaration fix and the 19 -> 20 pin both landed in `abed661f`; only OD-3 remains — see the OD-31 row.)
 - [ ] Diagnose red forward-tear fixtures and claim/report bridge + replay authority failures; do not infer governance-only.
 - [ ] Owner dispositions OD-22/23/24/26/29/30/31/32/33/34 remain open as detailed in the review.
 - [ ] Separately authorized final-source supported3.11/3.12 integration/OD-3 after scientific defects and red tests close.
@@ -692,7 +850,7 @@ therapeutic work.
 | OD-3 | Recertification: which HEAD, and when (owner-run). | Certificate binds `39d43456`, not `main` `2d0fa6c3`; #126, #123, #117 and #129 all touch certified scope and landed unrecertified. |
 | OD-4 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #123 lands by a merge commit (no rebase); it closes R3-01/R3-02 only. | Its certificate binds `39d43456` (the PR tree), not the merged `main`; recertification stays OD-3. |
 | OD-5 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #126 lands as one PR; it creates no new scientific capability stage and changes no maturity. | +8,043 lines; new `engcore.authority`; real escrow is relevant to Genesis leakage controls. Not recertified (OD-3). |
-| OD-6 | DECIDED 2026-10-18 (owner, in session): the active epic becomes the research program `engrt.numerical_foundations` ([contract](../project/ENGINEERING_FOUNDATIONS_PROGRAM.md)); in force when the branch `feat/od6-engineering-program-epic` is reviewed and merged. Gates DV0, M1, M2, E1, E2, E3; build-first. Battery stays tracked at FUNCTIONAL; Genesis A2 still needs an epic change or an exception; EXC-1 is superseded on merge. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
+| OD-6 | DECIDED 2026-10-18 (owner, in session): the active epic becomes the research program `engrt.numerical_foundations` ([contract](../project/ENGINEERING_FOUNDATIONS_PROGRAM.md)); in force since the branch `feat/od6-engineering-program-epic` merged via PR #157 (`0284ae16`, 2026-10-18; checked 2026-10-23 with `git merge-base --is-ancestor`). Gates DV0, M1, M2, E1, E2, E3; build-first. Battery stays tracked at FUNCTIONAL; Genesis A2 still needs an epic change or an exception; EXC-1 is superseded on merge. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
 | OD-7 | Timebox windows for G0, A1, A2, B1. | None set; no dates invented here. |
 | OD-8 | External evaluator for Genesis hidden tasks: name a person or group, or fix a selection process and deadline. | Required before the A1 freeze names its held-out protocol, and before Genesis Step 6. |
 | OD-9 | RESOLVED. PR #128 supersedes PR #127 and contains Genesis plus the reviewed planning consolidation. PR #127 was closed without merge; its branch remains preserved. | PR #127 existed as the standalone Genesis document. |
@@ -701,7 +859,7 @@ therapeutic work.
 | OD-12 | Confirm the control-plane budget signal (Master Plan §5.3). | Proposed: ~20 % warning plus a two-checkpoint no-progress signal. |
 | OD-13 | Confirm the B1 demo system. | Drone recommended: the only executable product chain today. |
 | OD-14 | LANDED as #129 (`de36168e`); recertification still OD-3. Was: branch `perf/test-suite-runtime`: land it (needs the OD-3 recertification: it touches `certified:harness`, `inference_admission`, `certification_control`), and decide whether to add V4 mutation entries for the admission-record memo (changes the certified population count of 680). | Owner-requested. FAST 992 s -> 476 s, SCIENTIFIC 1448 s -> 1024 s, same failure sets (PROGRESS 2026-10-12). Review F1–F4 fixed; the memo's three mutants are killed by `tests/inference/test_admission_record_memo.py` today, outside the certified population. |
-| OD-15 | CI policy conflict: `CLAUDE.md` § CI policy says PRs are classified and tested automatically and pushes to `main` rerun checks; every workflow has been `workflow_dispatch`-only since `c19d3177` (2026-10-06). Align one with the other. | Last automatic `main` runs 2026-09-28, both failed. MV-10 drift went unnoticed for a month. |
+| OD-15 | CI policy conflict: `CLAUDE.md` § CI policy says PRs are classified and tested automatically and pushes to `main` rerun checks; every workflow has been `workflow_dispatch`-only since `c19d3177` (2026-10-06). Align one with the other. **Status at `12862b0b` (2026-10-23): the trigger half is STALE — `324d1a7e` (2026-10-14) restored automatic triggers; `tests.yml` runs on `pull_request` and `push` to `main`, `recertify-hardened-core.yml` on `pull_request`, `branch-policy.yml` on `push` to `main`; only `trust-mutations.yml` is dispatch-only. What remains open is execution and enforcement: see OD-25 and OD-1.** | Last automatic `main` runs 2026-09-28, both failed. MV-10 drift went unnoticed for a month. |
 | OD-16 | Freeze v4 API surface is Python-version-bound: it records methods inherited from builtins, so it verifies only on <= 3.12. Exclude inherited builtin members (a surface-version decision) or declare 3.12 the certification interpreter (with OD-2). | PROGRESS 2026-10-12 G0 evidence: 106 added + 29 changed entries on 3.13, zero Forge-defined. |
 | OD-17 | Benchmark rounds pinning a digest of live `src/engcore/scientific` (`model_measurement_validation`, `empirical_validation`): re-pin, or bind the "changed nothing" claim to the round's own commit. | Broken since PR #21 (2026-09-12); the MV test rewrites committed `SAFETY_GATES.json`. |
 | OD-18 | Approve the Genesis-lite formal compute budget. | Baselines: 15,120 campaign runs ≈ 1,185 s ESTIMATED from the BR-16 pilot; Mind/LLM arms UNMEASURED. |
@@ -711,21 +869,20 @@ therapeutic work.
 | OD-22 | Window-control step-size memory: `tests/test_multiphysics_window_control.py::test_step_size_memory_halves_the_repeated_rejections_and_keeps_every_window_stable` expects 8 subdivisions without memory over 2 s; the runtime with Phase 1 BR4 exact rational windows makes 7. Decide which behaviour is specified, then fix the code or the test. **2026-10-18 remediation: an exact-rational replay (`docs/work/proposals/od22_replay.py`, re-derived independently by a reviewer) gives 7 without memory and 4 with growth 2: the last window [7/4, 2] is cut to 1/4 s by the horizon and never fails, which `plan.py` ("Events and input-change instants still cut windows") covers. Recommended: apply `docs/work/proposals/OD22_window_control_subdivisions.patch` (test 8 -> 7). Not applied.** | Found 2026-10-18 solver audit, after the `min()` fix (`cf74cf1c`) let the suite run. BR1/BR11/BR17 and BR4 were built without running each other's tests. |
 | OD-23 | Electrothermal native loop relaxation: BR18 / WS2 added `FixedPointCouplingPlan.relaxation_factor` to `systems/electrothermal/coupled.py`; `tests/test_electrothermal_vertical.py::test_l3_no_relaxation_appears_anywhere_in_the_module` pins fail condition §12.10 (relaxation is a separate decision, not a knob in that module) and the module docstring still says there is no relaxation. Remove the knob (relaxation lives in `MultiphysicsRuntime` only) or amend §12.10, the test and the docstring. | Not chosen by the builder (CLAUDE.md: conflicts are recorded, not resolved silently). |
 | OD-24 | Self-loop coupling edges: `tests/test_phase1_coupling_convergence_coverage.py::test_a_self_loop_is_a_lagged_edge` (Phase 1 BR1) expects an edge between two ports of one participant to be a lagged edge; `scientific/multiphysics/graph.py::_validate_edges` (older rule) refuses it as internal physics. Keep the refusal and drop the test, or admit self-loops as lagged edges. | Graph rule predates BR1; the BR1 test never ran. |
-| OD-25 | GitHub Actions has started no job since 2026-10-15 ("recent account payments have failed or your spending limit needs to be increased"); 15 PRs and 209 non-merge commits (+12.9k lines in `src`) landed on `main` with no CI. Restore billing, use a self-hosted runner, or make local assurance the recorded merge control (with OD-1 / OD-15). | Read from the GitHub API 2026-10-18: last executed `main` run 2026-10-14 (`e193e573`, failed); `main` is unprotected. |
+| OD-25 | GitHub Actions has started no job since 2026-10-15 ("recent account payments have failed or your spending limit needs to be increased"); 15 PRs and 209 non-merge commits (+12.9k lines in `src`) landed on `main` with no CI. Restore billing, use a self-hosted runner, or make local assurance the recorded merge control (with OD-1 / OD-15). **Refreshed 2026-10-23 (read-only GitHub API): of 2,499 jobs in the 210 runs created 2026-10-15T16:55Z..2026-10-20T20:38Z, 0 got a runner or ran a step; sampled annotations carry the billing message. The last job that ran steps completed 2026-10-14T15:43:50Z (`mutations`, run 38544091505, `e193e573`, cancelled at the 6 h cap). Since `e193e573`, 35 PR merges (#143-#182) and 375 non-merge commits (`src` +16,664/-538) landed with no CI execution. `main`: `protected=false`, required checks `enforcement_level=off`; branch rules/rulesets return 403 on this plan.** | Read from the GitHub API 2026-10-18: last executed `main` run 2026-10-14 (`e193e573`, failed); `main` is unprotected. |
 | OD-26 | `tests/test_phase2_review_regressions.py::test_a_redundant_forward_tear_is_refused` has no valid fixture in the electrothermal series pack: `test_no_admissible_plan_of_the_series_pack_reaches_the_forward_tear_refusal` enumerates every tear set of 1-3 stages and none reaches `runtime_equivalent`'s forward-tear refusal (mixed dimensions are refused by the plan; single-dimension sets that break every cycle are all backward). Delete the test, mark it strict-xfail citing the enumeration, or keep it until a pack (or a mixed-dimension normalization rule) makes a forward tear reachable. | Batch 4B, 2026-10-18. The guard in `runtime_adapter.py` stays as a defensive check; no fixture was fabricated. Independent review (MINOR-3): no passing test protects the guard; a tampered-record test (a frozen plan altered after `__post_init__`) would, without inventing an admissible plan. **2026-10-18 remediation (A2): added `test_a_tampered_plan_with_a_forward_tear_is_refused_by_the_runtime_build` (genuine 1-stage records; the nominal plan plus the heat edge, set with `object.__setattr__` after the constructor refuses it as mixed-dimension; the test pins that the edge is forward in the derived order P, E, T). The original test is unchanged and still fails at `dataclasses.replace` (static reading, NOT RUN). Owner: replace it with the tampered-record test, or keep both.** |
 | OD-27 | `MultiphysicsAuthority.execute` never checks that the run's `scenario_digest` is the scenario the system run authorized (`call.context.scenario.digest`); a `run_kwargs` passing another scenario's digest still commits state whose transition receipts name the wrong scenario. Add the check plus an adversarial test (a `src/` change, separate PR). | Independent review of Batch 4 (NOTE-3), pre-existing; outside the Batch 4 diff. |
 
-| OD-28 | `MultiscaleAuthority` binds no scenario / timeline / environment to the call context: `runtime.identities()` carries those digests and they enter the authority's identity, but neither `execute`, `resume` nor `preflight_findings` compares them with `call.context`, so a multiscale node built on scenario A's environment can run, expose outputs and commit slow state inside a request for scenario B. Same class as OD-27 (MultiphysicsAuthority, branch `fix/od27-scenario-identity`). | Independent review of Batch 5 (M2), 2026-10-18; also: the battery fast system's inner `MultiphysicsRuntime` run digest is not checked. Not fixed in Batch 5. |
 
-| OD-28 | `MultiscaleAuthority` binds no scenario / timeline / environment to the call context: `runtime.identities()` carries those digests and they enter the authority's identity, but neither `execute`, `resume` nor `preflight_findings` compares them with `call.context`, so a multiscale node built on scenario A's environment can run, expose outputs and commit slow state inside a request for scenario B. Same class as OD-27 (MultiphysicsAuthority, branch `fix/od27-scenario-identity`). | Independent review of Batch 5 (M2), 2026-10-18; also: the battery fast system's inner `MultiphysicsRuntime` run digest is not checked. Not fixed in Batch 5. **Implemented on branch `fix/od28-multiscale-identity` (draft PR, stacked on #164); UNCERTIFIED until OD-3.** |
+| OD-28 | `MultiscaleAuthority` binds no scenario / timeline / environment to the call context: `runtime.identities()` carries those digests and they enter the authority's identity, but neither `execute`, `resume` nor `preflight_findings` compares them with `call.context`, so a multiscale node built on scenario A's environment can run, expose outputs and commit slow state inside a request for scenario B. Same class as OD-27 (MultiphysicsAuthority, branch `fix/od27-scenario-identity`). | Independent review of Batch 5 (M2), 2026-10-18; also: the battery fast system's inner `MultiphysicsRuntime` run digest is not checked. Not fixed in Batch 5. **Implemented on branch `fix/od28-multiscale-identity`; merged to `main` via PR #167 (`337519d1`, 2026-10-18). UNCERTIFIED until OD-3.** (A duplicate, older copy of this row was removed 2026-10-23.) |
 | OD-29 | Fast-system inner run identity (follow-up of OD-28): `MultiTimescaleRuntime._execute` checks the fast result's echoed `consumed_environment_digest` / `consumed_timeline_digest` (the timeline digest binds the scenario transitively) and slow-state digest, but those are self-reported; the inner records behind `FastExecutionResult.run_digests` (e.g. the `MultiphysicsRuntime` run a heater/board or battery fast system starts with `scenario_digest=request.scenario_digest`) are never resolved or checked against the request's scenario / timeline / environment. Decide whether fast systems must hand back resolvable inner records (a `FastSystem` contract change in `multiscale/fast.py` and every provider fast system) or whether the echo stays the declared boundary. | Recorded 2026-10-18 while fixing OD-28; out of the bounded scope (multiscale core + providers, not the system-runtime authority). |
 | OD-30 | `MultiscaleAuthority` identity payload omits `initial_fast_state` and includes the construction-time `declared_fast_state` of the runtime: two authorities with different declared initial fast states over fresh runtimes get the same `identity_digest`, and the digest depends on whether a shared runtime ran before the authority was built. Adding it changes the authority's serialization identity (a version decision). Separately: identity refusals in `MultiscaleAuthority` and `MultiphysicsAuthority` (OD-27) are reported FAILED, not REFUSED; reclassify both together or keep. | Independent review of Batch 6A (NOTE-3, LOW-3), 2026-10-18; pre-existing, not changed in OD-28. **2026-10-18 remediation (Batch B, user-instructed): fast-state half implemented in the worktree -- the payload's `declared_fast_state` is the authority's own declaration (same payload shape, no version key; an authority declaring none over a never-run runtime keeps its digest), enforced on every returned record. Flagship `cell-cooling-aging` digest moves on regeneration. FAILED-vs-REFUSED half still open. NOT RUN; UNCERTIFIED until OD-3.** |
-| OD-31 | Model-discovery count: `tests/test_core_guards.py` pins `EXPECTED_MODELS = 19`, and M1C added `thermal.conduction1d.transient_piecewise_linear@0.1.0` (`domains/thermal_models/conduction1d_transient_fv.py:40`). Static count of `ScientificModelDefinition(` constructions in `src`: 19 at `89b9e7c3` (the commit that set 19) and 20 at `337519d1`; that is the only added or removed construction. The new record declares no validity conditions and no derived quantities, so reserving models (16), condition names (96), reserved names (63) and domains do not move. No added or removed `prepare`/`supports`, so solver classes stay 11. Approve `docs/work/proposals/A1_core_guards_model_count.patch` (19 -> 20). `tests/test_core_guards.py` is hash-pinned in `certification/current_core_v2.json` (already drifted since `89b9e7c3`), so this needs OD-3. | 2026-10-18 remediation, Batch A1. Discovery by import was attempted and could not run (host import wedge: `pint` / `scipy.sparse` imports do not return); the counts above are static. |
+| OD-31 | Model-discovery count: `tests/test_core_guards.py` pins `EXPECTED_MODELS = 19`, and M1C added `thermal.conduction1d.transient_piecewise_linear@0.1.0` (`domains/thermal_models/conduction1d_transient_fv.py:40`). Static count of `ScientificModelDefinition(` constructions in `src`: 19 at `89b9e7c3` (the commit that set 19) and 20 at `337519d1`; that is the only added or removed construction. The new record declares no validity conditions and no derived quantities, so reserving models (16), condition names (96), reserved names (63) and domains do not move. No added or removed `prepare`/`supports`, so solver classes stay 11. Approve `docs/work/proposals/A1_core_guards_model_count.patch` (19 -> 20). `tests/test_core_guards.py` is hash-pinned in `certification/current_core_v2.json` (already drifted since `89b9e7c3`), so this needs OD-3. **Status at `12862b0b` (2026-10-23): the pin half is APPLIED — `tests/test_core_guards.py:199` reads `EXPECTED_MODELS = 20` since `abed661f` (2026-10-18, "owner-approved D1-D3"), which also made the M1C realization declare `thermal:transient_conduction_1d` at realization 0.2.0. Still open: OD-3 (the file stays hash-drifted from the certificate).** | 2026-10-18 remediation, Batch A1. Discovery by import was attempted and could not run (host import wedge: `pint` / `scipy.sparse` imports do not return); the counts above are static. |
 | OD-32 | Numerical record-identity decisions left by Batch C (2026-10-18 remediation): (a) C1-4: an unevaluable residual at the declared initial point is DIVERGED with zero iterations, pinned by `tests/test_phase3_br13_numerical_stability.py::test_a_non_finite_residual_is_a_classified_numerical_failure`; make it FAILED with a distinct reason, or keep. (b) C2-1: `NumericalDiagnostics.residual_norm` means a relative 2-norm (linear), an absolute 2-norm (SciPy root) or a scaled L-inf (Newton) under one key; add a `residual_measure` label (changes every record's serialization; `numerical/core.py` is certified). (c) C2-2: linear records do not carry `RESIDUAL_IS_NOT_AN_ERROR_BOUND` (every linear record digest changes; the constant is in uncertified `health.py`, which certified `providers.py` cannot import). (d) C3-1: `oriented_integral_*` in `mapping.py` (certified) re-applies the contract sign and cannot detect a wrong orientation; relabel it, or build an independent receiver-flux check. | Each changes serialization identity or a pinned outcome; not changed in the bounded Batch C slice. The limitation in (d) is pinned by a test. |
 | OD-33 | M1D integration (adaptive transient) is not in `main`: `codex/m1d-adaptive-transient` (5fd797dd) is not an ancestor of `337519d1`. Its `from_transfer` reconstructs temperature from energy moved by the M1B length split, which across a jump in c*A turns a uniform 300 K into (300, 450, 257.1, 300) K on a two-material refine (hand derivation in `tests/test_m1b_vertex_dual_state.py`). Before M1D lands it must pass `AmountDistribution1D` (weights c*A per region) to `transfer_state`, and add the heterogeneous-uniform regression. Decide: rebase M1D onto this, or keep M1D homogeneous-only and refuse heterogeneous adaptation. | 2026-10-18 remediation, Batch D (D3-2). The M1B primitive is in the worktree, tests NOT RUN. |
 | OD-34 | Issued-record re-verification cost (F2-4): every M1C step re-verifies every issued record (`numerical/mesh_adaptation.py` `_IssuedRecords.verify`), so N steps cost O(N^2). Making it incremental would stop detecting a later in-place tamper of an older record, which current tests pin. Decide: keep the full sweep (cost accepted), or replace it with verification of the ancestry each operation reads plus a periodic full sweep, after measuring step time at step 10 / 100 / 1000. | 2026-10-18 remediation, Batch F. Not changed; see "Proposals awaiting measurement" in `docs/work/REMEDIATION_2026-10-18.md` for F1-a/b/c and F3-2..4 as well. |
 
-## Active-epic exceptions (open until OD-6 merges; EXC-1 is then superseded by the program)
+## Active-epic exceptions (OD-6 merged via PR #157 on 2026-10-18; EXC-1 is superseded by the program)
 
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).

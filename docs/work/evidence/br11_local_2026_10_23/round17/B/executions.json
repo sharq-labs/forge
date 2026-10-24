@@ -1,0 +1,49 @@
+[
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r17/B/probe_handing_boundary.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "env_overrides": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/B/probe_handing_boundary.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/mind/test_authority_review_r16.py",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "--basetemp=/home/dev_kaeem/br11-review/r17/B/pt",
+      "-n",
+      "1"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "env_overrides": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/B/r16_controls.log"
+  },
+  {
+    "command": [
+      "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+      "/home/dev_kaeem/br11-review/r17/B/probe_dispatch_histories.py"
+    ],
+    "cwd": "/home/dev_kaeem/forge-r17-review",
+    "env_overrides": {
+      "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+      "PYTHONDONTWRITEBYTECODE": "1"
+    },
+    "exit_code": 0,
+    "log": "/home/dev_kaeem/br11-review/r17/B/probe_dispatch_histories.log"
+  }
+]

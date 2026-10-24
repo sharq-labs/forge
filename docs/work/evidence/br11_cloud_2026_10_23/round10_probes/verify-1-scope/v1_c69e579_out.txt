@@ -1,0 +1,18 @@
+control {}                     | owner read-back: 4 | follower: read revision 4
+                               | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+nested list {'seeds':[1,2]}    | owner read-back: 4 | follower: refused: one its owner reads back: its serialization is not plain JSON data (exactly dict
+                               | after restore: DISPATCHED AGAIN | ran 2
+nan float                      | owner read-back: 4 | follower: refused: one its owner reads back: _Payload cannot be serialized: Out of range float valu
+                               | after restore: DISPATCHED AGAIN | ran 2
+datetime                       | owner read-back: 4 | follower: refused: one its owner reads back: its serialization is not plain JSON data (exactly dict
+                               | after restore: DISPATCHED AGAIN | ran 2
+bytes                          | owner read-back: 4 | follower: refused: one its owner reads back: its serialization is not plain JSON data (exactly dict
+                               | after restore: DISPATCHED AGAIN | ran 2
+set                            | owner read-back: 4 | follower: refused: one its owner reads back: its serialization is not plain JSON data (exactly dict
+                               | after restore: DISPATCHED AGAIN | ran 2
+Decimal                        | owner read-back: 4 | follower: refused: one its owner reads back: its serialization is not plain JSON data (exactly dict
+                               | after restore: DISPATCHED AGAIN | ran 2
+int key                        | owner read-back: 4 | follower: refused: one its owner reads back: its serialization is not plain JSON data (exactly dict
+                               | after restore: DISPATCHED AGAIN | ran 2
+object()                       | owner read-back: 4 | follower: refused: one its owner reads back: its serialization is not plain JSON data (exactly dict
+                               | after restore: DISPATCHED AGAIN | ran 2

@@ -1,0 +1,989 @@
+change classes (minimum gate beyond this one):
+  doc_only               benchmarks/mind_gen2_authority_v1/README.md -- this gate
+  unclassified           benchmarks/mind_gen2_authority_v1/__init__.py -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/br1_decisions.py -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/fixtures.py -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/ledger_curve.py -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/mutations.py -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/rescore.py -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/results/AUTHORITY.json -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/results/BR1_DECISIONS.json -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/results/BR1_PERFORMANCE_THIS_HOST.json -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/results/BR1_RESCORE.json -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/results/LEDGER_SIZE_CURVE.json -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/results/PERFORMANCE.json -- reach unknown: whole regression pack here, then FAST
+  unclassified           benchmarks/mind_gen2_authority_v1/run_benchmark.py -- reach unknown: whole regression pack here, then FAST
+  test_only              benchmarks/mind_gen2_authority_v1/tests/__init__.py -- FAST before merge
+  test_only              benchmarks/mind_gen2_authority_v1/tests/test_mind_gen2_authority_v1.py -- FAST before merge
+  test_only              benchmarks/mind_gen2_world_v1/tests/test_mind_gen2_world_v1.py -- FAST before merge
+  doc_only               docs/ai/DOCSET.txt -- this gate
+  doc_only               docs/work/ACTIVE_PLAN.md -- this gate
+  doc_only               docs/work/BR11_LOCAL_RESUME_CHECKPOINT_2026_10_23.md -- this gate
+  doc_only               docs/work/PROGRESS.md -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/.gitattributes -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/EVIDENCE_MANIFEST.sha256 -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/README.md -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/brief/BRIEF.md -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/affected_expensive.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/base_ids_sorted.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/expensive_base.ids -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/expensive_ec2c000.ids -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/failing_ids_ec2c000.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/guards_base_msgs.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/guards_ec2c000_msgs.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/gates/summary_ec2c000.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/mutation/mutate2_r10.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/mutation/mutate_r10.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/mutation/mutate_r11.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/mutation/r10_on_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/mutation/r10_on_c69e579_reasons.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/mutation/r11_on_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/ab_check_timing.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/ab_e573096_d89dd3b.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/br1_alternating5.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/br1_alternating5_d5ef1e3.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/contention_d5ef1e3.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/contention_d89dd3b.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/p24_ab.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/p24_count.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/performance/p28b.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/review_results/review_r10_result.json -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/review_results/review_r11_result.json -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/review_results/review_r9_result.json -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a1001_plain_rich_experiments.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a1002_bind_vs_check_fixed_fuzz.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a1002b_signed.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a1003_earlier_ticket_reads_rollback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a1004_campaign_ledgers_plain.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a1005_metadata_key_hook.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a1006_numpy_ledger.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a801_check.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/a801_level_path_fuzz.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/runbench.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/A-scientific-authority/suite_head.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/checks_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m10_no_plain_ledger.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m1_no_earlier_refusal.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m2_no_finally_discard.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m3_no_plain_experiment.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m4_ticket_after_accounts.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m5_pin_error_cleared.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m6_no_prune.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m7_readback_under_lock.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m8_stale_always.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mut_m9_flag_reset_before_readback.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/mutate.sh -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p10_cache_race.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p10_cache_race_portable.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p10b_cache_race_gateway.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p10c_cache_race_gateway_wide.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p11_cyclic_metadata_hang.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p12_stuck_accounts_refuses_all.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p13_key_code_under_lock.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p14_interrupt_before_try.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p15_revision_isdigit.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p16_failed_accounts_then_read.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p17_race_loses_handed_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p18_contention_refusals.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p18b_contention_unbound_spender.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p18b_k8.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p19_plain_coverage.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p20_r7_comment.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/p21_readthrough_from_readback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r8/p03_unlocked_readback_rollback_window.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r9/p01_cache_shares_live_metadata.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r9/p02_cache_keeps_dropped_accounts.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r9/p03_reentrancy_other_thread.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r9/p04_r8p03_adapted.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r9/p05_execution_code_under_lock.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r9/p06_pin_error_served_replay.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/r9/p07_readthrough_from_readback_hangs.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/repeat_r6_r9.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/suite_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/B-architecture/suite_item1_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1001_mirror_ticket_order.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1001_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1002_inspect.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1003_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1003_mirror_over_budget.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1003_mutant_anyinflight_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1003_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1004_accounts_blocks_or_raises.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1004_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1005_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1005_revision_isdigit_copy.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1007_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1007_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1007_unplain_spend_then_rollback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1008_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1008_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1008_unplain_evaluation_then_rollback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1008_unplain_evaluation_then_rollback_mutant_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1009_ok_evaluation_plain.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1009_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1010_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1010_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1010_lm_port_unplain_rollback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1010_lm_port_unplain_rollback_mutant_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1011_hooks_and_keys.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1011_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1012_mirror_natural_stress.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1012_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1013_level_fuzz_matched.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/c1013_seed11.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/mutant_both_suite.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c01_locked_readback_runs_execution_code.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c02_handed_before_rollback_read_after.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c03.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c04_cached_readback_shares_live_metadata.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c04b_admission_record_replay.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c06_convertible_other_base_unit.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c07_read_through_on_another_thread.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c08_splice_edits.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/c09_raise_and_equal_content.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r01_seed10.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r02_lm.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r03_s1_s4.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r03_s1_s4.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r03b_experiment_rewrite.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r04_k7.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r05_cache.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r06_torn.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r07_bound.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r08_reads_through.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9rerun/r09_fixed.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/r9tests_on_ceaf8cd.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/runbench.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/C-adversarial-bypass/suite_r6_r9.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d10_stale_mismatch_labels.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d10b_forged_revision_desk.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d11_rec_seed0.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d11_rec_seed1.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d11_rec_seed4242.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d11_record.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d11_replay.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d11_replay_seed7.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d11_replay_seed99.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d12_contention.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d13_proposer_threads_vs_dispatch.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d14_nonplain_spend_rollback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d14b_nonplain_kinds.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d15_key_hook_in_readback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d16_cyclic_metadata.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/d17_equal_content_replacement_alias.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/e02_rec_c69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/rescore_check.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/run_benchmark_check.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/D-replay-stale/suite_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/authority_tests.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f01_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f01_out_ceaf8cd.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f01_ticket_inversion_redispatch.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f02_key_code_under_lock.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f02_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f02_out_ceaf8cd.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f03_out_seed2.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f03_out_seed3.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f03_out_seed4.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f03_out_seed5.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f03_out_seed6.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f03_out_seed7.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f03_pipeline_fuzz.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f04_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f04_out_ceaf8cd.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f04_revision_isdigit.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f05_mutants.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f05_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f06_apply.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f06_g06_adapted.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f07_c02_adapted.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f07_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f08_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f08_plain_values_replay.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f09_p01_adapted.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f10_ledger_alias.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f10_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f11_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/f11_stalled_verification.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/F-round9-rewrites-deep/r9_probes_at_head.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/critic/k01_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/critic/k01_value_kinds.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/critic/km1_level_byte_guard_off.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/critic/mutate.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/r9_findings.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/c1007_ceaf8cd_rerun.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/c1010_ceaf8cd_rerun.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/mutant_r8r9_tests.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v01_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v01_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v01_mutant_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v01_nested_eval_meta_restore.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v01b.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v02_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v02_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-0-repro/v02_unserializable_meta.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v1_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v1_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v1_unreadable_classes.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v2_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v2_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v2_ledger_classes.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v3_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-1-scope/v3_documented_baseline.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-2-repro/v01_mirror_exec_lock.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-2-repro/v02_ceaf8cd_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-2-repro/v02_mirror_latency.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-2-repro/v02_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-2-repro/v03_r9_c02_adapted.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-3-scope/s01_mirror_and_controls.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-3-scope/s02_mutants_vs_r9_control.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round10_probes/verify-3-scope/s03_strengthened_mirror.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/a1101_executed_level_vs_c69e579.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/a1102_torn_topup_refused_for_good.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/a1103_ledger_value_meaning.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/a1104_runtimeerror_class_hides_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/a1105_numpy_evaluation_metadata.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/a1106_replay_ledger_values.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/runbench.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/A-scientific-authority/suite_head.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/from_r10/c1001_mirror_ticket_order.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/from_r10/c1003_mirror_over_budget.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/from_r10/c1012_mirror_natural_stress.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/from_r10/f01_ticket_inversion_redispatch.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p10_cache_race.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p10_cache_race_portable.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p10b_cache_race_gateway.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p10c_cache_race_gateway_wide.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p11_cyclic_metadata_hang.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p12_stuck_accounts_refuses_all.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p13_key_code_under_lock.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p14_interrupt_before_try.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p15_revision_isdigit.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p15b_revision_checks.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p16_failed_accounts_then_read.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p17_race_loses_handed_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p18_contention_refusals.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p18b_contention_unbound_spender.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p19_plain_coverage.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p20_r7_comment.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p21_readthrough_from_readback.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p22_interrupt_in_leave.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p23_torn_read_for_good.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p23b_torn_read_stress.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p24_contention_large_account.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p25_recursion_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p26_diverged_while_waiting.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p27_unreadable_by_from_dict.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/B-architecture/p28_recursion_depends_on_caller.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1013_seed23_at_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1101_n2_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1101_n3_exp_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1101_n3_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1101_schedule_enum.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1102_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1102_torn_topup_refused_for_good.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1103_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1103_slow_readback_times_out.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1104_inflight_timeout_and_raise.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1104_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1105_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1105_public_api_edits_and_intake.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1106_c1108_mutants_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1106_mutants_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1106_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1106_unreadable_spend_compared_during_wait.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1107_ok_evaluation_readback_stable.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1107_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1108_mutants_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1108_sequential_budget_cut.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1109_deterministic_runtimeerror_hides_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1109_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1111_mutants_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1111_sequential_deep_nesting.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1112_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1112_deepcopy_outside_try.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/c1112_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/mutants.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/mutants_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/C-adversarial-bypass/run_under_mutant.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/actions_orig.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d11_rec_seed0.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d11_rec_seed1.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d11_rec_seed4242.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d11_replay_seed7.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d11_replay_seed99.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d20_torn_topup_for_good.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d20b_torn_topup_threads.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d20c_torn_experiment_threads.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d21_runtimeerror_value_hides_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d22_defaultstr_record.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d22_seed0.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d22_seed1.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d22_seed77.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/d23_unreadable_ledger_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/mutant_ledger_transient.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/mutants.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/owners_orig.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/D-replay-stale/projection_orig.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/contention_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1101_executed_level_four_way.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1101_seed2.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1101_seed3.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1101_seed4.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1102_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1102_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1102_readback_escape_redispatch.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1102b_depth_scan.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1102c_where.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1102d_unbound_deep.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1103_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1103_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1103_out_mutant_M1.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1103_unreadable_spend_during_wait.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1104_contention_bound_spender.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1104_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1105_malformed_mapping_hides_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1105_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/f1105_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M10_leave_no_notify.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M12_no_deepcopy.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M14_revision_string_compare.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M18_executed_level_no_also.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M19_timeout_accepts.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M1_no_diverged_recheck.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M2_no_behind_recheck.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M5_runtimeerror_for_good.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M6_recursion_transient.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M7_torn_experiment_for_good.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mut_M8_wait_only_earlier.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/mutate.sh -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/r10_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/r10_on_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/F-round10-rewrites-deep/runbench.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/critic/k01_post_write_block.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/critic/k01_tree.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/r10_findings.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/orig_c1112.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/orig_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/v1_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/v1_where.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/v2_c69e579_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/v2_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/v2_repro.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/v3_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-0-repro/v3_stack.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-1-scope/s1_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-1-scope/s1_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-1-scope/s1_out_ceaf8cd.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-1-scope/s1_scope.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-1-scope/s2_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-1-scope/s2_rootcause.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-2-repro/f1102_readback_escape_redispatch.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-2-repro/f1102b_depth_scan.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-2-repro/f1102c_where.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-2-repro/f1102d_unbound_deep.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-2-repro/v_indep.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-3-scope/s1_window.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-3-scope/s2_documented_analogs.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-3-scope/s2_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-3-scope/s2_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-3-scope/v1_r10_unwritable_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-4-repro/f1105_malformed_mapping_hides_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-4-repro/v4_ctor.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-4-repro/v4_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-4-repro/v4_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-4-repro/v4_variants.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-5-scope/s1_equivalence_classes.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-5-scope/s1_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-5-scope/s1_out_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-5-scope/s2_out_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/verify-5-scope/s2_steady_state.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round11_probes/workflow_r11.js -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1101_executed_level_vs_c69e579.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1102_torn_topup_refused_for_good.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1103_ledger_value_meaning.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1104_runtimeerror_class_hides_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1105_numpy_evaluation_metadata.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1106_replay_ledger_values.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1201_deep_caller_stack_scan.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1202_deep_stack_new_unit.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1202b_detail.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1203_p23b_torn_read_stress.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1204_id_str_override.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1205_two_accounts_one_spelling.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1205b_constructor_collapse.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1206_three_torn_reads.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1207_fresh_thread_join_deadlock.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/a1208_served_per_pin.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/builder_mut_serve_shared.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/builder_mut_torn_check_dropped.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/c1112_deepcopy_outside_try.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/f1102_readback_escape_redispatch.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/f1105_malformed_mapping_hides_spend.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/mut_differ_not_moving.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/mut_id_str_call.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/mut_why_only.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/mutate_a12.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/r11_on_aad2f69.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/runbench.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/A-scientific-authority/suite_head.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1201_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1201_unprintable_exception_escapes.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1202_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1202_unprintable_hides_other_accounts.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1203_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1203_recursion_headroom_scan.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1204_deterministic_mutation_error.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1204_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1205_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1205_same_spelling_collision.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1206_fresh_thread_single_attempt.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1206_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1207_fresh_thread_join_unbounded.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1207_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1208_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1208_varying_message_is_moving.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1209_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1209_p24_instrumented.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1210_alias_spend_recorded.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1210_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1211_fresh_thread_read_through.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/b1211_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/mutants_out.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/mutants_out2.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/mutate_r12.py -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/B-architecture/run_mutants.sh -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/ROUND12_STATUS.md -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/r11_findings.txt -- this gate
+  doc_only               docs/work/evidence/br11_cloud_2026_10_23/round12_interrupted/workflow_r12.js -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/.gitattributes -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/EVIDENCE_MANIFEST.sha256 -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/README.md -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/baseline/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/baseline/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/checks_33258438/benchmarks_battery_rediscovery_v3_gen1_reference.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/checks_33258438/benchmarks_mind_gen2_authority_v1_rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/checks_33258438/benchmarks_mind_gen2_authority_v1_run_benchmark.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/checks_33258438/suite.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/controls/r12_controls_prefix_d40aff44.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/base_1202ea6c/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/base_1202ea6c/expensive_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/base_1202ea6c/fast_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/base_1202ea6c/guards_failing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/base_1202ea6c/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/branch_33258438/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/branch_33258438/expensive_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/branch_33258438/fast_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/branch_33258438/guards_failing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/branch_33258438/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/gates/gates.sh -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/mutation/mutate_r12_local.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/mutation/run_mutants_local.sh -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/mutation/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/performance/ab_r12.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/performance/ab_r12.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/performance/b1209_p24_instrumented.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/_summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1101_executed_level_vs_c69e579.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1102_torn_topup_refused_for_good.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1103_ledger_value_meaning.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1104_runtimeerror_class_hides_spend.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1105_numpy_evaluation_metadata.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1106_replay_ledger_values.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1201_deep_caller_stack_scan.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1202_deep_stack_new_unit.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1202b_detail.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1203_p23b_torn_read_stress.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1204_id_str_override.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1205_two_accounts_one_spelling.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1205b_constructor_collapse.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1206_three_torn_reads.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1207_fresh_thread_join_deadlock.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/a1208_served_per_pin.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1201_unprintable_exception_escapes.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1202_unprintable_hides_other_accounts.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1203_recursion_headroom_scan.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1204_deterministic_mutation_error.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1205_same_spelling_collision.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1206_fresh_thread_single_attempt.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1207_fresh_thread_join_unbounded.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1208_varying_message_is_moving.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1209_p24_instrumented.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1210_alias_spend_recorded.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/b1211_fresh_thread_read_through.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/c1112_deepcopy_outside_try.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/f1102_readback_escape_redispatch.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/r12_probes_d40aff44/f1105_malformed_mapping_hides_spend.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/review_results/review_r13_result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/review_results/review_r14_result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/checks/benchmarks_battery_rediscovery_v3_gen1_reference.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/checks/benchmarks_mind_gen2_authority_v1_rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/checks/benchmarks_mind_gen2_authority_v1_run_benchmark.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/checks/suite.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/base_1202ea6c/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/base_1202ea6c/expensive_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/base_1202ea6c/fast_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/base_1202ea6c/guards_failing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/base_1202ea6c/regression_tail.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/base_1202ea6c/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/branch_13051154/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/branch_13051154/expensive_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/branch_13051154/fast_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/branch_13051154/guards_failing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/branch_13051154/regression_tail.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/branch_13051154/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/gates/gates.sh -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/mutation/mutate_r13_local.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/mutation/run_mutants_r13.sh -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/mutation/summary_first_pass.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/mutation/summary_rerun_tightened_control.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/performance/ab_r12.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/performance/ab_r13.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round13/performance/b1209_p24_instrumented.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/checks/benchmarks_battery_rediscovery_v3_gen1_reference.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/checks/benchmarks_mind_gen2_authority_v1_rescore.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/checks/benchmarks_mind_gen2_authority_v1_run_benchmark.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/checks/suite.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/base_1202ea6c/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/base_1202ea6c/expensive_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/base_1202ea6c/fast_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/base_1202ea6c/guards_failing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/base_1202ea6c/regression_tail.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/base_1202ea6c/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/branch_7b4a0de8/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/branch_7b4a0de8/expensive_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/branch_7b4a0de8/fast_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/branch_7b4a0de8/guards_failing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/branch_7b4a0de8/regression_tail.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/branch_7b4a0de8/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/gates/gates.sh -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/mutation/mutate_r14_local.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/mutation/run_mutants_r14.sh -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/mutation/summary_first_pass.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/mutation/summary_rerun_new_control.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/performance/ab_r12.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/performance/ab_r14.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/performance/ab_r14_desk_extra.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round14/performance/b1209_p24_instrumented.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/benchmark.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/benchmark_completed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/benchmark_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/benchmark_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/changed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/changed_release_selection.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/changed_selection_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/clean_candidate.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/compare_gates.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_comparison_outside_lock.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_control.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_discard_interrupted_handing.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_drop_before_observation.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_exact_pair_type.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_handing_dictionary_copy.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_interrupt_implicit_success.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_interrupt_poison.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_listing_outside_interrupt_guard.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_listing_outside_without_handing_recovery.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_no_comparison_seal.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_no_history_count.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_no_post_wait_seal.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_no_reconciliation.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_no_retained_history_reconciliation.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_reread_retired_content.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_retain_live_mapping.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_reviewed_prefix.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutant_seal_entry_only.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/mutations.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/completed_mutation_batch/run_mutations.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/consolidated_matrix.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/executions.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/expensive.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/expensive_completed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/expensive_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/fast_clean.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/fast_clean_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/fast_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/fast_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/final_candidate.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/final_ladder_r15.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/gate_differential.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/gen1.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/gen1_completed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/gen1_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/gen1_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/guards.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/guards_completed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/guards_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/honest_pair_prefix_candidate.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/interrupted_handing_candidate.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/interrupted_handing_fix1.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_fix1.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_generated.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_generated2.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_handoff.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_handoff_fixed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_native_handoff.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_pair_fixed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_prefix.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l0_retired_fixed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l1_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l1_fix1.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l1_fix2.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l1_fix3.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l1_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l2_completed_source.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l2_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l2_fix3.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l2_handoff.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l2_handoff_corrected.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l2_native_handoff.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/l2_pair_fixed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/matrix_r15.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/measure_authority.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_comparison_outside_lock.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_control.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_discard_interrupted_handing.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_drop_before_observation.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_exact_pair_type.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_handing_dictionary_copy.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_interrupt_implicit_success.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_interrupt_poison.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_listing_outside_interrupt_guard.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_listing_outside_without_handing_recovery.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_no_comparison_seal.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_no_history_count.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_no_post_wait_seal.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_no_reconciliation.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_no_retained_history_reconciliation.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_reread_retired_content.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_retain_live_mapping.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_reviewed_prefix.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutant_seal_entry_only.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations_completed_source.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations_handoff.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations_handoff_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations_native_handoff.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations_native_handoff_fixed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/mutations_run1.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/common.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p1.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p1_fixed.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p1_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p2.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p2_claim.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p3.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p3_aba.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p4.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/p4_stress.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/patch_fix.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/A-scientific-authority/r14fix.diff -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/B-architecture/common.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/B-architecture/p1_seal_toctou.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/B-architecture/p1b_unread_same_schedule.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/B-architecture/p2_unread_cleared_by_lying_readback.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/B-architecture/p2b_before_listing_dropped.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/B-architecture/p3_fresh_threads.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/B-architecture/p4_cross_thread_readthrough.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/common.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p1_order.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p2_port_order.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p2_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p2b_seal_race_port.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p3_aba.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p3_inplace_during_readback.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p4_edits.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p4_honest_restore.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/C-adversarial-bypass/p5_liar.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p1_copies_interrupt.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p1_copies_interrupt.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p2_seal_stack.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p2_seal_stack.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p3_record_replay.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p4_numbers.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p4_numbers.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p5_seal_gateway.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p5_seal_gateway.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p6_seal_project.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p6_seal_project.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p7_before_unrecorded.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/p7_before_unrecorded.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_0/r0_feasible.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_0/r1_not_read_back.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_0/r2_behind_unread.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_0/r3_rewrote_unread.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_0/r4_sealed.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_1/r0_feasible.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_1/r1_not_read_back.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_1/r2_behind_unread.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_1/r3_rewrote_unread.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_1/r4_sealed.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_4242/r0_feasible.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_4242/r1_not_read_back.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_4242/r2_behind_unread.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_4242/r3_rewrote_unread.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/D-replay-stale/rec_4242/r4_sealed.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/F-round14-rewrites-deep/diff14.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/F-round14-rewrites-deep/p1_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/F-round14-rewrites-deep/p1_seal_race.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/F-round14-rewrites-deep/p2_minors.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/F-round14-rewrites-deep/p2_minors.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/F-round14-rewrites-deep/p3_interrupt_at_listing.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/F-round14-rewrites-deep/p3_interrupt_at_listing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/README.md -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/critic/c_p2_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/critic/c_p3_inplace.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/critic/common.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/critic/kbi_content.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-0-repro/v_seal.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-0-repro/v_seal.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-1-scope/common.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-1-scope/p1.out -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-1-scope/p1_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-2-repro/seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-3-scope/common.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-3-scope/p2_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-3-scope/patch.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-4-repro/v4_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-4-repro/v4_seal_race.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-5-scope/v5.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-5-scope/v5.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-6-repro/v6_seal_race.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-7-scope/common.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-7-scope/p1_seal_toctou.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-7-scope/p1b_unread_same_schedule.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/original_probes/verify-7-scope/p_mine.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/pair_prefix_candidate.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/performance.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/performance.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/performance_native_handoff.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/r15_labels.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/r15_results.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/recovery_candidate.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/regression.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/regression_completed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/regression_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/regression_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_A-scientific-authority_p1_seal_race.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_A-scientific-authority_p2_claim.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_A-scientific-authority_p3_aba.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p2_unread_cleared_by_lying_readback.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p2b_before_listing_dropped.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p3_fresh_threads.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_B-architecture_p4_cross_thread_readthrough.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_D-replay-stale_p1_copies_interrupt.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_D-replay-stale_p2_seal_stack.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_D-replay-stale_p7_before_unrecorded.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_F-round14-rewrites-deep_p2_minors.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_F-round14-rewrites-deep_p3_interrupt_at_listing.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/repro_critic_kbi_content.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/rescore.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/rescore_completed.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/rescore_final.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/rescore_release.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/retired_prefix_candidate.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/reused_base_r14/REUSE.md -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/reused_base_r14/env.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/reused_base_r14/expensive_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/reused_base_r14/fast_failing_ids.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/reused_base_r14/guards_failing.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/reused_base_r14/summary.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/run_mutations.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/run_r15_record.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/tested_source_manifest.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/threat_disposition_matrix.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round15/wf_r15.js -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/controls.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/executions.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/probe_native_stack.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/probe_native_stack.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/probe_retention.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/probe_retention.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/run_controls.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/run_native.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/run_probe.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/A/source_identity.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/B/probe_handing_boundary.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/B/probe_handing_boundary.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/B/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/B/targeted_controls.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/BRIEF.md -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/C/executions.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/C/identity.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/C/probe_lifecycle.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/C/probe_lifecycle.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/C/probe_native_depth.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/C/probe_native_depth.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/C/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/CRITIC/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/CRITIC/review.md -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/probe_identity.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/probe_identity.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/probe_repeat_detached.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/probe_repeat_detached.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/probe_trace_capture.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/probe_trace_capture.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/r15_controls.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/D/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/final_source_identity.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/identity.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/probe.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/probe_execution.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/probe_expanded.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/probe_expanded_execution.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/record.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/record_execution.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/run_expanded.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/run_probe.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/run_record.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/run_trace.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/test_e_record.py.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/test_e_replay.py.txt -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/trace_execution.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/trace_repro.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/E/trace_repro.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/F/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/F/review.md -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/execution.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/execution_extra_boundaries.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/execution_followup.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/extra_rows.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/followup_rows.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/probe.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/probe.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/probe_extra_boundaries.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/probe_extra_boundaries.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/probe_followup.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/probe_followup.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/probe_rows.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/review.md -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/run.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/run_extra_boundaries.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S1/run_followup.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S2/identity_reproduction.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S2/lifecycle_reproduction.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S2/probe.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S2/probe.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S2/result.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S2/run.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/S2/source_status.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/changed_selection.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/executions.jsonl -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/l1_local.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/l2_local.log -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/preservation_manifest.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/review_identity.json -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/run_r16_record.py -- this gate
+  doc_only               docs/work/evidence/br11_local_2026_10_23/round16/threat_disposition_matrix.json -- this gate
+  scientific_shared      src/engcore/mind/world/__init__.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/actions.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/admission.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/authority.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/base.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/binders.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/declaration.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/domains.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/feasibility.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/owners.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/port.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/projection.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/variables.py -- FAST, then SCIENTIFIC before merge
+  scientific_shared      src/engcore/mind/world/world.py -- FAST, then SCIENTIFIC before merge
+  certification_pinned   src/engcore/sria/campaign/budget.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_cross_domain.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_failing_first.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_mutations.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r1.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r10.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r11.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r12.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r13.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r14.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r15.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r16.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r2.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r3.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r4.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r5.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r6.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r7.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r8.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_review_r9.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_authority_state_machine_r15.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_world_contract.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/mind/test_world_failing_first.py -- hardened recertification is required (owner-run); this gate does not replace it
+  certification_pinned   tests/test_sria_budget_ledger_identity.py -- hardened recertification is required (owner-run); this gate does not replace it
+RECERTIFICATION_REQUIRED (owner-run; this gate does not replace it):
+  src/engcore/sria/campaign/budget.py: certified:assurance_admission
+  tests/mind/test_authority_cross_domain.py: certified:harness, assurance_suites
+  tests/mind/test_authority_failing_first.py: certified:harness, assurance_suites
+  tests/mind/test_authority_mutations.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r1.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r10.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r11.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r12.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r13.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r14.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r15.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r16.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r2.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r3.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r4.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r5.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r6.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r7.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r8.py: certified:harness, assurance_suites
+  tests/mind/test_authority_review_r9.py: certified:harness, assurance_suites
+  tests/mind/test_authority_state_machine_r15.py: certified:harness, assurance_suites
+  tests/mind/test_world_contract.py: certified:harness, assurance_suites
+  tests/mind/test_world_failing_first.py: certified:harness, assurance_suites
+  tests/test_sria_budget_ledger_identity.py: certified:harness, assurance_suites
+affected test modules: 103 reached by import, mention or source scan
+affected expensive tests NOT run here -- run SCIENTIFIC, or pass --with-expensive:
+  benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_careful_identifies_synthetic_pulses_and_recovers_the_parameters
+  benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_runs_end_to_end_on_synthetic_pulses_and_its_traces_replay
+  benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_no_arm_supports_identifiability_when_tau_is_far_outside_the_window
+  benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates
+  tests/domains/kinetics/test_cstr_domain.py
+  tests/systems/aerospace/test_multirotor_mvr0.py
+  tests/systems/aerospace/test_multirotor_mvr1.py
+  tests/test_electrical_v01_demo.py
+  tests/test_heterogeneous_ngspice.py
+  tests/test_sria_e1_electrical.py
+  tests/test_sria_e2_model_adequacy.py
+  tests/test_sria_e3_adequacy_obligation.py
+  tests/test_sria_v01_certification_path.py
+  tests/test_thermal_t1_fidelity_inference.py
+changes whose reach could not be established select the whole regression pack:
+  benchmarks/mind_gen2_authority_v1/ledger_curve.py
+  benchmarks/mind_gen2_authority_v1/results/AUTHORITY.json
+  benchmarks/mind_gen2_authority_v1/results/BR1_PERFORMANCE_THIS_HOST.json
+  benchmarks/mind_gen2_authority_v1/results/LEDGER_SIZE_CURVE.json
+  benchmarks/mind_gen2_authority_v1/tests/__init__.py
+  src/engcore/mind/world/binders.py
+NARROWING REFUSED -- running the whole FAST tier (or SCIENTIFIC with --with-expensive), not a selection
+unclassified changes select the whole regression pack:
+  src/engcore/mind/world/__init__.py
+  src/engcore/mind/world/actions.py
+  src/engcore/mind/world/admission.py
+  src/engcore/mind/world/authority.py
+  src/engcore/mind/world/base.py
+  src/engcore/mind/world/binders.py
+  src/engcore/mind/world/declaration.py
+  src/engcore/mind/world/domains.py
+  src/engcore/mind/world/feasibility.py
+  src/engcore/mind/world/owners.py
+  src/engcore/mind/world/port.py
+  src/engcore/mind/world/projection.py
+  src/engcore/mind/world/variables.py
+  src/engcore/mind/world/world.py
+$ /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest -q -m 'not expensive'

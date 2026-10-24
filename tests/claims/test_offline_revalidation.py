@@ -404,3 +404,34 @@ def test_a_single_field_edit_with_a_recomputed_digest_is_tampered(t3, registry, 
     forged = copy.deepcopy(bundle)
     edit(forged["record"])
     assert verify_bundle(_redigest(forged), registry).status is BundleStatus.TAMPERED
+
+
+def test_coupled_replay_precondition_keeps_parent_and_subresult_identities_distinct(et300):
+    from engcore.claims.replay.bundle import _has_bound_replay_result
+
+    record = et300[0].to_dict()
+    assert record["execution"]["run_id"] != record["execution"]["report_run_id"]
+    assert _has_bound_replay_result(record)
+
+
+@pytest.mark.parametrize("path,value", [
+    (("execution", "run_id"), "another-parent"),
+    (("execution", "report_run_id"), "another-report"),
+    (("result", "report_run_id"), "another-report"),
+    (("credibility", "report", "run_id"), "another-report"),
+    (("credibility", "report", "provenance", "run_id"), "another-parent"),
+    (("credibility", "report", "provenance"), None),
+    (("execution", "outcome"), "refused"),
+    (("execution", "binding_problems"), ["unbound"]),
+    (("basis", "executed"), False),
+    (("basis", "bound"), False),
+])
+def test_coupled_replay_precondition_refuses_each_broken_identity_or_execution_link(et300, path, value):
+    from engcore.claims.replay.bundle import _has_bound_replay_result
+
+    record = copy.deepcopy(et300[0].to_dict())
+    target = record
+    for key in path[:-1]:
+        target = target[key]
+    target[path[-1]] = value
+    assert not _has_bound_replay_result(record)

@@ -585,6 +585,27 @@ def test_the_measured_population_refuses_once_a_provider_becomes_available():
                        BLIND_GUARD.split("::")[0]}
 
 
+def test_pybamm_checkpoint_skip_is_admitted_only_for_the_exact_unavailable_provider_test():
+    path = "providers/pybamm/tests/test_pybamm_checkpoint_identity.py"
+    test = "test_own_checkpoint_round_trip_reproduces_the_next_window"
+    reason = "PyBaMM is required (executed-provider test)"
+    availability = fx.availability_document("Python 3.12.9", sa.DEFAULT_POLICY)
+    statuses, problems = sa.availability_statuses(availability, sa.DEFAULT_POLICY)
+    assert problems == []
+    protected = sa.protected_tests(REPO, trust_script=TRUST_SCRIPT)
+
+    admitted = _only(sa.admit_suite(_junit(_skip(path, test, reason)), suite="junit_fast",
+                                    statuses=statuses, protected=protected, policy=sa.DEFAULT_POLICY))
+    assert admitted["admitted"] is True
+    assert admitted["classification"] == sa.OPTIONAL_PROVIDER_UNAVAILABLE
+    assert admitted["rule_id"] == "pybamm-checkpoint-identity"
+
+    unlisted = _only(sa.admit_suite(_junit(_skip(path, "test_unlisted_future_case", reason)),
+                                    suite="junit_fast", statuses=statuses, protected=protected,
+                                    policy=sa.DEFAULT_POLICY))
+    assert unlisted["admitted"] is False
+
+
 def test_the_committed_policy_is_narrow_and_true_of_this_tree():
     assert sa.policy_problems(sa.DEFAULT_POLICY, REPO, trust_script=TRUST_SCRIPT) == []
     assert sa.INSTALLED_EXTRAS == ("dev", "mcp", "oracles")

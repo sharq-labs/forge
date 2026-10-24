@@ -1,0 +1,6554 @@
+{
+ "assessability": {
+  "CROSS_CELL_TRANSFER": {
+   "NOT_ASSESSABLE": 5,
+   "NOT_SUPPORTED": 12,
+   "REFERENCE_DISAGREEMENT": 0,
+   "SUPPORTED": 6,
+   "UNSCORED": 8
+  },
+  "IDENTIFIABILITY": {
+   "NOT_ASSESSABLE": 31,
+   "NOT_SUPPORTED": 0,
+   "REFERENCE_DISAGREEMENT": 0,
+   "SUPPORTED": 0,
+   "UNSCORED": 0
+  },
+  "MODEL_ADEQUACY": {
+   "NOT_ASSESSABLE": 0,
+   "NOT_SUPPORTED": 23,
+   "REFERENCE_DISAGREEMENT": 0,
+   "SUPPORTED": 1,
+   "UNSCORED": 7
+  },
+  "MODEL_DISCREPANCY": {
+   "NOT_ASSESSABLE": 31,
+   "NOT_SUPPORTED": 0,
+   "REFERENCE_DISAGREEMENT": 0,
+   "SUPPORTED": 0,
+   "UNSCORED": 0
+  },
+  "WITHIN_CELL_GENERALIZATION": {
+   "NOT_ASSESSABLE": 0,
+   "NOT_SUPPORTED": 23,
+   "REFERENCE_DISAGREEMENT": 0,
+   "SUPPORTED": 8,
+   "UNSCORED": 0
+  }
+ },
+ "bridge": {
+  "all_reproduce": true,
+  "note": "SECONDARY_BRIDGE_SET: never counted in the primary conclusion",
+  "reproduces_v2_sealed_outputs": {
+   "ALWAYS_FIT__Q1": true,
+   "ALWAYS_FIT__Q2": true,
+   "ALWAYS_REFUSE__Q1": true,
+   "ALWAYS_REFUSE__Q2": true,
+   "CAREFUL_BASELINE__Q1": true,
+   "CAREFUL_BASELINE__Q2": true,
+   "FIXED_FIT__Q1": true,
+   "FIXED_FIT__Q2": true,
+   "OLD_MIND__Q1": true,
+   "OLD_MIND__Q2": true,
+   "REPRESENTATION_ONLY__Q1": true,
+   "REPRESENTATION_ONLY__Q2": true,
+   "REPRESENTATION_PLUS_ROLES__Q1": true,
+   "REPRESENTATION_PLUS_ROLES__Q2": true,
+   "SEMANTIC_ROLES_ONLY__Q1": true,
+   "SEMANTIC_ROLES_ONLY__Q2": true
+  },
+  "scores": {
+   "CAREFUL_BASELINE": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 2,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 2
+     },
+     "IDENTIFIABILITY": {
+      "correct": 2,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 2
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 1
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 1,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 2
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 1,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 1
+     }
+    },
+    "correct_decided_wilson95": [
+     0.37553462976252533,
+     0.9637758913675698
+    ],
+    "correct_n": 4,
+    "correct_refusal_n": 2,
+    "correct_scored_n": 6,
+    "decided_n": 5,
+    "false_refuse_n": 1,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 2,
+    "heldout_correct_wilson95": [
+     0.34238022750665303,
+     1.0
+    ],
+    "heldout_decided_n": 2,
+    "incorrect_n": 1,
+    "scored_n": 8,
+    "unassessable_n": 3,
+    "unscored_n": 2,
+    "unsupported_decision_n": 1
+   },
+   "OLD_MIND": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "IDENTIFIABILITY": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 1
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 1
+     }
+    },
+    "correct_decided_wilson95": [
+     0.0,
+     0.43448246478317476
+    ],
+    "correct_n": 0,
+    "correct_refusal_n": 3,
+    "correct_scored_n": 3,
+    "decided_n": 5,
+    "false_refuse_n": 5,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 0,
+    "heldout_correct_wilson95": [
+     0.0,
+     0.6576197724933469
+    ],
+    "heldout_decided_n": 2,
+    "incorrect_n": 5,
+    "scored_n": 8,
+    "unassessable_n": 3,
+    "unscored_n": 2,
+    "unsupported_decision_n": 0
+   },
+   "REPRESENTATION_ONLY": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "IDENTIFIABILITY": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 1
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 1
+     }
+    },
+    "correct_decided_wilson95": [
+     0.0,
+     0.43448246478317476
+    ],
+    "correct_n": 0,
+    "correct_refusal_n": 3,
+    "correct_scored_n": 3,
+    "decided_n": 5,
+    "false_refuse_n": 5,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 0,
+    "heldout_correct_wilson95": [
+     0.0,
+     0.6576197724933469
+    ],
+    "heldout_decided_n": 2,
+    "incorrect_n": 5,
+    "scored_n": 8,
+    "unassessable_n": 3,
+    "unscored_n": 2,
+    "unsupported_decision_n": 0
+   },
+   "REPRESENTATION_PLUS_ROLES": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 2,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 2
+     },
+     "IDENTIFIABILITY": {
+      "correct": 2,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 2
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 1,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 1
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 2,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 2
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 1,
+      "correct_decided": 1,
+      "decided": 1,
+      "scored": 1
+     }
+    },
+    "correct_decided_wilson95": [
+     0.5655175352168251,
+     1.0
+    ],
+    "correct_n": 5,
+    "correct_refusal_n": 3,
+    "correct_scored_n": 8,
+    "decided_n": 5,
+    "false_refuse_n": 0,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 2,
+    "heldout_correct_wilson95": [
+     0.34238022750665303,
+     1.0
+    ],
+    "heldout_decided_n": 2,
+    "incorrect_n": 0,
+    "scored_n": 8,
+    "unassessable_n": 3,
+    "unscored_n": 2,
+    "unsupported_decision_n": 0
+   },
+   "SEMANTIC_ROLES_ONLY": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "IDENTIFIABILITY": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 1
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 1,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 2
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 1,
+      "scored": 1
+     }
+    },
+    "correct_decided_wilson95": [
+     0.0,
+     0.43448246478317476
+    ],
+    "correct_n": 0,
+    "correct_refusal_n": 3,
+    "correct_scored_n": 3,
+    "decided_n": 5,
+    "false_refuse_n": 5,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 0,
+    "heldout_correct_wilson95": [
+     0.0,
+     0.6576197724933469
+    ],
+    "heldout_decided_n": 2,
+    "incorrect_n": 5,
+    "scored_n": 8,
+    "unassessable_n": 3,
+    "unscored_n": 2,
+    "unsupported_decision_n": 0
+   }
+  },
+  "truth_v3_vs_v2": {
+   "Q1": {
+    "CROSS_CELL_TRANSFER": {
+     "v2": "NOT_SUPPORTED",
+     "v3": "NOT_SUPPORTED"
+    },
+    "IDENTIFIABILITY": {
+     "v2": "NOT_ASSESSABLE",
+     "v3": "NOT_ASSESSABLE"
+    },
+    "MODEL_ADEQUACY": {
+     "v2": null,
+     "v3": null
+    },
+    "MODEL_DISCREPANCY": {
+     "v2": "NOT_ASSESSABLE",
+     "v3": "NOT_ASSESSABLE"
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "v2": null,
+     "v3": null
+    }
+   },
+   "Q2": {
+    "CROSS_CELL_TRANSFER": {
+     "v2": "NOT_ASSESSABLE",
+     "v3": "NOT_ASSESSABLE"
+    },
+    "IDENTIFIABILITY": {
+     "v2": "SUPPORTED",
+     "v3": "SUPPORTED"
+    },
+    "MODEL_ADEQUACY": {
+     "v2": "SUPPORTED",
+     "v3": "SUPPORTED"
+    },
+    "MODEL_DISCREPANCY": {
+     "v2": "NOT_SUPPORTED",
+     "v3": "NOT_SUPPORTED"
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "v2": "SUPPORTED",
+     "v3": "SUPPORTED"
+    }
+   }
+  }
+ },
+ "compute_cost_s": {
+  "ALWAYS_FIT": 0.3,
+  "ALWAYS_REFUSE": 0.0,
+  "CAREFUL_BASELINE": 47.7,
+  "FIXED_FIT": 0.6,
+  "OLD_MIND": 123.0,
+  "REPRESENTATION_ONLY": 0.4,
+  "REPRESENTATION_PLUS_ROLES": 1590.2,
+  "SEMANTIC_ROLES_ONLY": 82.2
+ },
+ "conclusion": {
+  "criteria": {
+   "C1_primary_comparison": {
+    "alpha": 0.05,
+    "holds": true,
+    "loss": 0,
+    "p_sign": 2.117582368135751e-22,
+    "tie": 0,
+    "win": 73
+   },
+   "C2_false_support_not_material": {
+    "FS_combined": 0,
+    "FS_old": 0,
+    "base_decided_n": 73,
+    "holds": true
+   },
+   "C3_beats_single_layer_arms": {
+    "holds": true,
+    "parts": {
+     "REPRESENTATION_ONLY": {
+      "correct_decided_arm": 0,
+      "correct_decided_combined": 73,
+      "fs_decided_arm": 0,
+      "fs_decided_combined": 0,
+      "holds": true
+     },
+     "SEMANTIC_ROLES_ONLY": {
+      "correct_decided_arm": 0,
+      "correct_decided_combined": 73,
+      "fs_decided_arm": 0,
+      "fs_decided_combined": 0,
+      "holds": true
+     }
+    }
+   },
+   "C4_heldout_improvement": {
+    "H3": true,
+    "heldout_correct_combined": 49,
+    "heldout_correct_old": 0,
+    "holds": true
+   }
+  },
+  "gates": {
+   "leakage_ok": true,
+   "reference_disagreement_fraction": 0.0,
+   "replay_exact": true,
+   "seal_ok": true
+  },
+  "hypotheses": {
+   "H1": {
+    "FR_combined": 0,
+    "FR_old": 73,
+    "holds": true,
+    "required_reduction": 14
+   },
+   "H2": {
+    "holds": true
+   },
+   "H3": {
+    "FS_heldout_combined": 0,
+    "FS_heldout_old": 0,
+    "heldout_decided_n": 49,
+    "holds": true,
+    "wilson_lower": 0.9273021807795035
+   },
+   "H4": {
+    "holds": true
+   }
+  },
+  "paired": {
+   "CAREFUL_BASELINE": {
+    "vs_CAREFUL_BASELINE": {
+     "loss": 0,
+     "p_sign": 1.0,
+     "tie": 73,
+     "win": 0
+    },
+    "vs_OLD_MIND": {
+     "loss": 0,
+     "p_sign": 4.235164736271502e-22,
+     "tie": 1,
+     "win": 72
+    }
+   },
+   "OLD_MIND": {
+    "vs_CAREFUL_BASELINE": {
+     "loss": 72,
+     "p_sign": 4.235164736271502e-22,
+     "tie": 1,
+     "win": 0
+    },
+    "vs_OLD_MIND": {
+     "loss": 0,
+     "p_sign": 1.0,
+     "tie": 73,
+     "win": 0
+    }
+   },
+   "REPRESENTATION_ONLY": {
+    "vs_CAREFUL_BASELINE": {
+     "loss": 72,
+     "p_sign": 4.235164736271502e-22,
+     "tie": 1,
+     "win": 0
+    },
+    "vs_OLD_MIND": {
+     "loss": 0,
+     "p_sign": 1.0,
+     "tie": 73,
+     "win": 0
+    }
+   },
+   "REPRESENTATION_PLUS_ROLES": {
+    "vs_CAREFUL_BASELINE": {
+     "loss": 0,
+     "p_sign": 1.0,
+     "tie": 72,
+     "win": 1
+    },
+    "vs_OLD_MIND": {
+     "loss": 0,
+     "p_sign": 2.117582368135751e-22,
+     "tie": 0,
+     "win": 73
+    }
+   },
+   "SEMANTIC_ROLES_ONLY": {
+    "vs_CAREFUL_BASELINE": {
+     "loss": 72,
+     "p_sign": 4.235164736271502e-22,
+     "tie": 1,
+     "win": 0
+    },
+    "vs_OLD_MIND": {
+     "loss": 0,
+     "p_sign": 1.0,
+     "tie": 73,
+     "win": 0
+    }
+   }
+  },
+  "robustness": {
+   "advantage_core": true,
+   "breaking": [],
+   "perturbations_checked": 146,
+   "robust": true
+  },
+  "statistics": {
+   "CAREFUL_BASELINE": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 23,
+      "correct_decided": 18,
+      "decided": 18,
+      "scored": 23
+     },
+     "IDENTIFIABILITY": {
+      "correct": 10,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 23,
+      "correct_decided": 23,
+      "decided": 24,
+      "scored": 24
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 31,
+      "correct_decided": 31,
+      "decided": 31,
+      "scored": 31
+     }
+    },
+    "correct_decided_wilson95": [
+     0.9264026272903616,
+     0.997577748533516
+    ],
+    "correct_n": 72,
+    "correct_refusal_n": 15,
+    "correct_scored_n": 87,
+    "decided_n": 73,
+    "false_refuse_n": 1,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 49,
+    "heldout_correct_wilson95": [
+     0.9273021807795035,
+     0.9999999999999999
+    ],
+    "heldout_decided_n": 49,
+    "incorrect_n": 1,
+    "scored_n": 140,
+    "unassessable_n": 67,
+    "unscored_n": 15,
+    "unsupported_decision_n": 52
+   },
+   "OLD_MIND": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 5,
+      "correct_decided": 0,
+      "decided": 18,
+      "scored": 23
+     },
+     "IDENTIFIABILITY": {
+      "correct": 21,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 24,
+      "scored": 24
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 31,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 31,
+      "scored": 31
+     }
+    },
+    "correct_decided_wilson95": [
+     0.0,
+     0.0499920079557311
+    ],
+    "correct_n": 0,
+    "correct_refusal_n": 57,
+    "correct_scored_n": 57,
+    "decided_n": 73,
+    "false_refuse_n": 73,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 0,
+    "heldout_correct_wilson95": [
+     6.938893903907228e-18,
+     0.07269781922049637
+    ],
+    "heldout_decided_n": 49,
+    "incorrect_n": 73,
+    "scored_n": 140,
+    "unassessable_n": 67,
+    "unscored_n": 15,
+    "unsupported_decision_n": 10
+   },
+   "REPRESENTATION_ONLY": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 5,
+      "correct_decided": 0,
+      "decided": 18,
+      "scored": 23
+     },
+     "IDENTIFIABILITY": {
+      "correct": 31,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 24,
+      "scored": 24
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 31,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 31,
+      "scored": 31
+     }
+    },
+    "correct_decided_wilson95": [
+     0.0,
+     0.0499920079557311
+    ],
+    "correct_n": 0,
+    "correct_refusal_n": 67,
+    "correct_scored_n": 67,
+    "decided_n": 73,
+    "false_refuse_n": 73,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 0,
+    "heldout_correct_wilson95": [
+     6.938893903907228e-18,
+     0.07269781922049637
+    ],
+    "heldout_decided_n": 49,
+    "incorrect_n": 73,
+    "scored_n": 140,
+    "unassessable_n": 67,
+    "unscored_n": 15,
+    "unsupported_decision_n": 0
+   },
+   "REPRESENTATION_PLUS_ROLES": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 23,
+      "correct_decided": 18,
+      "decided": 18,
+      "scored": 23
+     },
+     "IDENTIFIABILITY": {
+      "correct": 31,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 24,
+      "correct_decided": 24,
+      "decided": 24,
+      "scored": 24
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 31,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 31,
+      "correct_decided": 31,
+      "decided": 31,
+      "scored": 31
+     }
+    },
+    "correct_decided_wilson95": [
+     0.9500079920442688,
+     0.9999999999999998
+    ],
+    "correct_n": 73,
+    "correct_refusal_n": 67,
+    "correct_scored_n": 140,
+    "decided_n": 73,
+    "false_refuse_n": 0,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 49,
+    "heldout_correct_wilson95": [
+     0.9273021807795035,
+     0.9999999999999999
+    ],
+    "heldout_decided_n": 49,
+    "incorrect_n": 0,
+    "scored_n": 140,
+    "unassessable_n": 67,
+    "unscored_n": 15,
+    "unsupported_decision_n": 0
+   },
+   "SEMANTIC_ROLES_ONLY": {
+    "by_axis": {
+     "CROSS_CELL_TRANSFER": {
+      "correct": 5,
+      "correct_decided": 0,
+      "decided": 18,
+      "scored": 23
+     },
+     "IDENTIFIABILITY": {
+      "correct": 21,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "MODEL_ADEQUACY": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 24,
+      "scored": 24
+     },
+     "MODEL_DISCREPANCY": {
+      "correct": 31,
+      "correct_decided": 0,
+      "decided": 0,
+      "scored": 31
+     },
+     "WITHIN_CELL_GENERALIZATION": {
+      "correct": 0,
+      "correct_decided": 0,
+      "decided": 31,
+      "scored": 31
+     }
+    },
+    "correct_decided_wilson95": [
+     0.0,
+     0.0499920079557311
+    ],
+    "correct_n": 0,
+    "correct_refusal_n": 57,
+    "correct_scored_n": 57,
+    "decided_n": 73,
+    "false_refuse_n": 73,
+    "false_reject_n": 0,
+    "false_support_n": 0,
+    "heldout_correct_n": 0,
+    "heldout_correct_wilson95": [
+     6.938893903907228e-18,
+     0.07269781922049637
+    ],
+    "heldout_decided_n": 49,
+    "incorrect_n": 73,
+    "scored_n": 140,
+    "unassessable_n": 67,
+    "unscored_n": 15,
+    "unsupported_decision_n": 10
+   }
+  },
+  "thresholds": {
+   "FS_MATERIAL_EXTRA": 2,
+   "FS_MATERIAL_RATE": 0.05,
+   "H3_WILSON_LOWER_MIN": 0.5,
+   "MAX_REFERENCE_DISAGREEMENT": 0.25,
+   "MIN_DECIDED": 20,
+   "MIN_FR_REDUCTION": 2,
+   "MIN_FR_REDUCTION_FRACTION": 0.1,
+   "MIN_HELDOUT_DECIDED": 10,
+   "SIGN_TEST_ALPHA": 0.05,
+   "interval": "Wilson score, 95 %",
+   "paired_test": "exact two-sided binomial sign test on discordant pairs"
+  },
+  "verdict": "GEN1_REAL_DATA_ADVANTAGE_CONFIRMED",
+  "why": "C1-C4 hold and no single decided instance breaks them"
+ },
+ "degeneracy": {
+  "P01": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.30373824034,
+    "b_cost": 2.303738240345,
+    "relative_difference": 2.170385648047007e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 21.1783905862,
+    "flags": [],
+    "max_abs_correlation": 0.762459139738,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.35040548,
+    "parameters": {
+     "C1": 2893.28890214,
+     "R0": 0.0318092463232,
+     "R1": 0.0287122615569
+    },
+    "tau_s": 83.0728677181,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P02": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.515997650879,
+    "b_cost": 0.51599765088,
+    "relative_difference": 1.938165607685917e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 24.1520921524,
+    "flags": [],
+    "max_abs_correlation": 0.775002415002,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.48440549,
+    "parameters": {
+     "C1": 2345.82009313,
+     "R0": 0.0296326057762,
+     "R1": 0.0246977362426
+    },
+    "tau_s": 57.9364459328,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P03": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.20629565798,
+    "b_cost": 2.20629565798,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 20.7806653779,
+    "flags": [],
+    "max_abs_correlation": 0.764826231289,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.35640548,
+    "parameters": {
+     "C1": 2899.55295068,
+     "R0": 0.0304728499642,
+     "R1": 0.0300374495647
+    },
+    "tau_s": 87.095175516,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P04": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.572595757285,
+    "b_cost": 0.572595757285,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 23.6893832818,
+    "flags": [],
+    "max_abs_correlation": 0.752082177986,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.42619551,
+    "parameters": {
+     "C1": 2436.09645303,
+     "R0": 0.030190810765,
+     "R1": 0.0253826078201
+    },
+    "tau_s": 61.8344808793,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P05": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.555459392745,
+    "b_cost": 0.555459392745,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 23.9579550126,
+    "flags": [],
+    "max_abs_correlation": 0.766992214353,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.34418464,
+    "parameters": {
+     "C1": 2381.94891178,
+     "R0": 0.0293149530687,
+     "R1": 0.0248995254206
+    },
+    "tau_s": 59.3093974794,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P06": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.98625572138,
+    "b_cost": 2.986255721375,
+    "relative_difference": 1.6743376589970228e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 20.0067748136,
+    "flags": [],
+    "max_abs_correlation": 0.769781743542,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.3761955,
+    "parameters": {
+     "C1": 3031.51128259,
+     "R0": 0.0308310251199,
+     "R1": 0.0317619770899
+    },
+    "tau_s": 96.2867919054,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P07": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.23863410042,
+    "b_cost": 5.2386341004,
+    "relative_difference": 3.817789383916688e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 30.0538713568,
+    "flags": [],
+    "max_abs_correlation": 0.8912249442,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [
+     "EQUIVALENT_TAU_SET"
+    ],
+    "horizon_s": 3886.49840539,
+    "parameters": {
+     "C1": 1465.80342011,
+     "R0": 0.00542153731788,
+     "R1": 0.0201275655667
+    },
+    "tau_s": 29.5030544461,
+    "unconstrained_nuisance": [],
+    "value": "YES"
+   }
+  },
+  "P08": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 4.90109215498,
+    "b_cost": 4.90109215498,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 26.3280774592,
+    "flags": [],
+    "max_abs_correlation": 0.846785205694,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.28840547,
+    "parameters": {
+     "C1": 1416.08976601,
+     "R0": 0.00614663927331,
+     "R1": 0.0301987468208
+    },
+    "tau_s": 42.7641363193,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P09": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 4.61892751378,
+    "b_cost": 4.61892751378,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 26.0038045566,
+    "flags": [],
+    "max_abs_correlation": 0.840544983151,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.42640539,
+    "parameters": {
+     "C1": 1294.54713001,
+     "R0": 0.00680020210236,
+     "R1": 0.0342145843121
+    },
+    "tau_s": 44.2923919257,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P10": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.06371149375,
+    "b_cost": 5.06371149375,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 28.6475244151,
+    "flags": [],
+    "max_abs_correlation": 0.87956017563,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.09440535,
+    "parameters": {
+     "C1": 1374.89730851,
+     "R0": 0.00850508945386,
+     "R1": 0.0240575771237
+    },
+    "tau_s": 33.0766980365,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P11": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.18409448083,
+    "b_cost": 5.18409448085,
+    "relative_difference": 3.857954697524756e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 27.4437875556,
+    "flags": [],
+    "max_abs_correlation": 0.865650499116,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.02440545,
+    "parameters": {
+     "C1": 1474.68671099,
+     "R0": 0.00920650380389,
+     "R1": 0.0252853612081
+    },
+    "tau_s": 37.2879861561,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P12": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.13176181511,
+    "b_cost": 5.1317618151,
+    "relative_difference": 1.9486486683695313e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 28.8055796633,
+    "flags": [],
+    "max_abs_correlation": 0.881114769668,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3885.38040527,
+    "parameters": {
+     "C1": 1379.23303427,
+     "R0": 0.00838022107903,
+     "R1": 0.0236183817372
+    },
+    "tau_s": 32.5752523079,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P13": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.91078946418,
+    "b_cost": 2.910789464185,
+    "relative_difference": 1.717747186879357e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 20.3120972871,
+    "flags": [],
+    "max_abs_correlation": 0.767516820365,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.27840547,
+    "parameters": {
+     "C1": 2835.29575159,
+     "R0": 0.0308683304596,
+     "R1": 0.0325268614183
+    },
+    "tau_s": 92.2232719917,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P14": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.462265561992,
+    "b_cost": 0.462265561992,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 23.9055226231,
+    "flags": [],
+    "max_abs_correlation": 0.764597648199,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.37440548,
+    "parameters": {
+     "C1": 2492.04509497,
+     "R0": 0.0292106455878,
+     "R1": 0.0239622997791
+    },
+    "tau_s": 59.7151316287,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P15": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.96166032936,
+    "b_cost": 2.96166032936,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 20.1667537253,
+    "flags": [],
+    "max_abs_correlation": 0.768270993241,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.5364055,
+    "parameters": {
+     "C1": 2921.59574761,
+     "R0": 0.0308199997867,
+     "R1": 0.0321274968475
+    },
+    "tau_s": 93.8635581712,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P16": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.470499202986,
+    "b_cost": 0.470499202986,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 23.8524436531,
+    "flags": [],
+    "max_abs_correlation": 0.762250758133,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.27618464,
+    "parameters": {
+     "C1": 2482.51812979,
+     "R0": 0.0292606445923,
+     "R1": 0.0242122355954
+    },
+    "tau_s": 60.1073138282,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P17": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.462934258995,
+    "b_cost": 0.4629342589955,
+    "relative_difference": 1.0800430718280443e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 23.9465413125,
+    "flags": [],
+    "max_abs_correlation": 0.764694232429,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.59418465,
+    "parameters": {
+     "C1": 2495.19161149,
+     "R0": 0.0285815560338,
+     "R1": 0.0239414879018
+    },
+    "tau_s": 59.7385997792,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P18": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.473721083465,
+    "b_cost": 0.4737210834645,
+    "relative_difference": 1.0555672266761488e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 23.8729965865,
+    "flags": [],
+    "max_abs_correlation": 0.761140390372,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3887.43618464,
+    "parameters": {
+     "C1": 2481.74944058,
+     "R0": 0.0289402220098,
+     "R1": 0.0243125138023
+    },
+    "tau_s": 60.3375675281,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P19": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.49523815199,
+    "b_cost": 5.495238152,
+    "relative_difference": 1.8197574974551733e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 24.7545918925,
+    "flags": [],
+    "max_abs_correlation": 0.810000175724,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.40040538,
+    "parameters": {
+     "C1": 1199.04114838,
+     "R0": 0.0108683802553,
+     "R1": 0.0425271335629
+    },
+    "tau_s": 50.9917830647,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P20": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.13243985874,
+    "b_cost": 5.13243985875,
+    "relative_difference": 1.948391233529076e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 27.2489162516,
+    "flags": [],
+    "max_abs_correlation": 0.861689832813,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.17840536,
+    "parameters": {
+     "C1": 1208.24822378,
+     "R0": 0.0107413370079,
+     "R1": 0.0321432131335
+    },
+    "tau_s": 38.8369801753,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P21": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.03680533215,
+    "b_cost": 5.03680533215,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 27.7097444993,
+    "flags": [],
+    "max_abs_correlation": 0.867934923953,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.19640536,
+    "parameters": {
+     "C1": 1221.05832547,
+     "R0": 0.00995172581475,
+     "R1": 0.0303437896764
+    },
+    "tau_s": 37.0515370107,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P22": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 6.00844424067,
+    "b_cost": 6.00844424065,
+    "relative_difference": 3.3286489569847823e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 27.436758554,
+    "flags": [],
+    "max_abs_correlation": 0.864322107031,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.29040537,
+    "parameters": {
+     "C1": 1146.16409776,
+     "R0": 0.0190425203245,
+     "R1": 0.0332376113832
+    },
+    "tau_s": 38.0957568626,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P23": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 6.06358283635,
+    "b_cost": 6.06358283635,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 27.9973464098,
+    "flags": [],
+    "max_abs_correlation": 0.87147733711,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.45240539,
+    "parameters": {
+     "C1": 1103.42120665,
+     "R0": 0.0202347050218,
+     "R1": 0.0326254683395
+    },
+    "tau_s": 35.9996336429,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P24": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 5.83107689211,
+    "b_cost": 5.8310768921,
+    "relative_difference": 1.7149492302073157e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 28.2620509057,
+    "flags": [],
+    "max_abs_correlation": 0.874541123095,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 3886.27240537,
+    "parameters": {
+     "C1": 1133.87146974,
+     "R0": 0.0186338993406,
+     "R1": 0.0309233353092
+    },
+    "tau_s": 35.0630876562,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P25": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.32860289187,
+    "b_cost": 2.32860289187,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 52.956170549,
+    "flags": [
+     "HIGH_CORRELATION"
+    ],
+    "max_abs_correlation": 0.951267422238,
+    "value": "YES"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [
+     "EQUIVALENT_TAU_SET"
+    ],
+    "horizon_s": 43185.27,
+    "parameters": {
+     "C1": 1585.47796032,
+     "R0": 0.0255589716418,
+     "R1": 0.0201866212467
+    },
+    "tau_s": 32.00544308,
+    "unconstrained_nuisance": [],
+    "value": "YES"
+   }
+  },
+  "P26": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.39066601055,
+    "b_cost": 2.390666010555,
+    "relative_difference": 2.0914675624392596e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 52.1878904506,
+    "flags": [
+     "HIGH_CORRELATION"
+    ],
+    "max_abs_correlation": 0.950656912621,
+    "value": "YES"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [
+     "EQUIVALENT_TAU_SET"
+    ],
+    "horizon_s": 43214.4,
+    "parameters": {
+     "C1": 1486.70419432,
+     "R0": 0.0234788456904,
+     "R1": 0.0207576861572
+    },
+    "tau_s": 30.8605390742,
+    "unconstrained_nuisance": [],
+    "value": "YES"
+   }
+  },
+  "P27": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.30136273289,
+    "b_cost": 2.30136273289,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 53.4491910997,
+    "flags": [
+     "HIGH_CORRELATION"
+    ],
+    "max_abs_correlation": 0.951684008599,
+    "value": "YES"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [
+     "EQUIVALENT_TAU_SET"
+    ],
+    "horizon_s": 43153.11,
+    "parameters": {
+     "C1": 1523.3973547,
+     "R0": 0.0231990710798,
+     "R1": 0.0206632884466
+    },
+    "tau_s": 31.478398959,
+    "unconstrained_nuisance": [],
+    "value": "YES"
+   }
+  },
+  "P28": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [
+     "PINNED_TO_BOUND:R1",
+     "TAU_EXCEEDS_HORIZON"
+    ],
+    "value": "YES"
+   },
+   "FIT_OK": {
+    "a_best_status": 4,
+    "a_cost": 3.55713175273,
+    "b_cost": 3.55713175273,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 24.6767808594,
+    "flags": [],
+    "max_abs_correlation": 0.911890388572,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [
+     "PINNED_TO_BOUND:R1",
+     "TAU_EXCEEDS_HORIZON"
+    ],
+    "horizon_s": 1723.281,
+    "parameters": {
+     "C1": 5054.23320036,
+     "R0": 0.0642540425511,
+     "R1": 1.0
+    },
+    "tau_s": 5054.23320036,
+    "unconstrained_nuisance": [],
+    "value": "YES"
+   }
+  },
+  "P29": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [
+     "PINNED_TO_BOUND:R1",
+     "TAU_EXCEEDS_HORIZON"
+    ],
+    "value": "YES"
+   },
+   "FIT_OK": {
+    "a_best_status": 3,
+    "a_cost": 2.27872097454,
+    "b_cost": 2.27872097454,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 16.3946186276,
+    "flags": [],
+    "max_abs_correlation": 0.82695708728,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [
+     "PINNED_TO_BOUND:R1",
+     "TAU_EXCEEDS_HORIZON"
+    ],
+    "horizon_s": 1723.281,
+    "parameters": {
+     "C1": 6403.38704185,
+     "R0": 0.120298774373,
+     "R1": 1.0
+    },
+    "tau_s": 6403.38704185,
+    "unconstrained_nuisance": [],
+    "value": "YES"
+   }
+  },
+  "P31": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.0980384818655,
+    "b_cost": 0.0980384818655,
+    "relative_difference": 0.0,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 20.9363654257,
+    "flags": [],
+    "max_abs_correlation": 0.89599001807,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 1648.672,
+    "parameters": {
+     "C1": 2806.60307286,
+     "R0": 0.104389763877,
+     "R1": 0.153762775409
+    },
+    "tau_s": 431.551077956,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  },
+  "P32": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 2.32229691464,
+    "b_cost": 2.322296914645,
+    "relative_difference": 2.1530409751529057e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 5.52379638728,
+    "flags": [],
+    "max_abs_correlation": 0.59428340536,
+    "value": "NOT_ESTABLISHED_NO_SIGMA"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 2862.25,
+    "parameters": {
+     "C1": 2457.83653203,
+     "R0": 0.401259689579,
+     "R1": 0.210331675269
+    },
+    "tau_s": 516.960875319,
+    "unconstrained_nuisance": [
+     "ocv_k0",
+     "ocv_k1",
+     "ocv_k2",
+     "ocv_k3"
+    ],
+    "value": "NO"
+   }
+  },
+  "Q1": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [
+     "PINNED_TO_BOUND:R1"
+    ],
+    "value": "YES"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 3.9655471413,
+    "b_cost": 3.965547141305,
+    "relative_difference": 1.2608601626802077e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 430.818865652,
+    "flags": [
+     "HIGH_CORRELATION"
+    ],
+    "max_abs_correlation": 0.988646929287,
+    "value": "YES"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_ASSESSABLE"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [
+     "PINNED_TO_BOUND:R1"
+    ],
+    "horizon_s": 6571.156,
+    "parameters": {
+     "C1": 5164.96953384,
+     "R0": 0.135092796233,
+     "R1": 1.0
+    },
+    "tau_s": 5164.96953384,
+    "unconstrained_nuisance": [],
+    "value": "YES"
+   }
+  },
+  "Q2": {
+   "CANDIDATE_PARAMETER_DEGENERACY": {
+    "flags": [],
+    "value": "NO"
+   },
+   "FIT_OK": {
+    "a_best_status": 2,
+    "a_cost": 0.965391044079,
+    "b_cost": 0.96539104408,
+    "relative_difference": 1.0358267609918001e-12,
+    "value": "YES"
+   },
+   "IDENTIFIABILITY_LIMIT": {
+    "condition_number": 4.59701326767,
+    "flags": [],
+    "max_abs_correlation": 0.602149128257,
+    "value": "NO"
+   },
+   "MODEL_DISCREPANCY": {
+    "value": "NOT_SUPPORTED"
+   },
+   "PARAMETER_DEGENERACY": {
+    "flags": [],
+    "horizon_s": 59.912,
+    "parameters": {
+     "C1": 1463.98579416,
+     "R0": 0.0210177332078,
+     "R1": 0.0174052908965
+    },
+    "tau_s": 25.4810986157,
+    "unconstrained_nuisance": [],
+    "value": "NO"
+   }
+  }
+ },
+ "degenerate_support": [
+  {
+   "candidate_flags": [],
+   "instance": "P25/MODEL_ADEQUACY",
+   "reference_flags": [
+    "EQUIVALENT_TAU_SET"
+   ],
+   "truth": null
+  },
+  {
+   "candidate_flags": [
+    "PINNED_TO_BOUND:R1"
+   ],
+   "instance": "Q1/MODEL_ADEQUACY",
+   "reference_flags": [
+    "PINNED_TO_BOUND:R1"
+   ],
+   "truth": null
+  }
+ ],
+ "evidence_strength": {
+  "HELD_OUT_DECIDED_INSTANCES": 49,
+  "IMPLEMENTATION_CORRELATED_INSTANCES": 0,
+  "INDEPENDENT_CELLS": 19,
+  "LEAKAGE": "PASS",
+  "OPERATING_CONDITIONS": [
+   "GITT pulses, aged (latest RPT)",
+   "GITT pulses, beginning of life",
+   "One cell in a 4 C chamber, 2.0 A",
+   "One cell in a 43 C chamber, 4.0 A",
+   "constant-current rate tests (0.5-7.5 A)"
+  ],
+  "REFERENCE_DISAGREEMENT_FRACTION": 0.0,
+  "REPLAY": "EXACT",
+  "SINGLE_INSTANCE_ROBUST": "YES",
+  "TOTAL_DECIDED_INSTANCES": 73
+ },
+ "implementation_correlated": [],
+ "instances": [
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P01/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P01/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P01/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P01/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P01/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P02/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P02/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P02/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P02/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P02/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P03/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P03/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P03/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P03/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P03/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P04/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P04/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P04/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P04/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P04/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P05/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P05/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P05/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P05/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P05/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P06/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P06/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P06/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P06/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P06/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P07/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P07/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P07/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "REFUSED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P07/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P07/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P08/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P08/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P08/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "REFUSED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P08/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P08/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P09/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P09/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P09/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "REFUSED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P09/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P09/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P10/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P10/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P10/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P10/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P10/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P11/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P11/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P11/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P11/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P11/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P12/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P12/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P12/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P12/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P12/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P13/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P13/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P13/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "REFUSED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P13/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P13/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P14/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P14/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P14/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P14/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P14/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P15/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P15/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P15/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "REFUSED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P15/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P15/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P16/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P16/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P16/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P16/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P16/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P17/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P17/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P17/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_ASSESSABLE",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "REFUSED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "DOMAIN_RULE",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P17/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P17/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P18/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P18/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P18/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P18/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P18/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P19/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P19/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P19/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P19/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P19/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P20/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P20/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P20/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P20/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P20/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P21/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P21/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P21/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P21/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P21/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P22/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P22/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P22/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P22/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P22/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P23/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P23/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P23/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P23/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P23/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P24/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P24/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P24/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P24/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P24/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P25/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P25/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P25/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P25/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P25/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P26/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P26/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P26/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P26/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P26/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "UNSCORED_BY_RULE",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P27/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "UNSCORED",
+    "ALWAYS_REFUSE": "UNSCORED",
+    "CAREFUL_BASELINE": "UNSCORED",
+    "FIXED_FIT": "UNSCORED",
+    "OLD_MIND": "UNSCORED",
+    "REPRESENTATION_ONLY": "UNSCORED",
+    "REPRESENTATION_PLUS_ROLES": "UNSCORED",
+    "SEMANTIC_ROLES_ONLY": "UNSCORED"
+   },
+   "truth": null
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_SUPPORTED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_SUPPORTED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P27/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "UNSUPPORTED_DECISION",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "UNSUPPORTED_DECISION"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P27/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P27/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P27/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P28/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REFUSED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REFUSED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P28/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P28/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_ASSESSABLE",
+    "FIXED_FIT": "NOT_ASSESSABLE",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "NOT_ASSESSABLE",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P28/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "CORRECT_REFUSAL",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P28/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P29/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REFUSED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REFUSED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P29/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P29/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_ASSESSABLE",
+    "FIXED_FIT": "NOT_ASSESSABLE",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "NOT_ASSESSABLE",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P29/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "CORRECT_REFUSAL",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P29/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P31/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "FALSE_REFUSE",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REFUSED",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REFUSED"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P31/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P31/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "CORRECT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_ASSESSABLE",
+    "FIXED_FIT": "NOT_ASSESSABLE",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "NOT_ASSESSABLE",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P31/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "CORRECT_REFUSAL",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P31/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P32/MODEL_ADEQUACY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "REVIEW",
+    "FIXED_FIT": "SUPPORTED",
+    "OLD_MIND": "REVIEW",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "REVIEW"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P32/IDENTIFIABILITY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "FALSE_SUPPORT",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_SUPPORTED",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "INDEPENDENT_AGREEMENT",
+   "heldout": true,
+   "implementation_correlated": false,
+   "key": "P32/WITHIN_CELL_GENERALIZATION",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "FALSE_REFUSE",
+    "CAREFUL_BASELINE": "CORRECT",
+    "FIXED_FIT": "CORRECT",
+    "OLD_MIND": "FALSE_REFUSE",
+    "REPRESENTATION_ONLY": "FALSE_REFUSE",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT",
+    "SEMANTIC_ROLES_ONLY": "FALSE_REFUSE"
+   },
+   "truth": "NOT_SUPPORTED"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_ASSESSABLE",
+    "FIXED_FIT": "NOT_ASSESSABLE",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "NOT_ASSESSABLE",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P32/CROSS_CELL_TRANSFER",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "CORRECT_REFUSAL",
+    "FIXED_FIT": "CORRECT_REFUSAL",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  },
+  {
+   "answers": {
+    "ALWAYS_FIT": "SUPPORTED",
+    "ALWAYS_REFUSE": "REFUSED",
+    "CAREFUL_BASELINE": "NOT_SUPPORTED",
+    "FIXED_FIT": "NOT_SUPPORTED",
+    "OLD_MIND": "NOT_ASSESSABLE",
+    "REPRESENTATION_ONLY": "REFUSED",
+    "REPRESENTATION_PLUS_ROLES": "NOT_ASSESSABLE",
+    "SEMANTIC_ROLES_ONLY": "NOT_ASSESSABLE"
+   },
+   "basis_kind": "STRUCTURAL_DECLARATION",
+   "heldout": false,
+   "implementation_correlated": false,
+   "key": "P32/MODEL_DISCREPANCY",
+   "outcomes": {
+    "ALWAYS_FIT": "FALSE_SUPPORT",
+    "ALWAYS_REFUSE": "CORRECT_REFUSAL",
+    "CAREFUL_BASELINE": "UNSUPPORTED_DECISION",
+    "FIXED_FIT": "UNSUPPORTED_DECISION",
+    "OLD_MIND": "CORRECT_REFUSAL",
+    "REPRESENTATION_ONLY": "CORRECT_REFUSAL",
+    "REPRESENTATION_PLUS_ROLES": "CORRECT_REFUSAL",
+    "SEMANTIC_ROLES_ONLY": "CORRECT_REFUSAL"
+   },
+   "truth": "NOT_ASSESSABLE"
+  }
+ ],
+ "leakage": {
+  "post_seal_audit": "PASS",
+  "post_seal_mutation": {
+   "benign_controls": 706,
+   "benign_triggered": 0,
+   "leak_mutations": 1361,
+   "leaks_caught": 1361,
+   "status": "PASS"
+  }
+ },
+ "reference_arms": {
+  "ALWAYS_FIT": {
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 6,
+     "correct_decided": 6,
+     "decided": 18,
+     "scored": 23
+    },
+    "IDENTIFIABILITY": {
+     "correct": 0,
+     "correct_decided": 0,
+     "decided": 0,
+     "scored": 31
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 1,
+     "correct_decided": 1,
+     "decided": 24,
+     "scored": 24
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 0,
+     "correct_decided": 0,
+     "decided": 0,
+     "scored": 31
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 8,
+     "correct_decided": 8,
+     "decided": 31,
+     "scored": 31
+    }
+   },
+   "correct_decided_wilson95": [
+    0.1286697211101815,
+    0.31173653015141345
+   ],
+   "correct_n": 15,
+   "correct_refusal_n": 0,
+   "correct_scored_n": 15,
+   "decided_n": 73,
+   "false_refuse_n": 0,
+   "false_reject_n": 0,
+   "false_support_n": 125,
+   "heldout_correct_n": 14,
+   "heldout_correct_wilson95": [
+    0.178495944588126,
+    0.42408883507780093
+   ],
+   "heldout_decided_n": 49,
+   "incorrect_n": 58,
+   "scored_n": 140,
+   "unassessable_n": 67,
+   "unscored_n": 15,
+   "unsupported_decision_n": 0
+  },
+  "ALWAYS_REFUSE": {
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 5,
+     "correct_decided": 0,
+     "decided": 18,
+     "scored": 23
+    },
+    "IDENTIFIABILITY": {
+     "correct": 31,
+     "correct_decided": 0,
+     "decided": 0,
+     "scored": 31
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 0,
+     "correct_decided": 0,
+     "decided": 24,
+     "scored": 24
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 31,
+     "correct_decided": 0,
+     "decided": 0,
+     "scored": 31
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 0,
+     "correct_decided": 0,
+     "decided": 31,
+     "scored": 31
+    }
+   },
+   "correct_decided_wilson95": [
+    0.0,
+    0.0499920079557311
+   ],
+   "correct_n": 0,
+   "correct_refusal_n": 67,
+   "correct_scored_n": 67,
+   "decided_n": 73,
+   "false_refuse_n": 73,
+   "false_reject_n": 0,
+   "false_support_n": 0,
+   "heldout_correct_n": 0,
+   "heldout_correct_wilson95": [
+    6.938893903907228e-18,
+    0.07269781922049637
+   ],
+   "heldout_decided_n": 49,
+   "incorrect_n": 73,
+   "scored_n": 140,
+   "unassessable_n": 67,
+   "unscored_n": 15,
+   "unsupported_decision_n": 0
+  },
+  "FIXED_FIT": {
+   "by_axis": {
+    "CROSS_CELL_TRANSFER": {
+     "correct": 22,
+     "correct_decided": 18,
+     "decided": 18,
+     "scored": 23
+    },
+    "IDENTIFIABILITY": {
+     "correct": 0,
+     "correct_decided": 0,
+     "decided": 0,
+     "scored": 31
+    },
+    "MODEL_ADEQUACY": {
+     "correct": 24,
+     "correct_decided": 24,
+     "decided": 24,
+     "scored": 24
+    },
+    "MODEL_DISCREPANCY": {
+     "correct": 0,
+     "correct_decided": 0,
+     "decided": 0,
+     "scored": 31
+    },
+    "WITHIN_CELL_GENERALIZATION": {
+     "correct": 31,
+     "correct_decided": 31,
+     "decided": 31,
+     "scored": 31
+    }
+   },
+   "correct_decided_wilson95": [
+    0.9500079920442688,
+    0.9999999999999998
+   ],
+   "correct_n": 73,
+   "correct_refusal_n": 4,
+   "correct_scored_n": 77,
+   "decided_n": 73,
+   "false_refuse_n": 0,
+   "false_reject_n": 0,
+   "false_support_n": 34,
+   "heldout_correct_n": 49,
+   "heldout_correct_wilson95": [
+    0.9273021807795035,
+    0.9999999999999999
+   ],
+   "heldout_decided_n": 49,
+   "incorrect_n": 0,
+   "scored_n": 140,
+   "unassessable_n": 67,
+   "unscored_n": 15,
+   "unsupported_decision_n": 29
+  }
+ },
+ "replay": {
+  "exact": true,
+  "non_identical": [],
+  "old_mind_traces": 90,
+  "old_mind_traces_verified": 90,
+  "per_arm": {
+   "ALWAYS_FIT": {
+    "identical": 33,
+    "outputs": 33
+   },
+   "ALWAYS_REFUSE": {
+    "identical": 33,
+    "outputs": 33
+   },
+   "CAREFUL_BASELINE": {
+    "identical": 33,
+    "outputs": 33
+   },
+   "FIXED_FIT": {
+    "identical": 33,
+    "outputs": 33
+   },
+   "OLD_MIND": {
+    "identical": 33,
+    "outputs": 33
+   },
+   "REPRESENTATION_ONLY": {
+    "identical": 33,
+    "outputs": 33
+   },
+   "REPRESENTATION_PLUS_ROLES": {
+    "identical": 33,
+    "outputs": 33
+   },
+   "SEMANTIC_ROLES_ONLY": {
+    "identical": 33,
+    "outputs": 33
+   }
+  },
+  "repsem_exact": 66,
+  "repsem_total": 66,
+  "trace_files": 33,
+  "trace_files_identical": 33
+ },
+ "schema": "forge.battery_rediscovery_v3.evaluation/1",
+ "seal": {
+  "files_bound": 299,
+  "replay_commit": "16dfe967817e01f9db2bc66ddd3234113f65cc94",
+  "seal_commit": "9e018614512b08af26ca9266c0b74c7c22a855cf",
+  "seal_sha256": "033cae41d744a29f09a553f2882010a4f650093bb006d6ceacf10201f00789bf"
+ },
+ "table": [
+  [
+   "Axis",
+   "Old Mind",
+   "Representation",
+   "Roles",
+   "Combined",
+   "Careful",
+   "Decided N"
+  ],
+  [
+   "MODEL_ADEQUACY",
+   "0/24",
+   "0/24",
+   "0/24",
+   "24/24",
+   "23/24",
+   "24"
+  ],
+  [
+   "IDENTIFIABILITY",
+   "21/31",
+   "31/31",
+   "21/31",
+   "31/31",
+   "10/31",
+   "0"
+  ],
+  [
+   "WITHIN_CELL",
+   "0/31",
+   "0/31",
+   "0/31",
+   "31/31",
+   "31/31",
+   "31"
+  ],
+  [
+   "CROSS_CELL",
+   "5/23",
+   "5/23",
+   "5/23",
+   "23/23",
+   "23/23",
+   "18"
+  ],
+  [
+   "MODEL_DISCREPANCY",
+   "31/31",
+   "31/31",
+   "31/31",
+   "31/31",
+   "0/31",
+   "0"
+  ],
+  [
+   "CORRECT_REFUSAL",
+   "57",
+   "67",
+   "57",
+   "67",
+   "15",
+   "-"
+  ],
+  [
+   "FALSE_SUPPORT",
+   "0",
+   "0",
+   "0",
+   "0",
+   "0",
+   "-"
+  ],
+  [
+   "FALSE_REFUSE",
+   "73",
+   "73",
+   "73",
+   "0",
+   "1",
+   "-"
+  ],
+  [
+   "REPLAY",
+   "33/33 EXACT",
+   "33/33 EXACT",
+   "33/33 EXACT",
+   "33/33 EXACT",
+   "33/33 EXACT",
+   "-"
+  ]
+ ],
+ "truth_sha256": "52118c6fd42f3ea2755fd09fdf9e1863c38cbbf438da7352a40eec80f1ed820e"
+}

@@ -1,0 +1,61 @@
+...F.................................................................... [ 80%]
+.................                                                        [100%]
+=================================== FAILURES ===================================
+_____________________ test_comparison_is_atomic_with_seal ______________________
+
+self = {('ledger', 'a'): (OwnerRecord(owner_kind=<OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, owner_id='budget', record_id='a'...explore'>, realized=0.5, predicted=None, from_validation_reservation=0.0, from_general_pool=0.5, detail='observed'),))}
+
+    def items(self):
+>       assert reader._lock.locked(), "comparison escaped the lifecycle critical region"
+E       AssertionError: comparison escaped the lifecycle critical region
+E       assert False
+E        +  where False = <built-in method locked of _thread.lock object at 0x7e9b2e66ac00>()
+E        +    where <built-in method locked of _thread.lock object at 0x7e9b2e66ac00> = <unlocked _thread.lock object at 0x7e9b2e66ac00>.locked
+E        +      where <unlocked _thread.lock object at 0x7e9b2e66ac00> = <engcore.mind.world.owners.BudgetReader object at 0x7e9b2e9802c0>._lock
+
+tests/mind/test_authority_review_r15.py:127: AssertionError
+
+During handling of the above exception, another exception occurred:
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7e9b2e97ac00>
+
+    def test_comparison_is_atomic_with_seal(monkeypatch):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._read_back
+        checked = []
+        class Checked(dict):
+            def items(self):
+                assert reader._lock.locked(), "comparison escaped the lifecycle critical region"
+                checked.append(True)
+                return super().items()
+        def checked_read(self):
+            read, interrupted = original(self)
+            return Checked(read), interrupted
+        monkeypatch.setattr(BudgetReader, "_read_back", checked_read)
+>       assert reader.read(K, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r15.py:134: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1016: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:995: in pinned
+    current._observed = self._observe_all(current, ticket)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:752: in _observe_all
+    with self._changed:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <Condition(<unlocked _thread.lock object at 0x7e9b2e66ac00>, 0)>
+args = (<class 'AssertionError'>, AssertionError('comparison escaped the lifecycle critical region\nassert False\n +  where F...c00> = <engcore.mind.world.owners.BudgetReader object at 0x7e9b2e9802c0>._lock'), <traceback object at 0x7e9b2e66a540>)
+
+    def __exit__(self, *args):
+>       return self._lock.__exit__(*args)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       RuntimeError: release unlocked lock
+
+/usr/lib/python3.12/threading.py:303: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_comparison_is_atomic_with_seal
+1 failed, 88 passed in 3.02s

@@ -1,0 +1,208 @@
+{
+  "reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "lens": "S2 independent major-alias skeptic",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "question_scope": "Q4 directly executed; other NO answers mean no defect established in bounded changed-path review, not comprehensive independent system audit.",
+  "aliases": [
+    {
+      "id": "R18-A-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "/home/dev_kaeem/br11-review/r18/A/result.json",
+      "independent_evidence": [
+        "controls.log: native depth143/144 raw tuple, live map calls2; matched detached map calls1",
+        "controls.log: injected capture+recovery pair, live calls2 versus detached calls1"
+      ],
+      "qualification": "Claim corroborated by independent native probe and rerun injected mechanism; depth numbers are environment/call-stack dependent."
+    },
+    {
+      "id": "R18-B-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "/home/dev_kaeem/br11-review/r18/B/result.json",
+      "independent_evidence": [
+        "controls.log: native depth143/144 raw tuple, live map calls2; matched detached map calls1",
+        "controls.log: injected capture+recovery pair, live calls2 versus detached calls1"
+      ],
+      "qualification": "Claim corroborated by independent native probe and rerun injected mechanism; depth numbers are environment/call-stack dependent."
+    },
+    {
+      "id": "R18-C-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "/home/dev_kaeem/br11-review/r18/C/result.json",
+      "independent_evidence": [
+        "controls.log: native depth143/144 raw tuple, live map calls2; matched detached map calls1",
+        "controls.log: injected capture+recovery pair, live calls2 versus detached calls1"
+      ],
+      "qualification": "Claim corroborated by independent native probe and rerun injected mechanism; depth numbers are environment/call-stack dependent."
+    },
+    {
+      "id": "R18-D-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "/home/dev_kaeem/br11-review/r18/D/result.json",
+      "independent_evidence": [
+        "controls.log: native depth143/144 raw tuple, live map calls2; matched detached map calls1",
+        "controls.log: injected capture+recovery pair, live calls2 versus detached calls1"
+      ],
+      "qualification": "Claim corroborated by independent native probe and rerun injected mechanism; depth numbers are environment/call-stack dependent."
+    },
+    {
+      "id": "R18-E-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "/home/dev_kaeem/br11-review/r18/E/result.json",
+      "independent_evidence": [
+        "controls.log: native depth143/144 raw tuple, live map calls2; matched detached map calls1",
+        "controls.log: injected capture+recovery pair, live calls2 versus detached calls1"
+      ],
+      "qualification": "Claim corroborated by independent native probe and rerun injected mechanism; depth numbers are environment/call-stack dependent."
+    },
+    {
+      "id": "R18-F-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "family": "returned_live_mapping_pre_capture_loss",
+      "source": "/home/dev_kaeem/br11-review/r18/F/result.json",
+      "independent_evidence": [
+        "controls.log: native depth143/144 raw tuple, live map calls2; matched detached map calls1",
+        "controls.log: injected capture+recovery pair, live calls2 versus detached calls1"
+      ],
+      "qualification": "F source is static only; S2 supplies exact-SHA executed corroboration."
+    }
+  ],
+  "findings": [
+    {
+      "id": "R18-S2-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "title": "Returned mutable mapping loses spent owner before retention under repeated native capture failure",
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1015,
+      "related_lines": [
+        932,
+        936,
+        955,
+        1016,
+        1042
+      ],
+      "smallest_reproduction": "S2/test_s2.py test_matched_native_publication; recursionlimit180, depth143/144 in this pytest stack: dispatch/settle once, pin fails with raw handing retained, replace ledger binding with saved checkpoint, old admission dispatches again.",
+      "actual_result": "Both depths: live raw mapping calls2 and refusal false. Matched detached dict publication: same raw pending tuple, refusal true and calls1. E trace/profile control separately reproduced two interrupted _items calls.",
+      "expected_result": "Returned spend remains an obligation; old admission refuses after rollback; honest failure alone never seals permanently.",
+      "threat_families": [
+        "pre-capture information loss",
+        "checkpoint replacement",
+        "hidden spend redispatch"
+      ],
+      "proposed_correction": "Decide execution-owner publication lifetime: preserve handed account-ID associations and their relevant histories until reader retention/reconciliation. For exact replacement family, publish fresh native dicts and never mutate those published dicts; owner object references then survive registry replacement. Test broader supported mutation and abandoned-reading lifecycle separately. No generalized acknowledgement requirement follows from these controls."
+    }
+  ],
+  "counterarguments": [
+    {
+      "argument": "This is just absent at-most-once execution.",
+      "assessment": "Rejected: no reservation/once guarantee is required to demonstrate lost currentness. First execution settled genuine owner; a later verification was actually handed that spend before failure. The stale admission re-dispatches after replacement because the returned observation vanished."
+    },
+    {
+      "argument": "Recursion depth means malicious private owner mutation.",
+      "assessment": "Rejected: independent native test uses genuine owner settlement, ordinary checkpoint restoration and native stack exhaustion. Reader internals are inspected only for diagnostics, not changed. Injection is separately labeled and has native corroboration."
+    },
+    {
+      "argument": "Raw mapping reference proves enough state remains.",
+      "assessment": "Rejected: after replacement it references the checkpoint. Recovery reads current contents of that same dictionary; the old spent account is not represented in retained entries or seen history."
+    },
+    {
+      "argument": "Information loss proves no possible reader-side fix.",
+      "assessment": "Too broad. Once prior contents are erased, later serialization cannot reconstruct them from the remaining reader state. An uncertainty marker can force refusal but cannot select safe eventual acceptance between an honest unchanged interrupted handing and a spent-then-replaced handing sharing the same retained visible state. This is conditional on the current recovery inputs and allowed handoff mutations, not a theorem excluding new atomic retention primitives, bounded fresh-stack mechanisms, or additional execution-owner recovery sources. Such alternatives need concrete design and tests."
+    },
+    {
+      "argument": "A full acknowledgement protocol is mandatory.",
+      "assessment": "Rejected by matched detached-map control: reference lifetime alone preserves the old owner for this mapping-replacement family. Ack could bound owner-side retention if mutable publication must continue, but is an optional mechanism, not established minimum."
+    },
+    {
+      "argument": "Shallow dict copies solve all owner lifetime issues.",
+      "assessment": "Not established: they detach association replacement, not nested mutable payloads or in-place history rewrites. Contract must state permitted owner mutations and relevant history lifetime. Public append-only growth can preserve earlier entries; arbitrary rollback/rewrite cannot be assumed safe."
+    }
+  ],
+  "minimum_owner_decision": "Select whether accounts() publishes stable per-call ID-to-owner associations whose referenced history remains recoverable while pending, or supplies another authoritative recovery source. The demonstrated bounded option is detached dict publication without later edits to published dicts, with existing owner objects remaining reachable. This is an execution handoff/lifetime decision, not new scientific evidence authority or new budget policy. Reader-only serializer parity repair is already separable and tested; no further separable defect was established in this review.",
+  "repair_assessment": "R17 JSON parity repair supported: 16 R17 plus 16 R16 controls executed. Ledger normalization-before-JSON/default=str and experiment JSON-before-reconstruction/writability remain distinct owner paths. Additional 14 E parity/reconciliation controls exercised three detached prefixes and interruption recovery; no new normalization defect demonstrated.",
+  "tested_transitions": [
+    "Independent native depth sweep95..149 for live and detached mapping publication (110 cases inside one test)",
+    "Injected capture/recovery interruption paired live/detached publication",
+    "Both owner kinds JSON numeric/string keys and tuple/list equivalence",
+    "Ledger default=str/nonfinite and normalization order",
+    "True rollback/rewrite refuses",
+    "Invalid retained serializer remains unresolved",
+    "Three detached prefixes, every ordering, middle refusal and maximum recovery",
+    "R16 exact-barrier, post-return interruption and detached reconciliation controls"
+  ],
+  "missing_coverage": [
+    "No exhaustive interruption/concurrency proof.",
+    "Native matched publication test uses ledger mapping replacement; experiment and multiple-reader publication design not implemented/tested.",
+    "No generic owner-lifetime protocol implemented or approved.",
+    "No full FAST, performance, certification or physical scientific validation.",
+    "No independent full Q1-Q3/Q5-Q7 audit."
+  ],
+  "executions": [
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-c",
+        "import subprocess;from engcore.mind.world import owners;print(owners.__file__);assert owners.__file__=='/home/dev_kaeem/forge-r18-review/src/engcore/mind/world/owners.py';s=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();print(s);assert s=='cc7ef06b0d08398173d9448ff47d8abb7e375d44'"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/S2/identity.log"
+    },
+    {
+      "command": [
+        "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "-s",
+        "-p",
+        "no:cacheprovider",
+        "--basetemp=/home/dev_kaeem/br11-review/r18/S2/pt",
+        "/home/dev_kaeem/br11-review/r18/S2/test_s2.py",
+        "/home/dev_kaeem/br11-review/r18/E/test_e.py",
+        "tests/mind/test_authority_review_r16.py",
+        "tests/mind/test_authority_review_r17.py"
+      ],
+      "cwd": "/home/dev_kaeem/forge-r18-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r18-review/src:/home/dev_kaeem/forge-r18-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit": 0,
+      "log": "/home/dev_kaeem/br11-review/r18/S2/controls.log"
+    }
+  ],
+  "execution_result": "49 passed in 8.07s, including assertions demonstrating known defect; this is not 49 safety claims.",
+  "trust_boundary": "Canonical owner objects and ordinary execution-side registry checkpoint replacement; neither unadmitted-action bypass nor scientific verdict is demonstrated. Bounded synthetic software evidence only.",
+  "closure": "NOT CLOSED: one confirmed Q4 MAJOR family, six aliases. Complete all independently justified separable repairs before owner stop; this review found no new separable defect.",
+  "other_skeptic_read": false
+}

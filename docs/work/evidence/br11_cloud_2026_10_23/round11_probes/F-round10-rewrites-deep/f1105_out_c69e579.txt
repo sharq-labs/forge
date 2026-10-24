@@ -1,0 +1,2 @@
+[alias] admission on the spent mapping: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) | re-dispatch after the restore: DISPATCHED AGAIN | executor ran 2
+[numpy str_ id] admission on the spent mapping: MISSING_INFORMATION ('AUTHORITY_STALE',) | re-dispatch after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA) | executor ran 1

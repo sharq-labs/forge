@@ -1,0 +1,10 @@
+pre 1 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 16.5s; latency p50 2749 ms, max 3464 ms
+post 1 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 16.8s; latency p50 2822 ms, max 3503 ms
+pre 2 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 46, 'MISSING_INFORMATION in flight': 2} in 17.1s; latency p50 2832 ms, max 3691 ms
+post 2 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 46, 'MISSING_INFORMATION in flight': 2} in 17.2s; latency p50 2874 ms, max 3888 ms
+pre 3 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 17.3s; latency p50 2907 ms, max 3366 ms
+post 3 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 17.3s; latency p50 2834 ms, max 3269 ms
+pre 4 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 42, 'MISSING_INFORMATION in flight': 6} in 17.5s; latency p50 2826 ms, max 4385 ms
+post 4 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 43, 'MISSING_INFORMATION in flight': 5} in 17.1s; latency p50 2782 ms, max 4162 ms
+pre 5 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 17.4s; latency p50 2885 ms, max 3613 ms
+post 5 K=8 N=6 E=2500 period=0.1s: {'FEASIBLE': 48} in 16.7s; latency p50 2762 ms, max 3271 ms

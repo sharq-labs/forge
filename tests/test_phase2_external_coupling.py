@@ -37,20 +37,32 @@ from engcore.scientific.multiphysics import (
 )
 from engcore.scientific.results.uncertainty import Uncertainty
 from engcore.scientific.units.quantity import Quantity
+from engcore.scientific.fields.semantics import FieldSemantics, InterfaceConvention
+from engcore.scientific.fields.interface_transfer import InterfaceTransfer
+from engcore.scientific.semantics import QuantitySemantics, QuantityRole, ConservedQuantity
 from engcore.system_runtime.authorities import MultiphysicsAuthority
 
 UNKNOWN = Uncertainty.unknown("mock session: no uncertainty")
 SOLID = StructuredMesh("solid", Quantity(1, "m"), Quantity(1, "m"), 3, 3)   # 2 x 2 cells
 FLUID = StructuredMesh("fluid", Quantity(1, "m"), Quantity(1, "m"), 4, 4)   # 3 x 3 cells
-FLUX_S = FieldDefinition("q_solid", "W/m**2", "solid", FieldLocation.CELL)
-FLUX_F = FieldDefinition("q_fluid", "W/m**2", "fluid", FieldLocation.CELL)
-TEMP_F = FieldDefinition("t_fluid", "K", "fluid", FieldLocation.CELL)
-TEMP_S = FieldDefinition("t_solid", "K", "solid", FieldLocation.CELL)
+TEMPERATURE = QuantitySemantics("fixture:temperature", "K", (QuantityRole.INTENSIVE,))
+HEAT_FLUX = QuantitySemantics("fixture:heat_flux", "W/m**2", (QuantityRole.DENSITY, QuantityRole.FLOW))
+SOLID_NORMAL = InterfaceConvention("solid", SOLID.fingerprint(), "fixture:world", 1, (0, 0, 1))
+FLUID_NORMAL = InterfaceConvention("fluid", FLUID.fingerprint(), "fixture:world", 1, (0, 0, -1))
+TRANSFER = InterfaceTransfer(SOLID_NORMAL, FLUID_NORMAL, HEAT_FLUX, ConservedQuantity("fixture:heat", "W"),
+    "normal_density", "equal_and_opposite_outward", "full", "common_plane_rectangles",
+    (0, 0, 0), (1, 0, 0), (0, 1, 0))
+FLUX_S = FieldDefinition("q_solid", "W/m**2", "solid", FieldLocation.CELL,
+    semantics=FieldSemantics("normal_flux", HEAT_FLUX, interface=SOLID_NORMAL))
+FLUX_F = FieldDefinition("q_fluid", "W/m**2", "fluid", FieldLocation.CELL,
+    semantics=FieldSemantics("normal_flux", HEAT_FLUX, interface=FLUID_NORMAL))
+TEMP_F = FieldDefinition("t_fluid", "K", "fluid", FieldLocation.CELL, semantics=FieldSemantics("intensive", TEMPERATURE))
+TEMP_S = FieldDefinition("t_solid", "K", "solid", FieldLocation.CELL, semantics=FieldSemantics("intensive", TEMPERATURE))
 
 
 def _field_port(port_id, direction, definition, quantity):
     return PortDefinition(port_id, PortDirection(direction), PortKind.FIELD, quantity, definition.unit,
-                          field=definition, algebra=FieldAlgebra.SCALAR)
+                          field=definition, algebra=FieldAlgebra.SCALAR, semantics=definition.semantics.quantity)
 
 
 def _identity(pid):
@@ -99,15 +111,15 @@ def _graph(flux_method=FieldMappingMethod.CONSERVATIVE_CELL):
     edges = (
         CouplingEdge("e_flux", PortRef("solid", "q"), PortRef("fluid", "q"),
                      mapping=FieldMappingDefinition("flux", flux_method),
-                     transport_declaration="the heat flux density crosses the shared interface whole (mock fixture)"),
+                     interface_transfer=TRANSFER),
         CouplingEdge("e_temp", PortRef("fluid", "t"), PortRef("solid", "t"),
-                     mapping=FieldMappingDefinition("temp", FieldMappingMethod.BILINEAR)),
+                     mapping=FieldMappingDefinition("temp", FieldMappingMethod.CONSERVATIVE_CELL)),
     )
     return PhysicsGraph("mock-interface", (solid, fluid), edges, supports=(SOLID, FLUID)), solid, fluid
 
 
 CONTRACT = InterfaceContract("solid-fluid", (
-    InterfaceExchange("e_flux", ExchangeKind.FLUX_DENSITY, "outward normal of the solid"),
+    InterfaceExchange("e_flux", ExchangeKind.FLUX_DENSITY, "edge_interface_transfer"),
     InterfaceExchange("e_temp", ExchangeKind.INTENSIVE),
 ))
 
@@ -131,12 +143,15 @@ def _runtime(*, solid_fail=None):
 def test_a_field_coupled_run_maps_the_flux_conservatively_and_records_it():
     run = _runtime().run("mock", external_inputs={})
     diagnostics = {d["edge_id"]: d["mapping"] for d in run.windows[0].iterations[-1].mapping_diagnostics}
-    assert diagnostics["e_flux"]["provenance"]["method"] == "first_order_intersection_remap"
+    assert diagnostics["e_flux"]["provenance"]["method"] == "executed_common_plane_interface_overlap"
     assert diagnostics["e_temp"]["provenance"]["conservative"] is False
     assert diagnostics["e_flux"]["conservation_relative_error"] <= 1e-12
     balance = interface_flux_balance(run, CONTRACT)
-    assert [b["status"] for b in balance] == ["diagnostic"]
-    assert "not a bound" in balance[0]["notice"]
+    assert [b["status"] for b in balance] == ["transfer_integral_diagnostic"]
+    assert balance[0]["coupled_physical_conservation"] == "unknown"
+    assert "independent solver balance is not established" in balance[0]["notice"]
+    assert diagnostics["e_flux"]["provenance"]["applied_sign"] == -1
+    assert diagnostics["e_flux"]["provenance"]["target_total_normal_component"] == pytest.approx(-100.0)
 
 
 # ---- the interface contract ---------------------------------------------------------------------------------------
@@ -148,9 +163,8 @@ def test_the_contract_is_honoured_by_a_conservative_flux_and_a_consistent_temper
 
 
 def test_a_flux_mapped_by_nearest_site_is_refused():
-    graph, _, _ = _graph(flux_method=FieldMappingMethod.NEAREST)
-    with pytest.raises(InvalidScientificProblem, match="crosses an interface conservatively"):
-        CONTRACT.check(graph)
+    with pytest.raises(InvalidScientificProblem, match="full-coverage"):
+        _graph(flux_method=FieldMappingMethod.NEAREST)
 
 
 def test_a_flux_without_a_sign_convention_is_refused():
@@ -160,7 +174,7 @@ def test_a_flux_without_a_sign_convention_is_refused():
 
 def test_a_two_way_interface_needs_one_flux_and_one_intensive_quantity_back():
     graph, _, _ = _graph()
-    flux_only = InterfaceContract("x", (InterfaceExchange("e_flux", ExchangeKind.FLUX_DENSITY, "solid normal"),))
+    flux_only = InterfaceContract("x", (InterfaceExchange("e_flux", ExchangeKind.FLUX_DENSITY, "edge_interface_transfer"),))
     assert any("exactly one flux" in p for p in flux_only.problems(graph))
 
 

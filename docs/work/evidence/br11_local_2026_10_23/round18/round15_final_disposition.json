@@ -1,0 +1,374 @@
+{
+  "round15_reviewed_sha": "95f3869ed020b04c36c098f0c33050aa009212b6",
+  "latest_reviewed_sha": "cc7ef06b0d08398173d9448ff47d8abb7e375d44",
+  "rows": [
+    {
+      "id": "E15-F1",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "hidden spend",
+        "serialization/read-back",
+        "identity/aliasing",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "test": "test_readback_must_reconcile_listed_entries_before_authorizing",
+      "fix": "Require stable listed history matching read-back length; preserve pre-read entries on unread/rollback",
+      "mutant": "no_reconciliation; no_history_count; drop_before_observation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "E15-F2",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "concurrency/wait ordering",
+        "availability/deadlock",
+        "identity/aliasing"
+      ],
+      "test": "test_honest_growth_across_unread_checkpoint_never_means_rewritten",
+      "fix": "Moving read-back is transient; record its entry prefix instead of declaring a rewrite",
+      "mutant": "no_reconciliation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "E15-F3",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "BaseException/async interruption",
+        "seal lifecycle",
+        "availability/deadlock"
+      ],
+      "test": "test_async_or_resource_interruption_of_handing_never_retires_honest_reader",
+      "fix": "Seal only on explicit structural evidence of invalid handing; resource and asynchronous exceptions leave the invocation without sealing",
+      "mutant": "interrupt_poison",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "E15-F4",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "review/reporting evidence"
+      ],
+      "test": "Documentation comparison",
+      "fix": "Update test inventory; describe entry-identity exemption precisely; disclose R14 performance extension was data-dependent.",
+      "mutant": "NOT_APPLICABLE (reporting)",
+      "final_disposition": "CORRECTED"
+    },
+    {
+      "id": "R15-A-F1",
+      "severity": "MAJOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "seal lifecycle",
+        "in-flight verification",
+        "stale/current authority",
+        "rollback/restore",
+        "duplicate dispatch",
+        "fail-open behavior"
+      ],
+      "test": "test_sealed_spend_then_restore_never_redispatches; test_seal_before_authoritative_comparison_refuses_inflight_pin; test_seal_after_waited_verification_completes_still_refuses",
+      "fix": "Check seal under lifecycle lock at comparison and after waiting",
+      "mutant": "seal_entry_only; no_comparison_seal; no_post_wait_seal; comparison_outside_lock",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "R15-A-F2",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "serialization/read-back",
+        "identity/aliasing",
+        "BaseException/async interruption",
+        "availability/deadlock"
+      ],
+      "test": "test_unchanged_detached_accounts_recover_after_interrupt; test_readback_straddling_honest_growth_recovers_after_transient_failure",
+      "fix": "Reconcile retained entries with the existing canonical history rule outside the lock; adopt only against the identical still-pending barrier",
+      "mutant": "no_retained_history_reconciliation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "R15-A-F3",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "hidden spend",
+        "serialization/read-back",
+        "identity/aliasing",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "test": "test_readback_must_reconcile_listed_entries_before_authorizing",
+      "fix": "Require stable listed history matching read-back length; preserve pre-read entries on unread/rollback",
+      "mutant": "no_reconciliation; no_history_count; drop_before_observation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "R15-C-F1",
+      "severity": "MAJOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "seal lifecycle",
+        "in-flight verification",
+        "stale/current authority",
+        "rollback/restore",
+        "duplicate dispatch",
+        "fail-open behavior"
+      ],
+      "test": "test_sealed_spend_then_restore_never_redispatches; test_seal_before_authoritative_comparison_refuses_inflight_pin; test_seal_after_waited_verification_completes_still_refuses",
+      "fix": "Check seal under lifecycle lock at comparison and after waiting",
+      "mutant": "seal_entry_only; no_comparison_seal; no_post_wait_seal; comparison_outside_lock",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "R15-C-F2",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "hidden spend",
+        "serialization/read-back",
+        "identity/aliasing",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "test": "test_readback_must_reconcile_listed_entries_before_authorizing",
+      "fix": "Require stable listed history matching read-back length; preserve pre-read entries on unread/rollback",
+      "mutant": "no_reconciliation; no_history_count; drop_before_observation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "R15-C-F3",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "review/reporting evidence"
+      ],
+      "test": "Documentation comparison",
+      "fix": "Correct the historical R14-C-F2 disposition: its no-prior-unread case remained open at R15.",
+      "mutant": "NOT_APPLICABLE (reporting)",
+      "final_disposition": "CORRECTED"
+    },
+    {
+      "id": "F15-F1",
+      "severity": "MAJOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "seal lifecycle",
+        "in-flight verification",
+        "stale/current authority",
+        "rollback/restore",
+        "duplicate dispatch",
+        "fail-open behavior"
+      ],
+      "test": "test_sealed_spend_then_restore_never_redispatches; test_seal_before_authoritative_comparison_refuses_inflight_pin; test_seal_after_waited_verification_completes_still_refuses",
+      "fix": "Check seal under lifecycle lock at comparison and after waiting",
+      "mutant": "seal_entry_only; no_comparison_seal; no_post_wait_seal; comparison_outside_lock",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "F15-F2",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "serialization/read-back",
+        "identity/aliasing",
+        "BaseException/async interruption",
+        "availability/deadlock"
+      ],
+      "test": "test_unchanged_detached_accounts_recover_after_interrupt; test_readback_straddling_honest_growth_recovers_after_transient_failure",
+      "fix": "Reconcile retained entries with the existing canonical history rule outside the lock; adopt only against the identical still-pending barrier",
+      "mutant": "no_retained_history_reconciliation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "F15-F3",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "hidden spend",
+        "serialization/read-back",
+        "identity/aliasing",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "test": "test_readback_must_reconcile_listed_entries_before_authorizing",
+      "fix": "Require stable listed history matching read-back length; preserve pre-read entries on unread/rollback",
+      "mutant": "no_reconciliation; no_history_count; drop_before_observation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "F15-F4",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "BaseException/async interruption",
+        "hidden spend",
+        "in-flight verification"
+      ],
+      "test": "test_interrupt_at_entry_listing_preserves_previously_read_spend",
+      "fix": "Protect the initial entry listing and compare already read accounts before propagating interruption",
+      "mutant": "listing_outside_interrupt_guard; interrupt_implicit_success",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "F15-F5",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "BaseException/async interruption",
+        "seal lifecycle",
+        "availability/deadlock"
+      ],
+      "test": "test_async_or_resource_interruption_of_handing_never_retires_honest_reader",
+      "fix": "Seal only on explicit structural evidence of invalid handing; resource and asynchronous exceptions leave the invocation without sealing",
+      "mutant": "interrupt_poison",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "B15-F1",
+      "severity": "MAJOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "seal lifecycle",
+        "in-flight verification",
+        "stale/current authority",
+        "rollback/restore",
+        "duplicate dispatch",
+        "fail-open behavior"
+      ],
+      "test": "test_sealed_spend_then_restore_never_redispatches; test_seal_before_authoritative_comparison_refuses_inflight_pin; test_seal_after_waited_verification_completes_still_refuses",
+      "fix": "Check seal under lifecycle lock at comparison and after waiting",
+      "mutant": "seal_entry_only; no_comparison_seal; no_post_wait_seal; comparison_outside_lock",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "B15-F2",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "hidden spend",
+        "serialization/read-back",
+        "identity/aliasing",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "test": "test_readback_must_reconcile_listed_entries_before_authorizing",
+      "fix": "Require stable listed history matching read-back length; preserve pre-read entries on unread/rollback",
+      "mutant": "no_reconciliation; no_history_count; drop_before_observation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "B15-F3",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "BaseException/async interruption",
+        "seal lifecycle",
+        "availability/deadlock"
+      ],
+      "test": "test_async_or_resource_interruption_of_handing_never_retires_honest_reader",
+      "fix": "Seal only on explicit structural evidence of invalid handing; resource and asynchronous exceptions leave the invocation without sealing",
+      "mutant": "interrupt_poison",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "B15-F4",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "review/reporting evidence"
+      ],
+      "test": "Documentation comparison",
+      "fix": "Retain R12 evidence as-is. Cite and preserve the independently recorded R14 base rerun (r3) for 913 passed / 2 failed; no backfilled R12 result.",
+      "mutant": "NOT_APPLICABLE (reporting)",
+      "final_disposition": "CORRECTED"
+    },
+    {
+      "id": "D15-1",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "serialization/read-back",
+        "identity/aliasing",
+        "BaseException/async interruption",
+        "availability/deadlock"
+      ],
+      "test": "test_unchanged_detached_accounts_recover_after_interrupt; test_readback_straddling_honest_growth_recovers_after_transient_failure",
+      "fix": "Reconcile retained entries with the existing canonical history rule outside the lock; adopt only against the identical still-pending barrier",
+      "mutant": "no_retained_history_reconciliation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "D15-2",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "BaseException/async interruption",
+        "seal lifecycle",
+        "availability/deadlock"
+      ],
+      "test": "test_async_or_resource_interruption_of_handing_never_retires_honest_reader",
+      "fix": "Seal only on explicit structural evidence of invalid handing; resource and asynchronous exceptions leave the invocation without sealing",
+      "mutant": "interrupt_poison",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "D15-3",
+      "severity": "MINOR",
+      "reproduction_status": "DUPLICATE",
+      "threat_family": [
+        "hidden spend",
+        "serialization/read-back",
+        "identity/aliasing",
+        "rollback/restore",
+        "duplicate dispatch"
+      ],
+      "test": "test_readback_must_reconcile_listed_entries_before_authorizing",
+      "fix": "Require stable listed history matching read-back length; preserve pre-read entries on unread/rollback",
+      "mutant": "no_reconciliation; no_history_count; drop_before_observation",
+      "final_disposition": "FIXED_WITH_BOUNDED_R18_REVIEW_SUPPORT; not campaign closure"
+    },
+    {
+      "id": "D15-4",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "review/reporting evidence"
+      ],
+      "test": "Documentation comparison",
+      "fix": "Align class documentation and README with retained-entry reconciliation and fail-closed availability limits.",
+      "mutant": "NOT_APPLICABLE (reporting)",
+      "final_disposition": "CORRECTED"
+    },
+    {
+      "id": "CRIT15-1",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "review/reporting evidence"
+      ],
+      "test": "Documentation comparison",
+      "fix": "Record R15 aggregate Q4=YES, CRIT14-1 and R14-C-F2 open at reviewed SHA; E was static-only, no executed probe attributed to E.",
+      "mutant": "NOT_APPLICABLE (reporting)",
+      "final_disposition": "CORRECTED"
+    },
+    {
+      "id": "CRIT15-2",
+      "severity": "MINOR",
+      "reproduction_status": "CONFIRMED",
+      "threat_family": [
+        "BaseException/async interruption",
+        "availability/deadlock"
+      ],
+      "test": "test_repeated_content_interrupt_is_explicit_never_success_or_poison",
+      "fix": "Document repeated content KeyboardInterrupt as an explicit availability residual: each call aborts, never succeeds implicitly; no permanent seal/divergence solely from the interrupt. Repairing interrupting content permits reuse. Cannot distinguish a real asynchronous interrupt from content by exception class without inventing authority.",
+      "mutant": "interrupt_implicit_success",
+      "final_disposition": "DOCUMENTED_RESIDUAL"
+    }
+  ],
+  "open_new_family": "R15-REPAIR-3 universal interrupted-handing promise is reopened by R16\u2013R18 pre-capture information loss; original late-capture controls pass but do not cover this transition.",
+  "limits": "Historical R15 matrix kept intact. Subsequent refinement JSON/identity defects repaired in local commits; final R18 critic complete; campaign NOT CLOSED."
+}

@@ -1,0 +1,189 @@
+{
+  "reviewed_sha": "98d72b2ef854012780f4222706884b911c4a2f03",
+  "lens": "S1 independent skeptic",
+  "questions": {
+    "Q1": "NO",
+    "Q2": "NO",
+    "Q3": "NO",
+    "Q4": "YES",
+    "Q5": "NO",
+    "Q6": "NO",
+    "Q7": "NO"
+  },
+  "alias_verdicts": [
+    {
+      "id": "R17-A-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py native recursion depths145/146: raw returned tuple identity established, spent revision2 replaced by owner checkpoint revision1, redispatch not refused and simulated executor called twice.",
+      "classification": "Same root cause, not six independent defects",
+      "qualification": "F was static only; S1 supplies new executed evidence. A/C native proof and B/D/E injected proof converge on this native S1 counterexample."
+    },
+    {
+      "id": "R17-B-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py native recursion depths145/146: raw returned tuple identity established, spent revision2 replaced by owner checkpoint revision1, redispatch not refused and simulated executor called twice.",
+      "classification": "Same root cause, not six independent defects",
+      "qualification": "F was static only; S1 supplies new executed evidence. A/C native proof and B/D/E injected proof converge on this native S1 counterexample."
+    },
+    {
+      "id": "R17-C-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py native recursion depths145/146: raw returned tuple identity established, spent revision2 replaced by owner checkpoint revision1, redispatch not refused and simulated executor called twice.",
+      "classification": "Same root cause, not six independent defects",
+      "qualification": "F was static only; S1 supplies new executed evidence. A/C native proof and B/D/E injected proof converge on this native S1 counterexample."
+    },
+    {
+      "id": "R17-D-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py native recursion depths145/146: raw returned tuple identity established, spent revision2 replaced by owner checkpoint revision1, redispatch not refused and simulated executor called twice.",
+      "classification": "Same root cause, not six independent defects",
+      "qualification": "F was static only; S1 supplies new executed evidence. A/C native proof and B/D/E injected proof converge on this native S1 counterexample."
+    },
+    {
+      "id": "R17-E-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py native recursion depths145/146: raw returned tuple identity established, spent revision2 replaced by owner checkpoint revision1, redispatch not refused and simulated executor called twice.",
+      "classification": "Same root cause, not six independent defects",
+      "qualification": "F was static only; S1 supplies new executed evidence. A/C native proof and B/D/E injected proof converge on this native S1 counterexample."
+    },
+    {
+      "id": "R17-F-1",
+      "verdict": "CONFIRMED",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py native recursion depths145/146: raw returned tuple identity established, spent revision2 replaced by owner checkpoint revision1, redispatch not refused and simulated executor called twice.",
+      "classification": "Same root cause, not six independent defects",
+      "qualification": "F was static only; S1 supplies new executed evidence. A/C native proof and B/D/E injected proof converge on this native S1 counterexample."
+    },
+    {
+      "id": "R17-D-2",
+      "verdict": "CONFIRMED",
+      "severity": "MINOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py trace interrupts once after native retention; for both ledger detail and experiment metadata numeric keys2/10, fresh reader accepts exact JSON owner checkpoint, original permanently reports rewritten history.",
+      "qualification": "F static lead independently executed here; local correction, no architecture decision needed."
+    },
+    {
+      "id": "R17-F-2",
+      "verdict": "CONFIRMED",
+      "severity": "MINOR",
+      "question": "Q4",
+      "independent_proof": "S1/probe.py trace interrupts once after native retention; for both ledger detail and experiment metadata numeric keys2/10, fresh reader accepts exact JSON owner checkpoint, original permanently reports rewritten history.",
+      "qualification": "F static lead independently executed here; local correction, no architecture decision needed."
+    }
+  ],
+  "findings": [
+    {
+      "id": "R17-S1-1",
+      "severity": "MAJOR",
+      "question": "Q4",
+      "aliases": [
+        "R17-A-1",
+        "R17-B-1",
+        "R17-C-1",
+        "R17-D-1",
+        "R17-E-1",
+        "R17-F-1"
+      ],
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 1000,
+      "title": "Unretained mutable handing loses returned spend after native interruption and checkpoint restore",
+      "smallest_reproduction": "probe.py depths145/146 at recursion limit150, exact CPython3.12.3; no production patches.",
+      "actual_result": "Returned raw mapping holds spent account revision2; replacing mapping with revision1 and invoking original admitted action executes twice.",
+      "expected_result": "Returned spend prevents rollback redispatch; first interrupted verification does not accept.",
+      "proposed_correction": "Select stable execution-owner publication/lifetime contract; then implement it with interruption tests. Do not silently redefine handed to mean successfully captured."
+    },
+    {
+      "id": "R17-S1-2",
+      "severity": "MINOR",
+      "question": "Q4",
+      "aliases": [
+        "R17-D-2",
+        "R17-F-2"
+      ],
+      "file": "src/engcore/mind/world/owners.py",
+      "line": 759,
+      "title": "Retained normalization omits owner JSON key transformation",
+      "actual_result": "Both ledger detail and experiment metadata numeric-key cases cause false permanent divergence after honest checkpoint restore.",
+      "expected_result": "The same owner-readable canonical history recovers.",
+      "proposed_correction": "Reuse full ordinary owner JSON transformation before retained entry hashing, preserving serialization semantics and exact barrier guard. Add both expected-acceptance regressions."
+    }
+  ],
+  "architecture_assessment": {
+    "verdict": "CONCRETE CONTRACT BLOCKER for complete arbitrary-interruption/all-returned-handings guarantee; does not block local MINOR fix.",
+    "reason": "Once both captures abort and owner overwrites the sole mutable mapping entry, the follower has no retained reference to the spent version. Its recovery input is identical to the honest no-new-spend case. Returning acceptance may forget spend; permanent refusal without evidence poisons the honest case. Current API supplies no retained version or acknowledgement to distinguish them.",
+    "counterarguments": [
+      {
+        "proposal": "Fresh shallow worker / native copy",
+        "assessment": "Could fix this precise recursion trigger; not demonstrated here. Starting/copying/publishing may itself fail or be interrupted before any stable version exists. Does not guarantee every returned mutable handing survives later replacement."
+      },
+      {
+        "proposal": "More retries or incremental per-map capture",
+        "assessment": "Improves bounded windows, especially failure on experiments after ledger listing. Still fails before first retained reference when all finite recovery attempts abort."
+      },
+      {
+        "proposal": "Hold reader lock or retain raw mapping",
+        "assessment": "Owner mutation does not share reader lock; raw mapping is exactly the mutable object replaced in executed proof."
+      },
+      {
+        "proposal": "Permanently refuse any interrupted capture",
+        "assessment": "No corruption evidence exists solely from interruption; violates stated honest-reader recovery requirement."
+      },
+      {
+        "proposal": "Owner immutable snapshot or retained publication until acknowledgement",
+        "assessment": "Viable narrow generic integration remedy; requires selected owner lifetime obligation and publication/acknowledgement recovery semantics. No new budget authority is inherently needed, but this is not a reader-local reconciliation fix."
+      }
+    ],
+    "scope": "Not a formal impossibility proof for every implementation/runtime; information-loss argument applies to current callback mutable-container contract and stated repeat-interruption model."
+  },
+  "trust_boundaries": [
+    "Native recursion probe uses public execution-owned checkpoint replacement and real gateway path with synthetic executor; admission remains required.",
+    "Private fields are inspected only to prove returned mapping identity; no private production state is mutated.",
+    "Normalization fault injection uses sys.settrace solely to raise one KeyboardInterrupt at deterministic post-retention call entry; no production method replacement.",
+    "No Q7 unadmitted execution demonstrated; Q4 duplicate admitted execution is the finding."
+  ],
+  "tested_transitions": [
+    "11 native stack depths138..148;145/146 establish returned raw mapping and duplicate execution;144 retained history safely refuses.",
+    "Depths147/148 are NOT evidence of returned handing and excluded from defect confirmation.",
+    "Independent ledger and experiment numeric-key roundtrip with fresh-reader positive controls.",
+    "16 committed R16 controls passed in2.04s."
+  ],
+  "missing_coverage": [
+    "No full FAST, certification, actual solver/provider execution or scientific validation.",
+    "No exhaustive asynchronous-bytecode or concurrent-publication exploration.",
+    "Q1-Q3/Q5-Q7 NO is scoped absence of a discovered defect, not complete system proof.",
+    "No local fix was implemented or tested by this read-only skeptic."
+  ],
+  "executions": [
+    {
+      "command": "wsl -d Ubuntu-24.04 -- python3 /home/dev_kaeem/br11-review/r17/S1/run.py",
+      "inner_command": "/home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python /home/dev_kaeem/br11-review/r17/S1/probe.py",
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "environment": {
+        "PYTHONPATH": "/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review",
+        "PYTHONDONTWRITEBYTECODE": "1"
+      },
+      "exit_code": 0,
+      "result": "Assertions confirm counterexamples, not invariant success",
+      "log": "/home/dev_kaeem/br11-review/r17/S1/probe.log"
+    },
+    {
+      "command": "PYTHONPATH=/home/dev_kaeem/forge-r17-review/src:/home/dev_kaeem/forge-r17-review PYTHONDONTWRITEBYTECODE=1 /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python -m pytest tests/mind/test_authority_review_r16.py -q -p no:cacheprovider --basetemp=/home/dev_kaeem/br11-review/r17/S1/pt -n 1",
+      "cwd": "/home/dev_kaeem/forge-r17-review",
+      "exit_code": 0,
+      "result": "16 passed in2.04s",
+      "log": "/home/dev_kaeem/br11-review/r17/S1/controls.log"
+    }
+  ],
+  "summary": "CHANGES REQUIRED; one common known MAJOR confirmed for every alias plus one common local MINOR independently executed for both owner kinds. Review is software evidence only."
+}

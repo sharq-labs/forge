@@ -68,7 +68,7 @@ decisions or changes scientific standing.
 ## Fast changed-file gate
 
 ```bash
-python tools/forge_check.py --changed --workers 4          # what changed since main, including uncommitted edits
+python tools/forge_check.py --changed --base origin/main --workers 4  # what changed since origin/main, including uncommitted edits
 python tools/forge_check.py --changed --dry-run --list     # show the selection and why, run nothing
 python tools/forge_check.py --regression --workers 4       # the fixed scientific regression pack
 python tools/forge_check.py --changed --workers safe-auto  # developer only: 8/6/4/2/1 from CPUs and free memory
@@ -260,8 +260,15 @@ instead of 10,033: it silently left out 570 of them.
 ### 1. Changed / targeted -- after every edit
 
 ```bash
-python tools/forge_check.py --changed --workers 4
+python tools/forge_check.py --changed --base origin/main --workers 4
 ```
+
+`--base` defaults to `FORGE_BASE` or local `main`, and `--workers` defaults to
+serial (0) unless `--dev`/`--scientific` is given. A local `main` that lags
+`origin/main` turns every commit since it into "changed", which usually means
+the whole FAST tier, run serially. Name the base. Compare a red result with
+`docs/work/FAILURE_BASELINE_2026-10-20.md` before calling a failure new; a
+failure listed there is still a failure.
 
 ### 2. FAST -- a checkpoint before you push
 

@@ -1,0 +1,4 @@
+[seq] trace depth 3: owner reads spent state back: 4 attempts | a verification on the spend: DISPATCHED | re-dispatch after the restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[seq] trace depth 600: owner reads spent state back: 4 attempts | a verification on the spend: RAISED RecursionError | re-dispatch after the restore: DISPATCHED | executor ran 2
+[wait] trace depth 3: D was waiting for P: True | P (handed the spend): DISPATCHED | D (re-dispatch, handed the restore): refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNE) | executor ran 1
+[wait] trace depth 600: D was waiting for P: True | P (handed the spend): RAISED RecursionError | D (re-dispatch, handed the restore): DISPATCHED | executor ran 2

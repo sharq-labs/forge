@@ -1,0 +1,9 @@
+[control] spent: MISSING_INFORMATION ('AUTHORITY_STALE',) [] | re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1
+[alias] spent: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) [the execution side could not state its budget accounts: one budget account object is regis] | re-dispatch after restore: DISPATCHED AGAIN | executor ran 2
+[numpy] spent: MISSING_INFORMATION ('AUTHORITY_STALE',) [] | re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1
+[strenum] spent: MISSING_INFORMATION ('AUTHORITY_STALE',) [] | re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1
+[subclass-value] spent: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) [the execution side could not state its budget accounts: an observation account is exactly ] | re-dispatch after restore: DISPATCHED AGAIN | executor ran 2
+[raises] spent: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) [the execution side could not state its budget accounts: accounts() fails after the run] | re-dispatch after restore: DISPATCHED AGAIN | executor ran 2
+[unreadable-extra] HUNG at c69e579 (round 9 _plain cycle walk, E10-F2); stopped
+[alias+persist] spent: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) [the execution side could not state its budget accounts: one budget account object is regis] | re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1
+[numpy+persist] spent: MISSING_INFORMATION ('AUTHORITY_STALE',) [] | re-dispatch after restore: refused (admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE)) | executor ran 1

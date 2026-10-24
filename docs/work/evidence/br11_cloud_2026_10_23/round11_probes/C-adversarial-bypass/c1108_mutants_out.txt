@@ -1,0 +1,4 @@
+[none] admission on the cut state: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) ['a spend): refused by this reader from then on (a new timeline is stated with a new reader)']
+re-dispatch after the restore: refused ( admission now refuses this action (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILA ); executor ran 1 
+[M12_exp_fromdict_transient] admission on the cut state: MISSING_INFORMATION ('AUTHORITY_OWNER_UNAVAILABLE',) ["' is not one its owner reads back: observation budget exhausted (3); cannot record 'run.1'"]
+re-dispatch after the restore: DISPATCHED AGAIN; executor ran 2 

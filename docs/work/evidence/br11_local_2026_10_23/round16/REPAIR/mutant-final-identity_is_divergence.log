@@ -1,0 +1,248 @@
+....FF....FF.FF.                                                         [100%]
+=================================== FAILURES ===================================
+______________ test_repeated_detached_interruptions_reconcile[2] _______________
+
+count = 2
+
+    @pytest.mark.parametrize("count", [1, 2, 3])
+    def test_repeated_detached_interruptions_reconcile(count):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "new")
+        for _ in range(count):
+            _interrupt_handing(reader)
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7c39e6679d30>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+______________ test_repeated_detached_interruptions_reconcile[3] _______________
+
+count = 3
+
+    @pytest.mark.parametrize("count", [1, 2, 3])
+    def test_repeated_detached_interruptions_reconcile(count):
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "new")
+        for _ in range(count):
+            _interrupt_handing(reader)
+>       assert reader.read(OwnerKind.BUDGET_LEDGER, "a") is not None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7c39e66808f0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+____ test_unread_malformed_detached_history_stays_unresolved_then_recovers _____
+
+    def test_unread_malformed_detached_history_stays_unresolved_then_recovers():
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "new")
+        _interrupt_handing(reader)
+        _interrupt_handing(reader)
+        real = BudgetReader._history
+        # Only retained reconciliation fails: normal readback already completed.
+        original_read = BudgetReader._read_back
+        def read_then_break(snapshot):
+            result = original_read(snapshot)
+            def bad(items):
+                raise ValueError("malformed retained payload")
+            monkey = patch.object(BudgetReader, "_history", staticmethod(bad))
+            monkey.start()
+            cleanup.append(monkey)
+            return result
+        cleanup = []
+        try:
+            with patch.object(BudgetReader, "_read_back", read_then_break):
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(OwnerKind.BUDGET_LEDGER, "a")
+        finally:
+            for monkey in cleanup:
+                monkey.stop()
+        assert BudgetReader._history is real
+>       assert not reader._diverged
+E       assert not {('ledger', 'a'): "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"}
+E        +  where {('ledger', 'a'): "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"} = <engcore.mind.world.owners.BudgetReader object at 0x7c39e66815b0>._diverged
+
+tests/mind/test_authority_review_r16.py:129: AssertionError
+__________ test_concurrent_new_barrier_invalidates_old_reconciliation __________
+
+    def test_concurrent_new_barrier_invalidates_old_reconciliation():
+        import threading
+        account = BudgetLedger(total_budget=100.)
+        _settle(account, "initial")
+        reader = BudgetReader.following(lambda: ({"a": BudgetLedger.from_dict(account.to_dict())}, {}))
+        _settle(account, "first")
+        _interrupt_handing(reader)
+        _interrupt_handing(reader)
+        entered, resume = threading.Event(), threading.Event()
+        real_history = BudgetReader._history
+        real_read = BudgetReader._read_back
+        local = threading.local()
+        errors = []
+        def read(snapshot):
+            result = real_read(snapshot)
+            if threading.current_thread() is worker:
+                local.reconcile = True
+            return result
+        def history(items):
+            if getattr(local, "reconcile", False):
+                local.reconcile = False
+                entered.set()
+                assert resume.wait(5)
+            return real_history(items)
+        def run():
+            try:
+                reader.read(OwnerKind.BUDGET_LEDGER, "a")
+            except BaseException as exc:
+                errors.append(exc)
+        worker = threading.Thread(target=run)
+        with patch.object(BudgetReader, "_read_back", read), patch.object(BudgetReader, "_history", staticmethod(history)):
+            worker.start()
+            try:
+>               assert entered.wait(5)
+E               assert False
+E                +  where False = wait(5)
+E                +    where wait = <threading.Event at 0x7c39e66e0a70: unset>.wait
+
+tests/mind/test_authority_review_r16.py:166: AssertionError
+_ test_experiment_detached_histories_reconcile_without_losing_attempts[False] __
+
+rollback = False
+
+    @pytest.mark.parametrize("rollback", [False, True])
+    def test_experiment_detached_histories_reconcile_without_losing_attempts(rollback):
+        from engcore.scientific.experiments.experiment import ScientificExperiment
+        from engcore.scientific.experiments.evaluation import ScientificEvaluation, EvaluationStatus
+        o = ax.owned("battery")
+        eid, account = next(iter(o.experiments.items()))
+        held = [account]
+        reader = BudgetReader.following(lambda: ({}, {eid: ScientificExperiment.from_dict(held[0].to_dict())}))
+        checkpoint = ScientificExperiment.from_dict(account.to_dict())
+        account.record(ScientificEvaluation("new", {}, status=EvaluationStatus.NOT_CONVERGED))
+        _interrupt_handing(reader)
+        _interrupt_handing(reader)
+        if rollback:
+            held[0] = checkpoint
+            with pytest.raises(OwnerUnavailable):
+                reader.read(OwnerKind.EXPERIMENT, eid)
+        else:
+>           assert reader.read(OwnerKind.EXPERIMENT, eid) is not None
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r16.py:215: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1039: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1040: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7c39e66c9dc0>
+kind = <OwnerKind.EXPERIMENT: 'experiment'>
+record_id = 'synthetic.battery.pulse-cell.experiment'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)
+
+../br11-review/r16/REPAIR/mutant_source/src/engcore/mind/world/owners.py:1103: OwnerUnavailable
+__ test_experiment_detached_histories_reconcile_without_losing_attempts[True] __
+
+rollback = True
+
+    @pytest.mark.parametrize("rollback", [False, True])
+    def test_experiment_detached_histories_reconcile_without_losing_attempts(rollback):
+        from engcore.scientific.experiments.experiment import ScientificExperiment
+        from engcore.scientific.experiments.evaluation import ScientificEvaluation, EvaluationStatus
+        o = ax.owned("battery")
+        eid, account = next(iter(o.experiments.items()))
+        held = [account]
+        reader = BudgetReader.following(lambda: ({}, {eid: ScientificExperiment.from_dict(held[0].to_dict())}))
+        checkpoint = ScientificExperiment.from_dict(account.to_dict())
+        account.record(ScientificEvaluation("new", {}, status=EvaluationStatus.NOT_CONVERGED))
+        _interrupt_handing(reader)
+        _interrupt_handing(reader)
+        if rollback:
+            held[0] = checkpoint
+            with pytest.raises(OwnerUnavailable):
+                reader.read(OwnerKind.EXPERIMENT, eid)
+        else:
+            assert reader.read(OwnerKind.EXPERIMENT, eid) is not None
+>       assert not reader._diverged
+E       assert not {('experiment', 'synthetic.battery.pulse-cell.experiment'): "budget experiment 'synthetic.battery.pulse-cell.experimen...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"}
+E        +  where {('experiment', 'synthetic.battery.pulse-cell.experiment'): "budget experiment 'synthetic.battery.pulse-cell.experimen...s with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)"} = <engcore.mind.world.owners.BudgetReader object at 0x7c39e66e4080>._diverged
+
+tests/mind/test_authority_review_r16.py:216: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r16.py::test_repeated_detached_interruptions_reconcile[2]
+FAILED tests/mind/test_authority_review_r16.py::test_repeated_detached_interruptions_reconcile[3]
+FAILED tests/mind/test_authority_review_r16.py::test_unread_malformed_detached_history_stays_unresolved_then_recovers
+FAILED tests/mind/test_authority_review_r16.py::test_concurrent_new_barrier_invalidates_old_reconciliation
+FAILED tests/mind/test_authority_review_r16.py::test_experiment_detached_histories_reconcile_without_losing_attempts[False]
+FAILED tests/mind/test_authority_review_r16.py::test_experiment_detached_histories_reconcile_without_losing_attempts[True]
+6 failed, 10 passed in 7.15s

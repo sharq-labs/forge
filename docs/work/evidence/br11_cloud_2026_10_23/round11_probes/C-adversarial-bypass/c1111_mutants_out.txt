@@ -1,0 +1,16 @@
+[none]  opy(a, memo))
+           ~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.13/copy.py", line 137, in deepcopy
+    y = copier(x, memo)
+  File "/usr/lib/python3.13/copy.py", line 197, in _deepcopy_list
+    append(deepcopy(a, memo))
+           ~~~~~~~~^^^^^^^^^
+RecursionError: maximum recursion depth exceeded
+[M14_recursion_transient]  opy(a, memo))
+           ~~~~~~~~^^^^^^^^^
+  File "/usr/lib/python3.13/copy.py", line 137, in deepcopy
+    y = copier(x, memo)
+  File "/usr/lib/python3.13/copy.py", line 197, in _deepcopy_list
+    append(deepcopy(a, memo))
+           ~~~~~~~~^^^^^^^^^
+RecursionError: maximum recursion depth exceeded

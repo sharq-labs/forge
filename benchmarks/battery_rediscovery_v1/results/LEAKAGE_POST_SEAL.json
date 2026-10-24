@@ -1,0 +1,129 @@
+{
+ "files_scanned": 19,
+ "numeric": [],
+ "pack_schema": [],
+ "phase": "post_seal",
+ "protected_values": [
+  {
+   "name": "brief_example_C1",
+   "unit": "F",
+   "value": "760"
+  },
+  {
+   "name": "synthetic_R",
+   "unit": "ohm",
+   "value": "0.0321"
+  },
+  {
+   "name": "synthetic_tau",
+   "unit": "s",
+   "value": "4567"
+  },
+  {
+   "name": "synthetic_rmse",
+   "unit": "mV",
+   "value": "12.34"
+  },
+  {
+   "name": "P1.R0",
+   "unit": "ohm",
+   "value": "0.13167672569496283"
+  },
+  {
+   "name": "P1.R1",
+   "unit": "ohm",
+   "value": "0.22580625155747797"
+  },
+  {
+   "name": "P1.C1",
+   "unit": "F",
+   "value": "759.8941120507851"
+  },
+  {
+   "name": "P1.tau",
+   "unit": "s",
+   "value": "171.58884102278594"
+  },
+  {
+   "name": "P1.calibration_rmse",
+   "unit": "mV",
+   "value": "48.38954222872905"
+  },
+  {
+   "name": "P2.R0",
+   "unit": "ohm",
+   "value": "0.02065143453238383"
+  },
+  {
+   "name": "P2.R1",
+   "unit": "ohm",
+   "value": "0.0156145302692712"
+  },
+  {
+   "name": "P2.C1",
+   "unit": "F",
+   "value": "1585.9009050828427"
+  },
+  {
+   "name": "P2.tau",
+   "unit": "s",
+   "value": "24.76309768648064"
+  },
+  {
+   "name": "P2.calibration_rmse",
+   "unit": "mV",
+   "value": "8.40160566720805"
+  },
+  {
+   "name": "P1.cross_cell_validation_rmse",
+   "unit": "mV",
+   "value": "89.22796908828245"
+  },
+  {
+   "name": "P1.within_cell_holdout_rmse",
+   "unit": "mV",
+   "value": "49.74030725864969"
+  },
+  {
+   "name": "P2.heldout_cc_rmse",
+   "unit": "mV",
+   "value": "28.65103257319798"
+  },
+  {
+   "name": "P2.heldout_pulses_rmse",
+   "unit": "mV",
+   "value": "12.549846854128964"
+  },
+  {
+   "name": "P1.rint_calibration_rmse",
+   "unit": "mV",
+   "value": "56.69243865734304"
+  },
+  {
+   "name": "P2.rint_calibration_rmse",
+   "unit": "mV",
+   "value": "31.91135572182914"
+  }
+ ],
+ "provenance": [],
+ "runtime": {
+  "benchmarks/battery_rediscovery_v1/results/ACCESS_LOG.json": {
+   "engcore_files_opened": 181,
+   "forbidden_modules": [],
+   "paths_opened": 1101,
+   "paths_outside_roots": [],
+   "platform_identity_tokens": []
+  },
+  "benchmarks/battery_rediscovery_v1/results/ACCESS_LOG_REPLAY.json": {
+   "engcore_files_opened": 181,
+   "forbidden_modules": [],
+   "paths_opened": 1101,
+   "paths_outside_roots": [],
+   "platform_identity_tokens": []
+  }
+ },
+ "scanner": "forge.battery_rediscovery.leakage_scanner@1.0.0",
+ "schema": "forge.battery_rediscovery.leakage_audit/2",
+ "status": "PASS",
+ "text": []
+}

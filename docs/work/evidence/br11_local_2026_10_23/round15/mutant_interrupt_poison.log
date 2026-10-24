@@ -1,0 +1,629 @@
+.....FFF.............FFFFFFFFFFFF....................................... [ 80%]
+.....FF..........                                                        [100%]
+=================================== FAILURES ===================================
+_ test_async_or_resource_interruption_of_handing_never_retires_honest_reader[KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18af214f0>
+failure = <class 'KeyboardInterrupt'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_async_or_resource_interruption_of_handing_never_retires_honest_reader(monkeypatch, failure):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed.pop() if armed else False:
+                raise failure("injected at an explicit phase")
+            return original(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+        with pytest.raises((failure, OwnerUnavailable)):
+            reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af21610>._sealed
+
+tests/mind/test_authority_review_r15.py:181: AssertionError
+_ test_async_or_resource_interruption_of_handing_never_retires_honest_reader[RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18af237d0>
+failure = <class 'RecursionError'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_async_or_resource_interruption_of_handing_never_retires_honest_reader(monkeypatch, failure):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed.pop() if armed else False:
+                raise failure("injected at an explicit phase")
+            return original(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+        with pytest.raises((failure, OwnerUnavailable)):
+            reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af22ba0>._sealed
+
+tests/mind/test_authority_review_r15.py:181: AssertionError
+_ test_async_or_resource_interruption_of_handing_never_retires_honest_reader[MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18af23b90>
+failure = <class 'MemoryError'>
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_async_or_resource_interruption_of_handing_never_retires_honest_reader(monkeypatch, failure):
+        account, held, mode, reader = _simple()
+        original = BudgetReader._handed.__func__
+        armed = [True]
+        def interrupted(cls, *args):
+            if armed.pop() if armed else False:
+                raise failure("injected at an explicit phase")
+            return original(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+        with pytest.raises((failure, OwnerUnavailable)):
+            reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af23c80>._sealed
+
+tests/mind/test_authority_review_r15.py:181: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-False-KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18afc8620>
+failure = <class 'KeyboardInterrupt'>, retry_later = False
+direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18b0c2db0>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-False-RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18af28d10>
+failure = <class 'RecursionError'>, retry_later = False, direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18ae86f30>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-False-MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b1df020>
+failure = <class 'MemoryError'>, retry_later = False, direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18ae6a390>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b093950>
+failure = <class 'KeyboardInterrupt'>, retry_later = True
+direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18ae873b0>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18af82d50>
+failure = <class 'RecursionError'>, retry_later = True, direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18b0c2690>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b15cf50>
+failure = <class 'MemoryError'>, retry_later = True, direct_mapping = False
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18ae850d0>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-False-KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b2a3020>
+failure = <class 'KeyboardInterrupt'>, retry_later = False
+direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18afc8800>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-False-RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18af82600>
+failure = <class 'RecursionError'>, retry_later = False, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af9ff80>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-False-MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b0913d0>
+failure = <class 'MemoryError'>, retry_later = False, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af81f10>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b0670e0>
+failure = <class 'KeyboardInterrupt'>, retry_later = True, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts in it were not o... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af6eab0>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18af9c050>
+failure = <class 'RecursionError'>, retry_later = True, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (RecursionError): the accounts in it were not obse... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af821e0>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+_ test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18afe9cd0>
+failure = <class 'MemoryError'>, retry_later = True, direct_mapping = True
+
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    @pytest.mark.parametrize("retry_later", [False, True])
+    @pytest.mark.parametrize("direct_mapping", [False, True])
+    def test_interrupted_handing_preserves_spend_before_detached_restore(monkeypatch, failure, retry_later, direct_mapping):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers if direct_mapping else dict(o.ledgers), dict(o.experiments)), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = BudgetReader._handed.__func__
+        armed = [True, True] if retry_later else [True]
+        def interrupted(cls, *args):
+            if armed:
+                armed.pop()
+                raise failure("interrupt after execution-side handing")
+            return original(cls, *args)
+        with monkeypatch.context() as patch:
+            patch.setattr(BudgetReader, "_handed", classmethod(interrupted))
+            with pytest.raises((failure, OwnerUnavailable)):
+                reader.pinned()
+>       assert reader._sealed is None
+E       AssertionError: assert 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' is None
+E        +  where 'the execution side handed over what is not a pair of account dicts (MemoryError): the accounts in it were not observe... them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)' = <engcore.mind.world.owners.BudgetReader object at 0x74b18af9f980>._sealed
+
+tests/mind/test_authority_review_r15.py:416: AssertionError
+__________ test_generated_inflight_lifecycle[handing-interrupt-False] __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b092870>
+phase = 'handing', event = 'interrupt', restore = False
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+            assert isinstance(box[0], OwnerUnavailable)
+        elif event == "interrupt":
+>           assert isinstance(box[0], KeyboardInterrupt)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerUnavailable('the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts...them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)'), KeyboardInterrupt)
+
+tests/mind/test_authority_state_machine_r15.py:152: AssertionError
+__________ test_generated_inflight_lifecycle[handing-interrupt-True] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x74b18b0919d0>
+phase = 'handing', event = 'interrupt', restore = True
+
+    @pytest.mark.parametrize("phase,event,restore", list(product(
+        ("start", "handing", "read"), ("seal", "spend", "top_up", "interrupt"), (False, True),
+    )))
+    def test_generated_inflight_lifecycle(monkeypatch, phase, event, restore):
+        import threading
+        from engcore.mind.world import BudgetReader
+        from tests.mind.test_authority_review_r15 import _thread, _join
+        account, held, mode, reader = _simple()
+        checkpoint = account.to_dict()
+        reached, resume = threading.Event(), threading.Event()
+        reader.WAIT_S = 0.0  # deterministic timeout of the observer while the first pin is paused
+        original_accounts, original_read = reader._follow, BudgetReader._read_back
+        original_handed = BudgetReader._handed.__func__
+        def checkpoint_pause():
+            reached.set()
+            assert resume.wait(10)
+            if event == "interrupt":
+                raise KeyboardInterrupt()
+        def accounts():
+            if phase == "start" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_accounts()
+        def read_back(self):
+            result = original_read(self)
+            if phase == "read" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return result
+        def handed(cls, *args):
+            if phase == "handing" and threading.current_thread().name == "verification":
+                checkpoint_pause()
+            return original_handed(cls, *args)
+        monkeypatch.setattr(BudgetReader, "_handed", classmethod(handed))
+        reader._follow = accounts
+        monkeypatch.setattr(BudgetReader, "_read_back", read_back)
+        thread, box = _thread(lambda: reader.read(K, "a"))
+        try:
+            assert reached.wait(10)
+            if event == "seal":
+                _seal(reader, mode)
+            elif event in ("spend", "top_up"):
+                if event == "spend":
+                    _settle(account, "spent")
+                else:
+                    account.total_budget += 10.0
+                with pytest.raises(OwnerUnavailable):
+                    reader.read(K, "a")  # observes effect, refuses while the first pin is in flight
+            if restore:
+                held["a"] = BudgetLedger.from_dict(checkpoint)
+        finally:
+            resume.set()
+            _join(thread)
+        assert len(box) == 1
+        if event == "seal" or (event == "spend" and (phase == "read" or (restore and phase == "start"))):
+            assert isinstance(box[0], OwnerUnavailable)
+        elif event == "interrupt":
+>           assert isinstance(box[0], KeyboardInterrupt)
+E           AssertionError: assert False
+E            +  where False = isinstance(OwnerUnavailable('the execution side handed over what is not a pair of account dicts (KeyboardInterrupt): the accounts...them may hold a spend, so this reader refuses every account from then on (a new timeline is stated with a new reader)'), KeyboardInterrupt)
+
+tests/mind/test_authority_state_machine_r15.py:152: AssertionError
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_async_or_resource_interruption_of_handing_never_retires_honest_reader[MemoryError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-False-MemoryError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[False-True-MemoryError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-False-MemoryError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-KeyboardInterrupt]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-RecursionError]
+FAILED tests/mind/test_authority_review_r15.py::test_interrupted_handing_preserves_spend_before_detached_restore[True-True-MemoryError]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-interrupt-False]
+FAILED tests/mind/test_authority_state_machine_r15.py::test_generated_inflight_lifecycle[handing-interrupt-True]
+17 failed, 72 passed in 3.10s

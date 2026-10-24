@@ -1,0 +1,9 @@
+control              | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+numpy iteration      | follower: refused: s owner reads back: its serialization is not plain JSON data | after restore: DISPATCHED AGAIN | ran 2
+numpy predicted      | follower: refused: s owner reads back: its serialization is not plain JSON data | after restore: DISPATCHED AGAIN | ran 2
+Decimal predicted    | follower: refused: s owner reads back: its serialization is not plain JSON data | after restore: DISPATCHED AGAIN | ran 2
+nan predicted        | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+inf predicted        | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+str iteration        | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+float iteration      | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1
+bool iteration       | follower: read revision 2 | after restore: refused (MISSING_INFORMATION: AUTHORITY_OWNER_UNAVAILABLE) | ran 1

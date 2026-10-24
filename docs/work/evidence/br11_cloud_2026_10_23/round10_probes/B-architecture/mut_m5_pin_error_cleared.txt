@@ -1,0 +1,2 @@
+FAILED tests/mind/test_authority_review_r9.py::test_an_owner_whose_pin_fails_is_pinned_once_per_verification
+1 failed, 568 passed in 24.31s

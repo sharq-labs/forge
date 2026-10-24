@@ -1,0 +1,294 @@
+[
+  {
+    "case": "production_unmodified_trace_profile",
+    "second_map": false,
+    "repeated": false,
+    "hits": [
+      1
+    ],
+    "pending": [],
+    "redispatch_refused": true,
+    "executor_calls": 1
+  },
+  {
+    "case": "production_unmodified_trace_profile",
+    "second_map": false,
+    "repeated": true,
+    "hits": [
+      1,
+      2
+    ],
+    "pending": [
+      "tuple"
+    ],
+    "redispatch_refused": false,
+    "executor_calls": 2
+  },
+  {
+    "case": "production_unmodified_trace_profile",
+    "second_map": true,
+    "repeated": false,
+    "hits": [
+      1
+    ],
+    "pending": [],
+    "redispatch_refused": true,
+    "executor_calls": 1
+  },
+  {
+    "case": "production_unmodified_trace_profile",
+    "second_map": true,
+    "repeated": true,
+    "hits": [
+      1,
+      2
+    ],
+    "pending": [
+      "tuple"
+    ],
+    "redispatch_refused": false,
+    "executor_calls": 2
+  },
+  {
+    "case": "normalization",
+    "iteration": 1,
+    "constructor_numeric": false,
+    "interrupt": false,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "normalization",
+    "iteration": 1,
+    "constructor_numeric": false,
+    "interrupt": true,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "normalization",
+    "iteration": 1.0,
+    "constructor_numeric": false,
+    "interrupt": false,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "normalization",
+    "iteration": 1.0,
+    "constructor_numeric": false,
+    "interrupt": true,
+    "refusal": "budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)",
+    "permanent": true
+  },
+  {
+    "case": "normalization",
+    "iteration": "1",
+    "constructor_numeric": false,
+    "interrupt": false,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "normalization",
+    "iteration": "1",
+    "constructor_numeric": false,
+    "interrupt": true,
+    "refusal": "budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)",
+    "permanent": true
+  },
+  {
+    "case": "normalization",
+    "iteration": 1,
+    "constructor_numeric": true,
+    "interrupt": false,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "normalization",
+    "iteration": 1,
+    "constructor_numeric": true,
+    "interrupt": true,
+    "refusal": "budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)",
+    "permanent": true
+  },
+  {
+    "case": "detached_interrupt",
+    "detached": false,
+    "count": 1,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "detached_interrupt",
+    "detached": false,
+    "count": 2,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "detached_interrupt",
+    "detached": true,
+    "count": 1,
+    "refusal": null,
+    "permanent": false
+  },
+  {
+    "case": "detached_interrupt",
+    "detached": true,
+    "count": 2,
+    "refusal": "budget ledger 'a' rewrote the entries of a state of it a verification was handed and could not read back (its owner's container no longer begins with exactly those entry objects): refused by this reader from then on (a new timeline is stated with a new reader)",
+    "permanent": true
+  },
+  {
+    "case": "indistinguishable",
+    "spent": false,
+    "state": {
+      "seen": {
+        "('ledger', 'a')": [
+          "6fc8b80079a79efb8927910ee2f1835ed08a298c98b15c0450c470b6815940f3"
+        ]
+      },
+      "unread": {},
+      "diverged": {},
+      "pending": [
+        [
+          "tuple",
+          {
+            "schema": "sria_campaign_budget_ledger/1",
+            "total_budget": 100.0,
+            "reserved_validation_budget": 0.0,
+            "cost_unit": "hour",
+            "enforced_cap": null,
+            "enforced_cap_source": "",
+            "charges": [
+              {
+                "schema": "sria_campaign_budget_charge/1",
+                "charge_id": "initial",
+                "action_id": "other",
+                "iteration": 1,
+                "family": "explore",
+                "realized": 0.5,
+                "predicted": null,
+                "from_validation_reservation": 0.0,
+                "from_general_pool": 0.5,
+                "detail": "observed"
+              }
+            ],
+            "spent_general": 0.5,
+            "spent_validation": 0.0,
+            "remaining": 99.5,
+            "overrun": 0.0
+          }
+        ]
+      ],
+      "initial_account": {
+        "schema": "sria_campaign_budget_ledger/1",
+        "total_budget": 100.0,
+        "reserved_validation_budget": 0.0,
+        "cost_unit": "hour",
+        "enforced_cap": null,
+        "enforced_cap_source": "",
+        "charges": [
+          {
+            "schema": "sria_campaign_budget_charge/1",
+            "charge_id": "initial",
+            "action_id": "other",
+            "iteration": 1,
+            "family": "explore",
+            "realized": 0.5,
+            "predicted": null,
+            "from_validation_reservation": 0.0,
+            "from_general_pool": 0.5,
+            "detail": "observed"
+          }
+        ],
+        "spent_general": 0.5,
+        "spent_validation": 0.0,
+        "remaining": 99.5,
+        "overrun": 0.0
+      },
+      "tickets": 3,
+      "in_flight": [],
+      "sealed": null,
+      "replacement_gone": true
+    },
+    "accepted": true
+  },
+  {
+    "case": "indistinguishable",
+    "spent": true,
+    "state": {
+      "seen": {
+        "('ledger', 'a')": [
+          "6fc8b80079a79efb8927910ee2f1835ed08a298c98b15c0450c470b6815940f3"
+        ]
+      },
+      "unread": {},
+      "diverged": {},
+      "pending": [
+        [
+          "tuple",
+          {
+            "schema": "sria_campaign_budget_ledger/1",
+            "total_budget": 100.0,
+            "reserved_validation_budget": 0.0,
+            "cost_unit": "hour",
+            "enforced_cap": null,
+            "enforced_cap_source": "",
+            "charges": [
+              {
+                "schema": "sria_campaign_budget_charge/1",
+                "charge_id": "initial",
+                "action_id": "other",
+                "iteration": 1,
+                "family": "explore",
+                "realized": 0.5,
+                "predicted": null,
+                "from_validation_reservation": 0.0,
+                "from_general_pool": 0.5,
+                "detail": "observed"
+              }
+            ],
+            "spent_general": 0.5,
+            "spent_validation": 0.0,
+            "remaining": 99.5,
+            "overrun": 0.0
+          }
+        ]
+      ],
+      "initial_account": {
+        "schema": "sria_campaign_budget_ledger/1",
+        "total_budget": 100.0,
+        "reserved_validation_budget": 0.0,
+        "cost_unit": "hour",
+        "enforced_cap": null,
+        "enforced_cap_source": "",
+        "charges": [
+          {
+            "schema": "sria_campaign_budget_charge/1",
+            "charge_id": "initial",
+            "action_id": "other",
+            "iteration": 1,
+            "family": "explore",
+            "realized": 0.5,
+            "predicted": null,
+            "from_validation_reservation": 0.0,
+            "from_general_pool": 0.5,
+            "detail": "observed"
+          }
+        ],
+        "spent_general": 0.5,
+        "spent_validation": 0.0,
+        "remaining": 99.5,
+        "overrun": 0.0
+      },
+      "tickets": 3,
+      "in_flight": [],
+      "sealed": null,
+      "replacement_gone": true
+    },
+    "accepted": true
+  }
+]

@@ -14,7 +14,7 @@ supersedes: none
 
 > This is a **location index** built from `docs/work/PROGRESS.md` on **main `a051af1`**, not an active queue, up-to-date PR report, or a summary of which tasks passed. Its line numbers are **historical** and will drift after edits. For the latest state consult [ACTIVE_PLAN.md](../work/ACTIVE_PLAN.md), live GitHub, actual source/evidence, and [Context Map](CONTEXT_MAP.md).
 
-The historical [PROGRESS.md](../work/PROGRESS.md) is ~6,600 lines. Do **not** load it all for each AI session. Locate the topic by exact heading or stable identifier, retrieve only that section and cited receipts, then validate SHA/environment. Append new executed history in PROGRESS via its existing rules; do not rewrite historical evidence just to optimize context.
+The historical [PROGRESS.md](../work/PROGRESS.md) was ~6,600 lines at this snapshot and is over 8,000 now (8,095 at `12862b0b`; new entries have also been inserted mid-file, so the approximate line numbers below can be off by 850 or more — search by heading). Do **not** load it all for each AI session. Locate the topic by exact heading or stable identifier, retrieve only that section and cited receipts, then validate SHA/environment. Append new executed history in PROGRESS via its existing rules; do not rewrite historical evidence just to optimize context.
 
 ## Fast navigation: indexed headings from main at the snapshot
 

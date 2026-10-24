@@ -1,0 +1,10 @@
+identity b8a65bb9d02b5a18e0a8b26779773c1552204dc1 /home/dev_kaeem/forge-r16-review/src/engcore/mind/world/owners.py /home/dev_kaeem/forge-gen2-authority-v1/.venv/bin/python
+pin raised KeyboardInterrupt
+injections ['native capture via sys.settrace', 'immediate recovery via sys.setprofile']
+pending ['tuple']
+dispatch_refused False executor_calls 2
+Traceback (most recent call last):
+  File "/home/dev_kaeem/br11-review/r16/E/trace_repro.py", line 59, in <module>
+    assert refused and len(calls) == 1, "handed spend lost after interrupted retention and restore"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: handed spend lost after interrupted retention and restore

@@ -225,6 +225,15 @@ class ProcessTreeMonitor:
         """Stop the child and, where the OS can, every descendant with it."""
         if self._job is not None:
             self._job.terminate()
+        elif not WINDOWS:
+            # runner creates a new session before exec: its PID is the group
+            # identity even after the direct child has exited. Never signal
+            # the observer's own process group.
+            import signal
+            try:
+                os.killpg(self._proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
         elif self._proc.poll() is None:
             self._proc.kill()
 

@@ -1,0 +1,15 @@
+--- revision 1²
+world built; declaration revision '1²'
+gateway.admit raised ValueError: invalid literal for int() with base 10: '1²'
+--- revision ١
+world built; declaration revision '١'
+admission: MISSING_INFORMATION ['AUTHORITY_STALE']
+--- revision 0
+world built; declaration revision '0'
+admission: MISSING_INFORMATION ['AUTHORITY_STALE']
+--- revision 99
+world built; declaration revision '99'
+admission: MISSING_INFORMATION ['AUTHORITY_STALE']
+--- revision x
+world built; declaration revision 'x'
+admission: MISSING_INFORMATION ['AUTHORITY_STALE']

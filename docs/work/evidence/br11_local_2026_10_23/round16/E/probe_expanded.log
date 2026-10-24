@@ -1,0 +1,337 @@
+raw_history ('04541d50a680590dfa7a848845aa2b9fe2215f584cf835401405b5cbad3e3032',)
+restored_history ('d5726c42faecb2749a9623325955a9114136d9d8e1205b6f30b9c4104d60d475',)
+.raw_history ('04541d50a680590dfa7a848845aa2b9fe2215f584cf835401405b5cbad3e3032',)
+restored_history ('d5726c42faecb2749a9623325955a9114136d9d8e1205b6f30b9c4104d60d475',)
+restored_result budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+diverged {('ledger', 'a'): "budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)"}
+Fpending_types []
+dispatch_refused True executor_calls 1 diverged {}
+.pending_types []
+dispatch_refused True executor_calls 1 diverged {}
+.pending_types ['tuple']
+dispatch_refused False executor_calls 2 diverged {}
+Fpending_types ['tuple']
+dispatch_refused False executor_calls 2 diverged {}
+Fpending_types []
+dispatch_refused True executor_calls 1 diverged {}
+.pending_types []
+dispatch_refused True executor_calls 1 diverged {}
+.pending_types ['tuple']
+dispatch_refused False executor_calls 2 diverged {}
+Fpending_types ['tuple']
+dispatch_refused False executor_calls 2 diverged {}
+Fpending_types []
+dispatch_refused True executor_calls 1 diverged {}
+.pending_types []
+dispatch_refused True executor_calls 1 diverged {}
+.pending_types ['tuple']
+dispatch_refused False executor_calls 2 diverged {}
+Fpending_types ['tuple']
+dispatch_refused False executor_calls 2 diverged {}
+F..
+=================================== FAILURES ===================================
+________________ test_integer_charge_checkpoint_recovers[True] _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7db28669c230>
+interrupt = True
+
+    @pytest.mark.parametrize("interrupt", [False, True])
+    def test_integer_charge_checkpoint_recovers(monkeypatch, interrupt):
+        held = {"a": BudgetLedger(total_budget=100)}
+        reader = BudgetReader.following(lambda: (held, {}))
+        # Public owner constructors accept ordinary numeric values and normalize on load.
+        charge = BudgetCharge(charge_id="run.1", action_id="simulate", iteration=1,
+                              family=ActionFamily.EXPLORE, realized=1, from_general_pool=1)
+        held["a"] = BudgetLedger(total_budget=100, charges=(charge,))
+        payload = held["a"].to_dict()
+        original = BudgetReader._account
+        if interrupt:
+            armed = [True]
+            def fail_once(self, key):
+                if armed:
+                    armed.pop()
+                    raise KeyboardInterrupt("explicit pre-read checkpoint")
+                return original(self, key)
+            with monkeypatch.context() as m:
+                m.setattr(BudgetReader, "_account", fail_once)
+                with pytest.raises(KeyboardInterrupt):
+                    reader.pinned()
+        else:
+            assert reader.read(K, "a") is not None
+        held["a"] = BudgetLedger.from_dict(payload)
+        print("raw_history", BudgetReader._history((charge,)))
+        print("restored_history", BudgetReader._history(held["a"].charges))
+        try:
+>           record = reader.read(K, "a")
+                     ^^^^^^^^^^^^^^^^^^^
+
+../br11-review/r16/E/test_e_replay.py:40: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/engcore/mind/world/owners.py:1014: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/engcore/mind/world/owners.py:1015: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x7db28669c680>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a' rewrote its history (it neither extends nor is a prefix of the history this reader observed): refused by this reader from then on (a new timeline is stated with a new reader)
+
+src/engcore/mind/world/owners.py:1078: OwnerUnavailable
+_ test_retention_interrupted_twice_keeps_spend[KeyboardInterrupt-True-first_mapping] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7db2f417f9b0>
+phase = 'first_mapping', repeated = True, failure = <class 'KeyboardInterrupt'>
+
+    @pytest.mark.parametrize("phase", ["first_mapping", "second_mapping"])
+    @pytest.mark.parametrize("repeated", [False, True])
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_retention_interrupted_twice_keeps_spend(monkeypatch, phase, repeated, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers, o.experiments), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = ow._items
+        chosen = o.ledgers if phase == "first_mapping" else o.experiments
+        remaining = [1, 1] if repeated else [1]
+        def interrupted_items(mapping):
+            if mapping is chosen and remaining:
+                remaining.pop()
+                raise failure("explicit native retention checkpoint")
+            return original(mapping)
+        with monkeypatch.context() as m:
+            m.setattr(ow, "_items", interrupted_items)
+            with pytest.raises(failure):
+                reader.pinned()
+        print("pending_types", [type(x).__name__ for x in reader._uncompared.values()])
+        assert bool(reader._uncompared) is repeated and reader._sealed is None
+        o.ledgers[lid] = checkpoint
+        refused = _refused(gateway, result.admitted)
+        print("dispatch_refused", refused, "executor_calls", len(calls), "diverged", reader._diverged)
+>       assert refused and calls == [1]
+E       assert (False)
+
+../br11-review/r16/E/test_e_replay.py:77: AssertionError
+_ test_retention_interrupted_twice_keeps_spend[KeyboardInterrupt-True-second_mapping] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7db2864a9eb0>
+phase = 'second_mapping', repeated = True, failure = <class 'KeyboardInterrupt'>
+
+    @pytest.mark.parametrize("phase", ["first_mapping", "second_mapping"])
+    @pytest.mark.parametrize("repeated", [False, True])
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_retention_interrupted_twice_keeps_spend(monkeypatch, phase, repeated, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers, o.experiments), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = ow._items
+        chosen = o.ledgers if phase == "first_mapping" else o.experiments
+        remaining = [1, 1] if repeated else [1]
+        def interrupted_items(mapping):
+            if mapping is chosen and remaining:
+                remaining.pop()
+                raise failure("explicit native retention checkpoint")
+            return original(mapping)
+        with monkeypatch.context() as m:
+            m.setattr(ow, "_items", interrupted_items)
+            with pytest.raises(failure):
+                reader.pinned()
+        print("pending_types", [type(x).__name__ for x in reader._uncompared.values()])
+        assert bool(reader._uncompared) is repeated and reader._sealed is None
+        o.ledgers[lid] = checkpoint
+        refused = _refused(gateway, result.admitted)
+        print("dispatch_refused", refused, "executor_calls", len(calls), "diverged", reader._diverged)
+>       assert refused and calls == [1]
+E       assert (False)
+
+../br11-review/r16/E/test_e_replay.py:77: AssertionError
+_ test_retention_interrupted_twice_keeps_spend[RecursionError-True-first_mapping] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7db2f37bffb0>
+phase = 'first_mapping', repeated = True, failure = <class 'RecursionError'>
+
+    @pytest.mark.parametrize("phase", ["first_mapping", "second_mapping"])
+    @pytest.mark.parametrize("repeated", [False, True])
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_retention_interrupted_twice_keeps_spend(monkeypatch, phase, repeated, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers, o.experiments), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = ow._items
+        chosen = o.ledgers if phase == "first_mapping" else o.experiments
+        remaining = [1, 1] if repeated else [1]
+        def interrupted_items(mapping):
+            if mapping is chosen and remaining:
+                remaining.pop()
+                raise failure("explicit native retention checkpoint")
+            return original(mapping)
+        with monkeypatch.context() as m:
+            m.setattr(ow, "_items", interrupted_items)
+            with pytest.raises(failure):
+                reader.pinned()
+        print("pending_types", [type(x).__name__ for x in reader._uncompared.values()])
+        assert bool(reader._uncompared) is repeated and reader._sealed is None
+        o.ledgers[lid] = checkpoint
+        refused = _refused(gateway, result.admitted)
+        print("dispatch_refused", refused, "executor_calls", len(calls), "diverged", reader._diverged)
+>       assert refused and calls == [1]
+E       assert (False)
+
+../br11-review/r16/E/test_e_replay.py:77: AssertionError
+_ test_retention_interrupted_twice_keeps_spend[RecursionError-True-second_mapping] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7db28669e570>
+phase = 'second_mapping', repeated = True, failure = <class 'RecursionError'>
+
+    @pytest.mark.parametrize("phase", ["first_mapping", "second_mapping"])
+    @pytest.mark.parametrize("repeated", [False, True])
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_retention_interrupted_twice_keeps_spend(monkeypatch, phase, repeated, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers, o.experiments), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = ow._items
+        chosen = o.ledgers if phase == "first_mapping" else o.experiments
+        remaining = [1, 1] if repeated else [1]
+        def interrupted_items(mapping):
+            if mapping is chosen and remaining:
+                remaining.pop()
+                raise failure("explicit native retention checkpoint")
+            return original(mapping)
+        with monkeypatch.context() as m:
+            m.setattr(ow, "_items", interrupted_items)
+            with pytest.raises(failure):
+                reader.pinned()
+        print("pending_types", [type(x).__name__ for x in reader._uncompared.values()])
+        assert bool(reader._uncompared) is repeated and reader._sealed is None
+        o.ledgers[lid] = checkpoint
+        refused = _refused(gateway, result.admitted)
+        print("dispatch_refused", refused, "executor_calls", len(calls), "diverged", reader._diverged)
+>       assert refused and calls == [1]
+E       assert (False)
+
+../br11-review/r16/E/test_e_replay.py:77: AssertionError
+_ test_retention_interrupted_twice_keeps_spend[MemoryError-True-first_mapping] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7db2861881d0>
+phase = 'first_mapping', repeated = True, failure = <class 'MemoryError'>
+
+    @pytest.mark.parametrize("phase", ["first_mapping", "second_mapping"])
+    @pytest.mark.parametrize("repeated", [False, True])
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_retention_interrupted_twice_keeps_spend(monkeypatch, phase, repeated, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers, o.experiments), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = ow._items
+        chosen = o.ledgers if phase == "first_mapping" else o.experiments
+        remaining = [1, 1] if repeated else [1]
+        def interrupted_items(mapping):
+            if mapping is chosen and remaining:
+                remaining.pop()
+                raise failure("explicit native retention checkpoint")
+            return original(mapping)
+        with monkeypatch.context() as m:
+            m.setattr(ow, "_items", interrupted_items)
+            with pytest.raises(failure):
+                reader.pinned()
+        print("pending_types", [type(x).__name__ for x in reader._uncompared.values()])
+        assert bool(reader._uncompared) is repeated and reader._sealed is None
+        o.ledgers[lid] = checkpoint
+        refused = _refused(gateway, result.admitted)
+        print("dispatch_refused", refused, "executor_calls", len(calls), "diverged", reader._diverged)
+>       assert refused and calls == [1]
+E       assert (False)
+
+../br11-review/r16/E/test_e_replay.py:77: AssertionError
+_ test_retention_interrupted_twice_keeps_spend[MemoryError-True-second_mapping] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7db2865e27b0>
+phase = 'second_mapping', repeated = True, failure = <class 'MemoryError'>
+
+    @pytest.mark.parametrize("phase", ["first_mapping", "second_mapping"])
+    @pytest.mark.parametrize("repeated", [False, True])
+    @pytest.mark.parametrize("failure", [KeyboardInterrupt, RecursionError, MemoryError])
+    def test_retention_interrupted_twice_keeps_spend(monkeypatch, phase, repeated, failure):
+        o = ax.owned("battery")
+        lid = _solver(o)
+        calls = []
+        def executor(authorization):
+            calls.append(1)
+            _settle(o.ledgers[lid], f"run.{len(calls)}")
+        reader, authorities, gateway, result = _desk(o, lambda: (o.ledgers, o.experiments), executor)
+        checkpoint = BudgetLedger.from_dict(o.ledgers[lid].to_dict())
+        gateway.dispatch(result.admitted)
+        original = ow._items
+        chosen = o.ledgers if phase == "first_mapping" else o.experiments
+        remaining = [1, 1] if repeated else [1]
+        def interrupted_items(mapping):
+            if mapping is chosen and remaining:
+                remaining.pop()
+                raise failure("explicit native retention checkpoint")
+            return original(mapping)
+        with monkeypatch.context() as m:
+            m.setattr(ow, "_items", interrupted_items)
+            with pytest.raises(failure):
+                reader.pinned()
+        print("pending_types", [type(x).__name__ for x in reader._uncompared.values()])
+        assert bool(reader._uncompared) is repeated and reader._sealed is None
+        o.ledgers[lid] = checkpoint
+        refused = _refused(gateway, result.admitted)
+        print("dispatch_refused", refused, "executor_calls", len(calls), "diverged", reader._diverged)
+>       assert refused and calls == [1]
+E       assert (False)
+
+../br11-review/r16/E/test_e_replay.py:77: AssertionError
+=========================== short test summary info ============================
+FAILED ../br11-review/r16/E/test_e_replay.py::test_integer_charge_checkpoint_recovers[True]
+FAILED ../br11-review/r16/E/test_e_replay.py::test_retention_interrupted_twice_keeps_spend[KeyboardInterrupt-True-first_mapping]
+FAILED ../br11-review/r16/E/test_e_replay.py::test_retention_interrupted_twice_keeps_spend[KeyboardInterrupt-True-second_mapping]
+FAILED ../br11-review/r16/E/test_e_replay.py::test_retention_interrupted_twice_keeps_spend[RecursionError-True-first_mapping]
+FAILED ../br11-review/r16/E/test_e_replay.py::test_retention_interrupted_twice_keeps_spend[RecursionError-True-second_mapping]
+FAILED ../br11-review/r16/E/test_e_replay.py::test_retention_interrupted_twice_keeps_spend[MemoryError-True-first_mapping]
+FAILED ../br11-review/r16/E/test_e_replay.py::test_retention_interrupted_twice_keeps_spend[MemoryError-True-second_mapping]
+7 failed, 9 passed in 2.10s

@@ -1,0 +1,1 @@
+{'worlds': 72, 'fixed_cases': 2268, 'ctrl_cases': 798, 'bind_ne_check': 0, 'exec_ne': 0, 'mint_ne': 0, 'admitted': 393, 'replays': 393, 'replay_bad': 0, 'raised': 0, 'bind_refused': 370, 'world_refused': 8}

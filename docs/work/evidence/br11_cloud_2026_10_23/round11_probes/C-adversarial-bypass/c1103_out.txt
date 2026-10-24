@@ -1,0 +1,8 @@
+('B0', 'FEASIBLE', 1.29, [])
+('A0', 'FEASIBLE', 2.13, [])
+('A1', 'MISSING_INFORMATION', 2.4, ['another verification of this budget reader was still in flight 1.0 s a'])
+('B1', 'FEASIBLE', 1.61, [])
+('B2', 'FEASIBLE', 1.61, [])
+('A2', 'FEASIBLE', 2.44, [])
+sequential control:
+('S', 'FEASIBLE', 1.07, [])

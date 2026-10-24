@@ -1,0 +1,86 @@
+......FF........................                                         [100%]
+=================================== FAILURES ===================================
+______ test_ledger_retains_its_default_string_and_nonfinite_rules[value0] ______
+
+value = <tests.mind.test_authority_review_r17._Text object at 0x76c963bc28a0>
+
+    @pytest.mark.parametrize("value", [_Text(), float("nan")])
+    def test_ledger_retains_its_default_string_and_nonfinite_rules(value):
+        account, held, follow, reader, owner_kind = _fixture("ledger")
+        _append(account, "ledger", value, iteration=_Iteration())
+        _interrupt_handing(reader)
+        held[0] = _checkpoint(account, "ledger")
+>       assert reader.read(owner_kind, "a") == BudgetReader.following(follow).read(owner_kind, "a")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r17.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py:1055: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py:1056: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x76c8f61e2d50>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a': previously unread entries could not be reconciled (TypeError); refused for this verification only
+
+../br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py:1119: OwnerUnavailable
+_______ test_ledger_retains_its_default_string_and_nonfinite_rules[nan] ________
+
+value = nan
+
+    @pytest.mark.parametrize("value", [_Text(), float("nan")])
+    def test_ledger_retains_its_default_string_and_nonfinite_rules(value):
+        account, held, follow, reader, owner_kind = _fixture("ledger")
+        _append(account, "ledger", value, iteration=_Iteration())
+        _interrupt_handing(reader)
+        held[0] = _checkpoint(account, "ledger")
+>       assert reader.read(owner_kind, "a") == BudgetReader.following(follow).read(owner_kind, "a")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/mind/test_authority_review_r17.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py:1055: in read
+    return self.pinned().read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py:1056: in read
+    return self._read(kind, record_id)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <engcore.mind.world.owners.BudgetReader object at 0x76c8f61ea0f0>
+kind = <OwnerKind.BUDGET_LEDGER: 'budget_ledger'>, record_id = 'a'
+
+    def _read(self, kind: OwnerKind, record_id: str) -> OwnerRecord | None:
+        kind = OwnerKind(kind)
+        if kind not in self.kinds:
+            return None
+        key = ("ledger" if kind is K.BUDGET_LEDGER else "experiment", record_id)
+        if self._observed is None:
+            self._deadline = time.monotonic() + self.WAIT_S
+            return self._account(key)[0]
+        observed = self._observed.get(key)
+        if isinstance(observed, str):
+>           raise OwnerUnavailable(observed)
+E           engcore.mind.world.authority.OwnerUnavailable: budget ledger 'a': previously unread entries could not be reconciled (ScientificCoreError); refused for this verification only
+
+../br11-review/r17/REPAIR/mutants/ledger_scientific_json/src/engcore/mind/world/owners.py:1119: OwnerUnavailable
+=========================== short test summary info ============================
+FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[value0]
+FAILED tests/mind/test_authority_review_r17.py::test_ledger_retains_its_default_string_and_nonfinite_rules[nan]
+2 failed, 30 passed in 1.94s

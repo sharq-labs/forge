@@ -1,0 +1,8 @@
+admitted: True
+moved forward (observed)                 reader: accepted rev 4 | dispatch A: refused (ORITY_STALE))
+rolled back                              reader: refused: budget experiment 'synthetic.battery.pulse-cell.experiment' is behind the history this rea | dispatch A: refused (ORITY_OWNER_UNAVAILABLE))
+re-extended by another evaluation        reader: refused: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote its history (it neithe | dispatch A: refused (ORITY_OWNER_UNAVAILABLE))
+rolled back again (admitted state)       reader: refused: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote its history (it neithe | dispatch A: refused (ORITY_OWNER_UNAVAILABLE))
+restored to the observed state           reader: refused: budget experiment 'synthetic.battery.pulse-cell.experiment' rewrote its history (it neithe | dispatch A: refused (ORITY_OWNER_UNAVAILABLE))
+executor ran 0
+exit 0
