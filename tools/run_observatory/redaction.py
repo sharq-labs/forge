@@ -36,7 +36,7 @@ _AUTH_HEADER = re.compile(r"(?i)(authorization[\"']?\s*[:=]\s*[\"']?)(?:(?:beare
                           r"(?!<REDACTED>)[^\s\"',;]+")
 _URL_USERINFO = re.compile(r"(?i)\b([a-z][a-z0-9+.-]*://[^/\s:@]+:)([^/\s@]+)(@)")
 _ASSIGNMENT = re.compile(
-    rf"(?i)((?:{_NAME_CHARS})*(?:password|passwd|passphrase|secret|token|api[_-]?key|apikey|access[_-]?key|"
+    rf"(?i)\b((?:{_NAME_CHARS})*(?:password|passwd|passphrase|secret|token|api[_-]?key|apikey|access[_-]?key|"
     rf"private[_-]?key|credential)(?:{_NAME_CHARS})*[\"']?\s*[=:]\s*)(\"[^\"]*\"|'[^']*'|[^\s,;&\"']+)")
 
 #: Shorter values are too likely to occur by accident to be searched for in output.

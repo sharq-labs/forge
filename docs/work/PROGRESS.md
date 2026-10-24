@@ -10038,3 +10038,22 @@ R22 full-assurance rerun follow-up (a257bc4fb10515a9f870d9b2c9941a89126a7d77):
 - Exact focused command: .forge/venvs/3.12/bin/python -m pytest -q -p no:cacheprovider benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance; 2 passed in 13.48s, exit 0.
 - Independent read-only provenance review: PASS. It confirmed the artifact digest is unchanged, the historical source blob matches the recorded digest, and the new commit identity binds that source. The review does not claim to establish the original producer invocation.
 - This source needs a new immutable commit and complete local-assurance rerun. The failed run remains preserved; SAFE_TO_PUSH is NO, and no push or merge was performed.
+
+
+## PR #186 review repair — 2026-10-24
+
+Bounded repair of stored-log redaction across chunks, child-relative JUnit
+paths and POSIX descendant termination. Main d19d7694 is merged locally;
+both DOCSET entries and both progress histories retained. No published history
+rewritten. Oversized pending log records fail closed with an explicit omission
+flag; raw passthrough/hashing retain their documented semantics.
+
+Windows interpreter: C:/Users/dev_kaeem/Downloads/Compressed/phyx/.venv/Scripts/python.exe.
+Commands/results:
+- `tools/forge_check.py --changed --base d19d76946506d5b3625f8eaa031dd87c7e2bfdd2 --workers 4`: exit 1, pytest INTERNALERROR, shared temp directory permission denied.
+- `-m pytest tests/test_run_observatory.py -q --tb=short`: 26 passed, 2 POSIX skips, 53 setup errors (shared temp permissions).
+- Same targeted command with `--basetemp=.pytest-review-temp/pr186-targeted`: 26 passed, 2 skips, 53 setup errors (missing parent). Parent created for retry.
+- Retry with `--basetemp=.pytest-review-temp/pr186-targeted-2`: interrupted after the new long-line probe exposed excessive regex rescanning; no pass claimed. One earlier failure remains to diagnose on retry.
+- WSL `PYTHONPATH=src:. /home/dev_kaeem/forge-r22-assurance/.forge/venvs/3.12/bin/python -m pytest tests/test_run_observatory.py -q --tb=short`: interrupted at the same long-line regression. Corrected regex boundary; rerun pending.
+Logs remain externally in C:/Users/dev_kaeem/.codex/forge-integration-20261024-131933/pr186-*.log and /home/dev_kaeem/pr186-*.log.
+Official assurance, independent approval and protected publication remain pending.

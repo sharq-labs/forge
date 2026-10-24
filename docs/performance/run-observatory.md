@@ -292,3 +292,17 @@ recorded duration is not. Numbers and commands: `docs/work/PROGRESS.md` (BR-RUN-
 - v2: solver / provider adapters with trusted counters and replay identities.
 - v3: MegaCorpus / data-efficiency telemetry beyond declared counters.
 - v4: dashboard and trends over the ledger.
+
+
+### Stored-log framing and POSIX interrupts
+
+Stored logs buffer incomplete lines, known multiline secrets and PEM blocks
+before redaction. If pending input exceeds 1 MiB, remaining stored output is
+omitted; `redaction_limit_omitted` records this explicitly. Raw hashes and
+terminal passthrough still cover original bytes. An incomplete PEM at EOF is
+redacted. This does not guarantee recognition of every possible secret format.
+
+POSIX commands start in a separate session/process group. Interrupts are
+forwarded to that group; escalation kills the group even after its direct child
+exits. Descendants deliberately creating separate sessions are outside this
+process-group contract; the observer is not a hostile-process sandbox.
