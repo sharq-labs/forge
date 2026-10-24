@@ -42,6 +42,9 @@ def write_log(log: str, rc: int) -> None:
 def main(argv: list[str]) -> int:
     log, rest = argv[0], argv[argv.index("--") + 1:]
     install()
+    # Candidate imports must not create __pycache__ files in their source tree.
+    # The audit hook observes those writes and correctly treats them as leakage.
+    sys.dont_write_bytecode = True
     from benchmarks.battery_rediscovery_v2.candidate import run  # GEN1, imported only after the hook is installed
 
     rc = 1
