@@ -8,6 +8,8 @@ reference application).
 
 ## Current bounded task - R21 integration gate recovery (2026-10-24)
 
+**R21 status: BLOCKED after completed bounded integration repairs.** Main-history reconciliation, all1211unknown provenance entries, complete746classification, retention/secret audit, local runtime setup and two required-runtime test portability repairs are complete. Final reviewed measured source`d05abfdf8216eda24a6235a9c7565d276f9a7fcc`:officialassurance REFUSED atFAST311 (59failed12922passed176skipped), SAFE_TO_PUSH:NO. Allfourinitialadditionalfailuresresolved;59remainingIDs matchRound20comparison, not a causal-equivalence claim. No receipt/certificatechild/push/merge. Stop for separate scientific/Core/OD3 repair authorization and private-protection/independent-human-review owneractions. Exact evidence and59nodeIDs: `docs/work/evidence/r21-integration-recovery/FINAL_REPORT.md`. No automatic retry, gate weakening or newBigRock.
+
 R21 is the current executable task. BR1.1 remains locally CLOSED; Kernel v0 and all
 new scientific implementation remain NOT STARTED. The owner explicitly authorized
 the documented full local-assurance workflow, campaigns, mutation shards and its
