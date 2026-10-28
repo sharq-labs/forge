@@ -10910,3 +10910,55 @@ HEAD stayed at `6538eed1` with the manifest unstaged and the scanner rejected it
 (1644 unknown); fixed with `update-ref` and re-run as above.
 Still failing by owner decision until OD-3: `test_synthetic_data_is_never_called_measured`,
 `test_current_repository_inventory_has_no_unreviewed_provenance` (one file).
+
+### 2026-10-28 — Genesis-lite v0.3 development path, strong baselines and dev pilot (owner-approved)
+
+Owner (chat): merge to local main and work there; approved (1) a v0.3 escrow/evaluator
+path keeping v0.2 as is, (2) PySINDy, BoTorch (CPU) and PySR with Julia in the /opt
+venv, (3) a development pilot with a 30-minute cap and 4 workers; red-first, review,
+record. Local `main` fast-forwarded to `d1fe7b0f` (no push).
+
+Design constraint found: the v0.2 preregistration byte-pins harness, evaluator and
+blindfold substrate (`escrow.py`, `roles.py`, `universe.py`, `baselines.py`,
+`expression.py`); any edit invalidates v0.2. v0.3 therefore lives in new files and
+applies FDA-05 to the escrow's signed pair facts (`contains_truth`/`brackets_truth`).
+`code_identity()` changed == [] throughout; v0.2 CONFIG digest `c545d486…` unchanged.
+
+Installs (/opt venv, `install_baselines.sh`, logs `~/forge-mvp-20261028-evidence/baselines/`):
+torch 2.15.0+cpu (CUDA False), botorch 0.18.1, gpytorch 1.15.2, pysindy 2.1.0,
+pysr 2.7.2 with Julia (`import pysr; PySRRegressor` ok), sympy 1.14.0; `pip check` clean.
+
+Commits (local main): `69597fbe` adjudication_v3 + score_v3.evaluate_campaign +
+harness_v3 (red 15 failed/1 passed; green 17; genesis_lite 178 passed; 600-campaign
+probe VALID with full agreement, 35 real unresolved pairs); `7c2e120f` arms_v3
+(red 9 failed; Linux 9 passed; genesis_lite Linux 187, Windows 180+7 skipped);
+`ef9eeeb0` review round 1 (F1 BoTorch box-edge ulp silently became LHS; F2 library
+failures earned refusal credit -> now propagate to inadmissible; F4 identity; red 3
+failed; Linux 191 passed); `1e913d92` pilot runner (red 5; green 5); `5daaba81` thread
+pinning (smoke: BoTorch 318 s -> 17 s per campaign with 4 unpinned workers); `ea894e61`
+pilot review round 2 (I-1 lost futures at deadline, I-2 unpaired credit, I-3 biased
+estimate, I-5 None->0 memory, I-6..I-9; red 7 failed/6 passed; green 13; Windows
+genesis_lite 197 passed, 7 skipped). Regression `forge_check --regression` 279 passed
+(Windows). Reviews: round 1 CHANGES REQUIRED (2 HIGH), round 2 no BLOCKER/HIGH
+(4 MEDIUM, fixed). Round 3 review of `ea894e61` NOT RUN.
+
+Pilot (`/opt` at `5daaba81`, clean; `timeout 1800 .venv/bin/python -m
+benchmarks.genesis_lite.pilot_v3 --out ~/forge-mvp-20261028-evidence/pilot-v3-dev-2026-10-28
+--arms all --workers 4`): **1920 planned, 1920 completed, 0 not_run, 0 interrupted
+in 675.68 s**; 16 arms x 120 paired world sets (10 campaigns x 4 presentations x 3
+seeds), all 120 world sets VALID for every arm; one development identity `3f385361…`
+for all runs; v0.2 pin unchanged. Re-summarized with the round-2 summarizer
+(`--resummarize`, `ea894e61`): 0 evaluator disagreements, 0 library failures, 0 design
+fallbacks, 0 inadmissible, 7 unresolved (extrapolation_pair). Mean clean wall per
+campaign: PySR 4.35 s, BoTorch 16.60 s, others <= 0.11 s; worker max RSS ~1.19 GB.
+Formal-tier ESTIMATE (2400 campaigns per arm, single-worker seconds 52781.9):
+**3.67 h at 4 workers**. Descriptive paired mean credit per campaign (development
+only, not a rate or lift): careful 3.275, space_filling 3.183, random_structures
+2.496, bo_botorch_variance 2.467, ..., pysindy_stlsq 1.925, pysr_symbolic 1.508,
+always_insufficient 1.500, always_law -4.600. The Minimal Mind was not an arm.
+Repo copies: `benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/`
+(summary.json sha256 `4ab18824…`, summary_resummarized.json `437eae33…`,
+environment.json `70b0f937…`, runs.jsonl sha256 `d594e9b9…`, 7.7 MB kept in the
+evidence dir). Root secret never written; only its commitment.
+Open: v0.3 pair-rule OWNER_DECISION_REQUIRED (ACTIVE_PLAN); v0.3 preregistration,
+custodian, Mind arm and formal budget not authorized.

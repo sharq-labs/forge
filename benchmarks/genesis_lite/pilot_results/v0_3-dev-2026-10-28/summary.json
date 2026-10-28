@@ -1,0 +1,533 @@
+{
+ "arms": {
+  "always_insufficient": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": 0.0,
+     "discoverable": 0.0,
+     "indistinguishable": 0.5,
+     "insufficient_evidence": 1.0,
+     "no_solution": 0.0,
+     "spurious_correlate": 0.0
+    },
+    "mean_total_per_valid_run": 1.5
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "floor: blanket refusal (existing)",
+   "formal_cost_estimate_seconds": 40.7,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 0.0,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.03,
+   "wall_seconds_mean": 0.017,
+   "wall_seconds_total": 2.036,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "always_law": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -1.0,
+     "discoverable": 0.05,
+     "indistinguishable": -0.7667,
+     "insufficient_evidence": -1.0,
+     "no_solution": -1.0,
+     "spurious_correlate": -0.8833
+    },
+    "mean_total_per_valid_run": -4.6
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "floor: always proposes (existing)",
+   "formal_cost_estimate_seconds": 193.7,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.136,
+   "wall_seconds_mean": 0.0807,
+   "wall_seconds_total": 9.687,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "always_refuse": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": 0.0,
+     "discoverable": 0.0,
+     "indistinguishable": 0.0,
+     "insufficient_evidence": 0.0,
+     "no_solution": 1.0,
+     "spurious_correlate": 0.0
+    },
+    "mean_total_per_valid_run": 1.0
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "floor: never proposes (existing)",
+   "formal_cost_estimate_seconds": 40.4,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 0.0,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.031,
+   "wall_seconds_mean": 0.0168,
+   "wall_seconds_total": 2.02,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "bo_botorch_variance": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.0917,
+     "discoverable": 0.1833,
+     "indistinguishable": 0.4583,
+     "insufficient_evidence": 0.8833,
+     "no_solution": 0.9083,
+     "spurious_correlate": 0.125
+    },
+    "mean_total_per_valid_run": 2.4667
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "experiment selection: BoTorch GP posterior-sd design",
+   "formal_cost_estimate_seconds": 39838.6,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 33.315,
+   "wall_seconds_mean": 16.5994,
+   "wall_seconds_total": 1991.93,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "careful": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": 0.7,
+     "discoverable": 0.175,
+     "indistinguishable": 0.5,
+     "insufficient_evidence": 0.95,
+     "no_solution": 0.7083,
+     "spurious_correlate": 0.2417
+    },
+    "mean_total_per_valid_run": 3.275
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "experiment selection: random design + replicate/holdout (existing)",
+   "formal_cost_estimate_seconds": 190.4,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.121,
+   "wall_seconds_mean": 0.0793,
+   "wall_seconds_total": 9.518,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "extrapolating_fit": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.3583,
+     "discoverable": 0.3167,
+     "indistinguishable": -0.15,
+     "insufficient_evidence": 0.8,
+     "no_solution": 0.9167,
+     "spurious_correlate": 0.2583
+    },
+    "mean_total_per_valid_run": 1.7833
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery that extrapolates outside the query box",
+   "formal_cost_estimate_seconds": 240.7,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.143,
+   "wall_seconds_mean": 0.1003,
+   "wall_seconds_total": 12.037,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "extrapolation_pair": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": 0.7,
+     "discoverable": 0.0833,
+     "indistinguishable": -0.0083,
+     "insufficient_evidence": 0.9,
+     "no_solution": 0.6417,
+     "spurious_correlate": 0.125
+    },
+    "mean_total_per_valid_run": 2.4417
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "indistinguishable answer: fixed rival-pair heuristic",
+   "formal_cost_estimate_seconds": 198.4,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 7,
+   "valid": 120,
+   "wall_seconds_max": 0.194,
+   "wall_seconds_mean": 0.0827,
+   "wall_seconds_total": 9.921,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "fit_all_gated": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.6667,
+     "discoverable": 0.2583,
+     "indistinguishable": -0.0667,
+     "insufficient_evidence": -0.2667,
+     "no_solution": 0.6083,
+     "spurious_correlate": -0.35
+    },
+    "mean_total_per_valid_run": -0.4833
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+   "formal_cost_estimate_seconds": 189.5,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.147,
+   "wall_seconds_mean": 0.079,
+   "wall_seconds_total": 9.475,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "greedy_forward": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.1333,
+     "discoverable": 0.2,
+     "indistinguishable": 0.4625,
+     "insufficient_evidence": 0.8,
+     "no_solution": 0.9417,
+     "spurious_correlate": 0.125
+    },
+    "mean_total_per_valid_run": 2.3958
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "variable-primitive selection: greedy forward",
+   "formal_cost_estimate_seconds": 215.1,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.133,
+   "wall_seconds_mean": 0.0896,
+   "wall_seconds_total": 10.757,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "historical_answer": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.25,
+     "discoverable": -0.25,
+     "indistinguishable": 0.125,
+     "insufficient_evidence": 0.5,
+     "no_solution": -0.25,
+     "spurious_correlate": -0.25
+    },
+    "mean_total_per_valid_run": -0.375
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "adversarial: textbook answer for familiar vocabulary",
+   "formal_cost_estimate_seconds": 78.4,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 53.05,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.121,
+   "wall_seconds_mean": 0.0327,
+   "wall_seconds_total": 3.921,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "monomial_enumeration": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.15,
+     "discoverable": 0.2083,
+     "indistinguishable": 0.425,
+     "insufficient_evidence": 0.8333,
+     "no_solution": 0.9417,
+     "spurious_correlate": 0.15
+    },
+    "mean_total_per_valid_run": 2.4083
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: enumeration of the frozen v0 monomial family",
+   "formal_cost_estimate_seconds": 241.3,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.139,
+   "wall_seconds_mean": 0.1006,
+   "wall_seconds_total": 12.067,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "pysindy_stlsq": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.2583,
+     "discoverable": 0.2167,
+     "indistinguishable": 0.5,
+     "insufficient_evidence": 0.9583,
+     "no_solution": 0.575,
+     "spurious_correlate": -0.0667
+    },
+    "mean_total_per_valid_run": 1.925
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "sparse identification: PySINDy STLSQ over the log-monomial library",
+   "formal_cost_estimate_seconds": 259.1,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 1.476,
+   "wall_seconds_mean": 0.1079,
+   "wall_seconds_total": 12.953,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "pysr_symbolic": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.0833,
+     "discoverable": 0.0083,
+     "indistinguishable": 0.4417,
+     "insufficient_evidence": 0.5917,
+     "no_solution": 0.5417,
+     "spurious_correlate": 0.0083
+    },
+    "mean_total_per_valid_run": 1.5083
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: PySR symbolic regression (development configuration)",
+   "formal_cost_estimate_seconds": 10443.7,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 13.226,
+   "wall_seconds_mean": 4.3515,
+   "wall_seconds_total": 522.185,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "random_structures": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": -0.0083,
+     "discoverable": 0.2,
+     "indistinguishable": 0.4292,
+     "insufficient_evidence": 0.8167,
+     "no_solution": 0.925,
+     "spurious_correlate": 0.1333
+    },
+    "mean_total_per_valid_run": 2.4958
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: constrained random structures (v0 family)",
+   "formal_cost_estimate_seconds": 238.5,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.148,
+   "wall_seconds_mean": 0.0994,
+   "wall_seconds_total": 11.926,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "single_setting": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": 1.0,
+     "discoverable": 0.0,
+     "indistinguishable": 0.4958,
+     "insufficient_evidence": 0.9583,
+     "no_solution": 0.0,
+     "spurious_correlate": 0.0
+    },
+    "mean_total_per_valid_run": 2.4542
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "non-discoverer control (existing)",
+   "formal_cost_estimate_seconds": 184.9,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.124,
+   "wall_seconds_mean": 0.077,
+   "wall_seconds_total": 9.245,
+   "worker_maxrss_kib_max": 1219764
+  },
+  "space_filling": {
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result",
+    "mean_per_kind": {
+     "confounded": 0.6833,
+     "discoverable": 0.1833,
+     "indistinguishable": 0.5,
+     "insufficient_evidence": 0.8917,
+     "no_solution": 0.7083,
+     "spurious_correlate": 0.2167
+    },
+    "mean_total_per_valid_run": 3.1833
+   },
+   "evaluator_disagreement_invalid": 0,
+   "family": "experiment selection: space-filling design",
+   "formal_cost_estimate_seconds": 188.5,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "not_run": 0,
+   "observe_calls_mean": 210.6,
+   "runs": 120,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 120,
+   "wall_seconds_max": 0.124,
+   "wall_seconds_mean": 0.0785,
+   "wall_seconds_total": 9.426,
+   "worker_maxrss_kib_max": 1219764
+  }
+ },
+ "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
+ "claims": "COST_MEASUREMENT_ONLY",
+ "design": {
+  "campaigns_per_presentation_per_seed": 10,
+  "deadline_seconds": 1680,
+  "presentations": [
+   "anonymous",
+   "renamed",
+   "paraphrased",
+   "trap"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "workers": 4
+ },
+ "elapsed_seconds": 675.68,
+ "formal_tier_estimate": {
+  "campaigns_per_arm": 2400,
+  "label": "ESTIMATE from measured mean wall per campaign; single-worker seconds",
+  "sum_over_arms_seconds": 52781.9,
+  "wall_hours_at_4_workers": 3.67
+ },
+ "paired_world_sets_complete": 120,
+ "readiness": "DEVELOPMENT_ONLY",
+ "tasks": {
+  "completed": 1920,
+  "interrupted": 0,
+  "not_run": 0,
+  "planned": 1920
+ }
+}

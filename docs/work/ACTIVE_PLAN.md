@@ -95,6 +95,23 @@ drift still needs commit + recertification under their own approval.
 - [ ] Deferred, not authorized: I-5 minimum independent final units/uncertainty;
   I-7..I-9; L-4 replay cost O(steps x reviews x search).
 
+Genesis-lite v0.3 development path (owner-approved 2026-10-28: v0.3 escrow/evaluator
+path keeping v0.2, PySINDy/BoTorch-CPU/PySR+Julia in the /opt venv, a 30-minute
+4-worker development pilot). Done on local main: `69597fbe` v0.3 path, `7c2e120f`
+baseline arms, `ef9eeeb0`/`ea894e61` review fixes, `1e913d92`/`5daaba81` pilot
+runner; pilot 1920/1920 campaigns VALID in 675.7 s, formal-tier ESTIMATE 3.67 h at
+4 workers (`benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/`). The v0.2
+preregistered identity is unchanged. DEVELOPMENT_ONLY: not a formal campaign, no lift.
+- [ ] OWNER_DECISION_REQUIRED (v0.3 pair rule): the escrow's `_assess_pair` (pinned
+  v0.2) and `score_v3._pair_outcome` differ in five places (distance |a-b|/|b| vs
+  |a-b|/max, bracketing bounds, non-finite outside truths, zero truths); every
+  disagreement invalidates the campaign (0 of 1920 in the pilot). Decide which rule
+  v0.3 adopts before a formal v0.3 identity; changing the escrow requires a new
+  preregistration and recertification.
+- [ ] Next toward formal Blindfold (each needs its own approval): v0.3
+  preregistration (thresholds, power, units), independent custodian, Minimal Mind as
+  an arm (active-epic exception), formal campaign budget (~3.7 h ESTIMATE).
+
 Owner requested implementation of the review's work packages in this chat
 ("اعمل انتى كل ده"). Starting source: `dd567d53d2444950f57ffaeb9903c74d7c38f04d`,
 clean local `main`. This section is the executable continuation; earlier R21/R22

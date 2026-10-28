@@ -1,0 +1,30 @@
+{
+ "cpu_count": 20,
+ "deadline_seconds": 1680,
+ "development_identity": "3f385361bb29e25b86bd4c404a9ac905abc0711e0fade9e31dfa6dfb0ceff916",
+ "elapsed_seconds": 675.682794386,
+ "git_head": "5daaba81b30e721ee48b94a3ac3a653c80e7fd16",
+ "library_versions": {
+  "botorch": "0.18.1",
+  "gpytorch": "1.15.2",
+  "numpy": "2.5.4",
+  "pysindy": "2.1.0",
+  "pysr": "2.7.2",
+  "sympy": "1.14.0",
+  "torch": "2.15.0+cpu"
+ },
+ "platform": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+ "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+ "root_commitment_sha256": "29f46edfc12ab6273ef8669c9cd86cff5c86da17762187dc8fb0c4d2ce4f347f",
+ "started": "2026-10-28T19:51:42+0300",
+ "v0_2_pin_changed": [],
+ "v0_2_prereg_identity": "878e6812a825fc85dc1f181b323d9a1c7a630b55e346612ca73d6a5b4e696b64",
+ "worker_thread_limits": {
+  "JULIA_NUM_THREADS": "1",
+  "MKL_NUM_THREADS": "1",
+  "NUMEXPR_NUM_THREADS": "1",
+  "OMP_NUM_THREADS": "1",
+  "OPENBLAS_NUM_THREADS": "1"
+ },
+ "workers": 4
+}
