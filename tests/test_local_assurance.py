@@ -19,6 +19,14 @@ from tools.certification.local_assurance import (
 REPO = pathlib.Path(__file__).resolve().parents[1]
 
 
+@pytest.fixture
+def canonical_scratch_root(tmp_path, monkeypatch):
+    # Successful orchestration needs real, canonical ancestors. Windows TEMP
+    # can use an 8.3 alias, which the production ownership guard must refuse.
+    import tempfile
+    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path.resolve()))
+
+
 #: Hostile review F8: the CI control plane runs automatically (CLAUDE.md, CI policy) -- every pull request
 #: is classified and tested, certificate-sensitive ones are recertified, pushes to main rerun the merged-tree
 #: checks and the branch policy. Manual dispatch stays as an explicit fallback; nothing runs on a schedule.
@@ -119,7 +127,7 @@ def test_frozen_evidence_manifest_detects_tampering(tmp_path):
 @pytest.mark.parametrize("workers", [1, 2])
 @pytest.mark.parametrize("family,count", [("formal_mutations", 4), ("v4_mutations", 8)])
 @pytest.mark.parametrize("fail", [False, True])
-def test_shards_are_bounded_isolated_and_fail_closed(tmp_path, monkeypatch, workers, family, count, fail):
+def test_shards_are_bounded_isolated_and_fail_closed(tmp_path, monkeypatch, workers, family, count, fail, canonical_scratch_root):
     import threading
     import time
     from tools.certification import local_assurance as la
@@ -279,13 +287,15 @@ def test_failed_run_never_builds_certificate(tmp_path, monkeypatch):
 
 @pytest.mark.parametrize("workers", [1, 2])
 @pytest.mark.parametrize("fail", [None, "formal_mutations_1", "v4_mutations_3"])
-def test_source_gate_orchestration_preserves_checkout(tmp_path, monkeypatch, workers, fail):
+def test_source_gate_orchestration_preserves_checkout(tmp_path, monkeypatch, workers, fail, canonical_scratch_root):
     import subprocess
     import threading
     from tools.certification import local_assurance as la
     root = tmp_path / "repo"
     root.mkdir()
-    (root / ".gitignore").write_text(".forge/\n")
+    # The clean-tree guard compares raw bytes to Git, so the fixture must not
+    # introduce platform newline translation before its first gate.
+    (root / ".gitignore").write_bytes(b".forge/\n")
     subprocess.run(["git", "init", "-q"], cwd=root, check=True)
     subprocess.run(["git", "add", ".gitignore"], cwd=root, check=True)
     subprocess.run(["git", "-c", "user.name=t", "-c", "user.email=t@example.invalid",
@@ -418,7 +428,7 @@ def test_child_exit_during_forced_kill_preserves_stream_error(tmp_path, monkeypa
             return 0
     child = Child()
     monkeypatch.setattr(la.subprocess, "Popen", lambda *a, **k: child)
-    monkeypatch.setattr(la.os, "killpg", lambda *a: pytest.fail("numeric group kill is not ownership"))
+    monkeypatch.setattr(la.os, "killpg", lambda *a: pytest.fail("numeric group kill is not ownership"), raising=False)
     with pytest.raises(OSError, match="original stream error"):
         la._run(["synthetic"], root=tmp_path, log=tmp_path / "shard.log")
     assert child.waits == [5, None]
