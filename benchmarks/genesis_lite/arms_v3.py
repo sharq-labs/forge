@@ -14,8 +14,16 @@ its method allows, so that a comparison isolates the method:
   own held-out rows with the gate's constant-baseline, replicate-noise lack-of-fit, covariate and extrapolation checks.
   The gate's parameter-precision bar is defined for a log-linear fit and has no analogue for a free form: not applied.
 
-Configurations are fixed here before any campaign (no tuning on final data). An internal failure of a library degrades to
-the documented fallback or a refusal inside the arm; it never aborts the campaign. DEVELOPMENT_ONLY: not frozen baselines.
+Configurations are fixed here before any campaign (no tuning on final data). A library failure (import, Julia, GP fit) is
+NOT caught: it propagates, and the campaign stores the universe as ``inadmissible`` (negative credit), so a broken method
+can never earn a refusal's credit. The only design fallback is explicit and named in the rationale: the BoTorch arm spends
+the rest of its budget on a Latin hypercube when fewer than three positive outputs leave nothing to model in log space.
+
+Known differences from ``monomial_enumeration`` (a comparison isolates method and design together, not method alone):
+PySINDy and PySR use the Latin-hypercube design; PySR fits squared error on raw outputs while scoring is relative; the
+free-form gate omits the precision bar but refuses when the law is undefined on any training or held-out row. The grammar
+translation is exact up to floating point: rational exponents and irrational constants become the nearest doubles.
+DEVELOPMENT_ONLY: not frozen baselines.
 """
 
 from __future__ import annotations
@@ -49,6 +57,18 @@ def _int_seed(*parts: Any) -> int:
     return int.from_bytes(hashlib.sha256(":".join(map(str, parts)).encode()).digest()[:4], "big")
 
 
+def to_setting(u: float, x: Mapping[str, Any]) -> float:
+    """Map a unit-box coordinate to a log-uniform setting inside the input's range (exp(log(b)) can exceed b by an ulp,
+    which the escrow refuses as outside the box)."""
+    low, high = float(x["range"][0]), float(x["range"][1])
+    if u <= 0.0:
+        return low
+    if u >= 1.0:
+        return high
+    value = math.exp(math.log(low) + (math.log(high) - math.log(low)) * u)
+    return min(max(value, low), high)
+
+
 def _refuse(card: Mapping[str, Any], why: str) -> dict[str, Any]:
     return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": why}
 
@@ -70,15 +90,12 @@ def pysindy_stlsq(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dic
     ok = arms._positive(train, names, out)
     if len(ok) < len(names) + 2:
         return _refuse(card, "too few positive training rows for the log-monomial library")
-    try:
-        from pysindy.optimizers import STLSQ
-        X = np.column_stack([np.ones(len(ok))] + [np.log([r[n] for r in ok]) for n in names])
-        y = np.log([r[out] for r in ok])
-        opt = STLSQ(threshold=STLSQ_THRESHOLD, alpha=0.0)
-        opt.fit(X, y.reshape(-1, 1))
-        coef = np.asarray(opt.coef_).reshape(-1)
-    except Exception as exc:  # noqa: BLE001 - a library failure is the arm's refusal, never an aborted campaign
-        return _refuse(card, f"PySINDy STLSQ failed: {type(exc).__name__}")
+    from pysindy.optimizers import STLSQ           # a library failure propagates: the universe is scored inadmissible
+    X = np.column_stack([np.ones(len(ok))] + [np.log([r[n] for r in ok]) for n in names])
+    y = np.log([r[out] for r in ok])
+    opt = STLSQ(threshold=STLSQ_THRESHOLD, alpha=0.0)
+    opt.fit(X, y.reshape(-1, 1))
+    coef = np.asarray(opt.coef_).reshape(-1)
     selected = [n for n, a in zip(names, coef[1:]) if abs(a) > 0]
     return arms._clean(arms._gate(card, rows, replicate, selected, "PySINDy STLSQ term selection, refit and gate"))
 
@@ -94,46 +111,48 @@ def bo_botorch_variance(card: Mapping[str, Any], client: Any, *, seed: int = 0) 
     n_init = min(fresh_budget, max(2 * len(xs) + 2, int(BO_INIT_FRACTION * fresh_budget)))
     init = arms._design_lhs(card, n_init, rng)
     rows = arms._collect(card, client, init, "bi")
-    lo = np.array([math.log(x["range"][0]) for x in xs])
-    hi = np.array([math.log(x["range"][1]) for x in xs])
     design_note = "BoTorch GP posterior-sd design"
-    try:
-        import torch
-        from botorch.acquisition.analytic import PosteriorStandardDeviation
-        from botorch.fit import fit_gpytorch_mll
-        from botorch.models import SingleTaskGP
-        from botorch.optim import optimize_acqf
-        from gpytorch.mlls import ExactMarginalLogLikelihood
-        torch.manual_seed(_int_seed("bo", seed, uid))
-        while len(rows) < fresh_budget:
-            pos = [r for r in rows if r[out] > 0]
-            if len(pos) < 3:
-                break
-            X = torch.tensor([[(math.log(r[x["name"]]) - lo[i]) / (hi[i] - lo[i]) for i, x in enumerate(xs)] for r in pos],
-                             dtype=torch.double)
-            Y = torch.tensor([[math.log(r[out])] for r in pos], dtype=torch.double)
-            Y = (Y - Y.mean()) / (Y.std() if float(Y.std()) > 0 else 1.0)
-            model = SingleTaskGP(X, Y)
-            fit_gpytorch_mll(ExactMarginalLogLikelihood(model.likelihood, model))
-            bounds = torch.tensor([[0.0] * len(xs), [1.0] * len(xs)], dtype=torch.double)
-            cand, _ = optimize_acqf(PosteriorStandardDeviation(model), bounds=bounds, q=1, num_restarts=4, raw_samples=64)
-            u = cand.detach().numpy().reshape(-1)
-            point = {x["name"]: float(math.exp(lo[i] + (hi[i] - lo[i]) * float(np.clip(u[i], 0.0, 1.0))))
-                     for i, x in enumerate(xs)}
-            got = arms._collect(card, client, [point], f"b{len(rows)}")
-            if not got:
-                break                                        # the escrow refused: budget exhausted
+    # library failures (import, GP fit, acquisition) propagate: the universe is scored inadmissible, never relabelled
+    import torch
+    from botorch.acquisition.analytic import PosteriorStandardDeviation
+    from botorch.fit import fit_gpytorch_mll
+    from botorch.models import SingleTaskGP
+    from botorch.optim import optimize_acqf
+    from gpytorch.mlls import ExactMarginalLogLikelihood
+    torch.manual_seed(_int_seed("bo", seed, uid))
+    exhausted = len(rows) < len(init)
+    while not exhausted and len(rows) < fresh_budget:
+        pos = [r for r in rows if r[out] > 0]
+        if len(pos) < 3:
+            design_note = ("design fallback: fewer than three positive outputs to model in log space; "
+                           "Latin hypercube for the remaining budget")
+            rest = arms._design_lhs(card, fresh_budget - len(rows), rng)
+            got = arms._collect(card, client, rest, "bf")
             rows += got
-    except Exception as exc:  # noqa: BLE001 - fall back to the Latin hypercube for the rest of the budget
-        design_note = f"BoTorch design failed ({type(exc).__name__}); Latin-hypercube fallback for the remainder"
-        rows += arms._collect(card, client, arms._design_lhs(card, max(0, fresh_budget - len(rows)), rng), "bf")
-    rows += arms._collect(card, client, init[:replicate], "br")   # replicates of the first points, as _split expects
+            exhausted = len(got) < len(rest)
+            break
+        X = torch.tensor([[(math.log(r[x["name"]]) - math.log(x["range"][0])) /
+                           (math.log(x["range"][1]) - math.log(x["range"][0])) for x in xs] for r in pos], dtype=torch.double)
+        Y = torch.tensor([[math.log(r[out])] for r in pos], dtype=torch.double)
+        Y = (Y - Y.mean()) / (Y.std() if float(Y.std()) > 0 else 1.0)
+        model = SingleTaskGP(X, Y)
+        fit_gpytorch_mll(ExactMarginalLogLikelihood(model.likelihood, model))
+        bounds = torch.tensor([[0.0] * len(xs), [1.0] * len(xs)], dtype=torch.double)
+        cand, _ = optimize_acqf(PosteriorStandardDeviation(model), bounds=bounds, q=1, num_restarts=4, raw_samples=64)
+        u = cand.detach().numpy().reshape(-1)
+        got = arms._collect(card, client, [{x["name"]: to_setting(float(u[i]), x) for i, x in enumerate(xs)}],
+                            f"b{len(rows)}")
+        if not got:
+            exhausted = True                             # the escrow refused on budget (any other refusal propagates)
+        rows += got
+    if not exhausted:
+        rows += arms._collect(card, client, init[:replicate], "br")   # replicates of the first points, as _split expects
     return _select_and_gate(card, rows, replicate, f"{design_note}; enumeration and gate")
 
 
 # ------------------------------------------------------------------------------------------------ PySR
 def to_grammar(expr: Any, names: Mapping[str, str]) -> dict:
-    """Translate a SymPy expression into the escrow grammar exactly, or refuse."""
+    """Translate a SymPy expression into the escrow grammar (exact up to floating point), or refuse."""
     import sympy
     if expr.is_Symbol:
         if str(expr) not in names:
@@ -207,20 +226,19 @@ def pysr_symbolic(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dic
         return _refuse(card, "too few observations")
     train, _, _, _ = arms._split(rows, replicate)
     aliases = {f"x{i}": n for i, n in enumerate(names)}
+    from pysr import PySRRegressor                 # a library or Julia failure propagates: scored inadmissible
+    with tempfile.TemporaryDirectory(prefix="gl-pysr-") as scratch:
+        model = PySRRegressor(**PYSR_SETTINGS, deterministic=True, parallelism="serial",
+                              random_state=_int_seed("pysr", seed, card["universe_id"]), progress=False, verbosity=0,
+                              output_directory=scratch)
+        model.fit(np.array([[r[n] for n in names] for r in train]), np.array([r[out] for r in train]),
+                  variable_names=list(aliases))
+        equation = model.sympy()
     try:
-        from pysr import PySRRegressor
-        with tempfile.TemporaryDirectory(prefix="gl-pysr-") as scratch:
-            model = PySRRegressor(**PYSR_SETTINGS, deterministic=True, parallelism="serial",
-                                  random_state=_int_seed("pysr", seed, card["universe_id"]), progress=False, verbosity=0,
-                                  output_directory=scratch)
-            model.fit(np.array([[r[n] for n in names] for r in train]), np.array([r[out] for r in train]),
-                      variable_names=list(aliases))
-            law = to_grammar(model.sympy(), aliases)
+        law = to_grammar(equation, aliases)
         validate(law)
     except (GrammarRefused, ExpressionRefused) as exc:
         return _refuse(card, f"the PySR equation is outside the escrow grammar: {exc}")
-    except Exception as exc:  # noqa: BLE001 - a library failure is the arm's refusal, never an aborted campaign
-        return _refuse(card, f"PySR failed: {type(exc).__name__}")
     return _gate_free_form(card, rows, replicate, law, "PySR symbolic regression with held-out gate")
 
 

@@ -6,9 +6,16 @@ accuracy rule) separately from whether it only *brackets* it. This module applie
 that only brackets the truth is ``indistinguishable_unresolved`` and keeps only a non-positive credit (penalties stay, a
 positive recovery credit becomes zero). Every other outcome is the v0.2 adjudication unchanged.
 
-Limits: the escrow's fractions keep the v0.2 zero-truth rule (a zero truth never counts as within tolerance) while the v0.3
-evaluator accepts an exact zero prediction there; such a point surfaces as an evaluator disagreement, so the run fails
-closed rather than being scored under two rules. DEVELOPMENT_ONLY: no preregistration, custody or formal statistics.
+Limits. The pair facts come from the pinned v0.2 ``escrow._assess_pair``; the independent v0.3 evaluator
+(``score_v3._pair_outcome``) implements the owner-approved v3 distance and differs from it in five places: in-box agreement
+and outside divergence use |a-b|/|b| (order-dependent, b == 0 skipped) in the escrow but |a-b|/max(|a|,|b|) in v0.3;
+bracketing uses lo*(1-tol)..hi*(1+tol) in the escrow but lo-tol|lo|..hi+tol|hi| in v0.3; outside points with a non-finite
+truth are skipped by the escrow's divergence count but counted by v0.3; and a zero truth never counts as within tolerance in
+the escrow while v0.3 accepts an exact zero prediction. Every such case surfaces as an evaluator disagreement, so the WHOLE
+campaign is INVALID (fail closed), never scored under two rules; a pilot must therefore report disagreement-invalid runs
+per arm. Which distance v0.3 finally adopts in the escrow itself is an open owner decision. The escrow report bound by
+``report_digest`` keeps v0.2 outcomes (bracketing credited); the v0.3 outcomes are the adjudications returned here.
+DEVELOPMENT_ONLY: no preregistration, custody or formal statistics.
 """
 
 from __future__ import annotations

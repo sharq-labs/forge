@@ -19,3 +19,5 @@ def test_a_baseline_arm_runs_a_valid_v0_3_campaign(name, module):
     assert rec.evaluator_status == "VALID" and all(u["independent_agrees"] for u in rec.universes)
     assert len(rec.universes) == 6 and all(u["answer"] for u in rec.universes)
     assert code_identity()[1] == []
+    assert not any("fallback" in u["rationale"] or "failed" in u["rationale"] for u in rec.universes), \
+        [u["rationale"] for u in rec.universes]

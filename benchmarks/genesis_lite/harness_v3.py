@@ -10,11 +10,12 @@ a ``development_identity`` over the v0.3 files instead. Not a formal benchmark i
 from __future__ import annotations
 
 import hashlib
+import importlib.metadata
 import json
 import pathlib
 import time
 import tracemalloc
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
 from engcore.blindfold import EscrowService, EvaluatorConfig, InProcessTransport, run_campaign
@@ -27,7 +28,18 @@ from .evaluator import score_v3
 from .presentation import Presented, PresentationRefused, TranslatingClient, check_card, present, to_original_law
 
 HERE = pathlib.Path(__file__).resolve().parent
-V3_FILES = ("adjudication_v3.py", "harness_v3.py", "evaluator/score_v3.py")
+V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "evaluator/score_v3.py")
+LIBRARIES = ("numpy", "sympy", "pysr", "pysindy", "botorch", "gpytorch", "torch")
+
+
+def library_versions() -> dict[str, str]:
+    out = {}
+    for name in LIBRARIES:
+        try:
+            out[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            out[name] = "NOT_INSTALLED"
+    return out
 
 
 def development_identity() -> tuple[str, list[str]]:
@@ -44,6 +56,10 @@ class RunRecordV3(h2.RunRecord):
     config_digest: str = ""
     development_identity: str = ""
     v3_adjudication_digest: str = ""
+    v3_total_credit: float = 0.0
+    #: report_digest binds the escrow report built by roles.run_campaign, whose outcomes follow the v0.2 rule
+    escrow_report_rule: str = "v0_2 outcomes (bracketing-only pairs credited); v0.3 outcomes are in universes"
+    library_versions: dict = field(default_factory=dict)
 
 
 def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_seed: bytes, campaign_id: str,
@@ -56,6 +72,7 @@ def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_s
         rec.invalid(f"the shared v0.2 code differs from its preregistration: {changed[:5]}")
         return rec
     rec.development_identity = identity
+    rec.library_versions = library_versions()
     if isolation not in h2.ISOLATIONS:
         rec.invalid(f"unknown isolation {isolation!r}")
         return rec
@@ -191,7 +208,10 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
                               "credit": a.credit, "independent_agrees": bool(by_uid.get(a.universe_id, {}).get("agree")),
                               "trap": a.universe_id in traps, "region_tell": tells.get(a.universe_id),
                               "truth_in_searched_family": score_v3.v2.in_monomial_family(entry["law"]),
+                              "rationale": str((proposals.get(a.universe_id) or {}).get("rationale")
+                                               or (proposals.get(a.universe_id) or {}).get("reason") or ""),
                               **per_universe.get(a.universe_id, {})})
+    rec.v3_total_credit = sum(u["credit"] for u in rec.universes)
 
 
 __all__ = ["CONFIG_V3", "RunRecordV3", "V3_FILES", "development_identity", "run_one_v3"]
