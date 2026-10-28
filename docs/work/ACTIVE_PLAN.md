@@ -6,6 +6,134 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — Scientific MVP delivery preparation (2026-10-28)
+
+### Public development integration — bounded L3 (owner continuation 2026-10-28)
+
+Exercise existing sparse discovery over explicit dimensionless x,x²,x³ features
+and intercept, all seven nonempty supports. Normalize physical I/V by declared
+1 A/1 V scales. Fit on calibration; select only on separate public development
+rows. Report smallest compatible support or ambiguity, never final evidence.
+Include mixed-term, indistinguishable-support, out-of-grammar and no-information
+controls; compare dense polynomial least squares with equal observations.
+This is bounded dictionary-support recovery, not unrestricted symbolic discovery.
+Preserve existing engine/policy, L1/L2 files, hidden data and mandatory gates.
+
+### Public development integration — L2 (owner continuation 2026-10-28)
+
+Compare two explicitly declared one-parameter families on separate selection
+observations after calibration-only fitting. Public noiseless software controls
+include ambiguity and neither-family adequacy. Selection is not a final test.
+Use existing repsem.v2 records and model execution; no Core or frozen benchmark
+change. Any numerical selection bar is an explicitly labelled development input,
+not a new scientific acceptance policy. Preserve L1 files/records and all gates.
+
+### Public development integration — L1 (owner-authorized 2026-10-28)
+
+Build the smallest executable synthetic electrical development example using
+repsem.v2, existing assessment/replay, explicit units, informative/uninformative
+and misspecified cases. Include an equal-observation analytic L1 reference.
+This is public integration verification, not blindfold, a new scientific verdict,
+or L2/L3 qualification. Other local thread verified idle before editing.
+No final truth/seeds, campaigns, dependency installs or full assurance. Preserve
+all mandatory gates. L2/L3 and independent custody remain subsequent work.
+
+### Follow-up review repairs R1–R7 (owner-authorized 2026-10-28)
+
+Owner requested all findings in REPO_REVIEW_2026_10_28.md repaired, starting with
+shared-symbol consistency and checking concurrent work first. The other local
+scientific-repair thread was verified idle with its last turn completed before
+these edits. Preserve its existing work. R1 shared bindings; R2/R3 strict versioned
+repsem units and executable identity using the existing engine; R4 replay before
+promotion; R5 symmetric pair comparison; R6 scratch placement; R7 package identity.
+Owner explicitly approved v3 pair distance |A-B|/max(|A|,|B|), zero for two zeros.
+No threshold change, historical v1/v2 replay rewrite, campaign, full assurance,
+commit/push/merge. Run red-first controls and regressions for each bounded repair.
+
+### Scientific audit repair scope (2026-10-28, current local main)
+
+The owner explicitly requested all five findings in the local scientific audit
+be repaired on `main` ("حل المشاكل دى كلها و كله علىا لmain"). This authorizes
+the bounded identity, data-role, scoring and statistical corrections below;
+it does not start a formal campaign, rewrite historical benchmark identities,
+or confer certification. Existing local MVP/isolation work is preserved.
+
+- S-01: bind feature expressions, evaluated values, data splits, lineage, policy
+  and implementation to generated candidate identities; refuse inconsistent values.
+- S-02/S-05: complete development v0.3 scoring: no bracketing-only recovery;
+  exact zero matches pass without a new absolute tolerance. Preserve frozen v2.
+- S-03: the v0.3 boundary refuses to promote old bootstrap-tail diagnostics;
+  preserve hash-pinned v0.2 replay and add bounded independent-unit paired inference,
+  complete paired grids, repeated-setting aggregation and all-baseline correction.
+- S-04: generated scores are explicitly selection; freeze one selected model
+  and its final threshold before separate final data; refuse sample/group overlap.
+- Validation: targeted regressions, compatibility/architecture checks and affected
+  gates. Report platform and certification limitations separately from code fixes.
+
+Discovery final-test review rounds 1-5 (2026-10-28, owner-approved repairs
+I-1..I-4, H-1/M-1 (r2), M-A/M-B/I-6 (r3), H-1/M-1/M-2 (r4); round 5 static
+review PASS; evidence in PROGRESS.md). Not committed; certified `core` area
+drift still needs commit + recertification under their own approval.
+- OWNER DECISION (2026-10-28) — discovery threat model: code running in the same
+  Python process is trusted; untrusted input must cross a serialization boundary
+  (re-derived via from_dict) or a process-isolation boundary (Blindfold). Exact-type
+  checks and use-time rebuilds are defence in depth, not a security boundary.
+- [ ] OWNER_DECISION_REQUIRED (M-3): what counts as INDEPENDENTLY_REPRODUCED for a
+  discovered equation. Today a complete `VerificationRunRecord` bound only by
+  `subject_digest` suffices; its observations, evidence and route independence are
+  caller-declared and need not concern the candidate's prediction (a 300 K vs
+  300.2 K record "reproduces" dimensionless y = x). Options: require the verified
+  quantity to be the candidate's prediction on declared rows, or rename/narrow the
+  decision. Not decided; no code change until decided.
+- [ ] OWNER_DECISION_REQUIRED (review r5, pre-existing): one `survived=True`
+  falsification record suffices for promotion; a `survived=False` record for the
+  same candidate never blocks it. Decide whether a recorded failed challenge must
+  block promotion (it is caller-declared, so possibly inadmissible as evidence).
+- [x] r5 LOW L-1 (fingerprints compared too), L-2 (`with_review` type check incl.
+  its candidate) and L-3 test gaps repaired 2026-10-28, owner-approved; review
+  round 6 PASS (static). Evidence in PROGRESS.md.
+- [ ] Deferred, not authorized: I-5 minimum independent final units/uncertainty;
+  I-7..I-9; L-4 replay cost O(steps x reviews x search).
+
+Owner requested implementation of the review's work packages in this chat
+("اعمل انتى كل ده"). Starting source: `dd567d53d2444950f57ffaeb9903c74d7c38f04d`,
+clean local `main`. This section is the executable continuation; earlier R21/R22
+paragraphs below remain historical checkpoints, not a claim about current failures.
+
+- [ ] WP-01: current source/environment/certificate inventory and bounded claim map.
+- [ ] WP-02: isolated supported environment, measured current gates, bounded red-first repairs.
+- [x] WP-03: zero-RMSE ordering regression and minimal correction (6 targeted tests; independent static review PASS; integration/certification still open).
+- [ ] WP-04/05: data-role, units and implementation-identity boundary proposals and approved repairs.
+- [ ] WP-06/07: synthetic scoring controls and concrete scoring/statistical amendment for owner review.
+- [ ] WP-08/09: executable isolation and competent baseline preparation; measured development cost estimate.
+- [ ] WP-10: real-measurement feasibility, rights and measurement audit; no new final data exposure.
+- [ ] WP-11: bounded development only after prerequisite gates and active-epic decision.
+- [ ] WP-12/13: independent final evaluation and reproducible delivery only after their prerequisite decisions.
+
+The immediate scope is stabilization, defect repair and evaluation preparation;
+no maturity promotion or new scientific capability is authorized by this queue.
+Reuse current evidence/provenance owners. Preserve historical artifacts and all
+mandatory gates; no tolerance widening, skip inflation or rewritten old evidence.
+No commit, push, merge, paid service, formal campaign or full assurance is started
+by this section. Local dependency setup and bounded development checks are part
+of the requested implementation. Campaign/assurance budget and independent
+custodian are pending concrete owner decisions. The owner will appoint the
+custodian later and requested cost estimates before campaign/assurance approval.
+FDA-05 was explicitly approved for a NEW benchmark version on 2026-10-28:
+bracketing alone earns no recovery; one law must pass the existing accuracy rule.
+The development v0.3 scorer now implements this, preserving negative control
+penalties and an explicit unresolved outcome. It is not a frozen campaign.
+Other scoring semantics and any frozen
+contract/active-epic change require their own reviewable decision, not an inference.
+Candidate development must not read hidden truth, final datasets, evaluator seeds
+or final evaluation outputs. Use synthetic development fixtures for repairs.
+
+Checkpoint: [SCIENTIFIC_MVP_CHECKPOINT_2026_10_28.md](SCIENTIFIC_MVP_CHECKPOINT_2026_10_28.md).
+FAST is RED on native Windows; Technical Stabilization and Scientific MVP remain
+OPEN. Linux execution, SCIENTIFIC, formal isolation, full assurance and final
+evaluation are NOT RUN for this patch. Historical authorizations below do not
+override the current owner's campaign-budget decision.
+
 ## Current bounded task — R22 required-gate repair (2026-10-24)
 
 Owner explicitly authorized bounded repair of the59 remaining R21 failures,

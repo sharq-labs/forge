@@ -13,7 +13,9 @@ from tools.certification import mutation_v4_runner as v4
 
 
 def test_environment_snapshot_is_independent_of_parent_and_each_child(tmp_path):
-    executable = tmp_path / "python"
+    # Windows derives the executable mode from the suffix; chmod alone cannot
+    # make an extensionless fixture satisfy the unchanged interpreter guard.
+    executable = tmp_path / "python.exe"
     executable.write_bytes(b"interpreter")
     executable.chmod(0o700)
     inherited = {"PATH": "controlled", "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "0",
@@ -36,7 +38,7 @@ def test_environment_snapshot_is_independent_of_parent_and_each_child(tmp_path):
 
 
 def test_interpreter_replacement_is_refused_with_same_size(tmp_path):
-    path = tmp_path / "python"
+    path = tmp_path / "python.exe"
     path.write_bytes(b"original")
     path.chmod(0o700)
     inputs = startup.StartupInputs.capture(executable=path, inherited={})

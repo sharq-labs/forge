@@ -51,7 +51,10 @@ def test_the_plugin_records_telemetry_and_never_changes_an_outcome(tmp_path) -> 
     (tmp_path / "test_sample.py").write_text(
         "import time\n\ndef test_ok():\n    time.sleep(0.3)\n\ndef test_bad():\n    assert False\n", encoding="utf-8")
     report = tmp_path / "out" / "timing.json"
+    # This subprocess owns only the generated fixture. Do not discover parent
+    # temp directories/conftests (which can be inaccessible on Windows).
     run = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "-p", "tools.test_timing",
+                          f"--rootdir={tmp_path}", f"--confcutdir={tmp_path}",
                           f"--timing-report={report}", str(tmp_path / "test_sample.py")],
                          capture_output=True, text=True, cwd=str(test_timing.pathlib.Path(__file__).resolve().parents[1]))
     assert run.returncode == 1 and "1 failed, 1 passed" in run.stdout  # the failure stays a failure
