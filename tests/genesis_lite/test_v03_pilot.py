@@ -156,7 +156,7 @@ def test_workers_receive_only_their_campaign_seed_and_report_threads_in_force(tm
     assert run["threads_in_force"]["blas_max"] in (1, None)
 
 
-def test_a_duplicated_arm_name_is_refused():
+def test_a_duplicated_arm_name_is_refused(tmp_path):
     from benchmarks.genesis_lite.pilot_v3 import run_pilot
     with pytest.raises(ValueError):
-        run_pilot(["careful", "careful"], out="unused", campaigns=1, workers=1, deadline_seconds=1.0, root=bytes(32))
+        run_pilot(["careful", "careful"], out=tmp_path / "unused", campaigns=1, workers=1, deadline_seconds=1.0, root=bytes(32))
