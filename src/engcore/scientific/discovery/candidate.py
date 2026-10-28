@@ -33,6 +33,8 @@ class DiscoveredEquationCandidate:
     context_digest: str
     evidence_digests: tuple[str, ...]
     status: DiscoveryCandidateStatus = DiscoveryCandidateStatus.CALIBRATED
+    discovery_binding_digest: str = ""
+    evaluation_role: str = "holdout"
 
     def __post_init__(self) -> None:
         candidate_id = str(self.candidate_id).strip()
@@ -63,6 +65,12 @@ class DiscoveredEquationCandidate:
                 "calibration RMSE must be non-negative"
             )
         status = DiscoveryCandidateStatus(self.status)
+        if self.discovery_binding_digest and not _SHA256.fullmatch(self.discovery_binding_digest):
+            raise InvalidScientificProblem("discovery binding must be SHA-256")
+        if self.evaluation_role not in ("holdout", "selection", "final_test"):
+            raise InvalidScientificProblem("unknown discovery evaluation role")
+        if self.evaluation_role != "holdout" and not self.discovery_binding_digest:
+            raise InvalidScientificProblem("selection/final-test candidates require a discovery binding")
         if self.holdout_rmse is not None:
             holdout = float(self.holdout_rmse)
             if not math.isfinite(holdout) or holdout < 0:
@@ -112,6 +120,11 @@ class DiscoveredEquationCandidate:
             "evidence_digests": list(self.evidence_digests),
             "status": self.status.value,
         }
+        # Preserve the identity of historical records; all newly generated
+        # candidates bind their expressions, data, policy and implementation.
+        if self.discovery_binding_digest:
+            payload["discovery_binding_digest"] = self.discovery_binding_digest
+            payload["evaluation_role"] = self.evaluation_role
         return hashlib.sha256(
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()

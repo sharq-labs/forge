@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from itertools import combinations
+import hashlib
+import json
 import math
+from pathlib import Path
 
 import numpy as np
 
@@ -76,6 +79,12 @@ def discover_sparse_equations(
     dataset: DiscoveryDataset,
     policy: SparseDiscoveryPolicy = SparseDiscoveryPolicy(),
 ) -> tuple[DiscoveredEquationCandidate, ...]:
+    """Rank candidates on selection rows; never expose final test data here."""
+    binding = hashlib.sha256(json.dumps({
+        "schema": "sparse_discovery_binding/2", "dataset": dataset.fingerprint,
+        "policy": asdict(policy), "implementation": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "numpy_version": np.__version__,
+    }, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()).hexdigest()
     calibration_y = dataset.target_vector(dataset.calibration_indices)
     holdout_y = dataset.target_vector(dataset.holdout_indices)
     feature_count = len(dataset.features)
@@ -128,6 +137,8 @@ def discover_sparse_equations(
                     dataset.context_digest,
                     dataset.evidence_digests,
                     status,
+                    discovery_binding_digest=binding,
+                    evaluation_role="selection",
                 )
             )
         if attempted > policy.maximum_candidates:
@@ -139,7 +150,7 @@ def discover_sparse_equations(
             key=lambda item: (
                 item.status
                 is not DiscoveryCandidateStatus.SURVIVED_HOLDOUT,
-                (item.holdout_rmse or float("inf"))
+                (item.holdout_rmse if item.holdout_rmse is not None else float("inf"))
                 + policy.complexity_penalty * item.complexity,
                 item.candidate_id,
             ),

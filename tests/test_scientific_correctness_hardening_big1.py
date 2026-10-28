@@ -254,34 +254,37 @@ def test_ratio_and_delta_scales_remain_multiplicative():
 
 
 def test_discovery_does_not_promote_an_unrelated_verified_subject():
-    candidate = DiscoveredEquationCandidate(
-        candidate_id="candidate-a",
-        feature_names=("x",),
-        coefficients=(1.0,),
-        intercept=0.0,
-        calibration_rmse=0.1,
-        holdout_rmse=0.1,
-        complexity=1,
-        context_digest="a" * 64,
-        evidence_digests=("b" * 64,),
-        status=DiscoveryCandidateStatus.SURVIVED_HOLDOUT,
+    from engcore.scientific.discovery import DiscoveryDataset, DiscoveryFeature, SparseDiscoveryPolicy, discover_sparse_equations
+    from engcore.scientific.discovery.final_evaluation import FrozenDiscoverySelection, evaluate_final_test
+    from engcore.scientific.equations import Symbol
+    def data(prefix, values, evidence):
+        feature = DiscoveryFeature("x", Symbol("x"), values, tuple({"x": Quantity(v, "1")} for v in values))
+        return DiscoveryDataset(prefix, (feature,), values, (0, 1), (2, 3), "a" * 64, evidence,
+                                tuple(f"{prefix}-{i}" for i in range(4)), (prefix,) * 4)
+    # final data is separate: new rows and new evidence, not the development data relabelled
+    dev, final = data("dev", (1., 2., 3., 4.), ("b" * 64,)), data("final", (5., 6., 7., 8.), ("c" * 64,))
+    selection = FrozenDiscoverySelection(dev, SparseDiscoveryPolicy(), discover_sparse_equations(dev)[0], .05)
+    candidate = evaluate_final_test(selection, final)
+
+    # a real, complete verification -- of another subject (look-alike objects are refused outright)
+    from engcore.scientific.verification import (
+        DependencyComponent, DependencyRole, RouteDependencyManifest, VerificationCandidate, VerificationObservation,
+        VerificationPolicy, VerificationRoute, VerificationRouteKind, VerificationRunRecord, plan_verification,
     )
+    plan = plan_verification(
+        VerificationRoute("p", VerificationRouteKind.DIFFERENT_IMPLEMENTATION, "a" * 64),
+        RouteDependencyManifest("p", (DependencyComponent("p-family", "a" * 64, DependencyRole.SOLVER),), "ours", False),
+        (VerificationCandidate(VerificationRoute("v", VerificationRouteKind.EXTERNAL_SOLVER, "b" * 64),
+                               RouteDependencyManifest("v", (DependencyComponent("v-family", "b" * 64, DependencyRole.SOLVER),),
+                                                       "lab", True)),),
+        VerificationPolicy())
+    unrelated = VerificationRunRecord(plan, VerificationObservation("p", Quantity(300, "kelvin"), "1" * 64, True),
+                                      (VerificationObservation("v", Quantity(300.2, "kelvin"), "2" * 64, True),),
+                                      Quantity(1, "kelvin"), subject_digest="c" * 64)
+    assert unrelated.result.complete and unrelated.result.verification.decision is VerificationDecision.VERIFIED
 
-    class _Verification:
-        subject_digest = "c" * 64
-
-        class _Result:
-            complete = True
-
-            class verification:
-                decision = VerificationDecision.VERIFIED
-
-        result = _Result()
-
-        def to_dict(self):
-            return {"subject_digest": self.subject_digest}
-
-    review = review_discovery_candidate(candidate, verification=_Verification())
+    review = review_discovery_candidate(candidate, verification=unrelated,
+                                       final_selection=selection, final_data=final)
     assert review.decision is DiscoveryDecision.HOLDOUT_SURVIVOR
     assert "not bound to this candidate" in review.reasons[0]
 
