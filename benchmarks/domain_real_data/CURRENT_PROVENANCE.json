@@ -5488,10 +5488,10 @@
     },
     {
       "path": "docs/ai/DOCSET.txt",
-      "sha256": "29caf10d5e3a197547286d921f22fe2b105b6059131d1a075c07dd7922e445f5",
+      "sha256": "ac10c80f79c9ab0d51812ad34fe312307e7651630835a95addfe712466a70ccc",
       "class": "DERIVED",
       "role": "DOCUMENT_CHECK_MANIFEST",
-      "rationale": "Authored navigation list consumed by check_docs.py; updated bytes include the BR1.1 resume checkpoint. Navigation metadata has no scientific authority.",
+      "rationale": "Authored navigation list consumed by check_docs.py; updated bytes include the BR1.1 resume checkpoint and, since 60094e5f (Run Observatory v1), one added line docs/performance/run-observatory.md, whose front matter declares authority_scope NONE and evidence_level NOT_EVIDENCE. Read-only review 2026-10-28: the only change from the previously reviewed bytes (29caf10d at d40aff44) is that line. Navigation metadata has no scientific authority.",
       "evidence": [
         {
           "path": "docs/ai/check_docs.py",
