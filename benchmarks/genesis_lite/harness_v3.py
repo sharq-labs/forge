@@ -28,7 +28,7 @@ from .evaluator import score_v3
 from .presentation import Presented, PresentationRefused, TranslatingClient, check_card, present, to_original_law
 
 HERE = pathlib.Path(__file__).resolve().parent
-V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "evaluator/score_v3.py")
+V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "pilot_v3.py", "evaluator/score_v3.py")
 LIBRARIES = ("numpy", "sympy", "pysr", "pysindy", "botorch", "gpytorch", "torch")
 
 

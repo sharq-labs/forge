@@ -69,3 +69,94 @@ def test_parallel_workers_are_pinned_to_one_thread_and_the_environment_says_so(t
               deadline_seconds=120.0, root=bytes(32))
     env = json.loads((tmp_path / "environment.json").read_text())
     assert env["worker_thread_limits"] == THREAD_LIMITS
+
+
+# ---- review round 2 (2026-10-28) ----------------------------------------------------------------------------------------
+def _rec(arm, campaign, status="VALID", wall=1.0, credit=1.0, answer="no_law", rss=100, rationale="r", reasons=()):
+    return {"arm": arm, "status": status, "reasons": list(reasons), "wall_seconds": wall, "observe_calls": 3,
+            "worker_maxrss_kib": rss, "v3_total_credit": credit,
+            "universes": [{"kind": "no_solution", "answer": answer, "outcome": answer, "credit": credit,
+                           "rationale": rationale}],
+            "task": {"arm": arm, "campaign": campaign, "presentation": "anonymous", "seed": 0}}
+
+
+def test_credit_is_compared_only_on_world_sets_every_arm_completed_validly():
+    from benchmarks.genesis_lite.pilot_v3 import _summarize
+    recs = [_rec("a", 0, credit=1.0), _rec("b", 0, credit=-1.0),
+            _rec("a", 1, credit=1.0), _rec("b", 1, status="INVALID_BENCHMARK", credit=5.0, reasons=["separate v0.3 evaluator"])]
+    s = _summarize(["a", "b"], {"a": True, "b": True}, recs, [], [], ("anonymous",), (0,), 2, 1.0, 1, 10.0, planned=4)
+    assert s["paired_world_sets_complete"] == 1
+    assert s["arms"]["a"]["descriptive_credit"]["paired_mean_total"] == 1.0
+    assert s["arms"]["b"]["descriptive_credit"]["paired_mean_total"] == -1.0
+    assert s["arms"]["a"]["descriptive_credit"]["paired_world_sets"] == 1
+    assert s["excluded_world_sets"] and s["excluded_world_sets"][0]["invalid_arms"] == ["b"]
+
+
+def test_the_cost_estimate_never_hides_missing_or_failed_measurements():
+    from benchmarks.genesis_lite.pilot_v3 import _summarize
+    from benchmarks.genesis_lite.pilot_v3 import Task
+    recs = [_rec("a", 0, wall=2.0), _rec("a", 1, wall=0.1, answer="inadmissible", rationale="ImportError: no julia")]
+    s = _summarize(["a", "slow"], {"a": True, "slow": True}, recs, [], [Task("slow", 0, "anonymous", 0)], ("anonymous",),
+                   (0,), 2, 1.0, 1, 10.0, planned=3)
+    assert s["arms"]["a"]["cost_basis_runs"] == 1 and s["arms"]["a"]["wall_seconds_mean_clean"] == 2.0
+    assert s["arms"]["a"]["library_failure_universes"] == 1
+    assert s["formal_tier_estimate"]["status"] == "INCOMPLETE" and s["formal_tier_estimate"]["arms_without_measurement"] == ["slow"]
+
+
+def test_unmeasured_memory_is_reported_as_unmeasured_not_zero():
+    from benchmarks.genesis_lite.pilot_v3 import _summarize
+    s = _summarize(["a"], {"a": True}, [_rec("a", 0, rss=None)], [], [], ("anonymous",), (0,), 1, 1.0, 1, 10.0, planned=1)
+    assert s["arms"]["a"]["worker_maxrss_kib_max"] == "UNMEASURED"
+
+
+def test_every_planned_task_is_accounted_for_even_when_the_deadline_cuts_in(tmp_path, monkeypatch):
+    import concurrent.futures as cf
+    import time
+    from benchmarks.genesis_lite import pilot_v3
+
+    def slow_work(task, master_hex):
+        time.sleep(0.3)
+        return {**_rec(task.arm, task.campaign), "task": {"arm": task.arm, "campaign": task.campaign,
+                                                           "presentation": task.presentation, "seed": task.seed}}
+
+    monkeypatch.setattr(pilot_v3, "_work", slow_work)
+    monkeypatch.setattr(pilot_v3, "_executor", lambda workers: cf.ThreadPoolExecutor(max_workers=workers))
+    monkeypatch.setattr(pilot_v3, "GRACE_SECONDS", 0.05)
+    s = pilot_v3.run_pilot(["always_refuse"], out=tmp_path, campaigns=6, presentations=("anonymous",), seeds=(0,),
+                           workers=2, deadline_seconds=0.5, root=bytes(32))
+    t = s["tasks"]
+    assert t["planned"] == 6 and t["completed"] + t["not_run"] + t["interrupted"] == 6
+
+
+def test_a_worker_failure_is_recorded_not_lost(tmp_path, monkeypatch):
+    import concurrent.futures as cf
+    from benchmarks.genesis_lite import pilot_v3
+
+    def work(task, master_hex):
+        if task.campaign == 1:
+            raise RuntimeError("worker died")
+        return {**_rec(task.arm, task.campaign), "task": {"arm": task.arm, "campaign": task.campaign,
+                                                           "presentation": task.presentation, "seed": task.seed}}
+
+    monkeypatch.setattr(pilot_v3, "_work", work)
+    monkeypatch.setattr(pilot_v3, "_executor", lambda workers: cf.ThreadPoolExecutor(max_workers=workers))
+    s = pilot_v3.run_pilot(["always_refuse"], out=tmp_path, campaigns=2, presentations=("anonymous",), seeds=(0,),
+                           workers=2, deadline_seconds=30.0, root=bytes(32))
+    assert s["arms"]["always_refuse"]["worker_failures"] == 1 and s["tasks"]["completed"] == 2
+
+
+def test_workers_receive_only_their_campaign_seed_and_report_threads_in_force(tmp_path):
+    import inspect
+    from benchmarks.genesis_lite import pilot_v3
+    assert list(inspect.signature(pilot_v3._work).parameters) == ["task", "master_seed_hex"]
+    assert "pilot_v3.py" in __import__("benchmarks.genesis_lite.harness_v3", fromlist=["V3_FILES"]).V3_FILES
+    pilot_v3.run_pilot(["always_refuse"], out=tmp_path, campaigns=1, presentations=("anonymous",), seeds=(0,), workers=2,
+                       deadline_seconds=120.0, root=bytes(32))
+    run = json.loads((tmp_path / "runs.jsonl").read_text().splitlines()[0])
+    assert run["threads_in_force"]["blas_max"] in (1, None)
+
+
+def test_a_duplicated_arm_name_is_refused():
+    from benchmarks.genesis_lite.pilot_v3 import run_pilot
+    with pytest.raises(ValueError):
+        run_pilot(["careful", "careful"], out="unused", campaigns=1, workers=1, deadline_seconds=1.0, root=bytes(32))

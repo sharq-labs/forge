@@ -83,10 +83,23 @@ def arm_available(name: str) -> bool:
     return availability_v3()[name]["status"] == "AVAILABLE_DEVELOPMENT"
 
 
-def _work(task: Task, root_hex: str) -> dict[str, Any]:
-    """One campaign (runs in a worker process)."""
-    rec = run_one_v3(task.arm, _arm(task.arm), master_seed=master_seed(bytes.fromhex(root_hex), task.campaign,
-                                                                         task.presentation, task.seed),
+def _threads_in_force() -> dict[str, Any]:
+    """The numerical thread counts actually in force in this process (not the requested ones)."""
+    out: dict[str, Any] = {"blas_max": None, "torch": None}
+    try:
+        from threadpoolctl import threadpool_info
+        counts = [int(lib.get("num_threads", 0)) for lib in threadpool_info()]
+        out["blas_max"] = max(counts) if counts else None
+    except Exception:  # noqa: BLE001 - recorded as unknown, never assumed
+        pass
+    if "torch" in sys.modules:
+        out["torch"] = sys.modules["torch"].get_num_threads()
+    return out
+
+
+def _work(task: Task, master_seed_hex: str) -> dict[str, Any]:
+    """One campaign (runs in a worker process). The worker receives only this campaign's master seed, never the root."""
+    rec = run_one_v3(task.arm, _arm(task.arm), master_seed=bytes.fromhex(master_seed_hex),
                      campaign_id=f"gl-v03-dev-{task.seed}-{task.campaign}-{task.presentation}", presentation=task.presentation,
                      seed=task.seed)
     try:
@@ -94,13 +107,30 @@ def _work(task: Task, root_hex: str) -> dict[str, Any]:
         maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss   # KiB on Linux
     except ImportError:
         maxrss = None
-    return {**rec.to_dict(), "task": asdict(task), "worker_pid": os.getpid(), "worker_maxrss_kib": maxrss}
+    return {**rec.to_dict(), "task": asdict(task), "worker_pid": os.getpid(), "worker_maxrss_kib": maxrss,
+            "threads_in_force": _threads_in_force()}
+
+
+def _executor(workers: int) -> cf.Executor:
+    # set in the parent BEFORE the pool exists: spawned workers inherit it before importing numpy (the initializer runs
+    # only after unpickling has already imported this module and numpy)
+    os.environ.update(THREAD_LIMITS)
+    return cf.ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
+                                  initializer=_init_worker)
+
+
+def _failure_record(task: Task, exc: BaseException) -> dict[str, Any]:
+    return {"arm": task.arm, "status": "WORKER_FAILED", "reasons": [f"{type(exc).__name__}: {str(exc)[:300]}"],
+            "wall_seconds": 0.0, "observe_calls": 0, "worker_maxrss_kib": None, "v3_total_credit": 0.0, "universes": [],
+            "task": asdict(task), "threads_in_force": {}}
 
 
 def _git_head() -> str:
     try:
-        return subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True,
-                              cwd=pathlib.Path(__file__).resolve().parents[2]).stdout.strip()
+        root = pathlib.Path(__file__).resolve().parents[2]
+        head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True, cwd=root).stdout.strip()
+        dirty = subprocess.run(["git", "status", "--porcelain"], capture_output=True, text=True, check=True, cwd=root).stdout
+        return head + ("+dirty" if dirty.strip() else "")
     except Exception:  # noqa: BLE001 - provenance best effort; recorded as unknown
         return "UNKNOWN"
 
@@ -108,6 +138,8 @@ def _git_head() -> str:
 def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: int = RUNG,
               presentations: Iterable[str] = PRESENTATIONS, seeds: Iterable[int] = PILOT_SEEDS, workers: int = 4,
               deadline_seconds: float = DEFAULT_DEADLINE, root: bytes | None = None) -> dict[str, Any]:
+    if len(set(arm_names)) != len(arm_names):
+        raise ValueError("an arm is named twice: its world sets would be reused")
     out = pathlib.Path(out)
     out.mkdir(parents=True, exist_ok=True)
     root = secrets.token_bytes(32) if root is None else root
@@ -127,6 +159,9 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
         with runs_path.open("a") as fh:
             fh.write(json.dumps(record, sort_keys=True, default=str) + "\n")
 
+    def seed_hex(task: Task) -> str:
+        return master_seed(root, task.campaign, task.presentation, task.seed).hex()
+
     if deadline_seconds <= 0:
         not_run = list(tasks)
     elif workers <= 1:
@@ -134,98 +169,163 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
             if time.monotonic() - t0 >= deadline_seconds:
                 not_run = tasks[k:]
                 break
-            keep(_work(task, root.hex()))
+            try:
+                keep(_work(task, seed_hex(task)))
+            except Exception as exc:  # noqa: BLE001 - a crashed campaign is recorded, never lost
+                keep(_failure_record(task, exc))
     else:
-        executor = cf.ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
-                                          initializer=_init_worker)
-        futures = {executor.submit(_work, task, root.hex()): task for task in tasks}
+        executor = _executor(workers)
+        futures = {executor.submit(_work, task, seed_hex(task)): task for task in tasks}
+        collected: set = set()
+
+        def collect(f: cf.Future) -> None:
+            collected.add(f)
+            try:
+                keep(f.result())
+            except Exception as exc:  # noqa: BLE001 - a dead worker (BrokenProcessPool) is recorded, never lost
+                keep(_failure_record(futures[f], exc))
+
         try:
-            for fut in cf.as_completed(futures, timeout=max(0.0, deadline_seconds - (time.monotonic() - t0))):
-                keep(fut.result())
+            for f in cf.as_completed(futures, timeout=max(0.0, deadline_seconds - (time.monotonic() - t0))):
+                collect(f)
         except cf.TimeoutError:
-            pending = [f for f in futures if not f.done()]
-            for f in pending:
-                if f.cancel():
-                    not_run.append(futures[f])
-            running = [f for f in pending if not f.cancelled()]
+            pass
+        for f in futures:                      # finished while the last result was being written: still counted
+            if f.done() and not f.cancelled() and f not in collected:
+                collect(f)
+        pending = [f for f in futures if not f.done()]
+        for f in pending:
+            if f.cancel():
+                not_run.append(futures[f])
+        running = [f for f in pending if not f.cancelled()]
+        if running:
             done, still = cf.wait(running, timeout=GRACE_SECONDS)
             for f in done:
-                keep(f.result())
+                collect(f)
             interrupted = [futures[f] for f in still]
             for proc in list(getattr(executor, "_processes", {}).values()):
                 proc.terminate()
-        finally:
-            executor.shutdown(wait=False, cancel_futures=True)
+        executor.shutdown(wait=False, cancel_futures=True)
     elapsed = time.monotonic() - t0
     summary = _summarize(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns, elapsed,
-                         workers, deadline_seconds)
+                         workers, deadline_seconds, planned=len(tasks))
     identity, changed = development_identity()
     env = {"python": sys.version, "platform": platform.platform(), "cpu_count": os.cpu_count(), "workers": workers,
            "worker_thread_limits": THREAD_LIMITS if workers > 1 else {},
            "deadline_seconds": deadline_seconds, "started": started_wall, "elapsed_seconds": elapsed,
            "root_commitment_sha256": hashlib.sha256(root).hexdigest(), "git_head": _git_head(),
            "development_identity": identity, "v0_2_prereg_identity": code_identity()[0], "v0_2_pin_changed": changed,
+           "run_identities": sorted({r.get("development_identity", "") for r in records}),
            "library_versions": library_versions()}
     (out / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True))
     (out / "environment.json").write_text(json.dumps(env, indent=1, sort_keys=True))
     return json.loads(json.dumps(summary))
 
 
+def _world(r: Mapping[str, Any]) -> tuple:
+    t = r["task"]
+    return (t["campaign"], t["presentation"], t["seed"])
+
+
+def _is_library_failure(u: Mapping[str, Any]) -> bool:
+    head = str(u.get("rationale", "")).split(":", 1)[0]
+    return u.get("answer") == "inadmissible" and (head.endswith("Error") or head.endswith("Exception"))
+
+
 def _summarize(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns, elapsed, workers,
-               deadline) -> dict[str, Any]:
+               deadline, *, planned: int) -> dict[str, Any]:
+    runnable = [name for name in arm_names if available[name]]
     by_arm: dict[str, list[dict]] = collections.defaultdict(list)
+    worlds: dict[tuple, dict[str, str]] = collections.defaultdict(dict)
     for r in records:
         by_arm[r["arm"]].append(r)
+        worlds[_world(r)][r["arm"]] = r["status"]
+    paired = {w for w, st in worlds.items() if runnable and all(st.get(a) == "VALID" for a in runnable)}
+    excluded = [{"world_set": list(w), "invalid_arms": sorted(a for a, x in st.items() if x != "VALID"),
+                 "missing_arms": sorted(set(runnable) - set(st))} for w, st in sorted(worlds.items()) if w not in paired]
     arms_out = {}
     for name in arm_names:
         rs = by_arm.get(name, [])
         valid = [r for r in rs if r["status"] == "VALID"]
-        walls = [r["wall_seconds"] for r in rs]
+        clean = [r for r in valid if not any(_is_library_failure(u) for u in r["universes"])]
+        walls = [r["wall_seconds"] for r in rs if r["status"] != "WORKER_FAILED"]
+        rss = [r.get("worker_maxrss_kib") for r in rs]
         universes = [u for r in valid for u in r["universes"]]
+        on_paired = [r for r in valid if _world(r) in paired]
         per_kind = collections.defaultdict(list)
-        for u in universes:
-            per_kind[u["kind"]].append(u["credit"])
+        for r in on_paired:
+            for u in r["universes"]:
+                per_kind[u["kind"]].append(u["credit"])
         reasons = collections.Counter(reason[:120] for r in rs for reason in r["reasons"])
+        wall_clean = (sum(r["wall_seconds"] for r in clean) / len(clean)) if clean else None
         arms_out[name] = {
             "status": "AVAILABLE" if available[name] else "ARM_UNAVAILABLE",
             "family": (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or (None, ""))[1],
-            "runs": len(rs), "valid": len(valid), "invalid": len(rs) - len(valid),
+            "runs": len(rs), "valid": len(valid), "invalid": sum(r["status"] == "INVALID_BENCHMARK" for r in rs),
+            "worker_failures": sum(r["status"] == "WORKER_FAILED" for r in rs),
             "evaluator_disagreement_invalid": sum(any("separate v0.3 evaluator" in x for x in r["reasons"]) for r in rs),
             "invalid_reasons_top": dict(reasons.most_common(5)),
             "not_run": sum(t.arm == name for t in not_run), "interrupted": sum(t.arm == name for t in interrupted),
             "wall_seconds_total": round(sum(walls), 3),
-            "wall_seconds_mean": round(sum(walls) / len(walls), 4) if walls else None,
+            "wall_seconds_mean_all": round(sum(walls) / len(walls), 4) if walls else None,
             "wall_seconds_max": round(max(walls), 3) if walls else None,
+            "cost_basis_runs": len(clean),
+            "wall_seconds_mean_clean": round(wall_clean, 4) if wall_clean is not None else None,
             "observe_calls_mean": round(sum(r["observe_calls"] for r in rs) / len(rs), 2) if rs else None,
-            "worker_maxrss_kib_max": max((r["worker_maxrss_kib"] or 0 for r in rs), default=None),
+            "worker_maxrss_kib_max": ("UNMEASURED" if not rss or any(x is None for x in rss) else max(rss)),
             "inadmissible_universes": sum(u["answer"] == "inadmissible" for u in universes),
+            "library_failure_universes": sum(_is_library_failure(u) for u in universes),
+            "design_fallback_universes": sum("design fallback" in str(u.get("rationale", "")) for u in universes),
             "unresolved_universes": sum(u["outcome"] == "indistinguishable_unresolved" for u in universes),
-            "descriptive_credit": {"label": DESCRIPTIVE,
-                                   "mean_total_per_valid_run": (round(sum(r["v3_total_credit"] for r in valid) / len(valid), 4)
-                                                                if valid else None),
-                                   "mean_per_kind": {k: round(sum(v) / len(v), 4) for k, v in sorted(per_kind.items())}},
-            "formal_cost_estimate_seconds": (round(FORMAL_CAMPAIGNS * sum(walls) / len(walls), 1) if walls else None),
+            "descriptive_credit": {
+                "label": DESCRIPTIVE + "; paired world sets only (every runnable arm VALID there)",
+                "paired_world_sets": len({_world(r) for r in on_paired}),
+                "paired_mean_total": (round(sum(r["v3_total_credit"] for r in on_paired) / len(on_paired), 4)
+                                      if on_paired else None),
+                "paired_mean_per_kind": {k: {"mean": round(sum(v) / len(v), 4), "n": len(v)}
+                                         for k, v in sorted(per_kind.items())}},
+            "formal_cost_estimate_seconds": (round(FORMAL_CAMPAIGNS * wall_clean, 1) if wall_clean is not None else None),
         }
-    world_sets = collections.defaultdict(set)
-    for r in records:
-        if r["status"] == "VALID":
-            t = r["task"]
-            world_sets[(t["campaign"], t["presentation"], t["seed"])].add(r["arm"])
-    runnable = {name for name in arm_names if available[name]}
-    estimates = [a["formal_cost_estimate_seconds"] for a in arms_out.values() if a["formal_cost_estimate_seconds"]]
+    missing = sorted(name for name in runnable if arms_out[name]["cost_basis_runs"] == 0)
+    estimates = [arms_out[n]["formal_cost_estimate_seconds"] for n in runnable
+                 if arms_out[n]["formal_cost_estimate_seconds"] is not None]
+    status = "INCOMPLETE" if missing else ("LOWER_BOUND" if interrupted else "ESTIMATE")
     return {
         "readiness": "DEVELOPMENT_ONLY", "claims": "COST_MEASUREMENT_ONLY", "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
         "design": {"campaigns_per_presentation_per_seed": campaigns, "presentations": list(presentations),
                    "seeds": list(seeds), "workers": workers, "deadline_seconds": deadline},
         "elapsed_seconds": round(elapsed, 2),
-        "tasks": {"planned": len(records) + len(not_run) + len(interrupted), "completed": len(records),
-                  "not_run": len(not_run), "interrupted": len(interrupted)},
-        "paired_world_sets_complete": sum(1 for arms in world_sets.values() if runnable and runnable <= arms),
+        "tasks": {"planned": planned, "completed": len(records), "not_run": len(not_run), "interrupted": len(interrupted)},
+        "paired_world_sets_complete": len(paired),
+        "excluded_world_sets": excluded,
         "arms": arms_out,
-        "formal_tier_estimate": {"label": "ESTIMATE from measured mean wall per campaign; single-worker seconds",
-                                 "campaigns_per_arm": FORMAL_CAMPAIGNS, "sum_over_arms_seconds": round(sum(estimates), 1),
+        "formal_tier_estimate": {"label": "ESTIMATE from the measured mean wall of clean VALID campaigns; single-worker seconds",
+                                 "status": status, "arms_without_measurement": missing,
+                                 "campaigns_per_arm": FORMAL_CAMPAIGNS,
+                                 "sum_over_measured_arms_seconds": round(sum(estimates), 1),
                                  "wall_hours_at_4_workers": round(sum(estimates) / 4 / 3600, 2)},
     }
+
+
+def resummarize(out: pathlib.Path | str, arm_names: Sequence[str], *, campaigns: int = RUNG,
+                presentations: Iterable[str] = PRESENTATIONS, seeds: Iterable[int] = PILOT_SEEDS) -> dict[str, Any]:
+    """Recompute a summary from an existing runs.jsonl into summary_resummarized.json; the original summary is kept.
+    Planned tasks without a record count as not_run (cancelled and interrupted tasks are not distinguishable here)."""
+    out = pathlib.Path(out)
+    records = [json.loads(line) for line in (out / "runs.jsonl").read_text().splitlines() if line.strip()]
+    env = json.loads((out / "environment.json").read_text())
+    presentations, seeds = tuple(presentations), tuple(seeds)
+    available = {name: arm_available(name) for name in arm_names}
+    tasks = plan([n for n in arm_names if available[n]], campaigns=campaigns, presentations=presentations, seeds=seeds)
+    seen = {(r["task"]["arm"], r["task"]["campaign"], r["task"]["presentation"], r["task"]["seed"]) for r in records}
+    not_run = [t for t in tasks if (t.arm, t.campaign, t.presentation, t.seed) not in seen]
+    summary = _summarize(arm_names, available, records, not_run, [], presentations, seeds, campaigns,
+                         float(env["elapsed_seconds"]), int(env["workers"]), float(env["deadline_seconds"]),
+                         planned=len(tasks))
+    summary["resummarized_from"] = {"runs_jsonl_sha256": hashlib.sha256((out / "runs.jsonl").read_bytes()).hexdigest(),
+                                    "summarizer": "pilot_v3._summarize (review round 2)"}
+    (out / "summary_resummarized.json").write_text(json.dumps(summary, indent=1, sort_keys=True))
+    return summary
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -235,10 +335,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--campaigns", type=int, default=RUNG)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--deadline-seconds", type=float, default=DEFAULT_DEADLINE)
+    parser.add_argument("--resummarize", action="store_true", help="recompute the summary from an existing runs.jsonl")
     args = parser.parse_args(argv)
     names = all_arms() if args.arms == "all" else args.arms.split(",")
-    summary = run_pilot(names, out=args.out, campaigns=args.campaigns, workers=args.workers,
-                        deadline_seconds=args.deadline_seconds)
+    if args.resummarize:
+        summary = resummarize(args.out, names, campaigns=args.campaigns)
+    else:
+        summary = run_pilot(names, out=args.out, campaigns=args.campaigns, workers=args.workers,
+                            deadline_seconds=args.deadline_seconds)
     print(json.dumps({"tasks": summary["tasks"], "elapsed_seconds": summary["elapsed_seconds"],
                       "paired_world_sets_complete": summary["paired_world_sets_complete"]}))
     return 0
