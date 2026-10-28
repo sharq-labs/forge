@@ -10839,3 +10839,74 @@ passed, 176 skipped in 316.83s**, same 10 nodes; JUnit sha256
 Residual (threat model): use-time rebuilds compare with `==`, so a later-set numeric
 alias in dataset values passes with no numerical effect. Deferred: I-5, I-7..I-9,
 L-4 cost; OWNER_DECISION_REQUIRED: M-3, failed-challenge question. Not committed.
+
+### 2026-10-28 — Local branch and SCIENTIFIC tier on Linux (owner-approved)
+
+Local branch `local/scientific-mvp-2026-10-28` from `main` `dd567d53`, four
+commits by certified area: `c134183d` core discovery (13 files), `f98d1528`
+verdict_authority (`blindfold/isolation.py` + portability test), `f13a4591`
+certification_control (`tests/test_local_assurance.py` fixtures), `6538eed1`
+the rest (36 files). Branch tree `7f1a25f5…` equals the pre-commit working-tree
+snapshot except an untracked empty file named `" | head -20"` (0 bytes, created
+17:48, left uncommitted and undeleted). `main` unchanged; no upstream, no push.
+/opt fetched the branch; its working tree was verified identical (tree
+`7f1a25f5…`, after copying the two newer docs) before HEAD was pointed at
+`6538eed1` with `reset --mixed` (no file touched); status clean.
+
+SCIENTIFIC (owner: CI command with the six docs/TESTING.md §3 deselects, 1 h cap),
+dev_kaeem, /opt at `6538eed1`, clean before and after: `timeout 3600 .venv/bin/python
+-m pytest -m "not campaign" -q -n 4 --dist loadfile` + the six `--deselect`s +
+`--junitxml=~/forge-mvp-20261028-evidence/scientific-linux.xml`.
+Result: **4 failed, 13961 passed, 177 skipped, 2 warnings in 411.08s** (exit 1,
+well inside the cap). JUnit sha256
+`243936ef6aebb0d8c80c45554b2a6e834a745bc9b46ac41babaa54eda4a7185b`; log sha256
+`bfc2daa9faebf94ff02bf6ac1522e4aff27e7f3b81674d946bfaa05297d4ca3b`.
+Failures:
+- `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` and
+  `::test_the_certificate_records_the_v1_relationship_truthfully`: certified commit
+  `0d1d6823`; area drift exactly `certification_control` (test_local_assurance.py),
+  `core` (6 discovery files incl. added final_evaluation.py), `verdict_authority`
+  (isolation.py) — the three committed areas; no uncommitted-tree problem now.
+- `benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured`
+  and `::test_current_repository_inventory_has_no_unreviewed_provenance`
+  (`assert 2 == 0` unreviewed provenance rows).
+Comparison (`scientific-linux-comparison.json`): 0 SCIENTIFIC-only failures; 0 new
+vs FAILURE_BASELINE_2026-10-20 Linux/Windows-only/domain_real_data, R21 and the last
+CI SCIENTIFIC run (`e193e573`: `test_the_certificate_describes_this_tree`). All 4 also
+fail in today's FAST. The 6 freeze-manifest nodes that failed in FAST (uncommitted
+tree) pass on the committed clean tree. Remaining reds need OD-3 recertification of
+the three areas and a provenance review of two rows. Full assurance, formal
+Blindfold and recertification NOT RUN.
+
+### 2026-10-28 — domain_real_data provenance: DOCSET.txt re-reviewed (owner-approved)
+
+Read-only first: the round's own scanner (`inventory_scan.scan()`, scratch
+`provenance_scan.py`) at `6538eed1` named the two UNKNOWN_PROVENANCE files; both
+predate this session's work (pristine `dd567d53` fails the same way) and neither is
+in a certified area. Both have records whose sha256 is stale:
+- `docs/ai/DOCSET.txt`: recorded `29caf10d…` = bytes at `d40aff44`; changed in
+  `60094e5f` (Run Observatory v1) by one line `docs/performance/run-observatory.md`
+  (front matter `authority_scope: NONE`, `evidence_level: NOT_EVIDENCE`); evidence
+  records (commit-bound `check_docs.py`, `DOCUMENT_SCHEMA.md`) still match.
+- `certification/current_core_v2.json`: recorded `eec62a56…` = bytes at
+  `b1eea81b`; changed by certificate child `68ebe4d7` (recertifies `0d1d6823`,
+  generator 2.6.0, pint 0.26.2). Evidence still matches. Structural: the provenance
+  manifest is last updated in the certified source (`0d1d6823`) and the certificate
+  child is written after it, so every recertification re-stales this record.
+Owner decision: update DOCSET.txt now; defer the certificate record until after OD-3.
+Change (commit `07b305d9`, CURRENT_PROVENANCE.json only, 2 lines): sha256
+`29caf10d…` -> `ac10c80f79c9ab0d51812ad34fe312307e7651630835a95addfe712466a70ccc`;
+rationale names the added line; class, role, evidence unchanged.
+Checks: Windows, staged before commit: `.venv/Scripts/python.exe docs/ai/check_docs.py`
+-> `AI_DOCS: PASS (9 documents …)`; `-m pytest -p no:cacheprovider -q
+benchmarks/domain_real_data/tests` -> **2 failed, 31 passed in 422.92s**; scanner ->
+`unknown_provenance_files = 1` (`certification/current_core_v2.json`).
+Linux /opt aligned to `07b305d9` (tree `50be1a92…`, clean): check_docs PASS;
+`.venv/bin/python -m pytest -p no:cacheprovider -q -n 4 --dist loadfile
+benchmarks/domain_real_data/tests` -> **2 failed, 31 passed in 25.49s**
+(`domain-real-data-07b305d9.log`); scanner -> 1 unknown file (the certificate).
+A first Linux attempt was discarded: `git branch -f` refused the checked-out branch,
+HEAD stayed at `6538eed1` with the manifest unstaged and the scanner rejected it
+(1644 unknown); fixed with `update-ref` and re-run as above.
+Still failing by owner decision until OD-3: `test_synthetic_data_is_never_called_measured`,
+`test_current_repository_inventory_has_no_unreviewed_provenance` (one file).
