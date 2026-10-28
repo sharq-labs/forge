@@ -4,8 +4,9 @@ This is NOT a frozen campaign or an independent implementation of v2. It reuses
 the v2 interpreter. Exact zero predictions pass zero truths; other zero-truth
 predictions fail (no new absolute tolerance). Bracketing alone never recovers
 a law. Historical scoring and preregistrations are
-unchanged. No campaign evaluator is exposed: escrow reconciliation, statistical
-review, isolation and preregistration are prerequisites for a v0.3 campaign.
+unchanged. ``evaluate_campaign`` reconciles with the v0.3 development path
+(``benchmarks.genesis_lite.harness_v3``); statistical review, isolation and
+preregistration remain prerequisites for any formal v0.3 campaign.
 """
 
 from __future__ import annotations
@@ -100,3 +101,35 @@ def score_universe(proposal: Mapping[str, Any], entry: Mapping[str, Any]) -> dic
                         else float(table.get(result["outcome"], 0.0)))
     return {**result, "benchmark_id": BENCHMARK_ID, "schema": EVALUATOR_SCHEMA,
             "readiness": READINESS}
+
+
+#: the v0.2 credit table: v0.3 changes the outcome rule, not the credits
+CREDIT_DIGEST = v2.CREDIT_DIGEST
+
+
+def evaluate_campaign(proposals: Mapping[str, Mapping[str, Any]], key: Mapping[str, Any],
+                      escrow: Mapping[str, Mapping[str, Any]], *, expected_credit_digest: str) -> dict[str, Any]:
+    """The v2 reconciliation contract, scored with this module's rule: VALID only when every kind, outcome, credit and
+    fraction agrees with the escrow's v0.3 adjudication. A zero truth (exact zero accepted here, never by the escrow's
+    v0.2 fractions) therefore surfaces as a disagreement: the run fails closed instead of mixing two rules."""
+    if v2.credit_digest(v2.CREDIT) != expected_credit_digest:
+        raise v2.EvaluatorRefused("the evaluator's credit table is not the expected one")
+    entries = {e["universe_id"]: e for e in key["universes"]}
+    if set(entries) != set(proposals) or set(entries) != set(escrow):
+        return {"status": "KEY_MISMATCH", "results": [], "disagreements": [], "benchmark_id": BENCHMARK_ID,
+                "detail": "the answer key, the sealed proposals and the escrow adjudications name different universes"}
+    results, disagreements = [], []
+    for uid in sorted(entries):
+        mine = score_universe(proposals[uid], entries[uid])
+        theirs = escrow[uid]
+        theirs_fr = list(theirs.get("fractions", []))
+        agree = (mine["kind"] == theirs["kind"] and mine["outcome"] == theirs["outcome"]
+                 and math.isclose(mine["credit"], float(theirs["credit"]), abs_tol=1e-12)
+                 and len(theirs_fr) == len(mine["fractions"])
+                 and all(math.isclose(a, b, abs_tol=1e-12) for a, b in zip(mine["fractions"], theirs_fr)))
+        results.append({**mine, "escrow_outcome": theirs["outcome"], "agree": agree})
+        if not agree:
+            disagreements.append(uid)
+    return {"status": "VALID" if not disagreements else "EVALUATOR_DISAGREEMENT", "results": results,
+            "disagreements": disagreements, "schema": EVALUATOR_SCHEMA, "credit_digest": CREDIT_DIGEST,
+            "benchmark_id": BENCHMARK_ID, "readiness": READINESS}
