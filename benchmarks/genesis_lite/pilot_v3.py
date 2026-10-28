@@ -42,6 +42,14 @@ FORMAL_CAMPAIGNS = 30 * len(PRESENTATIONS) * 20          # per arm: 30 campaigns
 DEFAULT_DEADLINE = 28 * 60                               # inside the owner's 30-minute cap, leaving time to stop and write
 GRACE_SECONDS = 60
 DESCRIPTIVE = "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result"
+#: one thread per worker process: with 4 unpinned workers torch/BLAS each grabbed every core and a BoTorch campaign took
+#: 318 s instead of 1.6 s (smoke run 2026-10-28). Set before any numerical library is imported in the worker.
+THREAD_LIMITS = {"OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1",
+                 "JULIA_NUM_THREADS": "1"}
+
+
+def _init_worker() -> None:
+    os.environ.update(THREAD_LIMITS)
 
 
 @dataclass(frozen=True)
@@ -128,7 +136,8 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
                 break
             keep(_work(task, root.hex()))
     else:
-        executor = cf.ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"))
+        executor = cf.ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
+                                          initializer=_init_worker)
         futures = {executor.submit(_work, task, root.hex()): task for task in tasks}
         try:
             for fut in cf.as_completed(futures, timeout=max(0.0, deadline_seconds - (time.monotonic() - t0))):
@@ -152,6 +161,7 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
                          workers, deadline_seconds)
     identity, changed = development_identity()
     env = {"python": sys.version, "platform": platform.platform(), "cpu_count": os.cpu_count(), "workers": workers,
+           "worker_thread_limits": THREAD_LIMITS if workers > 1 else {},
            "deadline_seconds": deadline_seconds, "started": started_wall, "elapsed_seconds": elapsed,
            "root_commitment_sha256": hashlib.sha256(root).hexdigest(), "git_head": _git_head(),
            "development_identity": identity, "v0_2_prereg_identity": code_identity()[0], "v0_2_pin_changed": changed,

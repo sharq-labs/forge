@@ -58,3 +58,14 @@ def test_a_tiny_pilot_writes_runs_summary_and_environment(tmp_path):
         assert arm["runs"] == 1 and arm["valid"] == 1 and arm["wall_seconds_total"] >= 0
         assert arm["descriptive_credit"]["label"].startswith("DEVELOPMENT_DESCRIPTIVE")
     assert summary["paired_world_sets_complete"] == 1
+
+
+def test_parallel_workers_are_pinned_to_one_thread_and_the_environment_says_so(tmp_path):
+    # smoke run 2026-10-28: BoTorch took 318 s per campaign with 4 unpinned workers (1.6 s alone): thread oversubscription
+    from benchmarks.genesis_lite.pilot_v3 import THREAD_LIMITS, run_pilot
+    assert {"OMP_NUM_THREADS", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "JULIA_NUM_THREADS"} <= set(THREAD_LIMITS)
+    assert set(THREAD_LIMITS.values()) == {"1"}
+    run_pilot(["always_refuse"], out=tmp_path, campaigns=1, presentations=("anonymous",), seeds=(0,), workers=2,
+              deadline_seconds=120.0, root=bytes(32))
+    env = json.loads((tmp_path / "environment.json").read_text())
+    assert env["worker_thread_limits"] == THREAD_LIMITS
