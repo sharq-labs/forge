@@ -74,6 +74,8 @@ _MECHANISM = ("separate uid 65534 (setpriv --reuid/--regid, cleared groups, all 
 
 def isolation_support() -> tuple[bool, str]:
     """Whether this host can build the isolated deployment (root to create namespaces and switch uid, the tools)."""
+    if sys.platform != "linux":
+        return False, "the isolation launcher requires Linux namespaces and process inspection"
     if os.geteuid() != 0:
         return False, "creating the namespaces and switching to the discovery uid needs root on the launcher side"
     missing = [t for t in ("unshare", "setpriv", "mount") if shutil.which(t) is None]
