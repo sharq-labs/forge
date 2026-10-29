@@ -226,3 +226,19 @@ def test_the_parent_environment_is_restored_and_workers_run_one_blas_thread(tmp_
     run = json.loads((tmp_path / "runs.jsonl").read_text().splitlines()[0])
     if importlib.util.find_spec("threadpoolctl") is not None:
         assert run["threads_in_force"]["blas_max"] == 1
+
+
+def test_adapter_refusal_and_mind_refused_universes_are_counted_and_reported_apart():
+    from benchmarks.genesis_lite.pilot_v3 import _summarize
+    recs = [_rec("m", 0, answer="inadmissible", credit=-1.0, rationale="EscrowRefused: q=9 outside the box"),
+            _rec("m", 1, answer="inadmissible", credit=-1.0, rationale="MindAdapterError: region"),
+            _rec("m", 2, answer="insufficient_evidence", credit=1.0, rationale="Mind refused: non-positive observable"),
+            _rec("m", 3, answer="no_law", credit=0.5, rationale="Mind no_dependence: flat")]
+    arm = _summarize(["m"], {"m": True}, recs, [], [], ("anonymous",), (0,), 4, 1.0, 1, 10.0, planned=4)["arms"]["m"]
+    assert arm["adapter_or_refusal_failure_universes"] == 2 and arm["library_failure_universes"] == 0
+    assert arm["mind_refused_universes"] == 1
+    assert arm["cost_basis_runs"] == 2                       # both failed campaigns leave the clean cost basis
+    dc = arm["descriptive_credit"]
+    assert dc["paired_mean_total"] == round((-1 - 1 + 1 + 0.5) / 4, 4)
+    # same campaigns, the Mind-refused universes' credit left out (per-campaign totals stay comparable across arms)
+    assert dc["paired_mean_total_excluding_mind_refused"] == round((-1 - 1 + 0 + 0.5) / 4, 4)

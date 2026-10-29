@@ -227,3 +227,64 @@ def test_the_bound_closure_covers_every_engcore_module_a_mind_run_loads():
     assert any(f.endswith("runner.py") for f in out)
     loaded = {__import__("pathlib").Path(f).resolve().relative_to(ROOT).as_posix() for f in out if f}
     assert loaded and loaded <= set(SUBSTRATE_V3_FILES), sorted(loaded - set(SUBSTRATE_V3_FILES))
+
+
+# ---- re-review of 7a75e916 (2026-10-29): notes closed before the pilot -------------------------------------------------
+def _client(make):
+    class Client:
+        def observe(self, uid, settings, query_id):
+            return {"observation": make(settings)}
+    return Client()
+
+
+@pytest.mark.parametrize("make", [lambda x: {"q": x["q"], "r": x["r"], "y": 1.0},                       # drops covariate w
+                                  lambda x: {"q": x["q"], "r": x["r"], "w": 1.0, "y": float("nan")},  # non-finite output
+                                  lambda x: {"q": x["q"], "r": x["r"], "w": 1.0, "y": 1.0, "z": 2.0}])  # unknown key
+def test_a_malformed_observation_is_an_adapter_failure_not_a_mind_refusal(make):
+    from benchmarks.genesis_lite.mind_arm_v3 import MindAdapterError, observer
+    with pytest.raises(MindAdapterError):
+        observer(CARD, _client(make))({"q": 1.0, "r": 2.0}, "q0")
+
+
+def test_a_non_positive_observable_still_reaches_the_mind():
+    from benchmarks.genesis_lite.mind_arm_v3 import observer
+    obs = observer(CARD, _client(lambda x: {"q": x["q"], "r": x["r"], "w": 1.0, "y": -1.0}))({"q": 1.0, "r": 2.0}, "q0")
+    assert obs["y"] == -1.0
+
+
+@pytest.mark.parametrize("arm,kind", [("mind_full", ""), ("mind_full", "baseline"), ("mind_no_falsifier", "candidate"),
+                                      ("always_refuse", "candidate")])
+def test_a_proposer_kind_that_does_not_match_the_arm_invalidates_the_run(arm, kind):
+    from benchmarks.genesis_lite import pilot_v3
+    from benchmarks.genesis_lite.harness_v3 import run_one_v3
+    rec = run_one_v3(arm, pilot_v3._arm(arm), master_seed=(12).to_bytes(4, "big") * 8, campaign_id="gl-v03-kind",
+                     presentation="anonymous", proposer_kind=kind)
+    assert rec.status == "INVALID_BENCHMARK" and any("proposer kind" in r for r in rec.reasons)
+
+
+def test_the_pilot_submits_each_mind_arm_under_its_role(monkeypatch):
+    from benchmarks.genesis_lite import harness_v3, pilot_v3
+    assert {a: pilot_v3.proposer_kind(a) for a in ("mind_full", "mind_no_adaptive_selection", "mind_no_belief_update",
+                                                   "mind_no_falsifier", "always_refuse")} == {
+        "mind_full": "candidate", "mind_no_adaptive_selection": "ablation", "mind_no_belief_update": "ablation",
+        "mind_no_falsifier": "ablation", "always_refuse": "baseline"}
+    seen = []
+    real = harness_v3.run_campaign
+
+    def spy(*args, **kwargs):
+        seen.append(dict(kwargs["proposer_identity"]))
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(harness_v3, "run_campaign", spy)
+    rec = pilot_v3._work(pilot_v3.Task("mind_no_falsifier", 0, "anonymous", 0), ((13).to_bytes(4, "big") * 8).hex())
+    assert rec["status"] == "VALID" and seen == [{"kind": "ablation", "id": "mind_no_falsifier"}]
+
+
+def test_a_run_whose_engcore_is_not_this_tree_is_invalid(monkeypatch):
+    import engcore
+    from benchmarks.genesis_lite.harness_v3 import run_one_v3
+    from benchmarks.genesis_lite.mind_arm_v3 import MIND_ARMS
+    monkeypatch.setattr(engcore, "__file__", "/elsewhere/engcore/__init__.py")
+    rec = run_one_v3("mind_full", MIND_ARMS["mind_full"][0], master_seed=(14).to_bytes(4, "big") * 8,
+                     campaign_id="gl-v03-where", presentation="anonymous", proposer_kind="candidate")
+    assert rec.status == "INVALID_BENCHMARK" and any("engcore" in r for r in rec.reasons)

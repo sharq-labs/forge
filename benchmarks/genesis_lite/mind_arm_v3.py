@@ -6,7 +6,9 @@ The adapter only translates; ``engcore.mind.minimal`` (MIND_VERSION 1.0.0) is us
   settable, an assessment region over exactly the inputs, and a unit query cost (the Mind counts its budget in queries).
   Anything else raises :class:`MindAdapterError`;
 * the Mind observes through the escrow's client; a budget refusal reaches it as ``ObservationRefused(budget=True)``. Any
-  other escrow refusal is re-raised as it is, exactly as the baselines' ``arms._collect`` does;
+  other escrow refusal is re-raised as it is, exactly as the baselines' ``arms._collect`` does. An observation must name
+  exactly the card's inputs, covariates and output with finite values (a non-positive output is the Mind's to judge);
+  anything else raises, so a malformed observation never becomes the Mind's model refusal;
 * its conclusion becomes a Blindfold answer by :data:`TRANSLATION`, frozen here before any run. A fitted law
   ln y = a + sum b_i ln x_i + sum c_j (ln x_j)^2 is written exactly as exp(a) * prod x_i^b_i * prod exp(c_j (ln x_j)^2).
   A REFUSED conclusion (the Mind's model is inapplicable, e.g. a non-positive observable) is answered
@@ -65,14 +67,20 @@ def problem_from_card(card: Mapping[str, Any]) -> ExperimentalProblem:
 
 def observer(card: Mapping[str, Any], client: Any) -> Callable[[Mapping[str, float], str], Mapping[str, float]]:
     uid = card["universe_id"]
+    expected = ({x["name"] for x in card["inputs"]} | set(card.get("observed_covariates", ()))
+                | {card["output"]["name"]})
 
     def observe(settings: Mapping[str, float], query_ref: str) -> Mapping[str, float]:
         try:
-            return client.observe(uid, dict(settings), query_id=f"m{query_ref}-{secrets.token_hex(6)}")["observation"]
+            obs = client.observe(uid, dict(settings), query_id=f"m{query_ref}-{secrets.token_hex(6)}")["observation"]
         except EscrowRefused as exc:
             if not is_budget_refusal(exc):
                 raise                               # a malformed query is the arm's failure, never a refusal to answer
             raise ObservationRefused(str(exc), budget=True) from exc
+        if set(obs) != expected or not all(isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+                                           for x in obs.values()):
+            raise MindAdapterError(f"an observation must name exactly {sorted(expected)} with finite values")
+        return obs
 
     return observe
 

@@ -23,10 +23,13 @@ from engcore.blindfold import EvaluatorConfig, InProcessTransport, run_campaign
 from engcore.blindfold.escrow_v3 import RULE as ESCROW_RULE, EscrowServiceV3
 from engcore.blindfold.expression import c, mul, pw, v
 
+import engcore
+
 from . import harness as h2
 from .adjudication_v3 import BENCHMARK_ID, CONFIG_V3, READINESS, adjudicate_v3
 from .answer_key import export_answer_key, key_digest
 from .evaluator import score_v3
+from .mind_arm_v3 import MIND_ARMS
 from .presentation import Presented, PresentationRefused, TranslatingClient, check_card, present, to_original_law
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -114,15 +117,24 @@ class RunRecordV3(h2.RunRecord):
                             "shares with escrow_v3, so agreement checks those parts, not the rule semantics")
     library_versions: dict = field(default_factory=dict)
     #: the proposer kind the campaign was submitted under ("baseline", or the Mind arms' "candidate" / "ablation")
-    proposer_kind: str = "baseline"
+    proposer_kind: str = ""
 
 
 def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_seed: bytes, campaign_id: str,
                presentation: str, seed: int = 0, measure_memory: bool = False, config: EvaluatorConfig = CONFIG_V3,
                isolation: str = "in_process", arm_spec: str | None = None,
-               extra_paths: tuple[str, ...] = (), proposer_kind: str = "baseline") -> RunRecordV3:
+               extra_paths: tuple[str, ...] = (), proposer_kind: str | None = None) -> RunRecordV3:
+    """``proposer_kind`` defaults to the arm's role: a Mind arm's (``candidate`` / ``ablation``), else ``baseline``; any
+    other kind invalidates the run."""
     rec = RunRecordV3(arm_name, seed, campaign_id, presentation, memory_instrumented=measure_memory, isolation=isolation)
-    rec.proposer_kind = proposer_kind
+    role = MIND_ARMS[arm_name][3] if arm_name in MIND_ARMS else "baseline"
+    rec.proposer_kind = role if proposer_kind is None else str(proposer_kind)
+    if rec.proposer_kind != role:
+        rec.invalid(f"proposer kind {rec.proposer_kind!r} is not arm {arm_name}'s role {role!r}")
+        return rec
+    if pathlib.Path(engcore.__file__).resolve() != (ROOT / "src" / "engcore" / "__init__.py").resolve():
+        rec.invalid(f"this run's engcore ({engcore.__file__}) is not the tree the identity hashes")
+        return rec
     identity, changed = development_identity()
     if changed:
         rec.invalid(f"the shared v0.2 code differs from its preregistration: {changed[:5]}")

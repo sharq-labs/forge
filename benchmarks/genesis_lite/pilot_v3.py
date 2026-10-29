@@ -247,9 +247,23 @@ def _world(r: Mapping[str, Any]) -> tuple:
     return (t["campaign"], t["presentation"], t["seed"])
 
 
+def _failure_head(u: Mapping[str, Any]) -> str:
+    return str(u.get("rationale", "")).split(":", 1)[0] if u.get("answer") == "inadmissible" else ""
+
+
+def _is_adapter_or_refusal_failure(u: Mapping[str, Any]) -> bool:
+    """A Mind adapter failure or an escrow refusal the arm did not survive (a malformed query)."""
+    head = _failure_head(u)
+    return head == "MindAdapterError" or head.endswith("Refused")
+
+
 def _is_library_failure(u: Mapping[str, Any]) -> bool:
-    head = str(u.get("rationale", "")).split(":", 1)[0]
-    return u.get("answer") == "inadmissible" and (head.endswith("Error") or head.endswith("Exception"))
+    head = _failure_head(u)
+    return (head.endswith("Error") or head.endswith("Exception")) and not _is_adapter_or_refusal_failure(u)
+
+
+def _is_mind_refused(u: Mapping[str, Any]) -> bool:
+    return str(u.get("rationale", "")).startswith("Mind refused")
 
 
 def _summarize(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns, elapsed, workers,
@@ -267,7 +281,8 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
     for name in arm_names:
         rs = by_arm.get(name, [])
         valid = [r for r in rs if r["status"] == "VALID"]
-        clean = [r for r in valid if not any(_is_library_failure(u) for u in r["universes"])]
+        clean = [r for r in valid if not any(_is_library_failure(u) or _is_adapter_or_refusal_failure(u)
+                                             for u in r["universes"])]
         measured = [r for r in rs if r["status"] != "WORKER_FAILED"]       # a dead worker measured nothing
         walls = [r["wall_seconds"] for r in measured]
         rss = [r.get("worker_maxrss_kib") for r in measured]
@@ -298,15 +313,20 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
             "worker_rss_high_water_kib": ("UNMEASURED" if not rss or any(x is None for x in rss) else max(rss)),
             "inadmissible_universes": sum(u["answer"] == "inadmissible" for u in universes),
             "library_failure_universes": sum(_is_library_failure(u) for u in universes),
+            "adapter_or_refusal_failure_universes": sum(_is_adapter_or_refusal_failure(u) for u in universes),
             "design_fallback_universes": sum("design fallback" in str(u.get("rationale", "")) for u in universes),
             #: the Mind's own model refused (answered insufficient_evidence): reported apart from reasoned refusals
-            "mind_refused_universes": sum(str(u.get("rationale", "")).startswith("Mind refused") for u in universes),
+            "mind_refused_universes": sum(_is_mind_refused(u) for u in universes),
             "unresolved_universes": sum(u["outcome"] == "indistinguishable_unresolved" for u in universes),
             "descriptive_credit": {
                 "label": DESCRIPTIVE + "; paired world sets only (every runnable arm VALID there)",
                 "paired_world_sets": len({_world(r) for r in on_paired}),
                 "paired_mean_total": (round(sum(r["v3_total_credit"] for r in on_paired) / len(on_paired), 4)
                                       if on_paired else None),
+                #: the same campaigns with the Mind's model refusals' credit left out (a refusal the Mind did not reason to)
+                "paired_mean_total_excluding_mind_refused": (
+                    round(sum(u["credit"] for r in on_paired for u in r["universes"] if not _is_mind_refused(u))
+                          / len(on_paired), 4) if on_paired else None),
                 "paired_mean_per_kind": {k: {"mean": round(sum(v) / len(v), 4), "n": len(v)}
                                          for k, v in sorted(per_kind.items())}},
             "formal_cost_estimate_seconds": (round(FORMAL_CAMPAIGNS * wall_clean, 1) if wall_clean is not None else None),
