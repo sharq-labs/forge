@@ -1037,6 +1037,32 @@ therapeutic work.
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).
 
+### EXC-3 -- experiment selection under a scarce budget (Genesis-lite v0.3 development pilot) (OPEN)
+
+1. **Exact scope:** a `budget_fraction` in `benchmarks/genesis_lite/harness_v3.py` and `pilot_v3.py` and their tests:
+   the harness copies the presented card with `query_budget = min(budget, max(d + 2, floor(f x budget)))` (d = number of
+   inputs) and wraps the arm's client so it refuses past that cap with the escrow's own budget-refusal text; the summary
+   reports queries used and each budget level apart, plus the two pre-declared contrasts; this section. Not touched:
+   the v0.2-pinned files, `escrow.py`, `escrow_v3.py`, the credit table, `src/engcore/mind/**`.
+2. **Allowed capability work:** the cap and parameter, red-first, with a forge-scientific-review; one development pilot
+   on fresh worlds (new root seed) at budget fractions 1.0 (control), 0.5 and 0.25 on the same worlds, all 20 arms,
+   4 workers, 45-minute cap. Pre-declared contrasts (paired, per level): `mind_full` vs `mind_no_adaptive_selection`,
+   and `bo_botorch_variance` vs `space_filling`. Descriptive only.
+3. **Reason:** the EXC-2 pilot could not detect any contribution from experiment selection: every arm spent its whole
+   budget and a space-filling design sufficed at 12-60 queries over 3-4 inputs. If smart selection has value, a scarce
+   budget is the first place it should show.
+4. **Start condition:** owner approval (below); this entry recorded before any code.
+5. **Exit condition:** a recorded pilot report with both contrasts at every budget level on the same worlds, plus a
+   scientific review; no inferential statistics (they would need a statistical review and their own decision).
+6. **Expiry / timebox:** 2026-11-19, even if unfinished.
+7. **Owner approval:** the owner, in chat, 2026-10-29 ("موافق على EXC-3 زي المسودة بالـ defaults المقترحة"), on the
+   drafted eight fields with defaults: fractions 1.0 / 0.5 / 0.25 with a d+2 floor, 45-minute cap, 4 workers, Mind 1.0.0
+   unchanged.
+8. **What remains prohibited:** changing Mind code, thresholds or the answer mapping; tuning on this or the EXC-2
+   pilot's results; changing the credit table or pinned files; AI/LLM proposals to the Mind; any preregistration,
+   formal campaign, A2 closure, lift or superiority claim; widening this scope. A reward for saved queries (a cost-aware
+   Mind stop rule) is NOT part of EXC-3 and needs its own decision.
+
 ### EXC-2 -- Minimal Mind as a measurement arm in the Genesis-lite v0.3 development pilot (CLOSED 2026-10-29 by the owner)
 
 1. **Exact scope:** a new adapter `benchmarks/genesis_lite/mind_arm_v3.py` and its tests; registering its arms in

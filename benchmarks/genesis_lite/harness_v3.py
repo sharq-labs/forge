@@ -5,6 +5,11 @@ that pin to hold (so the shared code is exactly the reviewed code), then runs th
 configuration (:data:`CONFIG_V3`), applies :func:`adjudicate_v3` to the escrow's signed score facts and requires the
 independent v0.3 evaluator to agree. There is no v0.3 preregistration: ``prereg_sha256`` stays empty and the record carries
 a ``development_identity`` over the v0.3 files instead. Not a formal benchmark identity and not evidence of lift.
+
+EXC-3 (owner-approved 2026-10-29): ``budget_fraction`` caps the observations every arm makes on a universe below the
+world's budget (:func:`query_cap`). The presented card states the cap and :class:`QueryCap` refuses past it with the
+escrow's own budget-refusal text; the worlds, the escrow, the scoring and the credit table are unchanged, and at 1.0
+nothing changes at all.
 """
 
 from __future__ import annotations
@@ -13,6 +18,7 @@ import ast
 import hashlib
 import importlib.metadata
 import json
+import math
 import pathlib
 import time
 import tracemalloc
@@ -20,6 +26,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
 from engcore.blindfold import EvaluatorConfig, InProcessTransport, run_campaign
+from engcore.blindfold.escrow import EscrowRefused
 from engcore.blindfold.escrow_v3 import RULE as ESCROW_RULE, EscrowServiceV3
 from engcore.blindfold.expression import c, mul, pw, v
 
@@ -100,6 +107,38 @@ def development_identity() -> tuple[str, list[str]]:
     return h2._digest({"v0_2_prereg": prereg, "v0_3_files": files, "benchmark_id": BENCHMARK_ID}), changed
 
 
+def query_cap(card: Mapping[str, Any], fraction: Any) -> int:
+    """EXC-3: the observations an arm may make on this card's universe: ``min(budget, max(d + 2, floor(f x budget)))``,
+    d the number of inputs (the floor keeps a log-linear fit possible). A fraction below 1 needs a unit query cost."""
+    if isinstance(fraction, bool) or not isinstance(fraction, (int, float)) or not 0 < fraction <= 1:
+        raise ValueError(f"budget fraction {fraction!r} must be a number in (0, 1]")
+    budget = int(card["query_budget"])
+    if fraction == 1:
+        return budget
+    if float(card["query_cost"]) != 1.0:
+        raise ValueError("a budget fraction below 1 needs a unit query cost: the cap counts queries")
+    return min(budget, max(len(card["inputs"]) + 2, math.floor(fraction * budget)))
+
+
+class QueryCap:
+    """What an arm holds under a budget fraction: ``observe`` until ``cap`` observations have succeeded, then the escrow's
+    own budget refusal. A refused query is not counted. ``budget_remaining`` is the cap's, never the world's."""
+
+    __slots__ = ("_QueryCap__inner", "cap", "used")
+
+    def __init__(self, inner: Any, cap: int) -> None:
+        self.__inner = inner
+        self.cap = int(cap)
+        self.used = 0
+
+    def observe(self, universe_id: str, settings: Mapping[str, float], query_id: str = "") -> dict[str, Any]:
+        if self.used >= self.cap:
+            raise EscrowRefused(f"query budget {self.cap} exhausted for {universe_id}")
+        resp = self.__inner.observe(universe_id, settings, query_id=query_id)
+        self.used += 1
+        return {**resp, "budget_remaining": self.cap - self.used}
+
+
 @dataclass
 class RunRecordV3(h2.RunRecord):
     benchmark_id: str = BENCHMARK_ID
@@ -118,12 +157,15 @@ class RunRecordV3(h2.RunRecord):
     library_versions: dict = field(default_factory=dict)
     #: the proposer kind the campaign was submitted under ("baseline", or the Mind arms' "candidate" / "ablation")
     proposer_kind: str = ""
+    #: EXC-3: the fraction of each world's budget the arm was allowed (1.0 = the world's own budget)
+    budget_fraction: float = 1.0
 
 
 def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_seed: bytes, campaign_id: str,
                presentation: str, seed: int = 0, measure_memory: bool = False, config: EvaluatorConfig = CONFIG_V3,
                isolation: str = "in_process", arm_spec: str | None = None,
-               extra_paths: tuple[str, ...] = (), proposer_kind: str | None = None) -> RunRecordV3:
+               extra_paths: tuple[str, ...] = (), proposer_kind: str | None = None,
+               budget_fraction: float = 1.0) -> RunRecordV3:
     """``proposer_kind`` defaults to the arm's role: a Mind arm's (``candidate`` / ``ablation``), else ``baseline``; any
     other kind invalidates the run."""
     rec = RunRecordV3(arm_name, seed, campaign_id, presentation, memory_instrumented=measure_memory, isolation=isolation)
@@ -132,6 +174,10 @@ def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_s
     if rec.proposer_kind != role:
         rec.invalid(f"proposer kind {rec.proposer_kind!r} is not arm {arm_name}'s role {role!r}")
         return rec
+    if isinstance(budget_fraction, bool) or not isinstance(budget_fraction, (int, float)) or not 0 < budget_fraction <= 1:
+        rec.invalid(f"budget fraction {budget_fraction!r} is not in (0, 1]")
+        return rec
+    rec.budget_fraction = float(budget_fraction)
     if pathlib.Path(engcore.__file__).resolve() != (ROOT / "src" / "engcore" / "__init__.py").resolve():
         rec.invalid(f"this run's engcore ({engcore.__file__}) is not the tree the identity hashes")
         return rec
@@ -152,7 +198,7 @@ def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_s
             rec.host_start_seconds = time.perf_counter() - started
             spec = arm_spec or arm_name
             arm = lambda card, client, *, seed=0: host.propose(spec, card, seed, client)  # noqa: E731
-        _run_v3(rec, arm, master_seed, campaign_id, presentation, seed, measure_memory, config)
+        _run_v3(rec, arm, master_seed, campaign_id, presentation, seed, measure_memory, config, rec.budget_fraction)
     except Exception as exc:  # noqa: BLE001 - every failure is a recorded benchmark-invalid run, never a lost record
         rec.invalid(f"run aborted: {type(exc).__name__}: {str(exc)[:300]}")
     finally:
@@ -162,7 +208,8 @@ def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_s
 
 
 def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed: bytes, campaign_id: str,
-            presentation: str, seed: int, measure_memory: bool, config: EvaluatorConfig) -> None:
+            presentation: str, seed: int, measure_memory: bool, config: EvaluatorConfig,
+            budget_fraction: float = 1.0) -> None:
     if config.digest != CONFIG_V3.digest or score_v3.v2.credit_digest(dict(config.credit)) != score_v3.CREDIT_DIGEST:
         rec.invalid("the evaluator configuration is not the sealed v0.3 one")
         return
@@ -199,13 +246,22 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
         except Exception as exc:  # noqa: BLE001 - a presentation failure is the benchmark's, never the proposer's
             rec.invalid(f"presentation failed before the proposer saw {uid}: {type(exc).__name__}: {exc}")
             raise
+        budget = int(shown_card["query_budget"])
+        try:
+            cap = query_cap(shown_card, budget_fraction)
+        except ValueError as exc:                        # the benchmark's failure, never the proposer's
+            rec.invalid(f"budget fraction cannot be applied to {uid}: {exc}")
+            raise
+        if cap != budget:
+            shown_card = {**shown_card, "query_budget": cap}
         shown[uid] = shown_card
         if p.historical is not None:
             traps[uid] = p
         wrapped = TranslatingClient(client, p)
         t0 = time.perf_counter()
-        proposal = dict(arm(shown_card, wrapped, seed=seed))
-        per_universe[uid] = {"proposer_seconds": time.perf_counter() - t0, "observe_calls": wrapped.calls}
+        proposal = dict(arm(shown_card, QueryCap(wrapped, cap), seed=seed))
+        per_universe[uid] = {"proposer_seconds": time.perf_counter() - t0, "observe_calls": wrapped.calls,
+                             "query_cap": cap, "query_budget": budget}
         if proposal.get("universe_id", shown_card["universe_id"]) != shown_card["universe_id"]:
             raise ValueError("the proposal names another universe than its card")
         proposal["universe_id"] = uid
@@ -284,5 +340,5 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
     rec.v3_total_credit = sum(u["credit"] for u in rec.universes)
 
 
-__all__ = ["CONFIG_V3", "RunRecordV3", "SUBSTRATE_V3_FILES", "V3_FILES", "development_identity", "engcore_closure",
-           "run_one_v3"]
+__all__ = ["CONFIG_V3", "QueryCap", "RunRecordV3", "SUBSTRATE_V3_FILES", "V3_FILES", "development_identity",
+           "engcore_closure", "query_cap", "run_one_v3"]

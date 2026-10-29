@@ -3,6 +3,8 @@
 Every available arm -- the v0.2 arms, the v0.3 development baselines (PySR, PySINDy, BoTorch) and (EXC-2) the Minimal
 Mind with its three ablations -- runs development campaigns through :func:`.harness_v3.run_one_v3`. World sets are paired across arms (one master seed per campaign,
 presentation and seed, never reused) and scheduled world set by world set, so a deadline truncates every arm equally.
+EXC-3: with several budget fractions, every fraction of a world set runs on the same worlds before the next world set, and
+the summary reports each level apart with the pre-declared paired :data:`CONTRASTS`.
 Unavailable arms are recorded, never substituted. Runs are written as they finish.
 
 Measurement only. The summary reports cost (wall time, observations, worker memory), validity, evaluator disagreements,
@@ -43,6 +45,8 @@ FORMAL_CAMPAIGNS = 30 * len(PRESENTATIONS) * 20          # per arm: 30 campaigns
 DEFAULT_DEADLINE = 28 * 60                               # inside the owner's 30-minute cap, leaving time to stop and write
 GRACE_SECONDS = 60
 DESCRIPTIVE = "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result"
+#: EXC-3, declared before the scarce-budget pilot: (a, b) paired per world set and budget level, a minus b
+CONTRASTS = (("mind_full", "mind_no_adaptive_selection"), ("bo_botorch_variance", "space_filling"))
 #: one thread per worker process: with 4 unpinned workers torch/BLAS each grabbed every core and a BoTorch campaign took
 #: 318 s instead of 1.6 s (smoke run 2026-10-28). Set before any numerical library is imported in the worker.
 THREAD_LIMITS = {"OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1",
@@ -59,11 +63,14 @@ class Task:
     campaign: int
     presentation: str
     seed: int
+    budget_fraction: float = 1.0
 
 
-def plan(arm_names: Sequence[str], *, campaigns: int, presentations: Iterable[str], seeds: Iterable[int]) -> list[Task]:
-    presentations = tuple(presentations)
-    return [Task(arm, i, pres, seed) for seed in seeds for i in range(campaigns) for pres in presentations for arm in arm_names]
+def plan(arm_names: Sequence[str], *, campaigns: int, presentations: Iterable[str], seeds: Iterable[int],
+         fractions: Iterable[float] = (1.0,)) -> list[Task]:
+    presentations, fractions = tuple(presentations), tuple(fractions)
+    return [Task(arm, i, pres, seed, f) for seed in seeds for i in range(campaigns) for pres in presentations
+            for f in fractions for arm in arm_names]
 
 
 def master_seed(root: bytes, campaign: int, presentation: str, seed: int) -> bytes:
@@ -106,7 +113,7 @@ def _work(task: Task, master_seed_hex: str) -> dict[str, Any]:
     """One campaign (runs in a worker process). The worker receives only this campaign's master seed, never the root."""
     rec = run_one_v3(task.arm, _arm(task.arm), master_seed=bytes.fromhex(master_seed_hex),
                      campaign_id=f"gl-v03-dev-{task.seed}-{task.campaign}-{task.presentation}", presentation=task.presentation,
-                     seed=task.seed, proposer_kind=proposer_kind(task.arm))
+                     seed=task.seed, proposer_kind=proposer_kind(task.arm), budget_fraction=task.budget_fraction)
     try:
         import resource
         maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss   # KiB on Linux
@@ -156,9 +163,13 @@ def _git_head() -> str:
 
 def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: int = RUNG,
               presentations: Iterable[str] = PRESENTATIONS, seeds: Iterable[int] = PILOT_SEEDS, workers: int = 4,
-              deadline_seconds: float = DEFAULT_DEADLINE, root: bytes | None = None) -> dict[str, Any]:
+              deadline_seconds: float = DEFAULT_DEADLINE, root: bytes | None = None,
+              fractions: Iterable[float] = (1.0,)) -> dict[str, Any]:
     if len(set(arm_names)) != len(arm_names):
         raise ValueError("an arm is named twice: its world sets would be reused")
+    fractions = tuple(float(f) for f in fractions)
+    if not fractions or len(set(fractions)) != len(fractions) or not all(0 < f <= 1 for f in fractions):
+        raise ValueError(f"budget fractions must be distinct numbers in (0, 1]: {fractions}")
     out = pathlib.Path(out)
     out.mkdir(parents=True, exist_ok=True)
     root = secrets.token_bytes(32) if root is None else root
@@ -166,7 +177,7 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
     started_wall, t0 = time.strftime("%Y-%m-%dT%H:%M:%S%z"), time.monotonic()
     available = {name: arm_available(name) for name in arm_names}
     runnable = [name for name in arm_names if available[name]]
-    tasks = plan(runnable, campaigns=campaigns, presentations=presentations, seeds=seeds)
+    tasks = plan(runnable, campaigns=campaigns, presentations=presentations, seeds=seeds, fractions=fractions)
     records: list[dict[str, Any]] = []
     not_run: list[Task] = []
     interrupted: list[Task] = []
@@ -228,7 +239,7 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
         executor.shutdown(wait=False, cancel_futures=True)
     elapsed = time.monotonic() - t0
     summary = _summarize(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns, elapsed,
-                         workers, deadline_seconds, planned=len(tasks))
+                         workers, deadline_seconds, planned=len(tasks), fractions=fractions)
     identity, changed = development_identity()
     env = {"python": sys.version, "platform": platform.platform(), "cpu_count": os.cpu_count(), "workers": workers,
            "worker_thread_limits": THREAD_LIMITS if workers > 1 else {},
@@ -242,9 +253,36 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
     return json.loads(json.dumps(summary))
 
 
+def _fraction(r: Mapping[str, Any]) -> float:
+    return float(r["task"].get("budget_fraction", 1.0))
+
+
 def _world(r: Mapping[str, Any]) -> tuple:
     t = r["task"]
-    return (t["campaign"], t["presentation"], t["seed"])
+    return (t["campaign"], t["presentation"], t["seed"], _fraction(r))
+
+
+def _contrasts(records: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """The pre-declared paired contrasts on world sets where both arms are VALID (one budget level's records)."""
+    worlds: dict[tuple, dict[str, Mapping[str, Any]]] = collections.defaultdict(dict)
+    for r in records:
+        if r["status"] == "VALID":
+            worlds[_world(r)][r["arm"]] = r
+    out = []
+    for a, b in CONTRASTS:
+        both = [w for w in worlds.values() if a in w and b in w]
+        diffs = [w[a]["v3_total_credit"] - w[b]["v3_total_credit"] for w in both]
+
+        def calls(arm: str) -> float | None:
+            return round(sum(w[arm]["observe_calls"] for w in both) / len(both), 2) if both else None
+
+        out.append({"a": a, "b": b, "label": DESCRIPTIVE + "; pre-declared EXC-3 contrast: per campaign, a minus b",
+                    "paired_world_sets": len(diffs),
+                    "mean_difference": round(sum(diffs) / len(diffs), 4) if diffs else None,
+                    "a_better": sum(d > 1e-12 for d in diffs), "b_better": sum(d < -1e-12 for d in diffs),
+                    "ties": sum(abs(d) <= 1e-12 for d in diffs),
+                    "observe_calls_mean_a": calls(a), "observe_calls_mean_b": calls(b)})
+    return out
 
 
 def _failure_head(u: Mapping[str, Any]) -> str:
@@ -267,7 +305,30 @@ def _is_mind_refused(u: Mapping[str, Any]) -> bool:
 
 
 def _summarize(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns, elapsed, workers,
-               deadline, *, planned: int, missing_records: int = 0) -> dict[str, Any]:
+               deadline, *, planned: int, missing_records: int = 0, fractions: Sequence[float] = (1.0,)) -> dict[str, Any]:
+    """The pooled summary (every budget level together) plus ``budget_levels``: each level's arms, paired world sets and
+    pre-declared contrasts, on that level's records only."""
+    fractions = tuple(float(f) for f in fractions)
+    summary = _summarize_pooled(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns,
+                                elapsed, workers, deadline, planned=planned, missing_records=missing_records)
+    summary["design"]["budget_fractions"] = list(fractions)
+    if len(fractions) > 1:
+        summary["arms_label"] = "every budget level pooled; compare levels only through budget_levels"
+        summary["formal_tier_estimate"]["scope"] += "; budget levels pooled"
+    summary["budget_levels"] = {}
+    for f in fractions:
+        at = [r for r in records if _fraction(r) == f]
+        level = _summarize_pooled(arm_names, available, at, [t for t in not_run if t.budget_fraction == f],
+                                  [t for t in interrupted if t.budget_fraction == f], presentations, seeds, campaigns,
+                                  elapsed, workers, deadline, planned=planned // len(fractions))
+        summary["budget_levels"][str(f)] = {"arms": level["arms"],
+                                             "paired_world_sets_complete": level["paired_world_sets_complete"],
+                                             "contrasts": _contrasts(at)}
+    return summary
+
+
+def _summarize_pooled(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns, elapsed,
+                      workers, deadline, *, planned: int, missing_records: int = 0) -> dict[str, Any]:
     runnable = [name for name in arm_names if available[name]]
     by_arm: dict[str, list[dict]] = collections.defaultdict(list)
     worlds: dict[tuple, dict[str, str]] = collections.defaultdict(dict)
@@ -379,12 +440,15 @@ def resummarize(out: pathlib.Path | str, arm_names: Sequence[str] | None = None,
     available = {name: recorded["arms"][name]["status"] == "AVAILABLE" for name in names}
     presentations, seeds = tuple(design["presentations"]), tuple(design["seeds"])
     campaigns = int(design["campaigns_per_presentation_per_seed"])
-    tasks = plan([n for n in names if available[n]], campaigns=campaigns, presentations=presentations, seeds=seeds)
-    seen = {(r["task"]["arm"], r["task"]["campaign"], r["task"]["presentation"], r["task"]["seed"]) for r in records}
-    missing = sum((t.arm, t.campaign, t.presentation, t.seed) not in seen for t in tasks)
+    fractions = tuple(float(f) for f in design.get("budget_fractions", [1.0]))
+    tasks = plan([n for n in names if available[n]], campaigns=campaigns, presentations=presentations, seeds=seeds,
+                 fractions=fractions)
+    seen = {(r["task"]["arm"], r["task"]["campaign"], r["task"]["presentation"], r["task"]["seed"], _fraction(r))
+            for r in records}
+    missing = sum((t.arm, t.campaign, t.presentation, t.seed, t.budget_fraction) not in seen for t in tasks)
     summary = _summarize(names, available, records, [], [], presentations, seeds, campaigns,
                          float(env["elapsed_seconds"]), int(env["workers"]), float(env["deadline_seconds"]),
-                         planned=len(tasks), missing_records=missing)
+                         planned=len(tasks), missing_records=missing, fractions=fractions)
     summary["resummarized_from"] = {
         "runs_jsonl_sha256": hashlib.sha256((out / "runs.jsonl").read_bytes()).hexdigest(),
         "original_summary_sha256": hashlib.sha256(original).hexdigest(),
@@ -402,6 +466,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--campaigns", type=int, default=RUNG)
     parser.add_argument("--workers", type=int, default=4)
     parser.add_argument("--deadline-seconds", type=float, default=DEFAULT_DEADLINE)
+    parser.add_argument("--budget-fractions", default="1.0", help="EXC-3: comma-separated fractions of each world's budget")
     parser.add_argument("--resummarize", action="store_true", help="recompute the summary from an existing runs.jsonl")
     args = parser.parse_args(argv)
     names = all_arms() if args.arms == "all" else args.arms.split(",")
@@ -409,7 +474,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         summary = resummarize(args.out)
     else:
         summary = run_pilot(names, out=args.out, campaigns=args.campaigns, workers=args.workers,
-                            deadline_seconds=args.deadline_seconds)
+                            deadline_seconds=args.deadline_seconds,
+                            fractions=tuple(float(x) for x in args.budget_fractions.split(",")))
     print(json.dumps({"tasks": summary["tasks"], "elapsed_seconds": summary["elapsed_seconds"],
                       "paired_world_sets_complete": summary["paired_world_sets_complete"]}))
     return 0
