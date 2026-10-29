@@ -11173,3 +11173,37 @@ executed code. The 3261 post-change identity labels and environment.json's git_h
 as written and are corrected only in the README. It was not re-run. EXC-3 is marked CLOSED
 in ACTIVE_PLAN, and its field-8 prohibitions stand. Still open: coordination with the fork
 session that writes to the same main and /opt.
+
+### 2026-10-29 — Fork session report: a second EXC-3 pilot overlapped the accepted run
+
+The fork session ("محرك استدلال علمي محايد (fork)") acknowledged the owner's
+single-writer decision. It now makes no commits on main, does not touch /opt and starts no
+runs. Its report:
+- It started a second EXC-3 pilot in /opt at 14:23:49 at `56b33d42`
+  (`pilot-v3-dev-exc3-2026-10-29`, same fractions) and stopped it with SIGTERM at about
+  28 minutes. No process remains.
+- The partial output (no summary.json, runs.jsonl possibly partial) is left undeleted
+  outside the repository. It is NOT EXC-3 evidence.
+- Its commit `56b33d42` covers four changes:
+  - a per-universe cap check from the escrow's own accepted observations;
+  - per-fraction pseudonym keys below 1.0;
+  - a note that kind and credit are defined at the full budget;
+  - a formal estimate from level 1.0 only.
+- That session wrote no PROGRESS entry for its reviews of `1648ce7b`/`6f0bc58d` or for
+  `56b33d42`. The content above is as it reported it, not verified here. This session has
+  not reviewed `56b33d42`.
+
+Effect on the accepted scarce-budget run (14:08:13–14:37:17): 8 extra CPU-bound
+processes ran beside it from 14:23:49. Wall-time and cost figures from that window are
+contaminated.
+
+Outcomes and credit are not expected to change. This was checked statically, not by
+re-running:
+- every arm is iteration-bounded;
+- PySR runs `deterministic=True`, `parallelism="serial"`, `niterations=40` with no time
+  limit;
+- no arm or Mind module reads a clock for a decision;
+- the 2400 s deadline was not reached (1741 s).
+
+The README provenance section now records this. The owner's "Accept with note" was
+given before this report.

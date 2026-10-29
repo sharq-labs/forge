@@ -23,7 +23,14 @@ No statistics were computed. Not A2 evidence.
 - **Effect on results:** none is expected on scoring. `56b33d42` changes pseudonym keys below 1.0 and adds a
   per-universe cap check; the arms are stateless across campaigns and no run exceeded its cap (0 INVALID). The
   recorded provenance is nevertheless wrong for 3261 runs.
-- **Owner decision (2026-10-29, in chat: "Accept with note"):** this run is accepted with the correction above, which
+- **Concurrent load (reported afterwards by the fork session):** the fork also started a second EXC-3 pilot in /opt at
+  14:23:49, at `56b33d42`, with output `pilot-v3-dev-exc3-2026-10-29`. It ran 8 extra CPU-bound processes beside this run
+  until this run ended at 14:37:17; the fork stopped it at about 28 minutes. **Wall-time and cost figures from that
+  window are contaminated.** Outcomes and credit are not expected to be. Every arm is iteration-bounded; PySR runs
+  `deterministic=True`, `parallelism="serial"`, 40 iterations and no time limit; no arm or Mind module reads a clock for a
+  decision; and this run's deadline (2400 s) was never reached (1741 s). The fork's partial output has no summary, is NOT
+  EXC-3 evidence, and was left undeleted outside the repository.
+- **Owner decision (2026-10-29, in chat: "Accept with note"):** taken before the concurrent-load report above. this run is accepted with the correction above, which
   binds its results to `6f0bc58d` as the inferred executed code; it was not re-run. EXC-3 is closed.
 
 ## Files
