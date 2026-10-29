@@ -334,3 +334,22 @@ def test_contrasts_are_paired_per_universe_stratified_and_on_worlds_common_to_ev
     notes = {(x["a"], x["b"]): x["note"] for x in lv["contrasts"]}
     assert "design and analysis confounded" in notes[("bo_botorch_variance", "space_filling")]
     assert "design only" in notes[("mind_full", "mind_no_adaptive_selection")]
+
+
+# ---- re-review of 1648ce7b (APPROVE WITH NOTES): notes 3 and 4 --------------------------------------------------------
+def test_an_inadmissible_universe_keeps_its_cap_and_budget():
+    def boom(card, client, *, seed=0):
+        raise RuntimeError("arm failure")
+    rec = _run("boom", fn=boom)
+    assert rec.status == "VALID" and all(u["answer"] == "inadmissible" for u in rec.universes)
+    assert all(u["query_cap"] <= u["query_budget"] and "observe_calls" in u for u in rec.universes)
+
+
+def test_a_failure_recording_the_cap_data_invalidates_the_run_not_the_arm(monkeypatch):
+    from benchmarks.genesis_lite import harness_v3
+
+    def broken(card):
+        raise ZeroDivisionError("bookkeeping")
+    monkeypatch.setattr(harness_v3, "selection_queries", broken)
+    rec = _run("careful")
+    assert rec.status == "INVALID_BENCHMARK" and any("bookkeeping" in r for r in rec.reasons), rec.reasons

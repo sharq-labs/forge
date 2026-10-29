@@ -297,9 +297,14 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
         if p.historical is not None:
             traps[uid] = p
         wrapped = TranslatingClient(client, p)
-        # recorded before the arm runs, so an inadmissible universe keeps its cap and budget
-        per_universe[uid] = {"inputs": len(shown_card["inputs"]), "query_cap": cap, "query_budget": budget,
-                             **{f"{k}_selection_queries": n for k, n in selection_queries(shown_card).items()}}
+        # recorded before the arm runs, so an inadmissible universe keeps its cap and budget; a bookkeeping failure is
+        # the benchmark's, never the proposer's
+        try:
+            per_universe[uid] = {"inputs": len(shown_card["inputs"]), "query_cap": cap, "query_budget": budget,
+                                 **{f"{k}_selection_queries": n for k, n in selection_queries(shown_card).items()}}
+        except Exception as exc:  # noqa: BLE001
+            rec.invalid(f"recording the cap data for {uid} failed: {type(exc).__name__}: {exc}")
+            raise
         settable = {x["name"] for x in shown_card["inputs"] if x.get("settable")}
         t0 = time.perf_counter()
         try:
