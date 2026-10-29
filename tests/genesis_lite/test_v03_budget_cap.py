@@ -280,15 +280,20 @@ def test_past_the_cap_a_malformed_query_is_still_the_arms_failure(settings, uid)
 
 
 def test_a_capped_card_differs_from_the_full_card_only_in_its_budget():
-    cards = {}
+    cards = {1.0: [], 0.25: []}
+    current = []
 
     def spy(card, client, *, seed=0):
-        cards.setdefault(card["universe_id"], []).append(dict(card))
+        current.append(dict(card))
         return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": "spy"}
     for f in (1.0, 0.25):
+        current.clear()
         assert _run("spy", fraction=f, fn=spy).status == "VALID"
-    for full, capped in cards.values():
-        assert {k for k in full if full[k] != capped[k]} <= {"query_budget"}
+        cards[f] = list(current)
+    assert len(cards[1.0]) == len(cards[0.25]) == 6
+    for full, capped in zip(cards[1.0], cards[0.25]):        # the campaign presents the universes in the same order
+        # each fraction has its own pseudonym (review of 6f0bc58d, MEDIUM-2); nothing else but the budget differs
+        assert {k for k in full if full[k] != capped[k]} <= {"query_budget", "universe_id"}
         assert capped["query_budget"] <= full["query_budget"]
 
 
@@ -353,3 +358,76 @@ def test_a_failure_recording_the_cap_data_invalidates_the_run_not_the_arm(monkey
     monkeypatch.setattr(harness_v3, "selection_queries", broken)
     rec = _run("careful")
     assert rec.status == "INVALID_BENCHMARK" and any("bookkeeping" in r for r in rec.reasons), rec.reasons
+
+
+# ---- review of 6f0bc58d (2026-10-29): notes closed before the pilot ----------------------------------------------------
+def test_an_arm_that_breaks_the_cap_on_one_universe_only_invalidates_the_run():
+    spent = {"first": None}
+
+    def lopsided(card, client, *, seed=0):          # over the cap on the first universe, nothing on the others
+        if spent["first"] is None:
+            spent["first"] = card["universe_id"]
+            setattr(client, "_QueryCap__cap", 10 ** 6)
+            x = card["inputs"]
+            for k in range(int(card["query_budget"]) + 3):
+                try:
+                    client.observe(card["universe_id"], {i["name"]: i["range"][0] for i in x}, query_id=f"l{k}")
+                except EscrowRefused:
+                    break
+        return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": "lopsided"}
+
+    rec = _run("lopsided", fn=lopsided)
+    assert rec.status == "INVALID_BENCHMARK" and any("cap" in r for r in rec.reasons), rec.reasons
+
+
+def test_each_budget_fraction_gets_its_own_universe_pseudonyms_and_1_0_keeps_the_v0_2_ones(monkeypatch):
+    from benchmarks.genesis_lite import harness_v3
+    seen = []
+    real = harness_v3.present
+
+    def spy(card, presentation, key, stimulus_key=None):
+        p = real(card, presentation, key, stimulus_key)
+        seen.append((card["universe_id"], p.card["universe_id"]))
+        return p
+
+    monkeypatch.setattr(harness_v3, "present", spy)
+    names = {}
+    for f in (1.0, 0.5, 0.25):
+        seen.clear()
+        assert _run("careful", fraction=f).status == "VALID"
+        names[f] = dict(seen)
+    assert set(names[1.0]) == set(names[0.5]) == set(names[0.25])             # the same hidden worlds
+    for uid in names[1.0]:
+        assert len({names[1.0][uid], names[0.5][uid], names[0.25][uid]}) == 3   # never the same pseudonym twice
+    # at 1.0 the pseudonym key uses the bare arm name, exactly as v0.2 and the EXC-2 pilot did
+    assert harness_v3.presentation_arm_label("careful", 1.0) == "careful"
+    assert harness_v3.presentation_arm_label("careful", 0.25) != "careful"
+
+
+def test_every_budget_level_states_that_kinds_are_defined_at_the_full_budget():
+    s = _two_level_summary()
+    for level in s["budget_levels"].values():
+        assert "full budget" in level["kind_note"] and "within a level" in level["kind_note"]
+
+
+def _two_level_summary():
+    from benchmarks.genesis_lite.pilot_v3 import _summarize
+
+    def rec(campaign, fraction, wall):
+        return {"arm": "careful", "status": "VALID", "reasons": [], "wall_seconds": wall, "observe_calls": 3,
+                "worker_maxrss_kib": 100, "v3_total_credit": 1.0,
+                "universes": [{"universe_id": "u", "kind": "discoverable", "answer": "law", "outcome": "law_pass",
+                               "credit": 1.0, "rationale": "r", "observe_calls": 3, "query_cap": 3, "query_budget": 6}],
+                "task": {"arm": "careful", "campaign": campaign, "presentation": "anonymous", "seed": 0,
+                         "budget_fraction": fraction}}
+
+    recs = [rec(0, 1.0, 10.0), rec(1, 1.0, 10.0), rec(0, 0.25, 2.0), rec(1, 0.25, 2.0)]
+    return _summarize(["careful"], {"careful": True}, recs, [], [], ("anonymous",), (0,), 2, 1.0, 4, 10.0, planned=4,
+                      fractions=(1.0, 0.25))
+
+
+def test_the_formal_cost_estimate_comes_from_the_full_budget_level_only():
+    from benchmarks.genesis_lite.pilot_v3 import FORMAL_CAMPAIGNS
+    est = _two_level_summary()["formal_tier_estimate"]
+    assert est["sum_over_measured_arms_seconds"] == round(FORMAL_CAMPAIGNS * 10.0, 1)
+    assert "level 1.0 only" in est["scope"]

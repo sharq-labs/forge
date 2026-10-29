@@ -1,4 +1,5 @@
-"""Genesis-lite v0.3 DEVELOPMENT cost pilot (owner-approved 2026-10-28: 30-minute cap, 4 workers).
+"""Genesis-lite v0.3 DEVELOPMENT cost pilot (owner-approved 2026-10-28: 30-minute cap, 4 workers; EXC-3 2026-10-29:
+45-minute cap, budget fractions 1.0 / 0.5 / 0.25, passed on the command line).
 
 Every available arm -- the v0.2 arms, the v0.3 development baselines (PySR, PySINDy, BoTorch) and (EXC-2) the Minimal
 Mind with its three ablations -- runs development campaigns through :func:`.harness_v3.run_one_v3`. World sets are paired across arms (one master seed per campaign,
@@ -42,7 +43,7 @@ PRESENTATIONS = ("anonymous", "renamed", "paraphrased", "trap")
 RUNG = 10
 PILOT_SEEDS = (0, 1, 2)
 FORMAL_CAMPAIGNS = 30 * len(PRESENTATIONS) * 20          # per arm: 30 campaigns x 4 presentations x 20 seeds (Genesis floor)
-DEFAULT_DEADLINE = 28 * 60                               # inside the owner's 30-minute cap, leaving time to stop and write
+DEFAULT_DEADLINE = 28 * 60                               # inside the 30-minute cap of 2026-10-28; EXC-3 passes its own
 GRACE_SECONDS = 60
 DESCRIPTIVE = "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result"
 #: EXC-3, declared before the scarce-budget pilot: (a, b) paired per world set and budget level, a minus b
@@ -50,8 +51,9 @@ CONTRASTS = (("mind_full", "mind_no_adaptive_selection"), ("bo_botorch_variance"
 #: what each contrast can and cannot isolate (review of a9734570, stated before the pilot)
 CONTRAST_NOTES = {
     ("mind_full", "mind_no_adaptive_selection"): (
-        "design only: the same Mind analysis; the arms differ only after the shared initial design, so a universe with "
-        "no selection query left measures nothing but noise"),
+        "design only: the same Mind analysis; the arms differ only after the shared initial design (the fixed-design "
+        "arm also never stops early on a decided leader, so it may use more queries: compare observe_calls), so a "
+        "universe with no selection query left measures nothing but noise"),
     ("bo_botorch_variance", "space_filling"): (
         "design and analysis confounded: BoTorch also searches input subsets and the covariate (_select_and_gate) where "
         "space_filling gates the settable inputs (_gate), and their Latin-hypercube seeds differ"),
@@ -359,6 +361,10 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
     if len(fractions) > 1:
         summary["arms_label"] = "every budget level pooled; compare levels only through budget_levels"
         summary["formal_tier_estimate"]["scope"] += "; budget levels pooled"
+    #: universe kinds (and so the credit) are defined at each world's full budget
+    kind_note = ("universe kinds and their credit are defined at each world's full budget: below 1.0 a 'discoverable' "
+                 "world may not be discoverable within the cap, where a correct refusal earns 0. Level-to-level credit is "
+                 "therefore not correctness under scarcity; compare arms within a level")
     valid: dict[str, set] = collections.defaultdict(set)
     for r in records:
         if r["status"] == "VALID":
@@ -372,7 +378,12 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
         level = _summarize_pooled(arm_names, available, at, [t for t in not_run if t.budget_fraction == f],
                                   [t for t in interrupted if t.budget_fraction == f], presentations, seeds, campaigns,
                                   elapsed, workers, deadline, planned=planned // len(fractions))
-        summary["budget_levels"][str(f)] = {"arms": level["arms"],
+        if f == 1.0 and len(fractions) > 1:            # capped campaigns are cheaper: the estimate is the full budget's
+            estimate = dict(level["formal_tier_estimate"])
+            estimate["status"] = summary["formal_tier_estimate"]["status"]
+            estimate["scope"] = level["formal_tier_estimate"]["scope"] + "; level 1.0 only"
+            summary["formal_tier_estimate"] = estimate
+        summary["budget_levels"][str(f)] = {"arms": level["arms"], "kind_note": kind_note,
                                              "paired_world_sets_complete": level["paired_world_sets_complete"],
                                              "realised_fraction_mean": _realised_fraction(at),
                                              "contrasts": _contrasts(at, common)}

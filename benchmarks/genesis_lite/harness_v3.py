@@ -8,13 +8,16 @@ a ``development_identity`` over the v0.3 files instead. Not a formal benchmark i
 
 EXC-3 (owner-approved 2026-10-29): ``budget_fraction`` caps the observations every arm makes on a universe below the
 world's budget (:func:`query_cap`). The presented card states the cap and :class:`QueryCap` refuses past it with the
-escrow's own budget-refusal text; the worlds, the escrow, the scoring and the credit table are unchanged, and at 1.0
-nothing changes at all.
+escrow's own budget-refusal text; the worlds, the escrow, the scoring and the credit table are unchanged. At 1.0 the
+card and the pseudonyms are the v0.2 ones; the cap then only pre-empts the escrow's own budget refusal (that refusal is
+no longer logged) and reports ``budget_remaining`` as an integer. Below 1.0 each fraction gets its own pseudonyms, and
+the escrow's own per-universe observation count is checked against each cap after the run.
 """
 
 from __future__ import annotations
 
 import ast
+import collections
 import hashlib
 import importlib.metadata
 import json
@@ -141,6 +144,12 @@ def selection_queries(card: Mapping[str, Any]) -> dict[str, int | None]:
     return {"mind": mind, "bo": max(0, fresh - n_init)}
 
 
+def presentation_arm_label(arm: str, fraction: float) -> str:
+    """The arm label that keys the universe pseudonyms (``harness.presentation_key``): the bare arm at 1.0 (the v0.2 and
+    EXC-2 pseudonyms), and arm plus fraction below it, so two runs over the same hidden world never share a pseudonym."""
+    return arm if fraction == 1 else f"{arm}@budget_fraction={float(fraction)!r}"
+
+
 class QueryCap:
     """What an arm holds under a budget fraction: ``observe`` until ``cap`` observations have succeeded, then the escrow's
     own budget refusal. A refused query is not counted; a malformed query (another universe, a name that is not a
@@ -256,16 +265,19 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
     service = EscrowServiceV3(master_seed=master_seed, transport_label="in_process")
     inner = InProcessTransport(service)
     scored: dict[str, dict[str, Any]] = {}
+    observed: dict[str, int] = collections.Counter()      # the escrow's own accepted observations, per universe
 
     def transport(request: bytes) -> bytes:              # keeps the escrow's own signed score bodies for adjudication
         response = inner(request)
         body = json.loads(response)
         if body.get("ok") and "laws" in body and "universe_id" in body:
             scored[body["universe_id"]] = body
+        if body.get("ok") and "observation" in body and "universe_id" in body:
+            observed[str(body["universe_id"])] += 1
         return response
 
     transport.operator_token = inner.operator_token        # type: ignore[attr-defined]
-    pkey = h2.presentation_key(master_seed, rec.arm, seed, presentation)
+    pkey = h2.presentation_key(master_seed, presentation_arm_label(rec.arm, budget_fraction), seed, presentation)
     skey = h2.stimulus_key(master_seed, seed, presentation)
     shown: dict[str, dict[str, Any]] = {}
     per_universe: dict[str, dict[str, Any]] = {}
@@ -337,6 +349,9 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
     if report.queries > caps_total:                     # the escrow's own count, independent of anything the arm holds
         rec.invalid(f"the escrow logged {report.queries} observations, above the query caps' total {caps_total}: "
                     "the cap was broken")
+    over = sorted(u for u, n in observed.items() if n > per_universe.get(u, {}).get("query_cap", 0))
+    if over:                                            # per universe: overspending one cannot hide behind another
+        rec.invalid(f"the escrow accepted more observations than the query cap on {over[:5]}: the cap was broken")
     rec.security_boundary = report.security_boundary
     if rec.status != "VALID":
         return
