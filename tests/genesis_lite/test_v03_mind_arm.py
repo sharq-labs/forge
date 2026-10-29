@@ -6,6 +6,7 @@ client, and the Mind's conclusion becomes a Blindfold answer by a mapping frozen
 
 from __future__ import annotations
 
+import json
 import math
 import random
 
@@ -61,8 +62,6 @@ def test_an_indistinguishable_conclusion_carries_its_two_laws():
                                                                       FittedLaw("b", 0.1, {"q": 2.0}, {})))
     p = proposal_from(CARD, two)
     assert p["answer"] == "indistinguishable" and len(p["laws"]) == 2
-    one = MindConclusion(ConclusionKind.INDISTINGUISHABLE, "r", laws=(FittedLaw("a", 0.1, {"q": 1.0}, {}),))
-    assert proposal_from(CARD, one)["answer"] == "insufficient_evidence"
 
 
 def test_a_law_conclusion_proposes_the_leading_law_and_refusals_carry_none():
@@ -91,9 +90,8 @@ def test_escrow_refusals_reach_the_mind_as_observation_refusals():
     with pytest.raises(ObservationRefused) as budget:
         observer(CARD, Client("query budget 40 exhausted for u-1"))({"q": 1.0, "r": 2.0}, "q0")
     assert budget.value.budget is True
-    with pytest.raises(ObservationRefused) as other:
+    with pytest.raises(EscrowRefused):        # re-raised as the baselines' _collect does: scored inadmissible
         observer(CARD, Client("q=9 lies outside the box"))({"q": 9.0, "r": 2.0}, "q1")
-    assert other.value.budget is False
 
 
 def test_four_mind_arms_one_per_variant_all_available_in_the_pilot():
@@ -119,3 +117,113 @@ def test_the_mind_arm_runs_a_valid_v0_3_campaign():
     assert len(rec.universes) == 6 and all(u["rationale"].startswith("Mind") for u in rec.universes
                                            if u["answer"] != "inadmissible")
     assert code_identity()[1] == []
+
+
+# ---- review of 896efd72 (2026-10-29) ------------------------------------------------------------------------------------
+def test_a_non_budget_refusal_makes_the_mind_arm_fail_not_refuse():
+    from benchmarks.genesis_lite.mind_arm_v3 import MIND_ARMS
+    from engcore.blindfold.escrow import EscrowRefused
+
+    class Client:
+        def observe(self, uid, settings, query_id):
+            raise EscrowRefused("q=9.0 is outside the allowed query range")
+
+    with pytest.raises(EscrowRefused):
+        MIND_ARMS["mind_full"][0](CARD, Client(), seed=0)
+
+
+@pytest.mark.parametrize("laws", [0, 1, 3])
+def test_a_mind_answer_missing_its_laws_is_a_failure_not_a_refusal(laws):
+    from benchmarks.genesis_lite.mind_arm_v3 import MindAdapterError, proposal_from
+    from engcore.mind.minimal.runner import ConclusionKind, FittedLaw, MindConclusion
+    kind = ConclusionKind.LAW if laws == 0 else ConclusionKind.INDISTINGUISHABLE
+    conclusion = MindConclusion(kind, "r", laws=tuple(FittedLaw(f"h{i}", 0.1, {"q": 1.0}, {}) for i in range(laws)))
+    with pytest.raises(MindAdapterError):
+        proposal_from(CARD, conclusion)
+
+
+def test_a_refused_mind_answer_is_marked_as_a_model_refusal():
+    from benchmarks.genesis_lite.mind_arm_v3 import proposal_from
+    from engcore.mind.minimal.runner import ConclusionKind, MindConclusion
+    p = proposal_from(CARD, MindConclusion(ConclusionKind.REFUSED, "non-positive observable"))
+    assert p["answer"] == "insufficient_evidence" and p["rationale"].startswith("Mind refused")
+
+
+@pytest.mark.parametrize("change", [{"assessment_region": None}, {"assessment_region": {"q": [0.5, 8.0]}},
+                                    {"assessment_region": {"q": [0.5, 8.0], "r": [1.0, 10.0], "zz": [1, 2]}},
+                                    {"query_cost": 2.0}, {"settable": False}])
+def test_a_card_the_mind_cannot_state_exactly_is_refused(change):
+    import copy
+    from benchmarks.genesis_lite.mind_arm_v3 import MindAdapterError, problem_from_card
+    card = copy.deepcopy(CARD)
+    if "settable" in change:
+        card["inputs"][1]["settable"] = False
+    elif change.get("assessment_region", 1) is None:
+        card.pop("assessment_region")
+    else:
+        card.update(change)
+    with pytest.raises(MindAdapterError):
+        problem_from_card(card)
+
+
+def test_full_and_fixed_design_mind_arms_share_the_initial_design_seed_and_budget():
+    from benchmarks.genesis_lite.mind_arm_v3 import MIND_ARMS, problem_from_card
+    from engcore.mind.minimal.runner import initial_design
+
+    def record(arm):
+        seen = []
+
+        class Client:
+            def observe(self, uid, settings, query_id):
+                seen.append(dict(settings))
+                x = settings
+                return {"observation": {"q": x["q"], "r": x["r"], "w": 1.3, "y": 2.0 * x["q"] ** 1.5 / x["r"]}}
+
+        MIND_ARMS[arm][0](CARD, Client(), seed=4)
+        return seen
+
+    full, fixed = record("mind_full"), record("mind_no_adaptive_selection")
+    n = len(initial_design(problem_from_card(CARD), 4))
+    assert full[:n] == fixed[:n] and len(fixed) <= CARD["query_budget"] and len(full) <= CARD["query_budget"]
+
+
+def test_ablation_labels_say_everything_they_remove():
+    from benchmarks.genesis_lite.mind_arm_v3 import MIND_ARMS
+    fixed = MIND_ARMS["mind_no_adaptive_selection"][1]
+    assert "falsifier-targeted" in fixed and "early stop" in fixed
+    assert "selection only" in MIND_ARMS["mind_no_belief_update"][1]
+
+
+def test_the_identity_binds_the_minds_import_closure():
+    from benchmarks.genesis_lite.harness_v3 import SUBSTRATE_V3_FILES
+    assert {"src/engcore/claims/falsification.py", "src/engcore/mind/__init__.py",
+            "src/engcore/mind/minimal/runner.py"} <= set(SUBSTRATE_V3_FILES)
+    assert any(f.startswith("src/engcore/sria/decision/") for f in SUBSTRATE_V3_FILES)
+
+
+def test_the_mind_arm_is_submitted_as_a_candidate_not_a_baseline():
+    from benchmarks.genesis_lite.harness_v3 import run_one_v3
+    from benchmarks.genesis_lite.mind_arm_v3 import MIND_ARMS
+    rec = run_one_v3("mind_full", MIND_ARMS["mind_full"][0], master_seed=(11).to_bytes(4, "big") * 8,
+                     campaign_id="gl-v03-mind", presentation="anonymous", proposer_kind="candidate")
+    assert rec.status == "VALID" and rec.proposer_kind == "candidate"
+
+
+def test_the_bound_closure_covers_every_engcore_module_a_mind_run_loads():
+    import subprocess
+    import sys
+    from benchmarks.genesis_lite.harness_v3 import ROOT, SUBSTRATE_V3_FILES
+    # import the Mind alone, run it once (lazy imports included), then list the engcore modules that were loaded
+    code = "\n".join([
+        "import sys, json",
+        "from engcore.mind.minimal.problem import ExperimentalProblem, InputSpec",
+        "from engcore.mind.minimal.runner import run_mind",
+        "p = ExperimentalProblem('u', (InputSpec('q', 0.5, 4.0, 'L^1'),), ('w',), 'y', 'L^1', 20, 1.0, {'q': (0.5, 8.0)})",
+        "run_mind(p, lambda s, ref: {'q': s['q'], 'w': 1.0, 'y': 2.0 * s['q']}, seed=1)",
+        "print(json.dumps(sorted(getattr(m, '__file__', '') or '' for n, m in sys.modules.items()"
+        " if n.split('.')[0] == 'engcore')))"])
+    out = json.loads(subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True,
+                                    cwd=ROOT).stdout)
+    assert any(f.endswith("runner.py") for f in out)
+    loaded = {__import__("pathlib").Path(f).resolve().relative_to(ROOT).as_posix() for f in out if f}
+    assert loaded and loaded <= set(SUBSTRATE_V3_FILES), sorted(loaded - set(SUBSTRATE_V3_FILES))

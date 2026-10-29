@@ -1,7 +1,7 @@
 """Genesis-lite v0.3 DEVELOPMENT cost pilot (owner-approved 2026-10-28: 30-minute cap, 4 workers).
 
-Every available arm -- the v0.2 arms and the v0.3 development baselines (PySR, PySINDy, BoTorch) -- runs development
-campaigns through :func:`.harness_v3.run_one_v3`. World sets are paired across arms (one master seed per campaign,
+Every available arm -- the v0.2 arms, the v0.3 development baselines (PySR, PySINDy, BoTorch) and (EXC-2) the Minimal
+Mind with its three ablations -- runs development campaigns through :func:`.harness_v3.run_one_v3`. World sets are paired across arms (one master seed per campaign,
 presentation and seed, never reused) and scheduled world set by world set, so a deadline truncates every arm equally.
 Unavailable arms are recorded, never substituted. Runs are written as they finish.
 
@@ -78,6 +78,10 @@ def all_arms() -> list[str]:
     return sorted(arms_v2.ARMS) + sorted(ARMS_V3) + sorted(MIND_ARMS)
 
 
+def proposer_kind(name: str) -> str:
+    return MIND_ARMS[name][3] if name in MIND_ARMS else "baseline"
+
+
 def arm_available(name: str) -> bool:
     if name in arms_v2.ARMS or name in MIND_ARMS:
         return True
@@ -102,7 +106,7 @@ def _work(task: Task, master_seed_hex: str) -> dict[str, Any]:
     """One campaign (runs in a worker process). The worker receives only this campaign's master seed, never the root."""
     rec = run_one_v3(task.arm, _arm(task.arm), master_seed=bytes.fromhex(master_seed_hex),
                      campaign_id=f"gl-v03-dev-{task.seed}-{task.campaign}-{task.presentation}", presentation=task.presentation,
-                     seed=task.seed)
+                     seed=task.seed, proposer_kind=proposer_kind(task.arm))
     try:
         import resource
         maxrss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss   # KiB on Linux
@@ -295,6 +299,8 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
             "inadmissible_universes": sum(u["answer"] == "inadmissible" for u in universes),
             "library_failure_universes": sum(_is_library_failure(u) for u in universes),
             "design_fallback_universes": sum("design fallback" in str(u.get("rationale", "")) for u in universes),
+            #: the Mind's own model refused (answered insufficient_evidence): reported apart from reasoned refusals
+            "mind_refused_universes": sum(str(u.get("rationale", "")).startswith("Mind refused") for u in universes),
             "unresolved_universes": sum(u["outcome"] == "indistinguishable_unresolved" for u in universes),
             "descriptive_credit": {
                 "label": DESCRIPTIVE + "; paired world sets only (every runnable arm VALID there)",
@@ -326,8 +332,10 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
         "arms": arms_out,
         "formal_tier_estimate": {"label": (f"ESTIMATE from the mean wall of clean VALID campaigns, each measured inside one of "
                                            f"{workers} concurrent workers"),
-                                 "scope": ("baseline arms only (the arms planned here), in_process isolation; Mind arm UNMEASURED; "
-                                           "proposer-process isolation overhead UNMEASURED"),
+                                 "scope": ("the arms planned here, in_process isolation; "
+                                           + ("Mind arms included (EXC-2); " if any(a in MIND_ARMS for a in arms_out)
+                                              else "Mind arms UNMEASURED; ")
+                                           + "proposer-process isolation overhead UNMEASURED"),
                                  "status": status, "arms_without_measurement": missing,
                                  "campaigns_per_arm": FORMAL_CAMPAIGNS,
                                  "sum_over_measured_arms_seconds": round(sum(estimates), 1),

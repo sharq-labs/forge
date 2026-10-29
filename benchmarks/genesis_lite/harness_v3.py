@@ -9,6 +9,7 @@ a ``development_identity`` over the v0.3 files instead. Not a formal benchmark i
 
 from __future__ import annotations
 
+import ast
 import hashlib
 import importlib.metadata
 import json
@@ -29,21 +30,52 @@ from .evaluator import score_v3
 from .presentation import Presented, PresentationRefused, TranslatingClient, check_card, present, to_original_law
 
 HERE = pathlib.Path(__file__).resolve().parent
+ROOT = HERE.parents[1]
 V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "mind_arm_v3.py", "pilot_v3.py", "evaluator/score_v3.py")
-#: v0.3 substrate beside the pinned v0.2 escrow (repository-relative)
-SUBSTRATE_V3_FILES = ("src/engcore/blindfold/escrow_v3.py",
-                      # EXC-2: the Minimal Mind measured as an arm (read-only; its files bind the identity)
-                      "src/engcore/mind/minimal/__init__.py",
-                      "src/engcore/mind/minimal/competition.py",
-                      "src/engcore/mind/minimal/experiments.py",
-                      "src/engcore/mind/minimal/falsifier.py",
-                      "src/engcore/mind/minimal/outcome_model.py",
-                      "src/engcore/mind/minimal/problem.py",
-                      "src/engcore/mind/minimal/runner.py",
-                      "src/engcore/mind/minimal/stopping.py",
-                      "src/engcore/mind/minimal/structures.py",
-                      "src/engcore/mind/minimal/trace.py",
-                      )
+
+
+def engcore_closure(*modules: str) -> tuple[str, ...]:
+    """Repository-relative files of every ``engcore`` module the given modules import (statements and literal
+    ``import_module("engcore...")`` calls), transitively, with every parent
+    package ``__init__`` (which runs on import). Static, from the source text: a computed lazy import is not followed, so
+    tests/genesis_lite/test_v03_mind_arm.py checks that a Mind run loads nothing outside it. A change to any listed file
+    changes the identity."""
+    src = ROOT / "src"
+
+    def file_of(mod: str) -> pathlib.Path | None:
+        base = src.joinpath(*mod.split("."))
+        return base / "__init__.py" if (base / "__init__.py").exists() else (
+            base.with_suffix(".py") if base.with_suffix(".py").exists() else None)
+
+    seen: set[pathlib.Path] = set()
+    todo = [file_of(m) for m in modules]
+    while todo:
+        f = todo.pop()
+        if f is None or f in seen:
+            continue
+        seen.add(f)
+        parts = f.relative_to(src).with_suffix("").parts
+        name = ".".join(parts[:-1] if parts[-1] == "__init__" else parts)
+        package = name if f.name == "__init__.py" else name.rpartition(".")[0]
+        todo += [file_of(".".join(name.split(".")[:i])) for i in range(1, name.count(".") + 1)]
+        for node in ast.walk(ast.parse(f.read_text(encoding="utf-8"))):
+            if isinstance(node, ast.ImportFrom):
+                base = package.split(".")[: package.count(".") + 2 - node.level] if node.level else []
+                mod = ".".join(base + ([node.module] if node.module else []))
+                if mod.split(".")[0] == "engcore":
+                    todo += [file_of(mod)] + [file_of(f"{mod}.{a.name}") for a in node.names]
+            elif isinstance(node, ast.Import):
+                todo += [file_of(a.name) for a in node.names if a.name.split(".")[0] == "engcore"]
+            elif (isinstance(node, ast.Call) and node.args and isinstance(node.args[0], ast.Constant)
+                  and str(node.args[0].value).startswith("engcore.")
+                  and getattr(node.func, "id", getattr(node.func, "attr", "")).endswith("import_module")):
+                todo.append(file_of(node.args[0].value))     # the compatibility shims' import_module("engcore...")
+    return tuple(sorted(f.relative_to(ROOT).as_posix() for f in seen))
+
+
+#: v0.3 substrate beside the pinned v0.2 escrow (repository-relative), plus (EXC-2) every engcore file the Minimal Mind
+#: imports: it is measured read-only as an arm, so the code it runs binds the identity
+SUBSTRATE_V3_FILES = ("src/engcore/blindfold/escrow_v3.py", *engcore_closure("engcore.mind.minimal"))
 LIBRARIES = ("numpy", "sympy", "pysr", "pysindy", "botorch", "gpytorch", "torch")
 
 
@@ -61,7 +93,7 @@ def development_identity() -> tuple[str, list[str]]:
     """(identity, v0.2-pinned files that changed). The identity binds the v0.2 preregistration and the v0.3 files."""
     prereg, changed = h2.code_identity()
     files = {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest() for name in V3_FILES}
-    files.update({name: hashlib.sha256((HERE.parents[1] / name).read_bytes()).hexdigest() for name in SUBSTRATE_V3_FILES})
+    files.update({name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in SUBSTRATE_V3_FILES})
     return h2._digest({"v0_2_prereg": prereg, "v0_3_files": files, "benchmark_id": BENCHMARK_ID}), changed
 
 
@@ -81,13 +113,16 @@ class RunRecordV3(h2.RunRecord):
                             "outcome and credit plumbing; it agrees by construction on the pair/fraction rule text it "
                             "shares with escrow_v3, so agreement checks those parts, not the rule semantics")
     library_versions: dict = field(default_factory=dict)
+    #: the proposer kind the campaign was submitted under ("baseline", or the Mind arms' "candidate" / "ablation")
+    proposer_kind: str = "baseline"
 
 
 def run_one_v3(arm_name: str, arm: Callable[..., Mapping[str, Any]], *, master_seed: bytes, campaign_id: str,
                presentation: str, seed: int = 0, measure_memory: bool = False, config: EvaluatorConfig = CONFIG_V3,
                isolation: str = "in_process", arm_spec: str | None = None,
-               extra_paths: tuple[str, ...] = ()) -> RunRecordV3:
+               extra_paths: tuple[str, ...] = (), proposer_kind: str = "baseline") -> RunRecordV3:
     rec = RunRecordV3(arm_name, seed, campaign_id, presentation, memory_instrumented=measure_memory, isolation=isolation)
+    rec.proposer_kind = proposer_kind
     identity, changed = development_identity()
     if changed:
         rec.invalid(f"the shared v0.2 code differs from its preregistration: {changed[:5]}")
@@ -172,7 +207,7 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
     t0 = time.perf_counter()
     try:
         report, store = run_campaign(transport, campaign_id=campaign_id, mix=h2.MIX, proposer=proposer,
-                                     proposer_identity={"kind": "baseline", "id": rec.arm}, config=config,
+                                     proposer_identity={"kind": rec.proposer_kind, "id": rec.arm}, config=config,
                                      escrow_public=inner.escrow_public)
     finally:
         rec.wall_seconds = time.perf_counter() - t0
@@ -237,4 +272,5 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
     rec.v3_total_credit = sum(u["credit"] for u in rec.universes)
 
 
-__all__ = ["CONFIG_V3", "RunRecordV3", "SUBSTRATE_V3_FILES", "V3_FILES", "development_identity", "run_one_v3"]
+__all__ = ["CONFIG_V3", "RunRecordV3", "SUBSTRATE_V3_FILES", "V3_FILES", "development_identity", "engcore_closure",
+           "run_one_v3"]

@@ -208,8 +208,11 @@ def test_the_estimate_states_its_scope():
     from benchmarks.genesis_lite.pilot_v3 import _summarize
     est = _summarize(["a"], {"a": True}, [_rec("a", 0)], [], [], ("anonymous",), (0,), 1, 1.0, 4, 10.0,
                      planned=1)["formal_tier_estimate"]
-    assert "baseline arms only" in est["scope"] and "in_process" in est["scope"] and "Mind arm UNMEASURED" in est["scope"]
+    assert "arms planned here" in est["scope"] and "in_process" in est["scope"] and "Mind arms UNMEASURED" in est["scope"]
     assert "concurrent workers" in est["label"]
+    mind = _summarize(["mind_full"], {"mind_full": True}, [_rec("mind_full", 0)], [], [], ("anonymous",), (0,), 1, 1.0,
+                      4, 10.0, planned=1)["formal_tier_estimate"]
+    assert "Mind arms included (EXC-2)" in mind["scope"]
 
 
 def test_the_parent_environment_is_restored_and_workers_run_one_blas_thread(tmp_path, monkeypatch):
