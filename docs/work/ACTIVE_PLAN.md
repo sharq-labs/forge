@@ -1037,6 +1037,27 @@ therapeutic work.
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).
 
+### EXC-2 -- Minimal Mind as a measurement arm in the Genesis-lite v0.3 development pilot (OPEN)
+
+1. **Exact scope:** a new adapter `benchmarks/genesis_lite/mind_arm_v3.py` and its tests; registering its arms in
+   `benchmarks/genesis_lite/pilot_v3.py` and binding the Mind files into `harness_v3.development_identity`; this
+   section. `src/engcore/mind/**` is read-only: not one line may change.
+2. **Allowed capability work:** an adapter that poses a presented Blindfold card to the existing Minimal Mind
+   (`engcore.mind.minimal`, MIND_VERSION 1.0.0) as an `ExperimentalProblem`, observes through the escrow client, and
+   translates its conclusion by a mapping frozen in code before any run; four arms (full, no_adaptive_selection,
+   no_belief_update, no_falsifier); one development pilot (30-minute cap, 4 workers).
+3. **Reason:** measure, before any A2 investment, whether the Mind and its experiment selection add anything over the
+   strong development baselines (careful, BoTorch, PySR, PySINDy) on paired worlds; the owner asked for experiment
+   selection that is demonstrably smart.
+4. **Start condition:** owner approval (below); this entry recorded.
+5. **Exit condition:** a recorded pilot report plus a forge-scientific-review of the adapter; no A2, lift or maturity
+   claim.
+6. **Expiry / timebox:** 2026-11-12, even if unfinished.
+7. **Owner approval:** the owner, in chat, 2026-10-29 ("موافق على الاستثناء"), on the drafted eight fields.
+8. **What remains prohibited:** changing Mind code; tuning the Mind or the mapping on pilot results; AI/LLM proposals to
+   the Mind; any preregistration, formal campaign, A2 closure, lift or superiority claim; widening this scope.
+   A1 PASS has not happened, so any result is DEVELOPMENT_ONLY and not A2 evidence.
+
 ### EXC-1 -- adaptive mesh control, slice 1: adaptive resolution (Engineering Runtime V1 BR19)
 
 1. **Exact scope:** a new module `src/engcore/claims/adaptive_resolution.py` and its tests, on branch
