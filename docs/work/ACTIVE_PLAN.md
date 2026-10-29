@@ -110,7 +110,10 @@ preregistered identity is unchanged. DEVELOPMENT_ONLY: not a formal campaign, no
   preregistration and recertification.
 - [ ] Next toward formal Blindfold (each needs its own approval): v0.3
   preregistration (thresholds, power, units), independent custodian, Minimal Mind as
-  an arm (active-epic exception), formal campaign budget (~3.7 h ESTIMATE).
+  an arm (active-epic exception), formal campaign budget. The pilot's ~3.7 h ESTIMATE
+  covers the baseline arms only, in-process, measured with 20 BLAS threads per worker
+  (review round 3); the Mind arm and isolation overhead are UNMEASURED. A corrected
+  re-measurement (one BLAS thread per worker) needs its own approval.
 
 Owner requested implementation of the review's work packages in this chat
 ("اعمل انتى كل ده"). Starting source: `dd567d53d2444950f57ffaeb9903c74d7c38f04d`,

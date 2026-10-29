@@ -10962,3 +10962,40 @@ environment.json `70b0f937…`, runs.jsonl sha256 `d594e9b9…`, 7.7 MB kept in 
 evidence dir). Root secret never written; only its commitment.
 Open: v0.3 pair-rule OWNER_DECISION_REQUIRED (ACTIVE_PLAN); v0.3 preregistration,
 custodian, Mind arm and formal budget not authorized.
+
+### 2026-10-29 — Genesis-lite v0.3 pilot: forge-scientific-review round 3 and corrections
+
+Owner chose the round-3 review. `forge-scientific-review` (static; reviewer ran
+nothing) on `ea894e61`/`b3289e20`: CHANGES REQUIRED, no BLOCKER/HIGH; MEDIUM I-1..I-4,
+LOW I-5..I-9.
+- I-1 CONFIRMED by execution (scratch `thread_check.py`, /opt venv): limits set only
+  in the spawn initializer (as at `5daaba81`, where the recorded pilot ran) -> BLAS
+  threads [20] per worker, torch 1; limits set in the parent before the pool -> BLAS
+  [1], torch 1. **Correction to the 2026-10-28 entry:** its per-campaign walls and the
+  3.67 h ESTIMATE were measured with 20 BLAS threads in each of 4 workers; the
+  estimate covers the baseline arms only, in-process (Mind arm and isolation overhead
+  UNMEASURED), walls measured under 4-worker concurrency. "~1.19 GB" is 1191 MiB
+  (worker whole-life high-water mark, not per arm). That entry listed arms in credit
+  order; descriptive paired means alphabetically: always_insufficient 1.500,
+  always_law -4.600, always_refuse 1.000, bo_botorch_variance 2.467, careful 3.275,
+  extrapolating_fit 1.783, extrapolation_pair 2.442, fit_all_gated -0.483,
+  greedy_forward 2.396, historical_answer -0.375, monomial_enumeration 2.408,
+  pysindy_stlsq 1.925, pysr_symbolic 1.508, random_structures 2.496, single_setting
+  2.454, space_filling 3.183 (development only; not a rate, ranking or lift).
+- Fixed in `ef0cc2f0` (red first: 8 failed / 11 passed; green Windows test_v03_pilot
+  19 passed, genesis_lite 203 passed / 7 skipped; Linux /opt genesis_lite **210
+  passed in 40.10s**): thread limits only while workers spawn, parent env restored
+  (I-7); estimate scope/label (I-2); resummarize from the run's own design/arms/
+  availability with missing_records -> LOWER_BOUND and run/summarizer identities (I-3,
+  I-8); worker failures not counted completed, LOWER_BOUND, no fabricated zeros
+  (I-4, I-5); per-arm memory renamed worker_rss_high_water_kib plus a pool field (I-6).
+  The previous test asserting completed == 2 including a worker failure encoded the
+  mislabel and now expects completed == 1.
+- Re-summarized the recorded pilot at `ef0cc2f0`: tasks 1920 planned / 1920 completed /
+  0 worker_failed / 0 missing_records; estimate status ESTIMATE, 3.67 h, scope stated;
+  `resummarized_from` binds runs.jsonl `d594e9b9…`, original summary `4ab18824…`, run
+  head `5daaba81…`, summarizer head `ef0cc2f0…` and sha256 `b5176082…`. Repo copy
+  `summary_resummarized.json` sha256 `eeb5dd1c…`; caveats in
+  `benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md`.
+Not done: corrected re-measurement of pilot cost (needs approval); round-4 review of
+`ef0cc2f0` NOT RUN.
