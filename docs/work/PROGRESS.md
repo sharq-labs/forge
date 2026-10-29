@@ -10999,3 +10999,38 @@ LOW I-5..I-9.
   `benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md`.
 Not done: corrected re-measurement of pilot cost (needs approval); round-4 review of
 `ef0cc2f0` NOT RUN.
+
+### 2026-10-29 — v0.3 pair rule decided (owner option B) and implemented in escrow_v3
+
+Owner chose option B after a five-point comparison: adopt the v0.3 rules in a new
+escrow file, keep the v0.2-pinned `escrow.py` byte-identical. Point 4 (outside
+divergence over every outside point, independent of truth) was the one rule not
+decided earlier; approved with option B.
+- `cb1dfe44`: `src/engcore/blindfold/escrow_v3.py` — `EscrowServiceV3` overrides only
+  `_score`; `value_v3` maps evaluation errors to NaN as the evaluator does;
+  `fraction_v3`, `pair_distance_v3`, `assess_v3`, `assess_pair_v3` implement the five
+  rules; score bodies keep v0.2 keys plus `"rule": "v0_3"`. `harness_v3` scores on it
+  and binds the file into the development identity. Red first 7 failed / 1 passed;
+  green `tests/genesis_lite/test_v03_escrow_rule.py` 8 passed, including a 1500-case
+  randomized differential test (all three outcomes reached, zero disagreement with
+  `score_v3`) and order/negative/zero/non-finite cases. Windows genesis_lite 211
+  passed / 7 skipped; `forge_check --regression --workers 4` 279 passed;
+  architecture/layering 17 passed. Linux /opt genesis_lite 218 passed; 600-campaign
+  extrapolation_pair probe VALID with full agreement, outcome counts identical to the
+  2026-10-28 v0.2-escrow probe (the rule differences changed no verdict there).
+- `forge-scientific-review` of `cb1dfe44` (static, reviewer ran nothing): **PASS**,
+  no BLOCKER/HIGH/MEDIUM; term-by-term equivalence confirmed and the `_score` override
+  judged a faithful copy; `_restore` never rescores. LOW: I-1 agreement now checks the
+  interpreter and plumbing, not the shared rule text; I-2 random forms too narrow
+  (k*x^e only); I-3 rule label asserted not observed; I-4 refusals after sealing
+  (inherited from v0.2).
+- `d398c800` (I-1, I-3): `RunRecordV3.agreement_scope` states what agreement checks;
+  stale score_v3 docstring fixed; `adjudicate_v3` refuses bodies not scored under
+  `v0_3`; `escrow_rule` observed from the run's score bodies (`NO_SCORED_LAWS` when a
+  campaign scored no law); `EscrowServiceV3` refuses persistent storage until the
+  rule is journaled. Red first 5 failed / 17 passed (one new test first used a
+  refusal-only campaign id, correctly NO_SCORED_LAWS; now `gl-v03-probe-3`); green
+  Windows genesis_lite 216 passed / 7 skipped; Linux 223 passed in 36.46s; probe
+  600/600 VALID, escrow_rule `v0_3` in 476 runs and `NO_SCORED_LAWS` in 124.
+Deferred LOW: I-2, I-4. Not done: v0.3 preregistration, custodian, Mind arm, formal
+campaign, corrected pilot re-measurement, OD-3 (now also covering `escrow_v3.py`).

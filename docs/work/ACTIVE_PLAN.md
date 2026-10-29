@@ -102,12 +102,14 @@ baseline arms, `ef9eeeb0`/`ea894e61` review fixes, `1e913d92`/`5daaba81` pilot
 runner; pilot 1920/1920 campaigns VALID in 675.7 s, formal-tier ESTIMATE 3.67 h at
 4 workers (`benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/`). The v0.2
 preregistered identity is unchanged. DEVELOPMENT_ONLY: not a formal campaign, no lift.
-- [ ] OWNER_DECISION_REQUIRED (v0.3 pair rule): the escrow's `_assess_pair` (pinned
-  v0.2) and `score_v3._pair_outcome` differ in five places (distance |a-b|/|b| vs
-  |a-b|/max, bracketing bounds, non-finite outside truths, zero truths); every
-  disagreement invalidates the campaign (0 of 1920 in the pilot). Decide which rule
-  v0.3 adopts before a formal v0.3 identity; changing the escrow requires a new
-  preregistration and recertification.
+- [x] DECIDED 2026-10-29 (owner, option B) — v0.3 pair rule: the five v0.3 rules
+  (symmetric |a-b|/max distance in and outside the box, sign-correct bracketing,
+  outside divergence over every outside point, exact zero predictions of zero truths)
+  are applied by the new `engcore.blindfold.escrow_v3.EscrowServiceV3`; the pinned
+  v0.2 `escrow.py` is unchanged. Done in `cb1dfe44`, `d398c800`; review PASS. The new
+  file is in the certified `verdict_authority` area: part of the pending OD-3 scope.
+  Agreement with score_v3 now checks the interpreter and plumbing, not the shared
+  rule text. Deferred LOW: broader random differential forms; refusals after sealing.
 - [ ] Next toward formal Blindfold (each needs its own approval): v0.3
   preregistration (thresholds, power, units), independent custodian, Minimal Mind as
   an arm (active-epic exception), formal campaign budget. The pilot's ~3.7 h ESTIMATE
