@@ -29,14 +29,17 @@ from engcore.blindfold import EvaluatorConfig, InProcessTransport, run_campaign
 from engcore.blindfold.escrow import EscrowRefused
 from engcore.blindfold.escrow_v3 import RULE as ESCROW_RULE, EscrowServiceV3
 from engcore.blindfold.expression import c, mul, pw, v
+from engcore.mind.minimal.problem import ProblemRefused
+from engcore.mind.minimal.runner import initial_design
 
 import engcore
 
 from . import harness as h2
 from .adjudication_v3 import BENCHMARK_ID, CONFIG_V3, READINESS, adjudicate_v3
 from .answer_key import export_answer_key, key_digest
+from .arms_v3 import BO_INIT_FRACTION
 from .evaluator import score_v3
-from .mind_arm_v3 import MIND_ARMS
+from .mind_arm_v3 import MIND_ARMS, MindAdapterError, problem_from_card
 from .presentation import Presented, PresentationRefused, TranslatingClient, check_card, present, to_original_law
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -109,7 +112,9 @@ def development_identity() -> tuple[str, list[str]]:
 
 def query_cap(card: Mapping[str, Any], fraction: Any) -> int:
     """EXC-3: the observations an arm may make on this card's universe: ``min(budget, max(d + 2, floor(f x budget)))``,
-    d the number of inputs (the floor keeps a log-linear fit possible). A fraction below 1 needs a unit query cost."""
+    d the number of inputs. The floor keeps the Mind's minimal log-linear start possible; the gated baselines need more
+    (d + 6 plus replicates), so at the smallest caps they refuse by construction. Level labels are therefore nominal: the
+    pilot reports the realised fraction. A fraction below 1 needs a unit query cost."""
     if isinstance(fraction, bool) or not isinstance(fraction, (int, float)) or not 0 < fraction <= 1:
         raise ValueError(f"budget fraction {fraction!r} must be a number in (0, 1]")
     budget = int(card["query_budget"])
@@ -120,23 +125,57 @@ def query_cap(card: Mapping[str, Any], fraction: Any) -> int:
     return min(budget, max(len(card["inputs"]) + 2, math.floor(fraction * budget)))
 
 
+def selection_queries(card: Mapping[str, Any]) -> dict[str, int | None]:
+    """How many queries the card's budget leaves after each contrasted design's fixed start (frozen rules, read only):
+    the Mind's ``initial_design`` and BoTorch's replicates plus Latin-hypercube start. Zero means the arm cannot select at
+    all there; ``None`` means unknown (a card the Mind adapter cannot state)."""
+    cap = int(card["query_budget"])
+    try:
+        mind: int | None = max(0, cap - len(initial_design(problem_from_card(card), 0)))
+    except (MindAdapterError, ProblemRefused, KeyError, TypeError, ValueError):
+        mind = None
+    settable = sum(1 for x in card["inputs"] if x.get("settable"))
+    replicate = min(4, cap // 4)
+    fresh = max(0, cap - replicate)
+    n_init = min(fresh, max(2 * settable + 2, int(BO_INIT_FRACTION * fresh)))
+    return {"mind": mind, "bo": max(0, fresh - n_init)}
+
+
 class QueryCap:
     """What an arm holds under a budget fraction: ``observe`` until ``cap`` observations have succeeded, then the escrow's
-    own budget refusal. A refused query is not counted. ``budget_remaining`` is the cap's, never the world's."""
+    own budget refusal. A refused query is not counted; a malformed query (another universe, a name that is not a
+    settable input) is refused as the translating client refuses it, before the cap, so it stays the arm's failure.
+    ``budget_remaining`` is the cap's, never the world's. ``cap`` and ``used`` are read-only views; the harness also
+    checks the escrow's own observation count against the caps after the run."""
 
-    __slots__ = ("_QueryCap__inner", "cap", "used")
+    __slots__ = ("_QueryCap__inner", "_QueryCap__cap", "_QueryCap__used", "_QueryCap__uid", "_QueryCap__settable")
 
-    def __init__(self, inner: Any, cap: int) -> None:
+    def __init__(self, inner: Any, cap: int, universe_id: str, settable: Any) -> None:
         self.__inner = inner
-        self.cap = int(cap)
-        self.used = 0
+        self.__cap = int(cap)
+        self.__used = 0
+        self.__uid = str(universe_id)
+        self.__settable = frozenset(settable)
+
+    @property
+    def cap(self) -> int:
+        return self.__cap
+
+    @property
+    def used(self) -> int:
+        return self.__used
 
     def observe(self, universe_id: str, settings: Mapping[str, float], query_id: str = "") -> dict[str, Any]:
-        if self.used >= self.cap:
-            raise EscrowRefused(f"query budget {self.cap} exhausted for {universe_id}")
+        if universe_id != self.__uid:
+            raise EscrowRefused("unknown universe")
+        unknown = sorted(str(k) for k in settings if k not in self.__settable)
+        if unknown:
+            raise EscrowRefused(f"cannot set {len(unknown)} name(s): not settable inputs of this universe")
+        if self.__used >= self.__cap:
+            raise EscrowRefused(f"query budget {self.__cap} exhausted for {universe_id}")
         resp = self.__inner.observe(universe_id, settings, query_id=query_id)
-        self.used += 1
-        return {**resp, "budget_remaining": self.cap - self.used}
+        self.__used += 1
+        return {**resp, "budget_remaining": self.__cap - self.__used}
 
 
 @dataclass
@@ -258,10 +297,15 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
         if p.historical is not None:
             traps[uid] = p
         wrapped = TranslatingClient(client, p)
+        # recorded before the arm runs, so an inadmissible universe keeps its cap and budget
+        per_universe[uid] = {"inputs": len(shown_card["inputs"]), "query_cap": cap, "query_budget": budget,
+                             **{f"{k}_selection_queries": n for k, n in selection_queries(shown_card).items()}}
+        settable = {x["name"] for x in shown_card["inputs"] if x.get("settable")}
         t0 = time.perf_counter()
-        proposal = dict(arm(shown_card, QueryCap(wrapped, cap), seed=seed))
-        per_universe[uid] = {"proposer_seconds": time.perf_counter() - t0, "observe_calls": wrapped.calls,
-                             "query_cap": cap, "query_budget": budget}
+        try:
+            proposal = dict(arm(shown_card, QueryCap(wrapped, cap, shown_card["universe_id"], settable), seed=seed))
+        finally:
+            per_universe[uid].update({"proposer_seconds": time.perf_counter() - t0, "observe_calls": wrapped.calls})
         if proposal.get("universe_id", shown_card["universe_id"]) != shown_card["universe_id"]:
             raise ValueError("the proposal names another universe than its card")
         proposal["universe_id"] = uid
@@ -284,6 +328,10 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
             tracemalloc.stop()
     rec.report_digest = report.digest
     rec.observe_calls = report.queries
+    caps_total = sum(u["query_cap"] for u in per_universe.values())
+    if report.queries > caps_total:                     # the escrow's own count, independent of anything the arm holds
+        rec.invalid(f"the escrow logged {report.queries} observations, above the query caps' total {caps_total}: "
+                    "the cap was broken")
     rec.security_boundary = report.security_boundary
     if rec.status != "VALID":
         return
@@ -341,4 +389,4 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
 
 
 __all__ = ["CONFIG_V3", "QueryCap", "RunRecordV3", "SUBSTRATE_V3_FILES", "V3_FILES", "development_identity",
-           "engcore_closure", "query_cap", "run_one_v3"]
+           "engcore_closure", "query_cap", "run_one_v3", "selection_queries"]

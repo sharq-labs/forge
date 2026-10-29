@@ -59,7 +59,7 @@ class _Inner:
 def test_the_capped_client_refuses_past_the_cap_with_the_escrows_budget_text():
     from benchmarks.genesis_lite.harness_v3 import QueryCap
     inner = _Inner()
-    client = QueryCap(inner, 3)
+    client = QueryCap(inner, 3, "u-1", {"x0"})
     rem = [client.observe("u-1", {"x0": 1.0}, query_id=f"q{i}")["budget_remaining"] for i in range(3)]
     assert rem == [2, 1, 0]                                    # the world's true remaining budget never reaches the arm
     with pytest.raises(EscrowRefused) as exc:
@@ -70,7 +70,7 @@ def test_the_capped_client_refuses_past_the_cap_with_the_escrows_budget_text():
 
 def test_a_refused_query_is_not_counted_against_the_cap():
     from benchmarks.genesis_lite.harness_v3 import QueryCap
-    client = QueryCap(_Inner(refuse_at={"bad"}), 2)
+    client = QueryCap(_Inner(refuse_at={"bad"}), 2, "u-1", {"x0"})
     with pytest.raises(EscrowRefused) as exc:
         client.observe("u-1", {"x0": 9.0}, query_id="bad")
     assert not is_budget_refusal(exc.value) and client.used == 0
@@ -81,7 +81,7 @@ def test_a_refused_query_is_not_counted_against_the_cap():
 
 def test_the_capped_client_exposes_only_observe():
     from benchmarks.genesis_lite.harness_v3 import QueryCap
-    client = QueryCap(_Inner(), 2)
+    client = QueryCap(_Inner(), 2, "u-1", {"x0"})
     assert not hasattr(client, "seen") and not hasattr(client, "refuse_at")
 
 
@@ -185,3 +185,152 @@ def test_the_cli_takes_the_budget_fractions(tmp_path, monkeypatch):
         "tasks": {}, "elapsed_seconds": 0, "paired_world_sets_complete": 0})
     pilot_v3.main(["--out", str(tmp_path), "--arms", "careful", "--budget-fractions", "1.0,0.5,0.25"])
     assert seen["fractions"] == (1.0, 0.5, 0.25)
+
+
+# ---- review of a9734570 (CHANGES REQUIRED, 2026-10-29): fixed before the pilot --------------------------------------------
+def _run(arm, fraction=0.25, campaign="gl-v03-cap", fn=None):
+    from benchmarks.genesis_lite import pilot_v3
+    from benchmarks.genesis_lite.harness_v3 import run_one_v3
+    return run_one_v3(arm, fn or pilot_v3._arm(arm), master_seed=SEED, campaign_id=campaign, presentation="anonymous",
+                      budget_fraction=fraction, proposer_kind="baseline" if fn else None)
+
+
+def test_every_universe_records_its_inputs_cap_and_the_selection_queries_each_design_leaves():
+    from benchmarks.genesis_lite.harness_v3 import selection_queries
+    from benchmarks.genesis_lite.mind_arm_v3 import problem_from_card
+    from engcore.mind.minimal.runner import initial_design
+    rec = _run("careful")
+    for u in rec.universes:
+        assert {"inputs", "query_cap", "query_budget", "mind_selection_queries", "bo_selection_queries"} <= set(u)
+    card = {**_card(12, 4), "inputs": [{"name": f"x{i}", "settable": True, "range": [1.0, 2.0], "unit": "1"}
+                                       for i in range(4)], "observed_covariates": [], "output": {"name": "y", "unit": "1"},
+            "assessment_region": {f"x{i}": [1.0, 2.0] for i in range(4)}}
+    for cap in (5, 6, 7, 12, 15, 30):
+        shown = {**card, "query_budget": cap}
+        got = selection_queries(shown)
+        assert got["mind"] == max(0, cap - len(initial_design(problem_from_card(shown), 0)))
+
+
+@pytest.mark.parametrize("cap,inputs", [(5, 3), (6, 4), (7, 3), (15, 4), (30, 3), (60, 4)])
+def test_the_bo_selection_count_matches_the_arms_own_initial_design(cap, inputs, monkeypatch):
+    from benchmarks.genesis_lite import arms, arms_v3
+    from benchmarks.genesis_lite.harness_v3 import selection_queries
+    card = {**_card(cap, inputs), "output": {"name": "y", "unit": "1"}}
+    seen = []
+
+    class Stop(Exception):
+        pass
+
+    def first_collect(card_, client, points, tag):
+        seen.append(len(points))
+        raise Stop
+
+    monkeypatch.setattr(arms, "_collect", first_collect)
+    with pytest.raises(Stop):
+        arms_v3.bo_botorch_variance(card, client=None, seed=0)
+    replicate = min(4, cap // 4)
+    assert selection_queries(card)["bo"] == max(0, cap - replicate - seen[0])
+
+
+def test_cap_and_used_are_read_only():
+    from benchmarks.genesis_lite.harness_v3 import QueryCap
+    client = QueryCap(_Inner(), 2, "u-1", {"x0"})
+    for name in ("cap", "used"):
+        with pytest.raises(AttributeError):
+            setattr(client, name, 10 ** 6)
+
+
+def test_an_arm_that_breaks_the_cap_invalidates_the_run():
+    def greedy(card, client, *, seed=0):
+        setattr(client, "_QueryCap__cap", 10 ** 6)          # reaching past the read-only view
+        x = card["inputs"]
+        for k in range(int(card["query_budget"]) + 3):
+            try:
+                client.observe(card["universe_id"], {i["name"]: i["range"][0] for i in x}, query_id=f"g{k}")
+            except EscrowRefused:
+                break
+        return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": "greedy"}
+    rec = _run("greedy", fn=greedy)
+    assert rec.status == "INVALID_BENCHMARK" and any("cap" in r for r in rec.reasons), rec.reasons
+
+
+def test_an_arm_that_ignores_the_card_budget_stops_at_the_cap_and_is_not_inadmissible():
+    def eager(card, client, *, seed=0):
+        x = card["inputs"]
+        n = 0
+        while True:
+            try:
+                client.observe(card["universe_id"], {i["name"]: i["range"][0] for i in x}, query_id=f"e{n}")
+                n += 1
+            except EscrowRefused:
+                break
+        return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": f"eager {n}"}
+    rec = _run("eager", fn=eager)
+    assert rec.status == "VALID", rec.reasons
+    assert all(u["answer"] != "inadmissible" and u["observe_calls"] == u["query_cap"] for u in rec.universes)
+
+
+@pytest.mark.parametrize("settings,uid", [({"zz": 1.0}, None), ({}, "other")])
+def test_past_the_cap_a_malformed_query_is_still_the_arms_failure(settings, uid):
+    from benchmarks.genesis_lite.harness_v3 import QueryCap
+    client = QueryCap(_Inner(), 0, "u-1", {"x0"})
+    with pytest.raises(EscrowRefused) as exc:
+        client.observe(uid or "u-1", settings, query_id="q")
+    assert not is_budget_refusal(exc.value)
+
+
+def test_a_capped_card_differs_from_the_full_card_only_in_its_budget():
+    cards = {}
+
+    def spy(card, client, *, seed=0):
+        cards.setdefault(card["universe_id"], []).append(dict(card))
+        return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": "spy"}
+    for f in (1.0, 0.25):
+        assert _run("spy", fraction=f, fn=spy).status == "VALID"
+    for full, capped in cards.values():
+        assert {k for k in full if full[k] != capped[k]} <= {"query_budget"}
+        assert capped["query_budget"] <= full["query_budget"]
+
+
+@pytest.mark.parametrize("arm", ["mind_no_adaptive_selection", "space_filling", "bo_botorch_variance"])
+def test_the_contrasted_arms_keep_to_the_cap(arm):
+    if arm == "bo_botorch_variance":
+        pytest.importorskip("botorch")
+    rec = _run(arm)
+    assert rec.status == "VALID", rec.reasons
+    assert all(u["observe_calls"] <= u["query_cap"] for u in rec.universes)
+
+
+def _urec(arm, campaign, fraction, credits, budgets=(12, 60), mind_sel=(0, 3), bo_sel=(0, 2), status="VALID"):
+    return {"arm": arm, "status": status, "reasons": [], "wall_seconds": 1.0, "observe_calls": 3,
+            "worker_maxrss_kib": 100, "v3_total_credit": sum(credits),
+            "universes": [{"universe_id": f"u{i}", "kind": "discoverable", "answer": "law", "outcome": "law_pass",
+                           "credit": c, "rationale": "r", "observe_calls": 3, "query_budget": b,
+                           "query_cap": max(1, int(b * fraction)), "mind_selection_queries": m, "bo_selection_queries": s}
+                          for i, (c, b, m, s) in enumerate(zip(credits, budgets, mind_sel, bo_sel))],
+            "task": {"arm": arm, "campaign": campaign, "presentation": "anonymous", "seed": 0, "budget_fraction": fraction}}
+
+
+def test_contrasts_are_paired_per_universe_stratified_and_on_worlds_common_to_every_level():
+    from benchmarks.genesis_lite.pilot_v3 import _summarize
+    arms_ = ["mind_full", "mind_no_adaptive_selection"]
+    recs = [_urec("mind_full", 0, 0.25, (1.0, 1.0)), _urec("mind_no_adaptive_selection", 0, 0.25, (1.0, -1.0)),
+            _urec("mind_full", 1, 0.25, (0.0, 1.0)), _urec("mind_no_adaptive_selection", 1, 0.25, (0.0, 1.0)),
+            _urec("mind_full", 0, 1.0, (1.0, 1.0)), _urec("mind_no_adaptive_selection", 0, 1.0, (1.0, 1.0)),
+            _urec("mind_full", 1, 1.0, (1.0, 1.0), status="INVALID_BENCHMARK"),
+            _urec("mind_no_adaptive_selection", 1, 1.0, (1.0, 1.0))]
+    s = _summarize(arms_, {a: True for a in arms_}, recs, [], [], ("anonymous",), (0,), 2, 1.0, 1, 10.0, planned=8,
+                   fractions=(1.0, 0.25))
+    lv = s["budget_levels"]["0.25"]
+    assert 0 < lv["realised_fraction_mean"] <= 1
+    c = {(x["a"], x["b"]): x for x in lv["contrasts"]}[("mind_full", "mind_no_adaptive_selection")]
+    pu = c["per_universe"]
+    assert pu["opportunity_field"] == "mind_selection_queries"
+    assert (pu["all"]["n"], pu["all"]["mean_difference"], pu["all"]["a_better"], pu["all"]["ties"]) == (4, 0.5, 1, 3)
+    assert pu["without_selection_opportunity"]["n"] == 2 and pu["without_selection_opportunity"]["a_better"] == 0
+    assert pu["with_selection_opportunity"]["n"] == 2 and pu["with_selection_opportunity"]["mean_difference"] == 1.0
+    assert set(pu["by_query_budget"]) == {"12", "60"}
+    assert (c["common_world_sets"], c["common_mean_difference"]) == (1, 2.0)    # campaign 1 is not VALID at 1.0
+    notes = {(x["a"], x["b"]): x["note"] for x in lv["contrasts"]}
+    assert "design and analysis confounded" in notes[("bo_botorch_variance", "space_filling")]
+    assert "design only" in notes[("mind_full", "mind_no_adaptive_selection")]

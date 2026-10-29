@@ -47,6 +47,18 @@ GRACE_SECONDS = 60
 DESCRIPTIVE = "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result"
 #: EXC-3, declared before the scarce-budget pilot: (a, b) paired per world set and budget level, a minus b
 CONTRASTS = (("mind_full", "mind_no_adaptive_selection"), ("bo_botorch_variance", "space_filling"))
+#: what each contrast can and cannot isolate (review of a9734570, stated before the pilot)
+CONTRAST_NOTES = {
+    ("mind_full", "mind_no_adaptive_selection"): (
+        "design only: the same Mind analysis; the arms differ only after the shared initial design, so a universe with "
+        "no selection query left measures nothing but noise"),
+    ("bo_botorch_variance", "space_filling"): (
+        "design and analysis confounded: BoTorch also searches input subsets and the covariate (_select_and_gate) where "
+        "space_filling gates the settable inputs (_gate), and their Latin-hypercube seeds differ"),
+}
+#: the per-universe field (harness_v3.selection_queries) saying whether contrast a could select at all there
+CONTRAST_OPPORTUNITY = {("mind_full", "mind_no_adaptive_selection"): "mind_selection_queries",
+                        ("bo_botorch_variance", "space_filling"): "bo_selection_queries"}
 #: one thread per worker process: with 4 unpinned workers torch/BLAS each grabbed every core and a BoTorch campaign took
 #: 318 s instead of 1.6 s (smoke run 2026-10-28). Set before any numerical library is imported in the worker.
 THREAD_LIMITS = {"OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1",
@@ -262,27 +274,59 @@ def _world(r: Mapping[str, Any]) -> tuple:
     return (t["campaign"], t["presentation"], t["seed"], _fraction(r))
 
 
-def _contrasts(records: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
-    """The pre-declared paired contrasts on world sets where both arms are VALID (one budget level's records)."""
+def _stats(diffs: Sequence[float]) -> dict[str, Any]:
+    return {"n": len(diffs), "mean_difference": round(sum(diffs) / len(diffs), 4) if diffs else None,
+            "a_better": sum(d > 1e-12 for d in diffs), "b_better": sum(d < -1e-12 for d in diffs),
+            "ties": sum(abs(d) <= 1e-12 for d in diffs)}
+
+
+def _contrasts(records: Sequence[Mapping[str, Any]],
+               common: Mapping[tuple, set] | None = None) -> list[dict[str, Any]]:
+    """The pre-declared paired contrasts on one budget level's records, where both arms are VALID: per campaign; per
+    universe (paired by universe id), by query budget and by whether arm a could select at all there; and per campaign
+    on the world sets ``common`` to every level."""
     worlds: dict[tuple, dict[str, Mapping[str, Any]]] = collections.defaultdict(dict)
     for r in records:
         if r["status"] == "VALID":
             worlds[_world(r)][r["arm"]] = r
     out = []
     for a, b in CONTRASTS:
-        both = [w for w in worlds.values() if a in w and b in w]
-        diffs = [w[a]["v3_total_credit"] - w[b]["v3_total_credit"] for w in both]
+        both = {k: w for k, w in worlds.items() if a in w and b in w}
+        diffs = [w[a]["v3_total_credit"] - w[b]["v3_total_credit"] for w in both.values()]
+        field = CONTRAST_OPPORTUNITY[(a, b)]
+        rows = []
+        for w in both.values():
+            ua = {u.get("universe_id", i): u for i, u in enumerate(w[a]["universes"])}
+            ub = {u.get("universe_id", i): u for i, u in enumerate(w[b]["universes"])}
+            rows += [(ua[uid]["credit"] - ub[uid]["credit"], ua[uid].get("query_budget"), ua[uid].get(field))
+                     for uid in sorted(set(ua) & set(ub))]
+        budgets = sorted({q for _, q, _ in rows if q is not None})
+        keep = (common or {}).get((a, b), set())
+        on_common = [w[a]["v3_total_credit"] - w[b]["v3_total_credit"] for k, w in both.items() if k[:3] in keep]
 
         def calls(arm: str) -> float | None:
-            return round(sum(w[arm]["observe_calls"] for w in both) / len(both), 2) if both else None
+            return round(sum(w[arm]["observe_calls"] for w in both.values()) / len(both), 2) if both else None
 
-        out.append({"a": a, "b": b, "label": DESCRIPTIVE + "; pre-declared EXC-3 contrast: per campaign, a minus b",
-                    "paired_world_sets": len(diffs),
-                    "mean_difference": round(sum(diffs) / len(diffs), 4) if diffs else None,
-                    "a_better": sum(d > 1e-12 for d in diffs), "b_better": sum(d < -1e-12 for d in diffs),
-                    "ties": sum(abs(d) <= 1e-12 for d in diffs),
+        out.append({"a": a, "b": b, "label": DESCRIPTIVE + "; pre-declared EXC-3 contrast: a minus b",
+                    "note": CONTRAST_NOTES[(a, b)],
+                    "paired_world_sets": len(diffs), **{k: v for k, v in _stats(diffs).items() if k != "n"},
+                    "per_universe": {
+                        "opportunity_field": field,
+                        "all": _stats([d for d, _, _ in rows]),
+                        "with_selection_opportunity": _stats([d for d, _, o in rows if o is not None and o > 0]),
+                        "without_selection_opportunity": _stats([d for d, _, o in rows if o == 0]),
+                        "unknown_opportunity": sum(o is None for _, _, o in rows),
+                        "by_query_budget": {str(q): _stats([d for d, qq, _ in rows if qq == q]) for q in budgets}},
+                    "common_world_sets": len(on_common),
+                    "common_mean_difference": round(sum(on_common) / len(on_common), 4) if on_common else None,
                     "observe_calls_mean_a": calls(a), "observe_calls_mean_b": calls(b)})
     return out
+
+
+def _realised_fraction(records: Sequence[Mapping[str, Any]]) -> float | None:
+    shares = [u["query_cap"] / u["query_budget"] for r in records if r["status"] == "VALID" for u in r["universes"]
+              if u.get("query_cap") is not None and u.get("query_budget")]
+    return round(sum(shares) / len(shares), 4) if shares else None
 
 
 def _failure_head(u: Mapping[str, Any]) -> str:
@@ -315,6 +359,13 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
     if len(fractions) > 1:
         summary["arms_label"] = "every budget level pooled; compare levels only through budget_levels"
         summary["formal_tier_estimate"]["scope"] += "; budget levels pooled"
+    valid: dict[str, set] = collections.defaultdict(set)
+    for r in records:
+        if r["status"] == "VALID":
+            valid[r["arm"]].add(_world(r))
+    common = {(a, b): {w[:3] for w in valid[a] if all(w[:3] + (f,) in valid[a] and w[:3] + (f,) in valid[b]
+                                                      for f in fractions)}
+              for a, b in CONTRASTS}
     summary["budget_levels"] = {}
     for f in fractions:
         at = [r for r in records if _fraction(r) == f]
@@ -323,7 +374,8 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
                                   elapsed, workers, deadline, planned=planned // len(fractions))
         summary["budget_levels"][str(f)] = {"arms": level["arms"],
                                              "paired_world_sets_complete": level["paired_world_sets_complete"],
-                                             "contrasts": _contrasts(at)}
+                                             "realised_fraction_mean": _realised_fraction(at),
+                                             "contrasts": _contrasts(at, common)}
     return summary
 
 
