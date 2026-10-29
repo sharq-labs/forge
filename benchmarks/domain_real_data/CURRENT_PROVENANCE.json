@@ -5445,10 +5445,10 @@
     },
     {
       "path": "certification/current_core_v2.json",
-      "sha256": "eec62a56dc6997861c8aea98b57727d28ae1e21b35c26ea8b2e4b16dd2d2fcd8",
+      "sha256": "dfbc8293002b25e0cbb6d9bf7c5db2a6cae5f2f93c96f5e97c46740239fe2c20",
       "class": "DERIVED",
       "role": "SOFTWARE_ASSURANCE_RECORD",
-      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Filename current and guard declarations do not certify the current tree.",
+      "rationale": "Read-only origin classification; no fresh execution, authenticity, current certification, measurement uncertainty or model validation is established. Filename current and guard declarations do not certify the current tree. Bytes as written by certificate child 68ebe4d7 (recertifies 0d1d6823); the previously reviewed bytes eec62a56 were the b1eea81b certificate. Re-reviewed 2026-10-29 (owner decision D1 before OD-3); every recertification re-stales this record, which needs its own decision.",
       "evidence": [
         {
           "path": "tools/certification/core_certificate.py",
