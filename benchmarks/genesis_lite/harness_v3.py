@@ -18,7 +18,8 @@ import tracemalloc
 from dataclasses import dataclass, field
 from typing import Any, Callable, Mapping
 
-from engcore.blindfold import EscrowService, EvaluatorConfig, InProcessTransport, run_campaign
+from engcore.blindfold import EvaluatorConfig, InProcessTransport, run_campaign
+from engcore.blindfold.escrow_v3 import RULE as ESCROW_RULE, EscrowServiceV3
 from engcore.blindfold.expression import c, mul, pw, v
 
 from . import harness as h2
@@ -29,6 +30,8 @@ from .presentation import Presented, PresentationRefused, TranslatingClient, che
 
 HERE = pathlib.Path(__file__).resolve().parent
 V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "pilot_v3.py", "evaluator/score_v3.py")
+#: v0.3 substrate beside the pinned v0.2 escrow (repository-relative)
+SUBSTRATE_V3_FILES = ("src/engcore/blindfold/escrow_v3.py",)
 LIBRARIES = ("numpy", "sympy", "pysr", "pysindy", "botorch", "gpytorch", "torch")
 
 
@@ -46,6 +49,7 @@ def development_identity() -> tuple[str, list[str]]:
     """(identity, v0.2-pinned files that changed). The identity binds the v0.2 preregistration and the v0.3 files."""
     prereg, changed = h2.code_identity()
     files = {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest() for name in V3_FILES}
+    files.update({name: hashlib.sha256((HERE.parents[1] / name).read_bytes()).hexdigest() for name in SUBSTRATE_V3_FILES})
     return h2._digest({"v0_2_prereg": prereg, "v0_3_files": files, "benchmark_id": BENCHMARK_ID}), changed
 
 
@@ -58,7 +62,9 @@ class RunRecordV3(h2.RunRecord):
     v3_adjudication_digest: str = ""
     v3_total_credit: float = 0.0
     #: report_digest binds the escrow report built by roles.run_campaign, whose outcomes follow the v0.2 rule
-    escrow_report_rule: str = "v0_2 outcomes (bracketing-only pairs credited); v0.3 outcomes are in universes"
+    #: report_digest binds roles.run_campaign's report: v0.2 outcome mapping (a bracketing-only pair is a hit there)
+    escrow_report_rule: str = "v0_2 outcome mapping over v0_3 escrow facts; v0.3 outcomes are in universes"
+    escrow_rule: str = ESCROW_RULE
     library_versions: dict = field(default_factory=dict)
 
 
@@ -99,7 +105,7 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
         rec.invalid("the evaluator configuration is not the sealed v0.3 one")
         return
     rec.config_digest = config.digest
-    service = EscrowService(master_seed=master_seed, transport_label="in_process")
+    service = EscrowServiceV3(master_seed=master_seed, transport_label="in_process")
     inner = InProcessTransport(service)
     scored: dict[str, dict[str, Any]] = {}
 
@@ -214,4 +220,4 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
     rec.v3_total_credit = sum(u["credit"] for u in rec.universes)
 
 
-__all__ = ["CONFIG_V3", "RunRecordV3", "V3_FILES", "development_identity", "run_one_v3"]
+__all__ = ["CONFIG_V3", "RunRecordV3", "SUBSTRATE_V3_FILES", "V3_FILES", "development_identity", "run_one_v3"]
