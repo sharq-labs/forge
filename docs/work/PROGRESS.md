@@ -11108,3 +11108,59 @@ Nothing was re-run and no statistics were computed. Report:
 Conditions under which selection could matter are proposals only, each needing an owner
 decision: scarcer budget, more inputs or narrow features, credit for queries saved, and a
 richer hypothesis family.
+
+### 2026-10-29 — EXC-3: experiment selection under a scarce budget (build, reviews, pilot)
+
+Owner approved EXC-3 in chat, with defaults: fractions 1.0/0.5/0.25, d+2 floor, a 45-minute
+cap, 4 workers and Mind 1.0.0 unchanged. Recorded in ACTIVE_PLAN before any code.
+- `a9734570`: `query_cap`/`QueryCap` in harness_v3 and per-level summary with the
+  pre-declared contrasts in pilot_v3. Red first: 30 failed, then 30 passed. Windows
+  genesis_lite 281 passed / 7 skipped; Linux 288 passed. Smoke at 0.25 on Linux: PySINDy,
+  BoTorch, PySR, mind_full and careful were all VALID and kept to the cap.
+- Review of `a9734570` (static): **CHANGES REQUIRED**, a measurement-design finding with no
+  authority defect.
+  - HIGH-1: at the scarce levels most universes leave no selection query.
+  - MEDIUM-1: the BO contrast is confounded with analysis.
+  - MEDIUM-2: the cap was enforced only by state the arm could write.
+  - MEDIUM-3: levels were not held to common worlds.
+  - LOW-1..6: smaller issues.
+- `1648ce7b` fixes, red first: 12 failed / 34 passed / 1 skipped.
+  - Per-universe opportunity fields.
+  - Stratified per-universe contrasts.
+  - Notes on each contrast.
+  - Read-only cap, and an escrow-count check against the caps.
+  - Common-world contrasts.
+  - Realised fraction per level.
+  - Cap data recorded before the arm runs.
+  - Malformed queries refused before the cap.
+
+  Windows 297 passed / 8 skipped; Linux 305 passed.
+- Re-review of `1648ce7b`: **APPROVE WITH NOTES**. `6f0bc58d` closed notes 3 and 4 red
+  first: a cap-bookkeeping failure now makes the run INVALID, and an inadmissible universe
+  keeps its cap data. Windows 299 passed / 8 skipped; Linux 307 passed.
+- Pilot command: `timeout 2700 .venv/bin/python -m benchmarks.genesis_lite.pilot_v3 --out
+  .../pilot-v3-dev-scarce-2026-10-29 --arms all --workers 4 --deadline-seconds 2400
+  --budget-fractions 1.0,0.5,0.25`, started at `6f0bc58d`.
+  - Result: exit 0, 1741.39 s, 7200/7200 VALID, 120 paired world sets per level.
+  - **Provenance MIXED.** At 14:22:54 a fork of this session committed `56b33d42` to main
+    and fast-forwarded /opt mid-run. The executed code is inferred to be `6f0bc58d`: the
+    same 4 workers ran every campaign, with modules imported before the change. But 3261
+    runs record the post-change identity `bc8c5eea…`, and environment.json's git_head is
+    `56b33d42`.
+  - Report: `benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/README.md`
+    (summary sha256 `3607e87b…`, runs.jsonl sha256 `03661c13…`).
+- DEVELOPMENT_DESCRIPTIVE results, per universe where selection was possible:
+  - mind_full vs mind_no_adaptive_selection: 24 vs 22 ahead (0.25), 22 vs 39 (0.5),
+    28 vs 40 (1.0).
+  - bo vs space_filling (confounded): 10 vs 54, 25 vs 80, 17 vs 84.
+  - **Neither adaptive design was ahead of a space-filling design at any budget level.**
+  - Mind variants remain top at every level.
+  - mind_full answered no_law on 51 not-no_solution worlds at 0.25 (12 at 0.5, 5 at 1.0).
+- Current main `56b33d42` (the fork's commit, not made by this session): Windows
+  genesis_lite 303 passed / 8 skipped. This session did not review it.
+EXC-3 exit condition (report plus review) met, with mixed provenance.
+OWNER_DECISION_REQUIRED:
+1. Accept this run with its provenance correction, or re-run on a frozen tree.
+2. Close EXC-3.
+3. Coordinate the fork session, which writes to the same main and /opt.
+No A2, lift or superiority claim.

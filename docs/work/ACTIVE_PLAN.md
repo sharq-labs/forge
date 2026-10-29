@@ -1063,6 +1063,12 @@ expiry, owner approval, prohibitions).
    formal campaign, A2 closure, lift or superiority claim; widening this scope. A reward for saved queries (a cost-aware
    Mind stop rule) is NOT part of EXC-3 and needs its own decision.
 
+**Status 2026-10-29:** built `a9734570`, review fixes `1648ce7b`/`6f0bc58d` (CHANGES REQUIRED, then APPROVE WITH NOTES);
+pilot 7200/7200 VALID, report in `benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/`. Provenance MIXED: a
+fork session committed `56b33d42` and synced /opt mid-run (executed code inferred `6f0bc58d`; 3261 runs record the
+post-change identity). No adaptive design was ahead of a space-filling design at any budget level. OWNER_DECISION_REQUIRED:
+accept with the provenance correction or re-run on a frozen tree; close EXC-3; coordinate the fork session.
+
 ### EXC-2 -- Minimal Mind as a measurement arm in the Genesis-lite v0.3 development pilot (CLOSED 2026-10-29 by the owner)
 
 1. **Exact scope:** a new adapter `benchmarks/genesis_lite/mind_arm_v3.py` and its tests; registering its arms in
