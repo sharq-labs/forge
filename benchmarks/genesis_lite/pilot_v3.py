@@ -32,6 +32,7 @@ from typing import Any, Iterable, Mapping, Sequence
 
 from . import arms as arms_v2
 from .arms_v3 import ARMS_V3, availability_v3
+from .mind_arm_v3 import MIND_ARMS
 from .harness import code_identity
 from .harness_v3 import development_identity, library_versions, run_one_v3
 
@@ -70,15 +71,15 @@ def master_seed(root: bytes, campaign: int, presentation: str, seed: int) -> byt
 
 
 def _arm(name: str):
-    return (arms_v2.ARMS.get(name) or ARMS_V3[name])[0]
+    return (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or MIND_ARMS[name])[0]
 
 
 def all_arms() -> list[str]:
-    return sorted(arms_v2.ARMS) + sorted(ARMS_V3)
+    return sorted(arms_v2.ARMS) + sorted(ARMS_V3) + sorted(MIND_ARMS)
 
 
 def arm_available(name: str) -> bool:
-    if name in arms_v2.ARMS:
+    if name in arms_v2.ARMS or name in MIND_ARMS:
         return True
     return availability_v3()[name]["status"] == "AVAILABLE_DEVELOPMENT"
 
@@ -276,7 +277,7 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
         wall_clean = (sum(r["wall_seconds"] for r in clean) / len(clean)) if clean else None
         arms_out[name] = {
             "status": "AVAILABLE" if available[name] else "ARM_UNAVAILABLE",
-            "family": (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or (None, ""))[1],
+            "family": (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or MIND_ARMS.get(name) or (None, ""))[1],
             "runs": len(rs), "valid": len(valid), "invalid": sum(r["status"] == "INVALID_BENCHMARK" for r in rs),
             "worker_failures": sum(r["status"] == "WORKER_FAILED" for r in rs),
             "evaluator_disagreement_invalid": sum(any("separate v0.3 evaluator" in x for x in r["reasons"]) for r in rs),

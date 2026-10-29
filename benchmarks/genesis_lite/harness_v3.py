@@ -29,9 +29,21 @@ from .evaluator import score_v3
 from .presentation import Presented, PresentationRefused, TranslatingClient, check_card, present, to_original_law
 
 HERE = pathlib.Path(__file__).resolve().parent
-V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "pilot_v3.py", "evaluator/score_v3.py")
+V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "mind_arm_v3.py", "pilot_v3.py", "evaluator/score_v3.py")
 #: v0.3 substrate beside the pinned v0.2 escrow (repository-relative)
-SUBSTRATE_V3_FILES = ("src/engcore/blindfold/escrow_v3.py",)
+SUBSTRATE_V3_FILES = ("src/engcore/blindfold/escrow_v3.py",
+                      # EXC-2: the Minimal Mind measured as an arm (read-only; its files bind the identity)
+                      "src/engcore/mind/minimal/__init__.py",
+                      "src/engcore/mind/minimal/competition.py",
+                      "src/engcore/mind/minimal/experiments.py",
+                      "src/engcore/mind/minimal/falsifier.py",
+                      "src/engcore/mind/minimal/outcome_model.py",
+                      "src/engcore/mind/minimal/problem.py",
+                      "src/engcore/mind/minimal/runner.py",
+                      "src/engcore/mind/minimal/stopping.py",
+                      "src/engcore/mind/minimal/structures.py",
+                      "src/engcore/mind/minimal/trace.py",
+                      )
 LIBRARIES = ("numpy", "sympy", "pysr", "pysindy", "botorch", "gpytorch", "torch")
 
 
