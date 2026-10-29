@@ -112,17 +112,31 @@ def _work(task: Task, master_seed_hex: str) -> dict[str, Any]:
 
 
 def _executor(workers: int) -> cf.Executor:
-    # set in the parent BEFORE the pool exists: spawned workers inherit it before importing numpy (the initializer runs
-    # only after unpickling has already imported this module and numpy)
-    os.environ.update(THREAD_LIMITS)
     return cf.ProcessPoolExecutor(max_workers=workers, mp_context=multiprocessing.get_context("spawn"),
                                   initializer=_init_worker)
 
 
+class _PinnedThreads:
+    """THREAD_LIMITS in the parent while the spawned workers start (they inherit it before importing numpy: the initializer
+    alone runs after unpickling has imported numpy, and measured 20 BLAS threads per worker at 5daaba81); restored after."""
+
+    def __enter__(self) -> "_PinnedThreads":
+        self.saved = {k: os.environ.get(k) for k in THREAD_LIMITS}
+        os.environ.update(THREAD_LIMITS)
+        return self
+
+    def __exit__(self, *exc: Any) -> None:
+        for k, value in self.saved.items():
+            if value is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = value
+
+
 def _failure_record(task: Task, exc: BaseException) -> dict[str, Any]:
     return {"arm": task.arm, "status": "WORKER_FAILED", "reasons": [f"{type(exc).__name__}: {str(exc)[:300]}"],
-            "wall_seconds": 0.0, "observe_calls": 0, "worker_maxrss_kib": None, "v3_total_credit": 0.0, "universes": [],
-            "task": asdict(task), "threads_in_force": {}}
+            "wall_seconds": None, "observe_calls": None, "worker_maxrss_kib": None, "v3_total_credit": None,
+            "universes": [], "task": asdict(task), "threads_in_force": {}}
 
 
 def _git_head() -> str:
@@ -174,8 +188,9 @@ def run_pilot(arm_names: Sequence[str], *, out: pathlib.Path | str, campaigns: i
             except Exception as exc:  # noqa: BLE001 - a crashed campaign is recorded, never lost
                 keep(_failure_record(task, exc))
     else:
-        executor = _executor(workers)
-        futures = {executor.submit(_work, task, seed_hex(task)): task for task in tasks}
+        with _PinnedThreads():                 # workers are spawned during submit; the parent is restored afterwards
+            executor = _executor(workers)
+            futures = {executor.submit(_work, task, seed_hex(task)): task for task in tasks}
         collected: set = set()
 
         def collect(f: cf.Future) -> None:
@@ -233,7 +248,7 @@ def _is_library_failure(u: Mapping[str, Any]) -> bool:
 
 
 def _summarize(arm_names, available, records, not_run, interrupted, presentations, seeds, campaigns, elapsed, workers,
-               deadline, *, planned: int) -> dict[str, Any]:
+               deadline, *, planned: int, missing_records: int = 0) -> dict[str, Any]:
     runnable = [name for name in arm_names if available[name]]
     by_arm: dict[str, list[dict]] = collections.defaultdict(list)
     worlds: dict[tuple, dict[str, str]] = collections.defaultdict(dict)
@@ -248,8 +263,9 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
         rs = by_arm.get(name, [])
         valid = [r for r in rs if r["status"] == "VALID"]
         clean = [r for r in valid if not any(_is_library_failure(u) for u in r["universes"])]
-        walls = [r["wall_seconds"] for r in rs if r["status"] != "WORKER_FAILED"]
-        rss = [r.get("worker_maxrss_kib") for r in rs]
+        measured = [r for r in rs if r["status"] != "WORKER_FAILED"]       # a dead worker measured nothing
+        walls = [r["wall_seconds"] for r in measured]
+        rss = [r.get("worker_maxrss_kib") for r in measured]
         universes = [u for r in valid for u in r["universes"]]
         on_paired = [r for r in valid if _world(r) in paired]
         per_kind = collections.defaultdict(list)
@@ -271,8 +287,10 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
             "wall_seconds_max": round(max(walls), 3) if walls else None,
             "cost_basis_runs": len(clean),
             "wall_seconds_mean_clean": round(wall_clean, 4) if wall_clean is not None else None,
-            "observe_calls_mean": round(sum(r["observe_calls"] for r in rs) / len(rs), 2) if rs else None,
-            "worker_maxrss_kib_max": ("UNMEASURED" if not rss or any(x is None for x in rss) else max(rss)),
+            "observe_calls_mean": (round(sum(r["observe_calls"] for r in measured) / len(measured), 2)
+                                   if measured else None),
+            #: whole-life high-water mark of the pooled workers that ran this arm: not a per-arm memory measurement
+            "worker_rss_high_water_kib": ("UNMEASURED" if not rss or any(x is None for x in rss) else max(rss)),
             "inadmissible_universes": sum(u["answer"] == "inadmissible" for u in universes),
             "library_failure_universes": sum(_is_library_failure(u) for u in universes),
             "design_fallback_universes": sum("design fallback" in str(u.get("rationale", "")) for u in universes),
@@ -289,17 +307,26 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
     missing = sorted(name for name in runnable if arms_out[name]["cost_basis_runs"] == 0)
     estimates = [arms_out[n]["formal_cost_estimate_seconds"] for n in runnable
                  if arms_out[n]["formal_cost_estimate_seconds"] is not None]
-    status = "INCOMPLETE" if missing else ("LOWER_BOUND" if interrupted else "ESTIMATE")
+    worker_failed = sum(r["status"] == "WORKER_FAILED" for r in records)
+    pool_rss = [r.get("worker_maxrss_kib") for r in records if r["status"] != "WORKER_FAILED"]
+    status = ("INCOMPLETE" if missing else
+              "LOWER_BOUND" if (interrupted or worker_failed or missing_records) else "ESTIMATE")
     return {
         "readiness": "DEVELOPMENT_ONLY", "claims": "COST_MEASUREMENT_ONLY", "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
         "design": {"campaigns_per_presentation_per_seed": campaigns, "presentations": list(presentations),
                    "seeds": list(seeds), "workers": workers, "deadline_seconds": deadline},
         "elapsed_seconds": round(elapsed, 2),
-        "tasks": {"planned": planned, "completed": len(records), "not_run": len(not_run), "interrupted": len(interrupted)},
+        "tasks": {"planned": planned, "completed": len(records) - worker_failed, "worker_failed": worker_failed,
+                  "not_run": len(not_run), "interrupted": len(interrupted), "missing_records": missing_records},
+        "worker_rss_high_water_kib_pool": ("UNMEASURED" if not pool_rss or any(x is None for x in pool_rss)
+                                           else max(pool_rss)),
         "paired_world_sets_complete": len(paired),
         "excluded_world_sets": excluded,
         "arms": arms_out,
-        "formal_tier_estimate": {"label": "ESTIMATE from the measured mean wall of clean VALID campaigns; single-worker seconds",
+        "formal_tier_estimate": {"label": (f"ESTIMATE from the mean wall of clean VALID campaigns, each measured inside one of "
+                                           f"{workers} concurrent workers"),
+                                 "scope": ("baseline arms only (the arms planned here), in_process isolation; Mind arm UNMEASURED; "
+                                           "proposer-process isolation overhead UNMEASURED"),
                                  "status": status, "arms_without_measurement": missing,
                                  "campaigns_per_arm": FORMAL_CAMPAIGNS,
                                  "sum_over_measured_arms_seconds": round(sum(estimates), 1),
@@ -307,23 +334,34 @@ def _summarize(arm_names, available, records, not_run, interrupted, presentation
     }
 
 
-def resummarize(out: pathlib.Path | str, arm_names: Sequence[str], *, campaigns: int = RUNG,
-                presentations: Iterable[str] = PRESENTATIONS, seeds: Iterable[int] = PILOT_SEEDS) -> dict[str, Any]:
-    """Recompute a summary from an existing runs.jsonl into summary_resummarized.json; the original summary is kept.
-    Planned tasks without a record count as not_run (cancelled and interrupted tasks are not distinguishable here)."""
+def resummarize(out: pathlib.Path | str, arm_names: Sequence[str] | None = None, **_ignored: Any) -> dict[str, Any]:
+    """Recompute a summary from an existing run into summary_resummarized.json; the original summary is kept.
+
+    Design, arm list and availability come from the run's own summary.json, never from this machine or CLI defaults. A
+    planned task without a record is ``missing_records`` (cancelled, interrupted and lost are not distinguishable here) and
+    makes the estimate a LOWER_BOUND."""
     out = pathlib.Path(out)
     records = [json.loads(line) for line in (out / "runs.jsonl").read_text().splitlines() if line.strip()]
     env = json.loads((out / "environment.json").read_text())
-    presentations, seeds = tuple(presentations), tuple(seeds)
-    available = {name: arm_available(name) for name in arm_names}
-    tasks = plan([n for n in arm_names if available[n]], campaigns=campaigns, presentations=presentations, seeds=seeds)
+    original = (out / "summary.json").read_bytes()
+    recorded = json.loads(original)
+    design = recorded["design"]
+    names = list(recorded["arms"])
+    available = {name: recorded["arms"][name]["status"] == "AVAILABLE" for name in names}
+    presentations, seeds = tuple(design["presentations"]), tuple(design["seeds"])
+    campaigns = int(design["campaigns_per_presentation_per_seed"])
+    tasks = plan([n for n in names if available[n]], campaigns=campaigns, presentations=presentations, seeds=seeds)
     seen = {(r["task"]["arm"], r["task"]["campaign"], r["task"]["presentation"], r["task"]["seed"]) for r in records}
-    not_run = [t for t in tasks if (t.arm, t.campaign, t.presentation, t.seed) not in seen]
-    summary = _summarize(arm_names, available, records, not_run, [], presentations, seeds, campaigns,
+    missing = sum((t.arm, t.campaign, t.presentation, t.seed) not in seen for t in tasks)
+    summary = _summarize(names, available, records, [], [], presentations, seeds, campaigns,
                          float(env["elapsed_seconds"]), int(env["workers"]), float(env["deadline_seconds"]),
-                         planned=len(tasks))
-    summary["resummarized_from"] = {"runs_jsonl_sha256": hashlib.sha256((out / "runs.jsonl").read_bytes()).hexdigest(),
-                                    "summarizer": "pilot_v3._summarize (review round 2)"}
+                         planned=len(tasks), missing_records=missing)
+    summary["resummarized_from"] = {
+        "runs_jsonl_sha256": hashlib.sha256((out / "runs.jsonl").read_bytes()).hexdigest(),
+        "original_summary_sha256": hashlib.sha256(original).hexdigest(),
+        "run_git_head": env.get("git_head", "UNKNOWN"),
+        "summarizer_git_head": _git_head(),
+        "summarizer_sha256": hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest()}
     (out / "summary_resummarized.json").write_text(json.dumps(summary, indent=1, sort_keys=True))
     return summary
 
@@ -339,7 +377,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     names = all_arms() if args.arms == "all" else args.arms.split(",")
     if args.resummarize:
-        summary = resummarize(args.out, names, campaigns=args.campaigns)
+        summary = resummarize(args.out)
     else:
         summary = run_pilot(names, out=args.out, campaigns=args.campaigns, workers=args.workers,
                             deadline_seconds=args.deadline_seconds)

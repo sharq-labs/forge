@@ -106,7 +106,8 @@ def test_the_cost_estimate_never_hides_missing_or_failed_measurements():
 def test_unmeasured_memory_is_reported_as_unmeasured_not_zero():
     from benchmarks.genesis_lite.pilot_v3 import _summarize
     s = _summarize(["a"], {"a": True}, [_rec("a", 0, rss=None)], [], [], ("anonymous",), (0,), 1, 1.0, 1, 10.0, planned=1)
-    assert s["arms"]["a"]["worker_maxrss_kib_max"] == "UNMEASURED"
+    assert s["arms"]["a"]["worker_rss_high_water_kib"] == "UNMEASURED"
+    assert s["worker_rss_high_water_kib_pool"] == "UNMEASURED"
 
 
 def test_every_planned_task_is_accounted_for_even_when_the_deadline_cuts_in(tmp_path, monkeypatch):
@@ -142,7 +143,9 @@ def test_a_worker_failure_is_recorded_not_lost(tmp_path, monkeypatch):
     monkeypatch.setattr(pilot_v3, "_executor", lambda workers: cf.ThreadPoolExecutor(max_workers=workers))
     s = pilot_v3.run_pilot(["always_refuse"], out=tmp_path, campaigns=2, presentations=("anonymous",), seeds=(0,),
                            workers=2, deadline_seconds=30.0, root=bytes(32))
-    assert s["arms"]["always_refuse"]["worker_failures"] == 1 and s["tasks"]["completed"] == 2
+    assert s["arms"]["always_refuse"]["worker_failures"] == 1
+    assert s["tasks"]["completed"] == 1 and s["tasks"]["worker_failed"] == 1
+    assert s["formal_tier_estimate"]["status"] == "LOWER_BOUND"
 
 
 def test_workers_receive_only_their_campaign_seed_and_report_threads_in_force(tmp_path):
@@ -160,3 +163,63 @@ def test_a_duplicated_arm_name_is_refused(tmp_path):
     from benchmarks.genesis_lite.pilot_v3 import run_pilot
     with pytest.raises(ValueError):
         run_pilot(["careful", "careful"], out=tmp_path / "unused", campaigns=1, workers=1, deadline_seconds=1.0, root=bytes(32))
+
+
+# ---- review round 3 (2026-10-29) ----------------------------------------------------------------------------------------
+def _small_run(tmp_path, campaigns=2):
+    from benchmarks.genesis_lite.pilot_v3 import run_pilot
+    return run_pilot(["always_refuse"], out=tmp_path, campaigns=campaigns, presentations=("anonymous",), seeds=(0,),
+                     workers=1, deadline_seconds=120.0, root=bytes(32))
+
+
+def test_resummarize_takes_design_and_availability_from_the_run_not_this_machine(tmp_path, monkeypatch):
+    from benchmarks.genesis_lite import pilot_v3
+    _small_run(tmp_path)
+    monkeypatch.setattr(pilot_v3, "arm_available", lambda name: False)      # a machine without the arm
+    s = pilot_v3.resummarize(tmp_path, ["always_refuse"])                    # CLI defaults would plan 120 tasks
+    assert s["tasks"]["planned"] == 2 and s["arms"]["always_refuse"]["status"] == "AVAILABLE"
+    assert s["formal_tier_estimate"]["status"] == "ESTIMATE"
+
+
+def test_resummarize_of_a_run_missing_records_is_a_lower_bound(tmp_path):
+    from benchmarks.genesis_lite import pilot_v3
+    _small_run(tmp_path)
+    runs = (tmp_path / "runs.jsonl").read_text().splitlines()
+    (tmp_path / "runs.jsonl").write_text(runs[0] + "\n")
+    s = pilot_v3.resummarize(tmp_path, ["always_refuse"])
+    assert s["tasks"]["missing_records"] == 1 and s["formal_tier_estimate"]["status"] == "LOWER_BOUND"
+
+
+def test_resummarize_identifies_the_code_that_summarized_and_the_run_it_read(tmp_path):
+    from benchmarks.genesis_lite import pilot_v3
+    _small_run(tmp_path)
+    src = pilot_v3.resummarize(tmp_path, ["always_refuse"])["resummarized_from"]
+    assert len(src["summarizer_sha256"]) == 64 and src["summarizer_git_head"] and src["run_git_head"]
+
+
+def test_a_failed_worker_contributes_no_observation_count():
+    from benchmarks.genesis_lite.pilot_v3 import Task, _failure_record, _summarize
+    recs = [_rec("a", 0), _failure_record(Task("a", 1, "anonymous", 0), RuntimeError("x"))]
+    s = _summarize(["a"], {"a": True}, recs, [], [], ("anonymous",), (0,), 2, 1.0, 1, 10.0, planned=2)
+    assert s["arms"]["a"]["observe_calls_mean"] == 3.0
+
+
+def test_the_estimate_states_its_scope():
+    from benchmarks.genesis_lite.pilot_v3 import _summarize
+    est = _summarize(["a"], {"a": True}, [_rec("a", 0)], [], [], ("anonymous",), (0,), 1, 1.0, 4, 10.0,
+                     planned=1)["formal_tier_estimate"]
+    assert "baseline arms only" in est["scope"] and "in_process" in est["scope"] and "Mind arm UNMEASURED" in est["scope"]
+    assert "concurrent workers" in est["label"]
+
+
+def test_the_parent_environment_is_restored_and_workers_run_one_blas_thread(tmp_path, monkeypatch):
+    import importlib.util
+    import os
+    from benchmarks.genesis_lite import pilot_v3
+    monkeypatch.setenv("OMP_NUM_THREADS", "7")
+    pilot_v3.run_pilot(["always_refuse"], out=tmp_path, campaigns=1, presentations=("anonymous",), seeds=(0,), workers=2,
+                       deadline_seconds=120.0, root=bytes(32))
+    assert os.environ["OMP_NUM_THREADS"] == "7"
+    run = json.loads((tmp_path / "runs.jsonl").read_text().splitlines()[0])
+    if importlib.util.find_spec("threadpoolctl") is not None:
+        assert run["threads_in_force"]["blas_max"] == 1
