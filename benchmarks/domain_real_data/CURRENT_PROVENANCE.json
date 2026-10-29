@@ -33525,7 +33525,7 @@
         {
           "path": "benchmarks/genesis_lite/pilot_v3.py",
           "sha256": "644b3b2f378624a8c309c6d954746cca15474761b9b79c2914f03e137fd45eda",
-          "commit": "5daaba81"
+          "commit": "5daaba81b30e721ee48b94a3ac3a653c80e7fd16"
         },
         {
           "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md",
@@ -33543,7 +33543,7 @@
         {
           "path": "benchmarks/genesis_lite/pilot_v3.py",
           "sha256": "644b3b2f378624a8c309c6d954746cca15474761b9b79c2914f03e137fd45eda",
-          "commit": "5daaba81"
+          "commit": "5daaba81b30e721ee48b94a3ac3a653c80e7fd16"
         },
         {
           "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md",
@@ -33561,7 +33561,7 @@
         {
           "path": "benchmarks/genesis_lite/pilot_v3.py",
           "sha256": "b51760827d2e33ffb795be292d11ef7a0f5a941a2a27e4bbf91f0ef803080fef",
-          "commit": "ef0cc2f0"
+          "commit": "ef0cc2f0c00dfca7addf41eeacd434d015e85252"
         },
         {
           "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md",
@@ -33579,7 +33579,7 @@
         {
           "path": "benchmarks/genesis_lite/pilot_v3.py",
           "sha256": "49806b274623b68d64d06359fac251a63ef7c5505c1dd56122ca56140608b817",
-          "commit": "992deeba"
+          "commit": "992deeba5145a938060de2defb922f14bcbae944"
         },
         {
           "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/README.md",
@@ -33597,7 +33597,7 @@
         {
           "path": "benchmarks/genesis_lite/pilot_v3.py",
           "sha256": "49806b274623b68d64d06359fac251a63ef7c5505c1dd56122ca56140608b817",
-          "commit": "992deeba"
+          "commit": "992deeba5145a938060de2defb922f14bcbae944"
         },
         {
           "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/README.md",
@@ -33615,7 +33615,7 @@
         {
           "path": "benchmarks/genesis_lite/pilot_v3.py",
           "sha256": "d19c95ddb1c2c09efeda98f63c91c9fc224505d8b77aefb8bfbfa0a55cb65dcb",
-          "commit": "6f0bc58d"
+          "commit": "6f0bc58d4215a394c03a87905dfb786444c564ef"
         },
         {
           "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/README.md",
@@ -33633,7 +33633,7 @@
         {
           "path": "benchmarks/genesis_lite/pilot_v3.py",
           "sha256": "d19c95ddb1c2c09efeda98f63c91c9fc224505d8b77aefb8bfbfa0a55cb65dcb",
-          "commit": "6f0bc58d"
+          "commit": "6f0bc58d4215a394c03a87905dfb786444c564ef"
         },
         {
           "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/README.md",
