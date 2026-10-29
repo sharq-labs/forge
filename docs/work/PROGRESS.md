@@ -11082,3 +11082,29 @@ Owner approved EXC-2 in chat ("موافق على الاستثناء"); recorded 
 EXC-2 exit condition (pilot report plus review) met; closing EXC-2 is the owner's call.
 No A2, lift or superiority claim. Not done: anything that changes the Mind (needs a new
 decision); v0.3 preregistration; custodian; formal campaign; OD-3.
+
+### 2026-10-29 — EXC-2 closed; read-only analysis of the flat ablations
+
+Owner, in chat: "Close EXC-2, analyze". EXC-2 marked CLOSED in ACTIVE_PLAN; field 8's
+prohibitions stand (any Mind change, re-run or new arm needs a new decision). Analysis is
+read-only over the pilot's `runs.jsonl` (sha256 `96681496…`) and the Mind source. Scratch
+scripts (`ablation_analysis.py`, `ablation_infamily.py`) ran on /opt with `python -I`.
+Nothing was re-run and no statistics were computed. Report:
+`benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/ANALYSIS.md`.
+- Ablations rarely change the answer (720 paired universes): no_falsifier differs in 10,
+  no_belief_update 46, no_adaptive_selection 90 (careful: 111). The differences go both
+  ways (boundary flips).
+- On in-family law worlds (95): Mind variants 43-46 law_pass vs careful 31 and
+  space_filling 30. The lead comes from the shared hypothesis competition, fit and
+  `conclude` rules, which no ablation removes.
+- Selection cannot show here (explanations, not established causes):
+  - Every observing arm spent the full budget; the early stop never fired.
+  - A space-filling design suffices in 3-4 input boxes at 12-60 queries.
+  - 69 of 92 discoverable refusals have the truth outside the family.
+  - In 196 mind_full universes the region leaves the box.
+  - The falsifier is redundant with the misfit check (127 refuted-path cases, only
+    10 answer changes).
+  - no_belief_update only affects selection by construction.
+Conditions under which selection could matter are proposals only, each needing an owner
+decision: scarcer budget, more inputs or narrow features, credit for queries saved, and a
+richer hypothesis family.
