@@ -1037,7 +1037,7 @@ therapeutic work.
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).
 
-### EXC-3 -- experiment selection under a scarce budget (Genesis-lite v0.3 development pilot) (OPEN)
+### EXC-3 -- experiment selection under a scarce budget (Genesis-lite v0.3 development pilot) (CLOSED 2026-10-29 by the owner)
 
 1. **Exact scope:** a `budget_fraction` in `benchmarks/genesis_lite/harness_v3.py` and `pilot_v3.py` and their tests:
    the harness copies the presented card with `query_budget = min(budget, max(d + 2, floor(f x budget)))` (d = number of
@@ -1066,8 +1066,11 @@ expiry, owner approval, prohibitions).
 **Status 2026-10-29:** built `a9734570`, review fixes `1648ce7b`/`6f0bc58d` (CHANGES REQUIRED, then APPROVE WITH NOTES);
 pilot 7200/7200 VALID, report in `benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/`. Provenance MIXED: a
 fork session committed `56b33d42` and synced /opt mid-run (executed code inferred `6f0bc58d`; 3261 runs record the
-post-change identity). No adaptive design was ahead of a space-filling design at any budget level. OWNER_DECISION_REQUIRED:
-accept with the provenance correction or re-run on a frozen tree; close EXC-3; coordinate the fork session.
+post-change identity). No adaptive design was ahead of a space-filling design at any budget level. **Closed** by the owner
+in chat, 2026-10-29 ("Accept with note"): the run is accepted with its written provenance correction (executed code
+inferred `6f0bc58d`; the recorded identity of 3261 runs and environment.json's git_head are post-change labels), and EXC-3
+is closed. Field 8's prohibitions outlive the closure. Still open: coordinating the fork session that writes to the same
+main and /opt.
 
 ### EXC-2 -- Minimal Mind as a measurement arm in the Genesis-lite v0.3 development pilot (CLOSED 2026-10-29 by the owner)
 

@@ -11164,3 +11164,12 @@ OWNER_DECISION_REQUIRED:
 2. Close EXC-3.
 3. Coordinate the fork session, which writes to the same main and /opt.
 No A2, lift or superiority claim.
+
+### 2026-10-29 — EXC-3 closed; scarce-budget pilot accepted with its provenance correction
+
+Owner, in chat: "Accept with note". The run `pilot-v3-dev-scarce-2026-10-29` is accepted as
+DEVELOPMENT_DESCRIPTIVE evidence. Its results are bound to `6f0bc58d` as the inferred
+executed code. The 3261 post-change identity labels and environment.json's git_head stay
+as written and are corrected only in the README. It was not re-run. EXC-3 is marked CLOSED
+in ACTIVE_PLAN, and its field-8 prohibitions stand. Still open: coordination with the fork
+session that writes to the same main and /opt.

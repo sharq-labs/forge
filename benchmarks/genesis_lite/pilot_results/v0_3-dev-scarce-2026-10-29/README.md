@@ -22,8 +22,9 @@ No statistics were computed. Not A2 evidence.
   - `environment.json` records `git_head` `56b33d42…`, computed at the end of the run; it is not the code that ran.
 - **Effect on results:** none is expected on scoring. `56b33d42` changes pseudonym keys below 1.0 and adds a
   per-universe cap check; the arms are stateless across campaigns and no run exceeded its cap (0 INVALID). The
-  recorded provenance is nevertheless wrong for 3261 runs. Accepting this run with that correction, or re-running on a
-  frozen tree, is the owner's decision.
+  recorded provenance is nevertheless wrong for 3261 runs.
+- **Owner decision (2026-10-29, in chat: "Accept with note"):** this run is accepted with the correction above, which
+  binds its results to `6f0bc58d` as the inferred executed code; it was not re-run. EXC-3 is closed.
 
 ## Files
 
