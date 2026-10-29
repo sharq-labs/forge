@@ -110,8 +110,9 @@ CREDIT_DIGEST = v2.CREDIT_DIGEST
 def evaluate_campaign(proposals: Mapping[str, Mapping[str, Any]], key: Mapping[str, Any],
                       escrow: Mapping[str, Mapping[str, Any]], *, expected_credit_digest: str) -> dict[str, Any]:
     """The v2 reconciliation contract, scored with this module's rule: VALID only when every kind, outcome, credit and
-    fraction agrees with the escrow's v0.3 adjudication. A zero truth (exact zero accepted here, never by the escrow's
-    v0.2 fractions) therefore surfaces as a disagreement: the run fails closed instead of mixing two rules."""
+    fraction agrees with the escrow's v0.3 adjudication. Since escrow_v3 (2026-10-29) the escrow applies the same
+    pair/fraction rule text, so agreement independently checks the expression interpreter and the fraction, outcome and
+    credit plumbing, not the rule semantics. Any disagreement still fails the run closed."""
     if v2.credit_digest(v2.CREDIT) != expected_credit_digest:
         raise v2.EvaluatorRefused("the evaluator's credit table is not the expected one")
     entries = {e["universe_id"]: e for e in key["universes"]}

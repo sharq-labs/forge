@@ -114,7 +114,15 @@ def assess_pair_v3(laws: list[Mapping[str, Any]], truths: list[tuple[dict[str, f
 
 
 class EscrowServiceV3(EscrowService):
-    """The v0.2 escrow service, scoring with the v0.3 rules (every other behaviour, journal and signature unchanged)."""
+    """The v0.2 escrow service, scoring with the v0.3 rules (every other behaviour, journal and signature unchanged).
+
+    In-memory only: a journal does not yet record which rule scored a campaign, so a stored v0.3 campaign reopened by the
+    v0.2 service would continue under v0.2 rules. Persistent storage is refused until the rule is journaled."""
+
+    def __init__(self, *args: Any, storage: Any = None, **kwargs: Any) -> None:
+        if storage is not None:
+            raise EscrowRefused("EscrowServiceV3 refuses persistent storage until the scoring rule is journaled")
+        super().__init__(*args, **kwargs)
 
     def _score(self, req: Mapping[str, Any]) -> dict[str, Any]:
         camp = self._campaigns[str(req["campaign_id"])]

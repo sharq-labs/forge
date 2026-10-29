@@ -32,7 +32,7 @@ def _adjudication(kind, answer, outcome, credit, config, receipt="r" * 64, propo
 
 def _body(pair, receipt="r" * 64, proposal="p" * 64, answer="indistinguishable"):
     return {"universe_id": "u1", "proposal_digest": proposal, "answer": answer, "pair": pair,
-            "receipt": {"digest": receipt}}
+            "receipt": {"digest": receipt}, "rule": "v0_3"}
 
 
 @pytest.mark.parametrize("kind,hit_credit", [("indistinguishable", 1.0), ("discoverable", -0.5), ("confounded", -1.0)])
@@ -139,3 +139,43 @@ def test_a_real_bracketing_only_pair_is_unresolved_end_to_end_and_the_evaluator_
     assert rec.status == "VALID" and rec.evaluator_status == "VALID", rec.reasons
     unresolved = [u for u in rec.universes if u["outcome"] == "indistinguishable_unresolved"]
     assert unresolved and all(u["independent_agrees"] and u["credit"] <= 0.0 for u in unresolved)
+
+
+# ---- review of cb1dfe44 (2026-10-29): the rule is observed, not asserted -------------------------------------------------
+@pytest.mark.parametrize("rule", [None, "v0_2"])
+def test_a_score_body_not_scored_under_the_v0_3_rule_is_refused(rule):
+    from benchmarks.genesis_lite.adjudication_v3 import CONFIG_V3, AdjudicationRefused, adjudicate_v3
+    a = _adjudication("indistinguishable", "indistinguishable", "indistinguishable_hit", 1.0, CONFIG_V3)
+    body = _body({"hit": True, "contains_truth": True, "brackets_truth": True})
+    if rule is None:
+        body.pop("rule")
+    else:
+        body["rule"] = rule
+    with pytest.raises(AdjudicationRefused, match="rule"):
+        adjudicate_v3(a, body, CONFIG_V3)
+
+
+def test_the_v0_3_path_on_a_v0_2_escrow_is_invalid_not_relabelled(monkeypatch):
+    from benchmarks.genesis_lite import arms, harness_v3
+    from engcore.blindfold import EscrowService
+    monkeypatch.setattr(harness_v3, "EscrowServiceV3", EscrowService)
+    rec = harness_v3.run_one_v3("extrapolation_pair", arms.ARMS["extrapolation_pair"][0],
+                                master_seed=(3).to_bytes(4, "big") * 8, campaign_id="gl-v03-probe-3",
+                                presentation="anonymous")
+    # the world set of this campaign id has scored pair answers (a refusal-only campaign scores no law)
+    assert rec.status == "INVALID_BENCHMARK" and rec.escrow_rule != "v0_3"
+
+
+def test_the_record_states_what_evaluator_agreement_does_and_does_not_check():
+    from benchmarks.genesis_lite import arms
+    from benchmarks.genesis_lite.harness_v3 import run_one_v3
+    rec = run_one_v3("always_refuse", arms.ARMS["always_refuse"][0], master_seed=bytes(range(32)),
+                     campaign_id="gl-v03-scope", presentation="anonymous")
+    assert "interpreter" in rec.agreement_scope and "not the rule semantics" in rec.agreement_scope
+
+
+def test_the_v0_3_escrow_refuses_persistent_storage_until_the_rule_is_journaled():
+    from engcore.blindfold.escrow import EscrowRefused
+    from engcore.blindfold.escrow_v3 import EscrowServiceV3
+    with pytest.raises(EscrowRefused, match="storage"):
+        EscrowServiceV3(storage=object())

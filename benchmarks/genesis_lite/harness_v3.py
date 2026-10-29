@@ -61,10 +61,13 @@ class RunRecordV3(h2.RunRecord):
     development_identity: str = ""
     v3_adjudication_digest: str = ""
     v3_total_credit: float = 0.0
-    #: report_digest binds the escrow report built by roles.run_campaign, whose outcomes follow the v0.2 rule
     #: report_digest binds roles.run_campaign's report: v0.2 outcome mapping (a bracketing-only pair is a hit there)
     escrow_report_rule: str = "v0_2 outcome mapping over v0_3 escrow facts; v0.3 outcomes are in universes"
-    escrow_rule: str = ESCROW_RULE
+    #: the rule named by the escrow's own score bodies in this run (observed, never assumed)
+    escrow_rule: str = ""
+    agreement_scope: str = ("the evaluator independently re-implements the expression interpreter and the fraction, "
+                            "outcome and credit plumbing; it agrees by construction on the pair/fraction rule text it "
+                            "shares with escrow_v3, so agreement checks those parts, not the rule semantics")
     library_versions: dict = field(default_factory=dict)
 
 
@@ -169,6 +172,8 @@ def _run_v3(rec: RunRecordV3, arm: Callable[..., Mapping[str, Any]], master_seed
     rec.security_boundary = report.security_boundary
     if rec.status != "VALID":
         return
+    rules = sorted({str(body.get("rule")) for body in scored.values()})
+    rec.escrow_rule = rules[0] if len(rules) == 1 else ("NO_SCORED_LAWS" if not rules else "MIXED:" + ",".join(rules))
     # ---- v0.3 adjudication over the escrow's signed pair facts (every pair answer must have its score body)
     adjudications = []
     for a in report.adjudications:

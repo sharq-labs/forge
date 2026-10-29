@@ -21,6 +21,7 @@ from dataclasses import replace
 from typing import Any, Mapping
 
 from engcore.blindfold import EvaluatorConfig
+from engcore.blindfold.escrow_v3 import RULE as ESCROW_RULE
 from engcore.blindfold.roles import Adjudication
 
 BENCHMARK_ID = "genesis_lite.blindfold_l5.v0_3"
@@ -40,6 +41,9 @@ def adjudicate_v3(adjudication: Adjudication, score_body: Mapping[str, Any], con
             or score_body.get("proposal_digest") != adjudication.proposal_digest
             or (score_body.get("receipt") or {}).get("digest") != adjudication.score_receipt_digest):
         raise AdjudicationRefused("the escrow score body is not the one this adjudication was receipted for")
+    if score_body.get("rule") != ESCROW_RULE:
+        raise AdjudicationRefused(f"the score body was not scored under the {ESCROW_RULE} escrow rule: "
+                                  f"{score_body.get('rule')!r}")
     if adjudication.answer != "indistinguishable":
         return adjudication
     pair = score_body.get("pair") or {}
