@@ -1037,7 +1037,7 @@ therapeutic work.
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).
 
-### EXC-2 -- Minimal Mind as a measurement arm in the Genesis-lite v0.3 development pilot (OPEN)
+### EXC-2 -- Minimal Mind as a measurement arm in the Genesis-lite v0.3 development pilot (EXIT CONDITION MET 2026-10-29; closure is the owner's)
 
 1. **Exact scope:** a new adapter `benchmarks/genesis_lite/mind_arm_v3.py` and its tests; registering its arms in
    `benchmarks/genesis_lite/pilot_v3.py` and binding the Mind files into `harness_v3.development_identity`; this
@@ -1057,6 +1057,12 @@ expiry, owner approval, prohibitions).
 8. **What remains prohibited:** changing Mind code; tuning the Mind or the mapping on pilot results; AI/LLM proposals to
    the Mind; any preregistration, formal campaign, A2 closure, lift or superiority claim; widening this scope.
    A1 PASS has not happened, so any result is DEVELOPMENT_ONLY and not A2 evidence.
+
+**Status 2026-10-29:** adapter `896efd72`, review fixes `7a75e916` and `992deeba` (the `proposer_kind` parameter of
+`harness_v3.run_one_v3` is a review fix slightly beyond field 1, recorded in PROGRESS); re-review APPROVE WITH NOTES (notes
+closed); pilot 2400/2400 VALID, report in `benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/`. The pilot
+showed no ablation worse than the full Mind. OWNER_DECISION_REQUIRED: close EXC-2, and decide what (if anything) follows
+for the Mind; any Mind change is outside EXC-2.
 
 ### EXC-1 -- adaptive mesh control, slice 1: adaptive resolution (Engineering Runtime V1 BR19)
 

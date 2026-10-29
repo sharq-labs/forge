@@ -11034,3 +11034,51 @@ decided earlier; approved with option B.
   600/600 VALID, escrow_rule `v0_3` in 476 runs and `NO_SCORED_LAWS` in 124.
 Deferred LOW: I-2, I-4. Not done: v0.3 preregistration, custodian, Mind arm, formal
 campaign, corrected pilot re-measurement, OD-3 (now also covering `escrow_v3.py`).
+
+### 2026-10-29 — EXC-2: Minimal Mind as a v0.3 development arm (adapter, two reviews, pilot)
+
+Owner approved EXC-2 in chat ("موافق على الاستثناء"); recorded in ACTIVE_PLAN (`0d638338`).
+`src/engcore/mind/**` unchanged throughout (`git diff 896efd72~1 992deeba -- src/engcore/mind` empty).
+- `896efd72`: `benchmarks/genesis_lite/mind_arm_v3.py` (card -> `ExperimentalProblem`,
+  escrow observer, frozen `TRANSLATION`, exact law translation), four arms registered in
+  `pilot_v3`, Mind files bound into the development identity. Red first, then
+  `tests/genesis_lite/test_v03_mind_arm.py` 9 passed; Windows genesis_lite 225 passed /
+  7 skipped; Linux /opt 232 passed in 40.70 s.
+- `forge-scientific-review` of `896efd72` (static): **CHANGES REQUIRED**. I-1 HIGH: a
+  non-budget escrow refusal reached the Mind as `ObservationRefused(budget=False)` and could
+  end as a credited insufficient_evidence, while baselines are scored inadmissible. I-2/I-3
+  MEDIUM: ablation labels inexact; Mind imports (claims, sria/decision, mind/transition)
+  unbound. I-4..I-7 LOW: fallbacks earning refusal credit, silent region/settable filtering,
+  proposer kind "baseline", query_cost != 1.
+- `7a75e916`: all seven fixed red first (13 new tests failed first). The identity binds a
+  static engcore import closure (statements plus literal `import_module("engcore...")`
+  shims). The first runtime test found 5 shim-loaded modules missing from the closure; the
+  closure was fixed, and a test now runs the Mind once in a subprocess and requires every
+  engcore module loaded to be bound. Windows genesis_lite 240 passed / 7 skipped; Linux
+  247 passed in 39.08 s.
+- Re-review of `7a75e916` (static, reviewer ran nothing): **APPROVE WITH NOTES**; all seven
+  closed, no reachable false-support path. Notes N-1 (malformed observation could become a
+  Mind model refusal), N-5 (unvalidated proposer kind; in-process engcore location
+  unchecked), N-3/N-4 (failure counters and wiring tests), N-2 (refusal credit reported
+  apart). Scope note: the `proposer_kind` parameter of `harness_v3.run_one_v3` is a review
+  fix slightly beyond EXC-2 field 1 (identity binding); recorded here.
+- `992deeba`: notes closed red first (8 failed / 46 passed, plus 1 wiring test already
+  green). Windows genesis_lite 251 passed / 7 skipped; Linux /opt 258 passed in 40.41 s.
+- Pilot (owner-approved, 30-minute cap, 4 workers): `timeout 1800 .venv/bin/python -m
+  benchmarks.genesis_lite.pilot_v3 --out .../pilot-v3-dev-mind-2026-10-29 --arms all
+  --workers 4` at `992deeba` on /opt. Exit 0, 990.6 s, 2400/2400 VALID, 120 paired
+  world sets, 0 evaluator disagreements, 0 inadmissible universes, 0 Mind model refusals.
+  Report: `benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/README.md`
+  (summary.json sha256 `3c57d475…`, runs.jsonl sha256 `96681496…`, identity `86893cff…`).
+  DEVELOPMENT_DESCRIPTIVE paired mean credit: mind_no_falsifier 3.600,
+  mind_no_belief_update 3.575, mind_no_adaptive_selection 3.5625, mind_full 3.550,
+  careful 3.2875, space_filling 3.2333, bo 2.2917, pysindy 1.9167, pysr 1.5125.
+  **No ablation is worse than the full Mind.** The pilot shows no contribution from
+  adaptive selection, belief update or the falsifier. Every observing arm used its whole
+  budget (identical per-universe query counts), so the selection saved no queries.
+  mind_full recovered the law in 26/120 discoverable universes and named no correct
+  indistinguishable pair. Caveat: 43/2400 runs had 20 BLAS threads (2 workers, early;
+  cause unestablished).
+EXC-2 exit condition (pilot report plus review) met; closing EXC-2 is the owner's call.
+No A2, lift or superiority claim. Not done: anything that changes the Mind (needs a new
+decision); v0.3 preregistration; custodian; formal campaign; OD-3.
