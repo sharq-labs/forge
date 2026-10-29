@@ -11207,3 +11207,58 @@ re-running:
 
 The README provenance section now records this. The owner's "Accept with note" was
 given before this report.
+
+### 2026-10-29 — OD-3 scope, D1 provenance record, D2 preflight (owner-approved)
+
+Read-only scope:
+- `core_certificate --verify --allow-dirty`: the certificate binds `0d1d6823` (child
+  `68ebe4d7`). The ACTIVE_PLAN OD-3 row still says `39d43456`, which is stale. Drift is
+  exactly three areas:
+
+  | Area | Files | Digest |
+  |---|---|---|
+  | `core` | 6 discovery files | `0aa0b8c3…` -> `541ff8dd…` |
+  | `verdict_authority` | `isolation.py`, `escrow_v3.py` | `9acfc725…` -> `5ec30a1e…` |
+  | `certification_control` | `test_local_assurance.py` | `7655b56f…` -> `ac6e2638…` |
+
+  Aggregate `73ae733e…` -> `a6b28105…`.
+- `recertification_scope classify --base 0d1d6823 --head HEAD`: recertify_source (the
+  stored certificate, 9 certified source files, 34 harness/assurance test files).
+- The local authoritative path is `tools.certification.local_assurance`. It needs
+  Linux, a clean tree, and Python 3.11 + 3.12. The last full run took about 3.5 h.
+
+D1, `285b1ee1`: the CURRENT_PROVENANCE.json record for
+`certification/current_core_v2.json` was re-reviewed. Its sha256 changed from
+`eec62a56…` to `dfbc8293…`, the bytes of child `68ebe4d7`; class, role and evidence are
+unchanged. `check_docs.py` AI_DOCS: PASS. This reverses the earlier "defer until after
+OD-3", because the stale record would make local_assurance's FAST gate refuse.
+
+D2 preflight: /opt fast-forwarded to `285b1ee1`, clean before and after each tier,
+`PYTHONDONTWRITEBYTECODE=1`, `-p no:cacheprovider`.
+
+| Tier | Command | Result | Evidence |
+|---|---|---|---|
+| FAST | `pytest -m "not expensive" -q -n 4 --dist loadfile` | **6 failed, 13528 passed, 174 skipped in 336.15s** | log sha256 `a6e7139d…`, JUnit `50e84b5c…` |
+| SCIENTIFIC | CI command with the six TESTING.md §3 deselects | **5 failed, 14112 passed, 175 skipped in 435.47s** | log `8f0331ba…`, JUnit `b23e60f1…` |
+
+Failure classification (`od3-preflight-comparison.json`):
+- **Deferred certificate self-checks (2 per tier).** These are
+  `test_core_certificate.py::test_the_certificate_describes_this_tree` and
+  `::test_the_certificate_records_the_v1_relationship_truthfully`. Recertification
+  deselects them by design.
+- **Blockers.**
+  - `domain_real_data` × 2: 7 UNKNOWN_PROVENANCE files, all this session's pilot results
+    (`pilot_results/v0_3-dev-2026-10-28/{environment,summary,summary_resummarized}.json`,
+    `v0_3-dev-mind-2026-10-29/{environment,summary}.json`,
+    `v0_3-dev-scarce-2026-10-29/{environment,summary}.json`).
+  - Dependency guards: `test_core_api_contracts::test_every_third_party_import_is_declared_somewhere`
+    and `test_core_guards::test_every_dependency_the_tree_reaches_for_is_declared` (the
+    latter in FAST; SCIENTIFIC deselects it). botorch, gpytorch, pysindy, pysr,
+    threadpoolctl and torch are imported by the v0.3 baseline arms, the pilot and
+    their tests, but declared in no pyproject group.
+- **Fixed since 2026-10-28.** The 6 freeze-manifest nodes; they failed then only because
+  of the uncommitted patch.
+- Both blockers were introduced by this session's v0.3 work.
+OD-3 cannot pass until they are fixed. The fixes need owner decisions: provenance rows
+for the 7 files, and an optional dependency group, which changes the dependency
+manifest. Not run: D3 (prepare), D4 (local_assurance run).
