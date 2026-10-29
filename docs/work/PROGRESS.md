@@ -11262,3 +11262,39 @@ Failure classification (`od3-preflight-comparison.json`):
 OD-3 cannot pass until they are fixed. The fixes need owner decisions: provenance rows
 for the 7 files, and an optional dependency group, which changes the dependency
 manifest. Not run: D3 (prepare), D4 (local_assurance run).
+
+### 2026-10-29 — OD-3 preflight blockers fixed (owner-approved); preflight clean
+
+Owner approved both fixes ("Approve both fixes").
+- `13a0892d`, pyproject.toml: new optional group `genesis-baselines` (torch>=2.15,
+  botorch>=0.18.1, gpytorch>=1.15.2, pysindy>=2.1.0, pysr>=2.7.2, threadpoolctl>=3.7; lower
+  bounds are the pilot versions). Nothing was installed. Windows, both dependency guards:
+  2 passed in 24.08s.
+- `13a0892d`, CURRENT_PROVENANCE.json: 7 records, DERIVED / RECORDED_COMPUTE_RESULT, for
+  the pilot_results JSON files. Each is bound to `pilot_v3.py` at its producing commit and
+  to its directory README. The change is a pure insertion.
+- Preflight run 2 at `13a0892d`: FAST 8 failed / 13526 passed / 174 skipped in 326.36s;
+  SCIENTIFIC 8 failed / 14109 passed / 175 skipped in 432.76s.
+  - The dependency guards now passed.
+  - 6 domain_real_data nodes failed with `ValueError: provenance source commit must be
+    immutable`: the new evidence used abbreviated commit SHAs. Failed approach, kept here:
+    evidence `commit` must be a full 40-hex SHA.
+  - Evidence was kept as `run2-od3-preflight-*`; run 1 as `run1-od3-preflight-*`.
+- `39ca5de4`: the seven evidence commits were expanded to full SHAs. Linux
+  `benchmarks/domain_real_data/tests`: 33 passed in 28.17s.
+- Preflight run 3 at `39ca5de4` (/opt, clean before and after each tier, same commands):
+
+  | Tier | Result | Log sha256 | JUnit sha256 |
+  |---|---|---|---|
+  | FAST | **2 failed, 13532 passed, 174 skipped in 340.10s** | `82eea7e9…` | `7d198ba0…` |
+  | SCIENTIFIC | **2 failed, 14115 passed, 175 skipped in 428.76s** | `4e1d33a3…` | `b30e9010…` |
+
+  The only failures in both tiers are the two certificate self-checks that recertification
+  defers (`test_core_certificate.py::test_the_certificate_describes_this_tree`,
+  `::test_the_certificate_records_the_v1_relationship_truthfully`). There are 0 blockers.
+- The OD-3 scope now has four certified areas: `core`, `verdict_authority`,
+  `certification_control`, and `runtime_dependencies` (pyproject.toml).
+
+Not covered by this preflight: FAST on Python 3.11, the campaign and regression gates
+inside local_assurance, and the formal, v4 and trust mutation shards.
+Not run: D3 (`local_assurance prepare`), D4 (`local_assurance run`, about 3.5 h).
