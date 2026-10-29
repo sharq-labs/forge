@@ -33514,6 +33514,132 @@
           "sha256": "497a8dc41eb862f25836806ef83269e789e4207a6382944e738efb2386314e2e"
         }
       ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/environment.json",
+      "sha256": "70b0f93711108c5f9c7ea1fcf36799a568dec04ca361f5e04d4a8c5f528e7858",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. Cost pilot (owner-approved 2026-10-28); thread oversubscription caveat in the README.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "644b3b2f378624a8c309c6d954746cca15474761b9b79c2914f03e137fd45eda",
+          "commit": "5daaba81"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md",
+          "sha256": "bedaf147594ebe1abf841ea2f5a6e949e4098b8226fb4997e4ed96fc0f79e754"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/summary.json",
+      "sha256": "4ab18824f903a969da38762683915e90f5c5295953102b74f1c5ac310bd54f79",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. Cost pilot (owner-approved 2026-10-28); thread oversubscription caveat in the README.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "644b3b2f378624a8c309c6d954746cca15474761b9b79c2914f03e137fd45eda",
+          "commit": "5daaba81"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md",
+          "sha256": "bedaf147594ebe1abf841ea2f5a6e949e4098b8226fb4997e4ed96fc0f79e754"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/summary_resummarized.json",
+      "sha256": "eeb5dd1c7397a320e493d0c342c8b6473fe1c50750d4cf79c679c5b4a8f9250c",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. Cost pilot (owner-approved 2026-10-28); thread oversubscription caveat in the README. Recomputed from the same runs.jsonl at ef0cc2f0.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "b51760827d2e33ffb795be292d11ef7a0f5a941a2a27e4bbf91f0ef803080fef",
+          "commit": "ef0cc2f0"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md",
+          "sha256": "bedaf147594ebe1abf841ea2f5a6e949e4098b8226fb4997e4ed96fc0f79e754"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/environment.json",
+      "sha256": "0d18b3a7300997aa2a6cb43eb61ed6edcb292a0ca2dde778c78772d0dc6cd3d3",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-2 Minimal Mind arm pilot.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "49806b274623b68d64d06359fac251a63ef7c5505c1dd56122ca56140608b817",
+          "commit": "992deeba"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/README.md",
+          "sha256": "df07b5c8ecb4a1d911d148a9f493e4291adff5c5190c1c541e90e656c2585ebe"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/summary.json",
+      "sha256": "3c57d475007fdeb5d24c2de388885571f226cdd627e429e72a2e4a7f9c1640ac",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-2 Minimal Mind arm pilot.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "49806b274623b68d64d06359fac251a63ef7c5505c1dd56122ca56140608b817",
+          "commit": "992deeba"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/README.md",
+          "sha256": "df07b5c8ecb4a1d911d148a9f493e4291adff5c5190c1c541e90e656c2585ebe"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/environment.json",
+      "sha256": "a3c8af9278b3b7d2688382eb941ba3d9b1b234cabfc5ee0036e1e4523bc14369",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-3 scarce-budget pilot; provenance MIXED (a fork commit synced the tree mid-run; executed code inferred 6f0bc58d) and timings contaminated 14:23-14:37, as the README records; accepted by the owner with that correction.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "d19c95ddb1c2c09efeda98f63c91c9fc224505d8b77aefb8bfbfa0a55cb65dcb",
+          "commit": "6f0bc58d"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/README.md",
+          "sha256": "618f62654a9cf729c9e74c701ab5d39d6cb857daf193da147910aa6cc25fc63d"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/summary.json",
+      "sha256": "3607e87bf2979e969497bbdd1e92fe28382cdf42d837a3412985329648111506",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-3 scarce-budget pilot; provenance MIXED (a fork commit synced the tree mid-run; executed code inferred 6f0bc58d) and timings contaminated 14:23-14:37, as the README records; accepted by the owner with that correction.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "d19c95ddb1c2c09efeda98f63c91c9fc224505d8b77aefb8bfbfa0a55cb65dcb",
+          "commit": "6f0bc58d"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/README.md",
+          "sha256": "618f62654a9cf729c9e74c701ab5d39d6cb857daf193da147910aa6cc25fc63d"
+        }
+      ]
     }
   ]
 }

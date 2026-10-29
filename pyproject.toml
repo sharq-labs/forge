@@ -104,6 +104,20 @@ benchmarks = [
   "psutil>=5.9",
 ]
 
+# The Genesis-lite v0.3 development baselines (owner-approved 2026-10-28; declared 2026-10-29 before OD-3).
+# `benchmarks/genesis_lite/arms_v3.py` runs PySINDy, BoTorch (with GPyTorch and a CPU torch) and PySR (which also needs a
+# Julia runtime, fetched by juliacall on first use and not a Python dependency); `pilot_v3.py` reads the BLAS threads in
+# force through threadpoolctl. Nothing under `src/` imports any of them, and every test that needs one skips without it,
+# so the suite stays green on a bare install. Lower bounds are the versions the v0.3 pilots ran with.
+genesis-baselines = [
+  "torch>=2.15",
+  "botorch>=0.18.1",
+  "gpytorch>=1.15.2",
+  "pysindy>=2.1.0",
+  "pysr>=2.7.2",
+  "threadpoolctl>=3.7",
+]
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
