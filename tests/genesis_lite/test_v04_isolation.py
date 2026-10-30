@@ -189,7 +189,10 @@ def test_hidden_secrets_cannot_be_read_or_listed(secret_dir):
     others = [p for p in report["seen"] if p.startswith("/opt/")
               and not any(ih._under(p, e) or ih._under(e, p) for e in exposed)]
     assert not others, others                                    # another checkout under /opt is invisible
-    assert report["uid"] == 65534 and report["ppid"] == 0
+    # re-review M3: the process is uid 0 only of its own empty user namespace; outside, where file access is decided,
+    # it is 65534 with every capability at zero (checked by verified above)
+    assert report["uid"] == 0 and report["ppid"] == 0
+    assert outside["uid"] == [65534] * 4 and not any(outside["caps"].values())
     assert not any(k.startswith("FORGE") for k in report["env"])
 
 
