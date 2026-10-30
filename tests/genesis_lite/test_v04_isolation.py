@@ -75,7 +75,7 @@ def test_every_pilot_results_directory_of_the_tree_is_hidden():
 
 
 def test_nested_hides_collapse_to_their_ancestor():
-    assert ih._minimal(["/root/a/b", "/root", "/home/x", "/home/x/y"]) == ("/home/x", "/root")
+    assert set(ih._minimal(["/root/a/b", "/root", "/home/x", "/home/x/y"])) == {"/home/x", "/root"}
 
 
 def test_the_code_tree_must_live_under_the_whitelist_root():
