@@ -20,7 +20,7 @@ from . import harness_v3 as h3
 from .isolated_host import ISOLATION_LABEL, per_universe_arm, verified
 
 HERE = pathlib.Path(__file__).resolve().parent
-V4_FILES = ("analysis_v4.py", "arms_v4.py", "harness_v4.py", "isolated_host.py", "proposer_host.py")
+V4_FILES = ("analysis_v4.py", "arms_v4.py", "harness_v4.py", "isolated_host.py", "pilot_v4.py", "proposer_host.py")
 KINDS = h2.KINDS
 
 
@@ -32,10 +32,10 @@ def development_identity_v4() -> tuple[str, list[str]]:
 
 def run_one_v4(arm_name: str, spec: str, *, master_seed: bytes, campaign_id: str, presentation: str, seed: int = 0,
                hidden: Sequence[str], env: Mapping[str, str] | None = None, budget_fraction: float = 1.0,
-               timeout: float = 600.0) -> dict[str, Any]:
+               timeout: float = 600.0, exposed: Sequence[str] | None = None) -> dict[str, Any]:
     """One campaign of ``arm_name`` (resolved inside the isolated process from ``spec``, ``module:function``)."""
     checks: list[dict[str, Any]] = []
-    arm = per_universe_arm(spec, hidden, checks, env=env, timeout=timeout)
+    arm = per_universe_arm(spec, hidden, checks, env=env, timeout=timeout, exposed=exposed)
     rec = h3.run_one_v3(arm_name, arm, master_seed=master_seed, campaign_id=campaign_id, presentation=presentation,
                         seed=seed, isolation="in_process", budget_fraction=budget_fraction)
     out = rec.to_dict()
