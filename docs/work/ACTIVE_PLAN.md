@@ -23,12 +23,19 @@ The owner approved applying the 2026-10-30 time-saving review (chat). Executed o
    [EXC6](proposals/EXC6_PUBLIC_BENCHMARK_COMPARISON_DRAFT.md) (public equation-recovery benchmarks as
    development comparison). Each needs its own eight-field approval.
 
+- [x] DECIDED 2026-10-30 (owner, in chat: "blind fold مش محتاج حد من بره ده هيقيس قوه الاستنتاج عندنا"): the
+  Blindfold measurement of Forge's own inference (Genesis Steps 1-5) runs **without an independent custodian**; custody
+  is the sealed-root mechanism (root written outside the tree before the run, commitment recorded, revealed after
+  sealing). Results are labelled SELF_ADMINISTERED and are never presented as an external or independent score.
+  Genesis §26 is unchanged: Step 6 (held-out graduation) still needs a named external evaluator and stays
+  DEFERRED_BY_OWNER; §26 also asks that, before the v0.3 preregistration fixes its held-out protocol, this plan record
+  either the evaluator or a selection process with a deadline (OWNER_DECISION_REQUIRED, needed by then, not now).
 - [ ] OWNER_DECISION_REQUIRED (Master Plan §5.3 control-plane warning, raised 2026-10-30): by commit-subject heuristic,
   of 856 commits since 2026-10-01, 236 are `docs` and 179 control-plane (ci/test/chore/certification/gate/mutation),
   i.e. about 49 % against the 20 % planning threshold. ESTIMATE, not a measurement (subjects, not effort). Options: accept
   as front-loaded trust work; or cap control-plane work per checkpoint. Not a scientific rule; no work stopped.
 - Open owner decisions gathered in one place (each is decided where it lives): M-3 and review-r5 (discovery, below);
-  EXC5 and EXC6 drafts; v0.3 preregistration, independent custodian, formal campaign budget (Genesis-lite, below);
+  EXC5 and EXC6 drafts; v0.3 preregistration, formal campaign budget (Genesis-lite, below; custodian decided above);
   pushing or merging `main` (38 commits ahead of `origin/main` at `a9ddbf27`); the next OD-3 batch after EXC-4.
 
 ## Current bounded task — Scientific MVP delivery preparation (2026-10-28)
