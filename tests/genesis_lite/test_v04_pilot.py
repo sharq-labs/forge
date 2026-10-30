@@ -98,6 +98,14 @@ def test_a_development_run_commits_before_running_and_never_writes_the_root(tmp_
         manifest = json.loads((out / "environment.json").read_text())
         assert manifest["distributions"] and manifest["isolation_support"][0] is True
         assert str(secret) in manifest["hidden"] or "/root" in manifest["hidden"]
+        # the post-run reveal re-derives every law-kind universe from the sealed root, and refuses another root
+        from benchmarks.genesis_lite.analysis_v4 import LAW_KINDS
+        from benchmarks.genesis_lite.reveal_v4 import represented
+        rev = represented(recs, root)
+        law_uids = {u["universe_id"] for r in recs for u in r["universes"] if u["kind"] in LAW_KINDS}
+        assert set(rev["represented"]) == law_uids and all(isinstance(v, bool) for v in rev["represented"].values())
+        with pytest.raises(ValueError):
+            represented(recs, secrets.token_bytes(32))
     finally:
         for p in sorted(secret.rglob("*"), reverse=True):
             p.unlink()
