@@ -369,6 +369,13 @@ RULES: tuple[SkipRule, ...] = (
              tests=("test_on_the_exact_freeze_the_domain_digest_binds",),
              why="binds only on the exact V1 freeze commit; the test skips only in DESCENDANT mode and "
                  "fails in any other non-exact mode, and the descendant checks apply instead"),
+    SkipRule("battery-v3-raw-archive-rebuild", "benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py",
+             "needs the local raw archives", _C,
+             tests=("test_bundle_rebuilds_byte_identically_and_static_audit_passes",),
+             why="the byte-identical rebuild reads the raw archives under FORGE_DATA_ROOT (D:/forge-data: Kirkaldy 2024 "
+                 "Zenodo 10637534 Expt 4/5, NASA PCoE), outside the repository and absent on hosts without the research "
+                 "data. Only the rebuild from raw data and its static audit are lost; the module's other tests still "
+                 "run. The test runs again wherever the data exists (owner, OD-3, 2026-10-30)"),
     # Not admitted: tests/test_blind_challenge_guards.py::test_importing_the_truth_layer_loads_no_runtime_module
     # used to skip whenever its pytest worker had already imported engcore -- in every gate. It now
     # runs its check in a fresh interpreter and never skips.
@@ -439,7 +446,7 @@ def policy_problems(policy: SkipPolicy = DEFAULT_POLICY, root: pathlib.Path | No
     for rule in policy.rules:
         label = f"rule {rule.rule_id}"
         if not rule.path.endswith(".py") or any(c in rule.path for c in "*?[]\\") or rule.path.startswith(("/", ".")) \
-                or ".." in rule.path.split("/") or not rule.path.startswith(("tests/", "providers/", "flagships/")):
+                or ".." in rule.path.split("/") or not rule.path.startswith(("tests/", "providers/", "flagships/", "benchmarks/")):
             problems.append(f"{label}: path {rule.path!r} is not one exact test file")
         if rule.classification not in ADMITTED_CLASSES:
             problems.append(f"{label}: classification {rule.classification!r}")

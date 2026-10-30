@@ -11436,3 +11436,15 @@ EXC-4 CLOSED 2026-10-30 by the owner ("Close EXC-4"); recorded in ACTIVE_PLAN. N
   skips because the raw archives (FORGE_DATA_ROOT, D:/forge-data) are absent on this host; no library fixes it. The other
   session drafted a skip rule for it and reverted it (its scratch `battery_undo.sh`); no reason is recorded. With this skip
   open, an OD-3 rerun (about 3.5 h) would refuse again at `assurance_build`, so it was not started.
+
+## 2026-10-30 — owner: declared skip rule for the battery v3 raw-archive rebuild only
+
+Owner chose a declared conditional skip over downloading 21.8 GB (of which 24 CSVs, about 265 MB, are used).
+`tools/certification/skip_admission.py`: rule `battery-v3-raw-archive-rebuild` (exact node id, exact reason
+"needs the local raw archives", `why` stated), and `benchmarks/` added to the rule path prefixes (tests/, providers/,
+flagships/ since `dafa87c4` 2026-10-08, before benchmark tests skipped in the gates; one exact `.py` file still required).
+Probably why the other session's earlier draft was reverted: its rule path failed that prefix check (inferred, not
+recorded there). `INSTALLED_EXTRAS` unchanged (pinned by test).
+Red first (Windows `.venv` 3.11.15): `pytest tests/test_skip_admission.py -k "battery_v3 or outside_the_collected"` ->
+2 failed, 3 passed. Green: `pytest -n 4 --dist loadfile tests/test_skip_admission.py tests/test_recertification_scope.py
+tests/test_certification_control_plane.py` -> 230 passed.
