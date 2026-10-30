@@ -6,6 +6,31 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Owner direction 2026-10-30 — time-saving review applied ("طبق كل ده")
+
+The owner approved applying the 2026-10-30 time-saving review (chat). Executed order and limits:
+
+1. EXC-4 to its exit gate (already approved below). The pilot and the FAST tier wait until the owner's running OD-3
+   `local_assurance run` in WSL (on `a9ddbf274cc5d24a8f14236586d8bd94a2760fcb`) ends: its mutation shards are
+   load-sensitive. EXC-4 changes land after that HEAD, so their certification_pinned tests need the next OD-3.
+2. Backup: `a9ddbf27…` pushed to `refs/heads/backup/local-main-2026-10-30` on `sharq-labs/forge` (no PR; push
+   workflows run on `main` only). `main` itself was not pushed.
+3. OD-3: D4 already running (another session); not restarted or touched. One OD-3 batch per certified-scope batch from
+   now on, instead of a recertification per change.
+4. Documentation: one step record replaces the four per-step files
+   ([STEP_RECORD_TEMPLATE.md](templates/STEP_RECORD_TEMPLATE.md)) for new steps; existing records are not rewritten.
+5. Drafts only, no code: [EXC5](proposals/EXC5_PYSR_UNITS_BASELINE_DRAFT.md) (a units-aware PySR arm) and
+   [EXC6](proposals/EXC6_PUBLIC_BENCHMARK_COMPARISON_DRAFT.md) (public equation-recovery benchmarks as
+   development comparison). Each needs its own eight-field approval.
+
+- [ ] OWNER_DECISION_REQUIRED (Master Plan §5.3 control-plane warning, raised 2026-10-30): by commit-subject heuristic,
+  of 856 commits since 2026-10-01, 236 are `docs` and 179 control-plane (ci/test/chore/certification/gate/mutation),
+  i.e. about 49 % against the 20 % planning threshold. ESTIMATE, not a measurement (subjects, not effort). Options: accept
+  as front-loaded trust work; or cap control-plane work per checkpoint. Not a scientific rule; no work stopped.
+- Open owner decisions gathered in one place (each is decided where it lives): M-3 and review-r5 (discovery, below);
+  EXC5 and EXC6 drafts; v0.3 preregistration, independent custodian, formal campaign budget (Genesis-lite, below);
+  pushing or merging `main` (38 commits ahead of `origin/main` at `a9ddbf27`); the next OD-3 batch after EXC-4.
+
 ## Current bounded task — Scientific MVP delivery preparation (2026-10-28)
 
 ### Public development integration — bounded L3 (owner continuation 2026-10-28)
@@ -1036,6 +1061,49 @@ therapeutic work.
 
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).
+
+### EXC-4 -- richer hypothesis language, Stage 2a: grammar enumeration as a frozen development baseline (OPEN 2026-10-30)
+
+Full draft with rationale and risks: `docs/work/proposals/EXC4_MIND_HYPOTHESIS_LANGUAGE_DRAFT.md` (at `b622af5e`).
+
+1. **Exact scope:** new package `src/engcore/mind/grammar/` (`dimensions.py`, `grammar.py`, `fit.py`, `evidence.py`);
+   new development arm `grammar_enumeration` in `benchmarks/genesis_lite/arms_grammar_v3.py`, registered in
+   `pilot_v3.py` and bound into `harness_v3.development_identity`; their tests; this section. Not touched:
+   `src/engcore/mind/minimal/**` (Gen1 byte-identical, MIND_VERSION 1.0.0), the v0.2-pinned files, `escrow.py`,
+   `escrow_v3.py`, `engcore.blindfold.universe`, the credit table.
+2. **Allowed capability work:** Buckingham-pi groups from the presented card's public units only (refuse on
+   unparseable/inconsistent units); a structure grammar `scale x F(groups)` over `engcore.blindfold.expression` operators
+   (mul, pow with fitted constant exponent, add, exp, piecewise on one group) with limits <= 2 additive terms, <= 1 exp,
+   <= 1 piecewise, depth <= 4, <= 12 nodes, <= 5,000 structures per universe, defined by operators and limits, never by
+   templates from `universe.py`; constant fitting with the scipy `least_squares` deterministic multi-start pattern of
+   `repsem.assess._fit`; ln-scale likelihood with replicate noise plus a BIC complexity penalty under a declared prior,
+   every structure counted in `MultiplicityLedger`; CV selection inside the training split and judgement on the
+   hold-out through the shared gate logic of `arms._gate` generalised to nonlinear predictions. One development pilot on
+   fresh worlds (new root seed generated only after the grammar and arm code are frozen by digest), v0.3 harness,
+   budget fraction 1.0, all registered v0.3 arms plus `grammar_enumeration`, 4 workers, 45-minute cap. Pre-declared
+   paired descriptive contrasts: (i) `grammar_enumeration` - `monomial_enumeration` split in-family / out-of-family
+   discoverable; (ii) `grammar_enumeration` - `pysr_symbolic`; (iii) false-law rate on no_solution, confounded and
+   insufficient_evidence vs `careful`.
+3. **Reason:** EXC-2 found 69/92 of `mind_full`'s discoverable refusals have the truth outside its family, and EXC-3
+   found no selection advantage at any budget; Genesis requires a frozen `full_grammar_enumeration`-class baseline before
+   any Mind lift claim.
+4. **Start condition:** owner approval (below); this entry recorded before any code. Narrow exception under the
+   Completion Policy; not A2.
+5. **Exit condition:** red-first tests per module; a `forge-scientific-review` of dimensions, evidence and the gate; a
+   recorded pilot report with the three contrasts and per-world grammar expressibility. No inferential statistics.
+6. **Expiry / timebox:** 2026-11-27, even if unfinished.
+7. **Owner approval:** the owner, in chat, 2026-10-30 ("Approve as drafted"), on the drafted eight fields with the
+   default limits, timebox, 4 workers and 45-minute cap. **H2 decision** (owner, in chat, 2026-10-30, "Five shapes,
+   disclosed"): after the 2026-10-30 forge-scientific-review (CHANGES REQUIRED; H1, M1-M3, L1-L3 fixed) found that the
+   grammar is five declared shapes (power, sum, exp, sum_exp, regime), a strict subset of the operator/limit closure in
+   field 2, the pilot runs with those five shapes; the report must state the narrowing and the representation-circularity
+   risk (three shapes overlap the Blindfold generator's families) and judge expressibility against the structures
+   actually enumerated.
+8. **What remains prohibited:** changing Gen1 Mind code, thresholds or answer mapping; grammar rivals inside the Mind's
+   competition (Stage 2b); a Search Tree, Attempt Memory, Model Critic or causal reasoning; AI/LLM proposals; tuning the
+   grammar, limits, prior or gate on EXC-2, EXC-3 or this pilot's results; reusing the EXC-2/EXC-3 roots; changing the
+   credit table or pinned files; any preregistration, formal campaign, A2 closure, lift, novelty or superiority claim;
+   widening this scope.
 
 ### EXC-3 -- experiment selection under a scarce budget (Genesis-lite v0.3 development pilot) (CLOSED 2026-10-29 by the owner)
 

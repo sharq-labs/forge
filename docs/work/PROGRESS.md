@@ -11298,3 +11298,90 @@ Owner approved both fixes ("Approve both fixes").
 Not covered by this preflight: FAST on Python 3.11, the campaign and regression gates
 inside local_assurance, and the formal, v4 and trust mutation shards.
 Not run: D3 (`local_assurance prepare`), D4 (`local_assurance run`, about 3.5 h).
+
+## 2026-10-30 — Mind roadmap session: duplicate Stage-1 attempt discarded (failed approach)
+
+A session planned from a 2026-10-28 snapshot built a Gen1-Mind adapter for the Genesis-lite v0.2 pilot worlds
+(`benchmarks/genesis_lite_mind/`, outside the pinned files), unaware that EXC-2 (`mind_arm_v3.py`) and EXC-3 had
+already measured the same thing. Executed before discarding: `python -m pytest tests/genesis_lite -q -n 4 --dist loadfile`
+-> 315 passed, 8 skipped (Windows, .venv Python 3.11.15, HEAD `b622af5e` + the untracked adapter); a one-campaign
+isolated smoke run was VALID. The full dev run was stopped early; no results kept; files deleted. Lesson: check
+`git log` and ACTIVE_PLAN exceptions before resuming from a dated plan. The existing EXC-2 analysis (§4 d) already points at
+a richer hypothesis family as the next lever, which needs its own owner decision.
+
+## 2026-10-30 — EXC-4 Stage 2a: grammar enumeration baseline built; review CHANGES REQUIRED, fixes applied; H2 open
+
+Owner approved EXC-4 in chat ("Approve as drafted"); recorded in ACTIVE_PLAN before any code. Uncommitted, on HEAD
+`b622af5e6f86324ccc15bc26dc124c3556b7f2de`, Windows, `.venv` Python 3.11.15. New: `src/engcore/mind/grammar/`
+(dimensions, grammar, fit, evidence), `benchmarks/genesis_lite/arms_grammar_v3.py`; registered in `pilot_v3.py`, bound in
+`harness_v3.py` (`V3_FILES`, `SUBSTRATE_V3_FILES` closure, `LIBRARIES` + scipy). Gen1 `mind/minimal` and v0.2-pinned
+files untouched (`harness.code_identity()[1] == []` asserted by test).
+
+Tests executed (exit codes checked, no pipe; `--basetemp` outside the tree):
+- `python -m pytest tests/mind/test_grammar.py tests/genesis_lite/test_v03_grammar_arm.py -q` -> 55 passed.
+- `python -m pytest tests/genesis_lite tests/mind -q -n 4 --dist loadfile` -> 1261 passed, 8 skipped (before the review
+  fixes; re-run pending).
+- Mutation: making the arm pass all rows (hold-out included) to selection turned
+  `test_selection_sees_the_training_split_only` red; restored. Disabling the precision bar removes the H1 refusal (test).
+- FAST tier: started, then STOPPED (the tree was edited mid-run; result void). NOT RUN on the final tree yet.
+- `forge_check --changed --base HEAD --dry-run --list`: NARROWING REFUSED (new src package) -> whole FAST; new tests are
+  `certification_pinned` -> owner-run recertification needed (as for EXC-2's tests).
+
+forge-scientific-review (static, 2026-10-30): CHANGES REQUIRED. Fixed: H1 precision bar missing from the free-form gate
+(arm now applies `arms._gate`'s se bar with the covariate check); M1 score now uses the replicate-noise likelihood and
+refuses without it; M2 a fit reaching the exp clip is refused; M3 scipy recorded; L1 ledger counts eliminated/uncapped
+and a data-bound deterministic id; L2 iteration-capped fits counted; L3 duplicate names refuse. Recorded, not fixed: L4
+regime threshold df under-counted by BIC. OPEN (owner decision): H2 the grammar is five declared shapes, a strict
+subset of the operator/limit closure EXC-4 field 2 approved; docstring corrected. No pilot run.
+
+Failed approach: a fixed quantile grid for the regime threshold missed the switch (RSS 1.1 on noiseless data); replaced
+by an exact midpoint change-point search. Failed approach: finite-difference Jacobians made the nonlinear fits ~0.25 s
+each (pilot over the 45-min cap); analytic Jacobian (checked vs finite differences) + `max_nfev` 60 gave identical best
+RSS on two synthetic checks at ~3x speed.
+
+Later 2026-10-30: owner decided H2 in chat ("Five shapes, disclosed"); recorded in ACTIVE_PLAN EXC-4 field 7. Added
+`benchmarks/genesis_lite/expressibility_v3.py` (post-reveal expressibility by fit + the three contrasts; descriptive) and a
+consistency test (monomial-family laws must be EXPRESSIBLE_BY_FIT): `pytest tests/genesis_lite/test_v03_grammar_arm.py -k
+expressibility` -> 1 passed. One-campaign smoke of `pilot_v3.run_pilot` (grammar, monomial, careful; fixed test root,
+workers 1, Windows) -> 3/3 VALID, grammar ~1.9 s/campaign; the report ran end to end. Second FAST run STOPPED at ~37%
+(void) because WSL was running the owner's OD-3 `local_assurance` (mutation shards, load-sensitive); not interfered with.
+The Windows `.venv` lacks pysr/pysindy/botorch, so the pilot must run in WSL (`/opt/forge-mvp-20261028/.venv` has pysr
+2.7.2, pysindy 2.1.0, botorch 0.18.1) from a separate copy of this tree, after local_assurance ends. Pilot: NOT RUN.
+FAST on the final tree: NOT RUN.
+
+Re-review (forge-scientific-reviewer, static, 2026-10-30): CHANGES REQUIRED, one HIGH introduced by the H1 fix itself --
+the precision bar ran BEFORE the held-out beat-a-constant check, so on no_solution worlds (sigma 0.6-0.9) the arm could
+never answer `no_law` (careful/`_gate` do). Fixed: new `arms_grammar_v3.gate` follows `arms._gate`'s order (beat a
+constant -> precision AND lack-of-fit, covariate check on failure -> extrapolation). Also fixed LOW 1 (report refuses
+when run universes are not re-derived from the root), 2 (counts renamed), 4 (ledger docstring), 5 (non-converged chosen fit
+named in the rationale), 6 (CV test folds refuse a clipped exp argument), 7 (stale message), 8 (exp overlap disclosed).
+Recorded, not fixed: LOW 3 (tied boxes fall back to presentation order), 9 (sigma from <= 4 replicate pairs is noisy).
+`pytest tests/mind/test_grammar.py tests/genesis_lite/test_v03_grammar_arm.py -q` -> 61 passed. Mutation: disabling
+the beat-a-constant branch turned the new parity test (constant law, noise 0.7, budget 60, 3 seeds; careful answers
+no_law) red (3 failed); restored. Failed approach: placing a new refusal bar ahead of an existing gate instead of inside
+it in the same order changed the answers on control kinds; reproduce the reference gate's order and test parity.
+
+## 2026-10-30 — owner "apply the time-saving review": backup branch, plan records, drafts (EXC-4 pilot deferred)
+
+Executed, Windows `.venv` Python 3.11.15, tree = HEAD `a9ddbf274cc5d24a8f14236586d8bd94a2760fcb` + uncommitted EXC-4:
+- `python -m pytest tests/mind/test_grammar.py tests/genesis_lite/test_v03_grammar_arm.py -q -p no:cacheprovider
+  --basetemp <scratchpad>` -> 61 passed (exit 0).
+- `git push origin a9ddbf27...:refs/heads/backup/local-main-2026-10-30` -> new branch, verified by `git ls-remote`.
+  `main` not pushed; no PR.
+- `python docs/ai/check_docs.py` -> AI_DOCS: PASS (9 documents; syntax only).
+Not run: FAST, the EXC-4 pilot, commit of EXC-4. Reason: the owner's OD-3 `local_assurance run` (WSL, started by another
+session, on `a9ddbf27`) was running with load-sensitive mutation shards; EXC-4 is to be committed after the OD-3
+certificate child so `main` does not diverge from it.
+Added: ACTIVE_PLAN owner-direction section (§5.3 control-plane warning, about 49 % docs/control-plane by commit subject,
+ESTIMATE), `docs/work/templates/STEP_RECORD_TEMPLATE.md`, drafts `proposals/EXC5_PYSR_UNITS_BASELINE_DRAFT.md`,
+`proposals/EXC6_PUBLIC_BENCHMARK_COMPARISON_DRAFT.md` (PROPOSED, no code).
+
+OD-3 D4 outcome (observed 2026-10-30, read-only; run by another session in WSL `/home/dev_kaeem/forge-od3-b622af5e`):
+`local_assurance run --workers 4 --mutation-workers 2 --reuse` on `a9ddbf274cc5d24a8f14236586d8bd94a2760fcb` ->
+LOCAL_ASSURANCE: REFUSED, failed_gate `assurance_build`, SAFE_TO_PUSH: NO, failure record SHA-256
+`8c9f5ceb6e75fa551e52300b5332b0c133340b2b59e3e845379335d5df2547d3`. All 18 gates completed (fast311, fast312,
+scientific312, regression312, campaign312, formal/v4/trust mutation shards). Refusal: 19 distinct UNEXPECTED_SKIP node ids
+with no committed skip rule: the v0.3 baseline-arm tests (pysr/pysindy/botorch absent from the `.forge` 3.11/3.12 venvs)
+and `benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_bundle_rebuilds_byte_identically_and_static_audit_passes`.
+No certificate. Repair options (install the optional libraries into the assurance venvs, or a reviewed skip rule) are an
+owner decision; not attempted here.
