@@ -1,0 +1,63 @@
+"""Genesis-lite v0.4 DEVELOPMENT campaign path: the v0.3 campaign flow with every universe proposed by its own
+OS-isolated process (:mod:`.isolated_host`; owner decisions D3, D11). Nothing in the v0.3 flow is changed: the
+operator keeps the escrow, presentation, query cap, adjudication and independent evaluator; only WHERE the arm runs
+differs. The record carries the launcher's outside verification of every proposer process; a run whose six
+verifications are not all complete and passing is INVALID_BENCHMARK, never a result.
+
+``development_identity_v4`` binds the v0.3 development identity and the v0.4 files. There is no v0.4
+preregistration yet; DEVELOPMENT_ONLY.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import pathlib
+from collections.abc import Mapping, Sequence
+from typing import Any
+
+from . import harness as h2
+from . import harness_v3 as h3
+from .isolated_host import ISOLATION_LABEL, per_universe_arm, verified
+
+HERE = pathlib.Path(__file__).resolve().parent
+V4_FILES = ("analysis_v4.py", "arms_v4.py", "harness_v4.py", "isolated_host.py", "proposer_host.py")
+KINDS = h2.KINDS
+
+
+def development_identity_v4() -> tuple[str, list[str]]:
+    v3_identity, changed = h3.development_identity()
+    files = {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest() for name in V4_FILES}
+    return h2._digest({"v0_3_development_identity": v3_identity, "v0_4_files": files}), changed
+
+
+def run_one_v4(arm_name: str, spec: str, *, master_seed: bytes, campaign_id: str, presentation: str, seed: int = 0,
+               hidden: Sequence[str], env: Mapping[str, str] | None = None, budget_fraction: float = 1.0,
+               timeout: float = 600.0) -> dict[str, Any]:
+    """One campaign of ``arm_name`` (resolved inside the isolated process from ``spec``, ``module:function``)."""
+    checks: list[dict[str, Any]] = []
+    arm = per_universe_arm(spec, hidden, checks, env=env, timeout=timeout)
+    rec = h3.run_one_v3(arm_name, arm, master_seed=master_seed, campaign_id=campaign_id, presentation=presentation,
+                        seed=seed, isolation="in_process", budget_fraction=budget_fraction)
+    out = rec.to_dict()
+    identity, changed = development_identity_v4()
+    out.update({"isolation": ISOLATION_LABEL, "isolation_checks": checks, "development_identity_v4": identity,
+                "arm_spec": spec})
+    problems = []
+    if changed:
+        problems.append(f"the shared v0.2 code differs from its preregistration: {changed[:5]}")
+    if out["status"] == "VALID":
+        uids = sorted(u["universe_id"] for u in out.get("universes", ()))
+        seen = sorted({c["universe_id"] for c in checks})
+        if len(checks) != len(KINDS) or len(seen) != len(KINDS):
+            problems.append(f"{len(checks)} isolated proposer process(es) for {len(KINDS)} universes")
+        if not all(verified(c) for c in checks):
+            problems.append("a proposer process failed outside verification")
+        if len(uids) != len(KINDS):
+            problems.append("the record does not carry six universes")
+    if problems:
+        out["status"] = "INVALID_BENCHMARK"
+        out["reasons"] = [*out.get("reasons", []), *problems]
+    return out
+
+
+__all__ = ["V4_FILES", "development_identity_v4", "run_one_v4"]
