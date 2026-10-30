@@ -11585,3 +11585,20 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
   - WSL root, `/opt/forge-v4-fa0ae0773448` at `8fbcb710`, `/opt` venv, nice: all five v0.4 test files -> 84 passed,
     3 skipped (off-Linux, not-under-/opt, PySR-absent). The F1 integration mutant was KILLED.
 - Static review is not test execution. These tests do not validate the security boundary on any other host.
+
+### 2026-10-30 — OD-3 rerun 2: LOCAL_ASSURANCE PASS on 921f8d26 (certificate child 44ff750f, not on main)
+
+- Source: `921f8d26df920d209ee07faf11f435d88f4a1023` in the isolated WSL clone `/home/dev_kaeem/forge-od3-b622af5e`
+  (clean before the run). Command: `.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --repository
+  sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python --workers 4
+  --mutation-workers 2 --reuse` (18:39:42 to 22:55:57 +02:00). Result: `LOCAL_ASSURANCE: SOURCE_PASS`;
+  SKIP_ADMISSION skipped 523, accepted 523, unexpected 0; CLAIM "CORE ASSURANCE PASSED WITH DECLARED OPTIONAL PROVIDERS
+  UNAVAILABLE AND DECLARED CONDITIONAL SKIPS"; trust mutations survived 0; receipt `e9cb325f…c00c5a`.
+- Certificate child commit `44ff750fc503ac062b2b4e309446e58d48cf9335` ("certification: recertify hardened core",
+  `certification/current_core_v2.json` only) made in that clone. Then `local_assurance verify --python312
+  .forge/venvs/3.12/bin/python`: 22 certificate self-checks passed; `LOCAL_ASSURANCE: PASS`, receipt `9574754b…1765c`,
+  `SAFE_TO_PUSH: YES`. Logs: `/home/dev_kaeem/forge-od3-evidence/run.log`, `verify.log`; evidence under
+  `.forge/assurance/921f8d26…/`.
+- Scope limit: the certificate binds `921f8d26`. Local `main` has since moved 19 commits on (`7d24c948`..`5d9c362c`,
+  including v0.4 Genesis-lite source changes from another session), so it does **not** certify current main. `44ff750f`
+  is not pushed, not merged and not in this checkout. Integrating it (or recertifying the new HEAD) is an owner decision.
