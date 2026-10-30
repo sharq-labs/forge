@@ -11492,3 +11492,33 @@ Isolation facts that set A2's scope (read-only):
 - `scan_for_leaks` does not cover the root file, master seeds, presentation keys, other campaigns' outputs or
   `pilot_results`;
 - the YAMA test assumes a non-root operator, while the isolated launcher requires root.
+
+### 2026-10-30 — Session A: `analysis_v4` decision contract (D9, D10, D13, D14)
+
+New `benchmarks/genesis_lite/analysis_v4.py` and `tests/genesis_lite/test_analysis_v4.py`. v0.2 rule structure, with
+the following changes:
+- empirical-Bernstein bounds and p-values (bisection, conservative side);
+- the FDA-06 cap on every law kind, from a per-universe representation verdict (refuses when one is missing);
+- Clopper-Pearson representation-limited cells;
+- per-kind and per-presentation non-inferiority;
+- no screening (a hole blocks the claim);
+- v0.3 credit validation (`indistinguishable_unresolved` keeps only its penalty);
+- descriptive strata by kind, region tell and representation;
+- `multiplicity="holm_family"` (D9) and `"iut_all"`. The intersection-union test is valid at alpha for "beats every
+  comparator" without correction; it is an alternative to put to the owner, not adopted.
+
+Executed, Windows `.venv` 3.11:
+- `python -m pytest tests/genesis_lite/test_analysis_v4.py -q -p no:randomly -p no:cacheprovider` -> 34 passed.
+- Guard mutations (scratch `mutate_analysis_v4.py`, file restored and verified) -> 6/6 KILLED: cap on discoverable only
+  (the FDA-06 regression), no kind non-inferiority, no small-sample term, no presentation check, no coverage block,
+  credit/outcome unchecked.
+
+Not red-first: the module was written before its tests. The mutations stand in as the fail-first evidence. Failed
+approach: the first control-loss and presentation tests could not fail, because superiority already failed in them;
+each guard needs a fixture where every other component holds.
+
+Smoke on the real EXC-4b records (`/opt` venv, WSL, nice): `world_credits` accepts all 21 arms × 120 world sets
+(outcomes include `indistinguishable_unresolved`). DEVELOPMENT finding: on `ordinary_extension` regions, discoverable
+and spurious_correlate credit is 0.000 for grammar_enumeration, mind_full and careful (they refuse to extrapolate),
+so about half of the law worlds carry no discriminating information for those arms. It is disclosed in the strata,
+and it is a Step 2 / Stage 2b design input (correct extrapolation is where discovery shows).
