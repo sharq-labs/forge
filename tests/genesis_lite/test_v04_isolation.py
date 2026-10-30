@@ -68,7 +68,10 @@ def test_hiding_the_code_tree_itself_refuses():
         ih.hidden_paths([ROOT], exposed=EXPOSED)
 
 
-def test_every_pilot_results_directory_of_the_tree_is_hidden():
+def test_every_pilot_results_directory_of_the_tree_is_hidden(monkeypatch):
+    # a checkout under a default hide (/home on a Linux CI runner) is refused as a whole, which the test above covers;
+    # drop that one default here so the per-directory hides are still checked on every host
+    monkeypatch.setattr(ih, "DEFAULT_HIDDEN", tuple(d for d in ih.DEFAULT_HIDDEN if not ih._under(EXPOSED[0], d)))
     hidden = ih.hidden_paths(exposed=EXPOSED)
     for p in ROOT.glob("benchmarks/**/pilot_results"):
         assert str(p.resolve()) in hidden
