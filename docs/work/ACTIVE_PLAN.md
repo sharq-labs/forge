@@ -1064,6 +1064,12 @@ expiry, owner approval, prohibitions).
 
 ### EXC-4 -- richer hypothesis language, Stage 2a: grammar enumeration as a frozen development baseline (OPEN 2026-10-30)
 
+**Status 2026-10-30:** code `16236c66`; FAST at `e5af5f55` 3131 passed / 2 certificate failures; pilot done (2520/2520
+VALID, report `benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/`). Exit condition **partly met**:
+the three contrasts are recorded, but per-world grammar expressibility is NOT MET because the pilot did not persist
+its root. OWNER_DECISION_REQUIRED: a second pilot that writes a sealed root reveal (outside this exception's "one
+pilot"), or close EXC-4 without the expressibility split.
+
 Full draft with rationale and risks: `docs/work/proposals/EXC4_MIND_HYPOTHESIS_LANGUAGE_DRAFT.md` (at `b622af5e`).
 
 1. **Exact scope:** new package `src/engcore/mind/grammar/` (`dimensions.py`, `grammar.py`, `fit.py`, `evidence.py`);

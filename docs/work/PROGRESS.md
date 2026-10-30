@@ -11385,3 +11385,22 @@ with no committed skip rule: the v0.3 baseline-arm tests (pysr/pysindy/botorch a
 and `benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_bundle_rebuilds_byte_identically_and_static_audit_passes`.
 No certificate. Repair options (install the optional libraries into the assurance venvs, or a reviewed skip rule) are an
 owner decision; not attempted here.
+
+EXC-4 FAST (2026-10-30, WSL2 Ubuntu 24.04, `/opt/forge-mvp-20261028/.venv` Python 3.12.3, clean clone
+`/home/dev_kaeem/forge-exc4-e5af5f55` at `e5af5f55eafc1373d1bf934f8e4ca3e758f49e6b`, `PYTHONPATH=<clone>/src:<clone>`,
+engcore import verified from the clone, BLAS threads 1):
+`python tools/forge_check.py --changed --base a9ddbf274cc5d24a8f14236586d8bd94a2760fcb --workers 4` -> exit 1:
+3131 passed, 2 failed, 2 skipped (92 s). Failed: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`,
+`::test_the_certificate_records_the_v1_relationship_truthfully` (stale certificate; OD-3 refused above, so no new
+certificate exists). No other failure. Then the EXC-4 pilot started:
+`python -m benchmarks.genesis_lite.pilot_v3 --out /home/dev_kaeem/exc4-pilot-v0_3-dev-grammar-2026-10-30 --arms all
+--workers 4 --deadline-seconds 2700 --budget-fractions 1.0` (fresh root from `secrets`, generated after the code commit).
+
+EXC-4 pilot (2026-10-30, same environment as the FAST run above): exit 0, 2520/2520 campaigns, 0 worker failures, all 21
+arms 120/120 VALID, 1085.5 s. Report: `benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/README.md`
+(DEVELOPMENT_DESCRIPTIVE). Discoverable mean credit: grammar_enumeration 0.275, mind_full 0.200, careful 0.150,
+monomial 0.092, pysr 0.008; grammar - monomial outside the monomial family +0.304 (n 69, 18 better / 0 worse); 0 false
+laws on controls for grammar, careful, mind_full. Failed approach: `pilot_v3` CLI keeps only the root commitment, so the
+post-reveal per-world expressibility (`expressibility_v3`, an EXC-4 exit item) cannot be computed for this run;
+contrasts (i)-(iii) were computed from the records alone. A pilot that reveals its root after sealing must be decided
+first (owner), and the reveal file has to be written before the run, not reconstructed.
