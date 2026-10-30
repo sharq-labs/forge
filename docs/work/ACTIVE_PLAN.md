@@ -90,6 +90,25 @@ targeted test files run, at low priority. Design and reading work goes first.
   - **D12 = Codex** reviews the v0.4 preregistration before the freeze (the owner runs it).
   All are implemented in new v0.4 files; v0.2/v0.3 files, the credit table and `engcore.blindfold.universe` stay
   unchanged.
+- [ ] OWNER_DECISION_REQUIRED (D15, raised 2026-10-31 by the second v0.4 review, M-e): how a proposer process that
+  dies or times out AFTER its outside verification passed is classified. Today (`isolated_host.per_universe_arm`) it is
+  an infrastructure failure, so the whole run becomes INVALID_BENCHMARK and `decide_v4` refuses it (run rule
+  "any INVALID_BENCHMARK world set blocks"). Two reviews pull in opposite directions:
+  - L2 (2026-10-31): a dead pipe scored as the arm's -1 would favour a candidate over a baseline that crashed;
+  - M-e: one transient crash (OOM, a Julia segfault) over ~2400 units x 6 processes makes a formal run undecidable;
+    a candidate that kills itself turns a loss into "no decision"; and nothing counts reruns on fresh roots.
+  Options:
+  - (A) keep it as infrastructure, and add a per-root attempt ledger in the commitment so reruns are counted and
+    reported;
+  - (B) after a passed outside verification, death or timeout is the arm's own failure (inadmissible, -1), for every
+    arm alike, plus the ledger;
+  - (C) as B for the candidate only, A for baselines.
+  Recommendation: B plus the ledger. It is symmetric, a self-kill cannot rescue a loss, and a host failure before
+  verification stays infrastructure. Needed before the freeze.
+- [ ] OWNER_DECISION_REQUIRED (raised 2026-10-31 by the same review, M-d): the formal driver `pilot_v4.plan` accepts
+  only the frozen baseline roster, while `analysis_v4.decision` refuses a candidate inside it. Step 1 (D1, baselines
+  only) needs no candidate. But a Step 2 lift decision through `decide_v4` needs a registration path for the
+  candidate arm (for example the Mind), with its own identity binding. Not needed for Step 1; record before Step 2.
 
 ### EXC-5 -- units-aware PySR development arm (APPROVED 2026-10-30 by the owner via D2)
 

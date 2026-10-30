@@ -11684,3 +11684,47 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
   preregistration is now stale (its identity moved) and must be rebuilt.
 - Not done: a fresh review of these fixes.
 - OD-3 run 3 was active throughout; every run above was single-file or single-directory and niced.
+
+### 2026-10-31 — second v0.4 review of the fixes and its fixes (H-a, M-a, M-b, M-c, M-d test, LOW)
+
+- Review (forked, read-only, static) of `1979907f..0af67b4b`: **CHANGES REQUIRED**, 0 BLOCKER. Findings:
+  - **H-a:** `decide` let the caller pick `iut_all`, against D9.
+  - **M-a:** the session keyring (`@s`) is inherited across the userns.
+  - **M-b:** a proposer can create a nested user namespace with full capabilities in it.
+  - **M-c:** `verified()` accepted missing namespace and capability keys.
+  - **M-d:** decide tests stub the real reveal; the candidate registration path is missing.
+  - **M-e:** crash classification vs rerun loophole.
+  - **LOW:** `_BOUND` gaps, a TypeError on a malformed task.
+- Probes as root in WSL before the fix:
+  - nested `unshare(CLONE_NEWUSER)` inside the proposer's namespace SUCCEEDED (`max_user_namespaces` 2147483647
+    there);
+  - `@s` was not shared under `wsl -u root`, because there is no PAM session. It would be under a launcher that holds
+    a session keyring, and the integration test now creates exactly that condition.
+- Fixed in `5d4e4760` and `027e0088`:
+  - `decide` has no multiplicity parameter; Holm is fixed (`decide_v4.MULTIPLICITY`).
+  - Each launched child joins a fresh anonymous session keyring (`preexec_fn`).
+  - Root of the proposer's own namespace writes `max_user_namespaces=0` before the second capability drop, so a nested
+    namespace fails (ENOSPC).
+  - `verified()` requires exactly the six namespaces and the five capability sets; provenance requires each check's
+    hides to equal the committed hides.
+  - `_BOUND` adds `tree_dirty`, `v0_2_pin_changed`, `proposer_env`, `exposed` and `hidden`; a formal run from a dirty
+    tree or with a moved pin refuses; a malformed task refuses.
+  - New decide test through the real `reveal_v4.represented` on worlds the root derives.
+  - New attack arm `nested_namespace`; the persistence attack also probes `@s` while the launcher holds a session
+    keyring.
+  - The new root-only test is added to the declared skip rule `genesis-v04-isolation-needs-root` (same reason).
+- M-e and the candidate registration path are recorded in ACTIVE_PLAN as OWNER_DECISION_REQUIRED (D15, M-d), not
+  implemented.
+- Executed:
+  - Windows `.venv`: `pytest -q tests/genesis_lite/` -> 440 passed, 25 skipped; `pytest -q tests/test_skip_admission.py
+    tests/genesis_lite/test_v04_isolation.py` -> 117 passed, 8 skipped.
+  - WSL root, clean clone `/opt/forge-v4-fa0ae0773448` at `5d4e47608ff1d12916a0829a49d94eac67960adf`, niced, three
+    consecutive runs: `pytest tests/genesis_lite/test_v04_isolation.py test_v04_pilot.py test_v04_decide.py -q
+    -p no:randomly -p no:cacheprovider` -> 67 passed, 2 skipped each time.
+  - At `027e008822e38d3f7b3c16aa6e383c19bc00c6b4` (scratch `mab_mutants.sh`, as root): baseline 2 passed.
+    - M-b mutant (no `max_user_namespaces=0`): the nested-namespace test FAILED (`nested_user_namespace: True`;
+      `/home` still could not be unmounted, because the mounts are locked).
+    - M-a mutant (no fresh session keyring): the persistence test FAILED (`found: ['keyring:@s']`).
+    - The file was restored byte-identical to HEAD.
+- Boundary: one host and one config; no security level is claimed. The candidate preregistration stays stale until it
+  is rebuilt.
