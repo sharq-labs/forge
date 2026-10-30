@@ -49,16 +49,14 @@ def test_the_command_builds_every_namespace_hide_and_privilege_drop():
     assert inner.index("mount -t tmpfs") < inner.index("setpriv")          # hides are mounted before the uid switch
     # re-review M3: a fresh user namespace after the uid switch (private keyrings), the bounding set dropped again in it
     assert inner.index("--no-new-privs") < inner.index(ih.USER_NAMESPACE) < inner.index("/usr/bin/env -i")
-    assert ih.USER_NAMESPACE.startswith("unshare --user --map-root-user -- setpriv --inh-caps=-all --bounding-set=-all")
+    assert ih.USER_NAMESPACE.startswith("unshare --user --map-root-user -- ")
+    assert "exec setpriv --inh-caps=-all --bounding-set=-all" in ih.USER_NAMESPACE
 
 
 def test_the_outside_verification_requires_a_private_user_namespace():
-    good = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": {"CapEff": 0},
-            "no_new_privs": True, "private_namespaces": {"mnt": True, "user": True}, "hidden": {"/home": True},
-            "private_tmp": True, "whitelist_covered": True, "exposed_read_only": {"/opt/code": True},
-            "private_writable": {"/tmp": True}, "shared_state_covered": {"/run": True}}
-    assert ih.verified(good)
-    assert not ih.verified({**good, "private_namespaces": {"mnt": True, "user": False}})
+    assert ih.verified(GOOD)
+    assert not ih.verified({**GOOD, "private_namespaces": {**GOOD["private_namespaces"], "user": False}})
+    assert "echo 0 > /proc/sys/user/max_user_namespaces" in ih.USER_NAMESPACE      # no nested namespace (M-b)
 
 
 def test_the_operator_environment_never_reaches_the_proposer(monkeypatch):
@@ -109,14 +107,20 @@ def test_the_whitelist_stages_exposures_before_covering_opt_and_binds_them_back_
     assert order == sorted(order)
 
 
+GOOD = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": dict.fromkeys(ih.CAP_SETS, 0),
+        "no_new_privs": True, "private_namespaces": dict.fromkeys(ih.NAMESPACES, True), "hidden": {"/home": True},
+        "private_tmp": True, "whitelist_covered": True, "exposed_read_only": {"/opt/code": True},
+        "private_writable": {"/tmp": True, "/dev/shm": True}, "shared_state_covered": {"/run": True}}
+
+
 def test_outside_verification_fails_closed_on_any_missing_property():
-    good = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": {"CapEff": 0},
-            "no_new_privs": True, "private_namespaces": {"mnt": True, "pid": True}, "hidden": {"/home": True},
-            "private_tmp": True, "whitelist_covered": True, "exposed_read_only": {"/opt/code": True},
-            "private_writable": {"/tmp": True, "/dev/shm": True}, "shared_state_covered": {"/run": True}}
+    good = GOOD
     assert ih.verified(good)
-    for key, bad in (("uid", [0] * 4), ("groups", [27]), ("caps", {"CapEff": 1}), ("no_new_privs", False),
-                     ("private_namespaces", {"mnt": True, "pid": False}), ("hidden", {"/home": False}),
+    partial_ns = {n: True for n in ih.NAMESPACES if n != "user"}
+    partial_caps = {k: 0 for k in ih.CAP_SETS if k != "CapBnd"}
+    for key, bad in (("uid", [0] * 4), ("groups", [27]), ("caps", {**GOOD["caps"], "CapEff": 1}), ("no_new_privs", False),
+                     ("caps", partial_caps), ("private_namespaces", partial_ns),       # review 2026-10-31 M-c
+                     ("private_namespaces", {**GOOD["private_namespaces"], "pid": False}), ("hidden", {"/home": False}),
                      ("hidden", {}), ("private_tmp", False), ("inspected", False), ("whitelist_covered", False),
                      ("exposed_read_only", {}), ("exposed_read_only", {"/opt/code": False}),
                      ("private_writable", {}), ("private_writable", {"/dev/shm": False}),
@@ -276,13 +280,21 @@ def test_a_proposer_dying_mid_relay_is_an_infrastructure_failure(monkeypatch, er
 
 
 @integration
+def test_a_proposer_cannot_create_a_nested_user_namespace():
+    # review 2026-10-31 M-b: a nested namespace would give it capabilities again (kernel netns/nf_tables surface)
+    report, outside = _attack("nested_namespace", ih.hidden_paths())
+    assert ih.verified(outside)
+    assert report["nested_user_namespace"] is False and report["home_unmounted"] is False, report
+
+
+@integration
 def test_no_state_passes_from_one_proposer_process_to_the_next():
     # finding 1: process A writes a mark into every directory it can write and a key on its uid's kernel keyring
     # (re-review M3); process B, a later universe of the same uid, finds none
     first, outside_a = _attack("leave_marks", ih.hidden_paths())
     assert ih.verified(outside_a) and outside_a["private_namespaces"]["user"]
-    assert "keyring:@u" in first["written"]                         # the key was really left: the probe is live
+    assert {"keyring:@u", "keyring:@s"} <= set(first["written"])   # the keys were really left: the probe is live
     found, _ = _attack("find_marks", ih.hidden_paths())
     assert found["found"] == [], found
-    writable = set(first["written"]) - {"keyring:@u"}
+    writable = set(first["written"]) - {"keyring:@u", "keyring:@s"}
     assert writable <= {"/tmp", "/dev/shm", "/dev/mqueue"} | {w for w in writable if w.startswith(("/tmp/", "/dev/shm/"))}, writable

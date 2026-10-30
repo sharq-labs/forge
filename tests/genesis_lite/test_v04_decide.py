@@ -11,7 +11,7 @@ import pytest
 
 from benchmarks.genesis_lite import decide_v4, pilot_v4
 from benchmarks.genesis_lite.analysis import KINDS, AnalysisRefused
-from benchmarks.genesis_lite.isolated_host import ISOLATION_LABEL
+from benchmarks.genesis_lite.isolated_host import CAP_SETS, ISOLATION_LABEL, NAMESPACES
 
 from .test_analysis_v4 import BASE, FLOOR, outcome_for
 
@@ -19,8 +19,10 @@ IDENTITY = "i" * 64
 ROOT = bytes(range(32))
 ROOT_C = hashlib.sha256(ROOT).hexdigest()
 LAW_KINDS = ("confounded", "discoverable", "spurious_correlate")
-GOOD_CHECK = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": {"CapEff": 0},
-              "no_new_privs": True, "private_namespaces": {"mnt": True}, "hidden": {"/home": True}, "private_tmp": True,
+HIDDEN = ["/home", "/root"]
+GOOD_CHECK = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": dict.fromkeys(CAP_SETS, 0),
+              "no_new_privs": True, "private_namespaces": dict.fromkeys(NAMESPACES, True),
+              "hidden": dict.fromkeys(HIDDEN, True), "private_tmp": True,
               "whitelist_covered": True, "exposed_read_only": {"/opt/x": True},
               "private_writable": {"/tmp": True, "/dev/shm": True}, "shared_state_covered": {"/run": True}}
 
@@ -49,7 +51,7 @@ def _tree(monkeypatch):
     monkeypatch.setattr(decide_v4, "represented", _all_represented)
 
 
-def _run_dir(tmp_path, *, drop_arm=None, tamper=None, tier="formal", summary=None):
+def _run_dir(tmp_path, *, drop_arm=None, tamper=None, tier="formal", summary=None, commit=None, uids=None):
     arms = sorted(pilot_v4.roles()) + ["mind"]
     tasks = [pilot_v4.Task(a, c, p, 0) for c in range(2) for p in pilot_v4.PRESENTATIONS for a in arms]
     if drop_arm:
@@ -57,11 +59,16 @@ def _run_dir(tmp_path, *, drop_arm=None, tamper=None, tier="formal", summary=Non
     roles = pilot_v4.roles()
     recs = [_record(t.arm, t, FLOOR if roles.get(t.arm) in ("floor", "sanity", "adversarial") else BASE, tier=tier)
             for t in tasks]
+    if uids:
+        for r, t in zip(recs, tasks):
+            uids(r, t)
     if tamper:
         tamper(recs)
     runs = "".join(json.dumps(r, sort_keys=True) + "\n" for r in recs).encode()
     commitment = {"root_commitment_sha256": ROOT_C, "development_identity_v4": IDENTITY, "tier": tier,
-                  "tasks": [asdict(t) for t in tasks], "planned_campaigns": len(tasks)}
+                  "tasks": [asdict(t) for t in tasks], "planned_campaigns": len(tasks), "tree_dirty": False,
+                  "v0_2_pin_changed": [], "proposer_env": {}, "exposed": ["/opt/x"], "hidden": HIDDEN,
+                  **(commit or {})}
     (tmp_path / "commitment.json").write_text(json.dumps(commitment))
     done = {**commitment, "runs_sha256": hashlib.sha256(runs).hexdigest(), "completed": len(tasks),
             "not_run_at_deadline": 0, **(summary or {})}
@@ -142,6 +149,58 @@ def test_a_root_that_does_not_reproduce_the_worlds_refuses(tmp_path, monkeypatch
         _decide(_run_dir(tmp_path))
 
 
+def _real_worlds(record, task):
+    """Give a synthetic record the universe ids and monomial flags of the worlds the root really derives."""
+    from benchmarks.genesis_lite.evaluator import score_v3
+    from benchmarks.genesis_lite.expressibility_v3 import worlds
+    by_kind = {w.kind.value: w for w in worlds(pilot_v4.master_seed(ROOT, task.campaign, task.presentation, task.seed),
+                                               pilot_v4.campaign_id("formal", task))}
+    for u in record["universes"]:
+        w = by_kind[u["kind"]]
+        u["universe_id"] = w.universe_id
+        u["truth_in_searched_family"] = w.law is not None and score_v3.v2.in_monomial_family(w.law)
+
+
+def test_the_real_reveal_runs_through_decide_on_worlds_the_root_derives(tmp_path, monkeypatch):
+    # review 2026-10-31 M-d: the real reveal_v4.represented, not the stand-in, decides the cap inputs
+    from benchmarks.genesis_lite import reveal_v4
+    monkeypatch.setattr(decide_v4, "represented", reveal_v4.represented)
+    d = _run_dir(tmp_path, uids=_real_worlds)
+    out = _decide(d)
+    assert out["coverage_problems"] == [] and out["tier_status"] == "FORMAL"
+    monkeypatch.setattr(decide_v4, "read_root", lambda path: b"\x07" * 32)
+    with pytest.raises(AnalysisRefused, match="root does not match"):
+        _decide(d)
+
+
+def test_the_multiplicity_is_holm_and_the_caller_cannot_choose_another(tmp_path):
+    # review 2026-10-31 H-a: D9 fixes Holm over the pre-declared family
+    import inspect
+    assert "multiplicity" not in inspect.signature(decide_v4.decide).parameters
+    assert _decide(_run_dir(tmp_path))["multiplicity"] == "holm_family"
+
+
+@pytest.mark.parametrize("commit,match", [({"tree_dirty": True}, "dirty tree"),
+                                          ({"v0_2_pin_changed": ["scoring.py"]}, "v0.2 pin")])
+def test_a_formal_run_from_a_dirty_tree_or_a_moved_pin_refuses(tmp_path, commit, match):
+    with pytest.raises(AnalysisRefused, match=match):
+        _decide(_run_dir(tmp_path, commit=commit))
+
+
+def test_a_verification_of_other_hides_than_the_committed_ones_refuses(tmp_path):
+    def tamper(recs):
+        recs[0]["isolation_checks"] = [{**GOOD_CHECK, "hidden": {"/home": True}}] * 6
+    with pytest.raises(AnalysisRefused, match="provenance"):
+        _decide(_run_dir(tmp_path, tamper=tamper))
+
+
+def test_a_malformed_task_refuses_instead_of_crashing(tmp_path):
+    def tamper(recs):
+        recs[0]["task"] = {"arm": "careful"}
+    with pytest.raises(AnalysisRefused, match="malformed task"):
+        _decide(_run_dir(tmp_path, tamper=tamper))
+
+
 # ------------------------------------------------------------------- H2: the deciding code is the code that ran
 
 
@@ -219,7 +278,7 @@ def test_a_duplicated_record_refuses(tmp_path):
         _decide(_run_dir(tmp_path, tamper=tamper))
 
 
-@pytest.mark.parametrize("key", ["tier", "planned_campaigns", "root_commitment_sha256"])
+@pytest.mark.parametrize("key", ["tier", "planned_campaigns", "root_commitment_sha256", "hidden", "proposer_env"])
 def test_a_summary_missing_a_bound_key_refuses(tmp_path, key):
     d = _run_dir(tmp_path)
     s = json.loads((d / "summary.json").read_text())

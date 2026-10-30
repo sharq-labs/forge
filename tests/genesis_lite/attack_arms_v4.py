@@ -93,19 +93,36 @@ def _libc():
     return ctypes.CDLL(None, use_errno=True)
 
 
-def _leave_key(payload: bytes) -> bool:
-    """A kernel key on this uid's user keyring: it outlives the process (re-review M3)."""
-    return _libc().syscall(_SYS_ADD_KEY, b"user", MARK.encode(), payload, len(payload), _KEY_SPEC_USER_KEYRING) > 0
+_KEY_SPEC_SESSION_KEYRING = -3
+_RINGS = {"keyring:@u": _KEY_SPEC_USER_KEYRING, "keyring:@s": _KEY_SPEC_SESSION_KEYRING}
 
 
-def _find_key() -> bool:
-    return _libc().syscall(_SYS_KEYCTL, _KEYCTL_SEARCH, _KEY_SPEC_USER_KEYRING, b"user", MARK.encode(), 0) > 0
+def _leave_keys(payload: bytes) -> list[str]:
+    """A kernel key on this uid's user keyring (it outlives the process, re-review M3) and on the session keyring
+    (inherited across fork/exec, review 2026-10-31 M-a)."""
+    return [name for name, ring in _RINGS.items()
+            if _libc().syscall(_SYS_ADD_KEY, b"user", MARK.encode(), payload, len(payload), ring) > 0]
+
+
+def _found_keys() -> list[str]:
+    return [name for name, ring in _RINGS.items()
+            if _libc().syscall(_SYS_KEYCTL, _KEYCTL_SEARCH, ring, b"user", MARK.encode(), 0) > 0]
+
+
+def nested_namespace(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Try to create a nested user namespace (full capabilities inside it) and, in it, to unmount a hide (M-b)."""
+    import ctypes  # noqa: PLC0415
+    libc = ctypes.CDLL(None, use_errno=True)
+    created = libc.unshare(0x10000000) == 0                                  # CLONE_NEWUSER
+    errno = ctypes.get_errno()
+    unmounted = created and libc.unshare(0x00020000) == 0 and libc.umount2(b"/home", 2) == 0    # CLONE_NEWNS, MNT_DETACH
+    return _answer(card, {"nested_user_namespace": created, "errno": errno, "home_unmounted": bool(unmounted)})
 
 
 def leave_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Write a mark into EVERY directory this process can write (the persistence half of review finding 1), and a
     key on the uid's kernel keyring."""
-    written = ["keyring:@u"] if _leave_key(card["universe_id"].encode()) else []
+    written = _leave_keys(card["universe_id"].encode())
     for d in _walk_dirs():
         if os.access(d, os.W_OK):
             try:
@@ -119,6 +136,5 @@ def leave_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[
 
 def find_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     found = [d for d in _walk_dirs() if os.path.exists(os.path.join(d, MARK))]
-    if _find_key():
-        found.append("keyring:@u")
+    found += _found_keys()
     return _answer(card, {"found": sorted(found)})

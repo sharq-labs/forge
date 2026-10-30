@@ -58,7 +58,13 @@ PRIVATE_WRITABLE = ("/tmp", "/dev/shm")
 #: so a key one proposer leaves on uid 65534's keyring (it outlives the process) is not there for the next one. The
 #: process is root only inside its own empty namespace (65534 outside); dropping the bounding set again there leaves
 #: every capability at zero, which the outside verification checks
-USER_NAMESPACE = "unshare --user --map-root-user -- setpriv --inh-caps=-all --bounding-set=-all --"
+#: Inside it, before the second drop, root of that namespace sets its max_user_namespaces to 0, so the proposer cannot
+#: create a nested namespace and regain capabilities there (review 2026-10-31 M-b)
+USER_NAMESPACE = ("unshare --user --map-root-user -- /bin/sh -c 'echo 0 > /proc/sys/user/max_user_namespaces && "
+                  "exec setpriv --inh-caps=-all --bounding-set=-all -- \"$@\"' userns")
+#: the namespaces and capability sets the outside verification requires, exactly (review 2026-10-31 M-c)
+NAMESPACES = ("mnt", "pid", "net", "ipc", "uts", "user")
+CAP_SETS = ("CapInh", "CapPrm", "CapEff", "CapBnd", "CapAmb")
 THREAD_ENV = {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"}
 _HOST = pathlib.Path(__file__).resolve().parent / "proposer_host.py"
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -153,6 +159,14 @@ def command(hidden: Sequence[str], env: Mapping[str, str], python: str = sys.exe
             inner]
 
 
+def _fresh_session_keyring() -> None:
+    """In the launched child before exec: join a new anonymous session keyring, so no proposer inherits the launcher's
+    (a PAM session under sudo/ssh has one) or shares one with another proposer (review 2026-10-31 M-a)."""
+    import ctypes  # noqa: PLC0415 - Linux only, in the forked child
+    if ctypes.CDLL(None, use_errno=True).syscall(250, 1, None) < 0:      # keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL)
+        raise OSError(ctypes.get_errno(), "could not join a fresh session keyring")
+
+
 def _leaf(pid: int) -> int:
     from engcore.blindfold.isolation import _leaf as leaf  # noqa: PLC0415 - the launcher's own /proc walk
     return leaf(pid)
@@ -162,9 +176,8 @@ def inspect(pid: int, hidden: Sequence[str], exposed: Sequence[str] = ()) -> dic
     """What the launcher sees of the proposer process from OUTSIDE (never the process's own report)."""
     status = dict(line.split(":", 1) for line in open(f"/proc/{pid}/status").read().splitlines() if ":" in line)
     ids = lambda k: [int(x) for x in status.get(k, "").split()]  # noqa: E731
-    caps = {k: int(status.get(k, "f").strip() or "f", 16) for k in ("CapInh", "CapPrm", "CapEff", "CapBnd", "CapAmb")}
-    ns = {n: os.readlink(f"/proc/{pid}/ns/{n}") != os.readlink(f"/proc/self/ns/{n}")
-          for n in ("mnt", "pid", "net", "ipc", "uts", "user")}
+    caps = {k: int(status.get(k, "f").strip() or "f", 16) for k in CAP_SETS}
+    ns = {n: os.readlink(f"/proc/{pid}/ns/{n}") != os.readlink(f"/proc/self/ns/{n}") for n in NAMESPACES}
     mounts = [ln.split() for ln in open(f"/proc/{pid}/mountinfo").read().splitlines()]
     tmpfs = {m[4] for m in mounts if "-" in m and m[m.index("-") + 1] == "tmpfs"}
     read_only = {m[4] for m in mounts if len(m) > 5 and m[5].split(",")[0] == "ro"}
@@ -184,7 +197,8 @@ def inspect(pid: int, hidden: Sequence[str], exposed: Sequence[str] = ()) -> dic
 
 def verified(o: Mapping[str, Any]) -> bool:
     return bool(o.get("inspected") and o["uid"] == [DISCOVERY_UID] * 4 and o["gid"] == [DISCOVERY_UID] * 4
-                and not o["groups"] and not any(o["caps"].values()) and o["no_new_privs"]
+                and not o["groups"] and set(o["caps"]) == set(CAP_SETS) and not any(o["caps"].values())
+                and o["no_new_privs"] and set(o["private_namespaces"]) == set(NAMESPACES)
                 and all(o["private_namespaces"].values()) and o["hidden"] and all(o["hidden"].values())
                 and o["private_tmp"] and o.get("whitelist_covered") is True and bool(o.get("exposed_read_only"))
                 and all(o["exposed_read_only"].values()) and bool(o.get("private_writable"))
@@ -205,7 +219,7 @@ class IsolatedProposerHost(h2.ProposerHost):
         self._err = tempfile.TemporaryFile()                     # operator-side; the proposer's private /tmp cannot see it
         self._proc = subprocess.Popen(command(hidden, env or {}, python, exposed), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                       stderr=self._err, cwd="/", env={"PATH": "/usr/bin:/bin"}, bufsize=0,
-                                      start_new_session=True)
+                                      start_new_session=True, preexec_fn=_fresh_session_keyring)
         self._lines: queue.Queue = queue.Queue()
         threading.Thread(target=self._pump, daemon=True).start()
         hello = self._recv()

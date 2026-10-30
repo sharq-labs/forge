@@ -36,7 +36,10 @@ from .isolated_host import ISOLATION_LABEL, verified
 from .pilot_v4 import Task, campaign_id, formal_identity_check, read_root, roles
 from .reveal_v4 import represented
 
-_BOUND = ("root_commitment_sha256", "development_identity_v4", "tier", "tasks", "planned_campaigns")
+_BOUND = ("root_commitment_sha256", "development_identity_v4", "tier", "tasks", "planned_campaigns", "tree_dirty",
+          "v0_2_pin_changed", "proposer_env", "exposed", "hidden")
+#: D9: the superiority test is Holm over the pre-declared family; the caller cannot choose another (review M H-a)
+MULTIPLICITY = "holm_family"
 
 
 def _load(out_dir: pathlib.Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
@@ -62,6 +65,8 @@ def provenance_problems(rec: Mapping[str, Any], commitment: Mapping[str, Any]) -
     checks = list(rec.get("isolation_checks", ()))
     if len(checks) != 6 or not all(verified(c) for c in checks):
         out.append("not six passing outside verifications")
+    elif any(set(c["hidden"]) != set(commitment["hidden"]) for c in checks):
+        out.append("an outside verification checked other hides than the committed ones")
     if rec.get("development_identity_v4") != commitment["development_identity_v4"]:
         out.append("another development identity")
     if not str(rec.get("campaign_id", "")).startswith(f"gl-v04-{commitment['tier']}-"):
@@ -82,7 +87,10 @@ def _completeness(records: list[dict[str, Any]], tasks: list[Task], summary: Map
     planned = {(t.arm, campaign_id(tier, t)): t for t in tasks}
     seen: set[tuple[str, str]] = set()
     for r in records:
-        task = Task(**r.get("task", {}))
+        try:
+            task = Task(**r.get("task", {}))
+        except TypeError as exc:
+            raise AnalysisRefused(f"a record carries a malformed task: {exc}") from exc
         key = (str(r.get("arm")), campaign_id(tier, task))
         if key not in planned or planned[key] != task or key in seen:
             raise AnalysisRefused(f"record {key} is not one committed task")
@@ -95,7 +103,7 @@ def _completeness(records: list[dict[str, Any]], tasks: list[Task], summary: Map
 
 
 def decide(out_dir: str | pathlib.Path, root_file: str | pathlib.Path, candidate: str, *,
-           multiplicity: str = "holm_family", reveal_path: str | pathlib.Path | None = None) -> dict[str, Any]:
+           reveal_path: str | pathlib.Path | None = None) -> dict[str, Any]:
     out_dir = pathlib.Path(out_dir)
     commitment, summary, runs = _load(out_dir)
     tier = commitment["tier"]
@@ -103,7 +111,9 @@ def decide(out_dir: str | pathlib.Path, root_file: str | pathlib.Path, candidate
     if identity != commitment["development_identity_v4"] or changed:
         raise AnalysisRefused("the deciding code is not the code that ran (development identity or v0.2 pin differs)")
     if tier == "formal":
-        refusal = formal_identity_check(identity)
+        refusal = ("the run started from a dirty tree" if commitment["tree_dirty"] else "") or \
+            ("the run's v0.2 pin had changed" if commitment["v0_2_pin_changed"] else "") or \
+            formal_identity_check(identity)
         if refusal:
             raise AnalysisRefused(f"formal decision refused: {refusal}")
     elif tier != "development":
@@ -132,7 +142,7 @@ def decide(out_dir: str | pathlib.Path, root_file: str | pathlib.Path, candidate
         if supplied.get("runs_sha256") != hashlib.sha256(runs).hexdigest() or supplied.get("represented") != verdicts:
             raise AnalysisRefused("the supplied reveal differs from the one recomputed from the root")
     grid = {(t.presentation, campaign_id(tier, t), t.seed) for t in tasks}
-    result = a4.decision(records, candidate, frozen, verdicts, grid, multiplicity=multiplicity)
+    result = a4.decision(records, candidate, frozen, verdicts, grid, multiplicity=MULTIPLICITY)
     if tier == "development":
         result["lift_claimed"] = False
     result["tier_status"] = "FORMAL" if tier == "formal" else "DEVELOPMENT_ONLY"
