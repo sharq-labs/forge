@@ -166,7 +166,10 @@ def test_hidden_secrets_cannot_be_read_or_listed(secret_dir):
     assert token not in json.dumps(report)
     assert not [p for p in report["seen"] if p.startswith(("/root/", "/home/", "/mnt/", str(d)))
                 or "pilot_results/" in p], report["seen"]
-    others = [p for p in report["seen"] if p.startswith("/opt/") and not p.startswith(str(ROOT.resolve()))]
+    exposed = ih.exposures()
+    # under /opt only the exposures and the (otherwise empty) directories leading to them are visible
+    others = [p for p in report["seen"] if p.startswith("/opt/")
+              and not any(ih._under(p, e) or ih._under(e, p) for e in exposed)]
     assert not others, others                                    # another checkout under /opt is invisible
     assert report["uid"] == 65534 and report["ppid"] == 0
     assert not any(k.startswith("FORGE") for k in report["env"])
