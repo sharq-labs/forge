@@ -33640,6 +33640,137 @@
           "sha256": "618f62654a9cf729c9e74c701ab5d39d6cb857daf193da147910aa6cc25fc63d"
         }
       ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/contrasts.json",
+      "sha256": "aaffbe6c1a9f7ea33c4e0d07e6ac79eefc1d70bbcfa3e93c56d2ba948fb906c6",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-4 first pilot (owner-approved); root not persisted, so no expressibility file; contrasts.json was computed from runs.jsonl by a session script outside the repository that mirrors expressibility_v3.report without expressibility, as the README records.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "6d3734eb0159ac389dec70e9efa1861482f2ae8d50aa125aa231f0e8a2dc1751",
+          "commit": "e5af5f55eafc1373d1bf934f8e4ca3e758f49e6b"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/README.md",
+          "sha256": "a22689b1e68e58f73339ea7b6cbf49a28d570213ed4f1b8f85af47c242cd8803"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/environment.json",
+      "sha256": "e59e0ae36cd21c85436fa54d5c82ec2472b377f3d07380791b01c7ff9cb06083",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-4 first pilot (owner-approved); root not persisted, so no expressibility file; contrasts.json was computed from runs.jsonl by a session script outside the repository that mirrors expressibility_v3.report without expressibility, as the README records.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "6d3734eb0159ac389dec70e9efa1861482f2ae8d50aa125aa231f0e8a2dc1751",
+          "commit": "e5af5f55eafc1373d1bf934f8e4ca3e758f49e6b"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/README.md",
+          "sha256": "a22689b1e68e58f73339ea7b6cbf49a28d570213ed4f1b8f85af47c242cd8803"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/summary.json",
+      "sha256": "7c4677b963a1223295717001aece58fe2db54e7b4f47015298a33e1b0d8765b4",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-4 first pilot (owner-approved); root not persisted, so no expressibility file; contrasts.json was computed from runs.jsonl by a session script outside the repository that mirrors expressibility_v3.report without expressibility, as the README records.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "6d3734eb0159ac389dec70e9efa1861482f2ae8d50aa125aa231f0e8a2dc1751",
+          "commit": "e5af5f55eafc1373d1bf934f8e4ca3e758f49e6b"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/README.md",
+          "sha256": "a22689b1e68e58f73339ea7b6cbf49a28d570213ed4f1b8f85af47c242cd8803"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/contrasts.json",
+      "sha256": "bdc7b82c67897f00c90fd11391178bcc7a4c5e73f89d5a4913bccfcf71bce176",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-4 second pilot (owner decision 'Second pilot'), run through an out-of-tree driver calling run_pilot with a sealed root file; expressibility.json written by benchmarks/genesis_lite/expressibility_v3.py with the revealed root; contrasts.json from runs.jsonl by the session script described in the README.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "6d3734eb0159ac389dec70e9efa1861482f2ae8d50aa125aa231f0e8a2dc1751",
+          "commit": "a5c343f01f7829a030ca87ab146ce273b6ac4017"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/README.md",
+          "sha256": "2db5c1669075fab2c444296e603711c121c5ff36dd56e972fd7dff65218b38ca"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/environment.json",
+      "sha256": "71457c4e88b867ec57271573daf081a722acfc73be6d8cf869d4c745188e629b",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-4 second pilot (owner decision 'Second pilot'), run through an out-of-tree driver calling run_pilot with a sealed root file; expressibility.json written by benchmarks/genesis_lite/expressibility_v3.py with the revealed root; contrasts.json from runs.jsonl by the session script described in the README.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "6d3734eb0159ac389dec70e9efa1861482f2ae8d50aa125aa231f0e8a2dc1751",
+          "commit": "a5c343f01f7829a030ca87ab146ce273b6ac4017"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/README.md",
+          "sha256": "2db5c1669075fab2c444296e603711c121c5ff36dd56e972fd7dff65218b38ca"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/expressibility.json",
+      "sha256": "5128fb99bea8ea65955a0afa8ebd35ad4e41a22abaad765ec84b47511e43f051",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-4 second pilot (owner decision 'Second pilot'), run through an out-of-tree driver calling run_pilot with a sealed root file; expressibility.json written by benchmarks/genesis_lite/expressibility_v3.py with the revealed root; contrasts.json from runs.jsonl by the session script described in the README.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "6d3734eb0159ac389dec70e9efa1861482f2ae8d50aa125aa231f0e8a2dc1751",
+          "commit": "a5c343f01f7829a030ca87ab146ce273b6ac4017"
+        },
+        {
+          "path": "benchmarks/genesis_lite/expressibility_v3.py",
+          "sha256": "44a0b309eb38512b09d13c1f96b17af4600d341877a7953371832b8324c4abc3",
+          "commit": "a5c343f01f7829a030ca87ab146ce273b6ac4017"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/README.md",
+          "sha256": "2db5c1669075fab2c444296e603711c121c5ff36dd56e972fd7dff65218b38ca"
+        }
+      ]
+    },
+    {
+      "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/summary.json",
+      "sha256": "afb5ce143cdb7317a09c1fe197ce61e8224e9a77caf71e2c9199bff5cd4851fc",
+      "class": "DERIVED",
+      "role": "RECORDED_COMPUTE_RESULT",
+      "rationale": "DEVELOPMENT_ONLY Genesis-lite v0.3 pilot output, written by benchmarks/genesis_lite/pilot_v3.py at the producing commit named in evidence; raw runs.jsonl kept outside the repository and bound by runs.jsonl.sha256 in the same directory. Origin classification only: not replayed here; descriptive development credit, not a benchmark result, rate, lift, certification or physical validation. EXC-4 second pilot (owner decision 'Second pilot'), run through an out-of-tree driver calling run_pilot with a sealed root file; expressibility.json written by benchmarks/genesis_lite/expressibility_v3.py with the revealed root; contrasts.json from runs.jsonl by the session script described in the README.",
+      "evidence": [
+        {
+          "path": "benchmarks/genesis_lite/pilot_v3.py",
+          "sha256": "6d3734eb0159ac389dec70e9efa1861482f2ae8d50aa125aa231f0e8a2dc1751",
+          "commit": "a5c343f01f7829a030ca87ab146ce273b6ac4017"
+        },
+        {
+          "path": "benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30b/README.md",
+          "sha256": "2db5c1669075fab2c444296e603711c121c5ff36dd56e972fd7dff65218b38ca"
+        }
+      ]
     }
   ]
 }

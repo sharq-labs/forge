@@ -11448,3 +11448,13 @@ recorded there). `INSTALLED_EXTRAS` unchanged (pinned by test).
 Red first (Windows `.venv` 3.11.15): `pytest tests/test_skip_admission.py -k "battery_v3 or outside_the_collected"` ->
 2 failed, 3 passed. Green: `pytest -n 4 --dist loadfile tests/test_skip_admission.py tests/test_recertification_scope.py
 tests/test_certification_control_plane.py` -> 230 passed.
+
+OD-3 rerun 1 on `5e4cfdcd207487c3cd4ce46a70efef54dac1d33e` (WSL, owner's OD-3 checkout, 18:28-18:33): REFUSED at fast311,
+13576 passed / 2 failed / 174 skipped. Failed: `benchmarks/domain_real_data/tests/test_domain_real_data.py::
+test_synthetic_data_is_never_called_measured` and `::test_current_repository_inventory_has_no_unreviewed_provenance`:
+the seven EXC-4 pilot result JSON files had no provenance record. Failure record SHA-256
+`10a437457ea4ce4ed403d7949050bf1ccd88e666351cd4178de9d2d3d7932f58`. Failed approach: the EXC-4 FAST ran at `e5af5f55`,
+before the pilot result files existed, so it could not catch this; new committed result files need their provenance
+record in the same commit. Fix: seven DERIVED/RECORDED_COMPUTE_RESULT records in
+`benchmarks/domain_real_data/CURRENT_PROVENANCE.json` (format of the earlier pilot records, producing commits
+`e5af5f55` / `a5c343f0`). `pytest benchmarks/domain_real_data/tests/test_domain_real_data.py` (Windows `.venv`) -> 14 passed.
