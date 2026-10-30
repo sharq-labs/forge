@@ -11557,3 +11557,31 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
 - Boundary level: these tests exercise the mechanism on one host and one config (WSL2, umask=077 drvfs). Nothing here
   sets or claims a security level. The formal run's record must carry its own per-process verifications.
 - An OD-3 run was active throughout; every run above was single-file and niced.
+
+### 2026-10-30 — Session A: forge-scientific-review of the v0.4 path and its fixes
+
+- Review (forked, read-only, static) of `analysis_v4`, `arms_v4`, `isolated_host`, `harness_v4`, `pilot_v4`,
+  `reveal_v4` and their tests: **CHANGES REQUIRED**, 2 HIGH, 5 MEDIUM, 5 LOW. All addressed in
+  `8fbcb710dd583b37d7d6fc52556abf0fd0f50005`:
+  - (1 HIGH) private /dev/shm, /dev/mqueue and /tmp per process, /run and /var/crash covered, all checked from
+    outside;
+  - (2 HIGH) per-kind and per-presentation non-inferiority as an IUT against every non-adversarial arm;
+  - (3, 4, 10) new `decide_v4.py`: roles from the frozen roster, grid from the committed task list, runs digest,
+    reveal root, and per-record isolation/identity/tier provenance;
+  - (5) infrastructure failures make the run INVALID_BENCHMARK;
+  - (6) the identity covers reveal_v4, expressibility_v3, decide_v4 and isolation.py;
+  - (7) `y_units="1"` and a structured `dimensionally_consistent` flag;
+  - (8) reveal recomputes the monomial flag and refuses disagreement;
+  - (9) no finite equation raises;
+  - (11) unknown or missing presentations refuse;
+  - (12) random_grammar draws from the capped set.
+  - Open for the owner (12b): the control-kind non-inferiority margin 0.10 against "no loss allowed" (P-1).
+- Finding 1 REPRODUCED. A root integration mutation removed the private /dev/shm and the /run cover, and the
+  persistence test found marks in `/dev/shm`, `/run/lock`, `/run/shm` and `/var/crash`. Without the fix, a later
+  proposer could read state left by an earlier one. The marks the mutant left on the host were removed.
+- Executed:
+  - Windows `.venv`: v0.4 test files -> 66 passed, 13 skipped; `test_v04_decide.py` -> 8 passed.
+  - Fix-reverting mutations (scratch `mutate_review.py`) -> 9/9 KILLED: F1, F2, F3, F4, F5, F6, F8, F10, F11.
+  - WSL root, `/opt/forge-v4-fa0ae0773448` at `8fbcb710`, `/opt` venv, nice: all five v0.4 test files -> 84 passed,
+    3 skipped (off-Linux, not-under-/opt, PySR-absent). The F1 integration mutant was KILLED.
+- Static review is not test execution. These tests do not validate the security boundary on any other host.
