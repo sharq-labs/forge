@@ -33,6 +33,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 from collections.abc import Mapping, Sequence
 from typing import Any
@@ -126,8 +127,9 @@ class IsolatedProposerHost(h2.ProposerHost):
             raise IsolationUnavailable(why)
         self._dir = None
         self._timeout = timeout
+        self._err = tempfile.TemporaryFile()                     # operator-side; the proposer's private /tmp cannot see it
         self._proc = subprocess.Popen(command(hidden, env or {}, python), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                      stderr=subprocess.DEVNULL, cwd="/", env={"PATH": "/usr/bin:/bin"}, bufsize=0,
+                                      stderr=self._err, cwd="/", env={"PATH": "/usr/bin:/bin"}, bufsize=0,
                                       start_new_session=True)
         self._lines: queue.Queue = queue.Queue()
         threading.Thread(target=self._pump, daemon=True).start()
@@ -152,6 +154,21 @@ class IsolatedProposerHost(h2.ProposerHost):
                 except ProcessLookupError:
                     pass
                 self._proc.wait(timeout=10)
+        self._err.close()
+
+    def stderr_tail(self, limit: int = 600) -> str:
+        """The last bytes the proposer wrote to stderr (its own text: diagnostic, never evidence)."""
+        try:
+            self._err.seek(0)
+            return self._err.read().decode("utf-8", "replace")[-limit:]
+        except ValueError:
+            return ""
+
+    def _recv(self) -> dict[str, Any]:
+        try:
+            return super()._recv()
+        except RuntimeError as exc:
+            raise RuntimeError(f"{exc}; proposer stderr: {self.stderr_tail()!r}") from None
 
 
 def per_universe_arm(spec: str, hidden: Sequence[str], checks: list[dict[str, Any]], *,
