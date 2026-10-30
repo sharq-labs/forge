@@ -649,6 +649,38 @@ def test_the_battery_v3_raw_archive_skip_is_admitted_only_with_its_declared_reas
         assert not sa.classify(other, suite=suite, statuses={}, protected=(frozenset(), frozenset()))["admitted"]
 
 
+GENESIS_V04_ROOT = "needs Linux, root and a tree readable by uid 65534"
+GENESIS_V04_SKIPS = [
+    ("tests/genesis_lite/test_v04_isolation.py", "test_hidden_secrets_cannot_be_read_or_listed", GENESIS_V04_ROOT),
+    ("tests/genesis_lite/test_v04_isolation.py", "test_no_state_passes_from_one_proposer_process_to_the_next",
+     GENESIS_V04_ROOT),
+    ("tests/genesis_lite/test_v04_pilot.py", "test_a_development_run_commits_before_running_and_never_writes_the_root",
+     GENESIS_V04_ROOT),
+    ("tests/genesis_lite/test_v04_arms.py", "test_a_missing_library_raises_instead_of_earning_a_refusal",
+     "PySR installed: the failure path needs it absent"),
+]
+
+
+@pytest.mark.parametrize("suite", ["junit_fast", "junit_scientific"])
+@pytest.mark.parametrize("path,test,reason", GENESIS_V04_SKIPS)
+def test_the_genesis_v04_environment_skips_are_admitted_only_by_exact_test_and_reason(suite, path, test, reason):
+    """Owner, 2026-10-30: the isolated-proposer tests need root on /opt, and the PySR-absent path needs PySR missing."""
+    def skip(reason, test=test, path=path):
+        return sa.ObservedSkip(f"{path}::{test}", path, test, reason, f"{path}:99")
+
+    def admitted(observed):
+        return sa.classify(observed, suite=suite, statuses={}, protected=(frozenset(), frozenset()))
+
+    row = admitted(skip(reason))
+    assert row["admitted"] and row["classification"] == sa.DECLARED_CONDITIONAL_SKIP, row
+    for other in (skip(reason + "."), skip(reason, "test_other"),
+                  skip(reason, path="tests/genesis_lite/test_v04_decision.py")):
+        assert not admitted(other)["admitted"]
+    # the isolation module's pure tests never skip on the root reason
+    assert not admitted(skip(GENESIS_V04_ROOT, "test_hiding_the_code_tree_itself_refuses",
+                             "tests/genesis_lite/test_v04_isolation.py"))["admitted"]
+
+
 @pytest.mark.parametrize("path", ["src/engcore/claims/test_x.py", "benchmarks/", "tools/test_x.py"])
 def test_a_rule_outside_the_collected_test_trees_is_still_refused(path):
     rule = sa.SkipRule("x", path, "descendant", sa.DECLARED_CONDITIONAL_SKIP, tests=("t",), why="x")

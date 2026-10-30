@@ -376,6 +376,33 @@ RULES: tuple[SkipRule, ...] = (
                  "Zenodo 10637534 Expt 4/5, NASA PCoE), outside the repository and absent on hosts without the research "
                  "data. Only the rebuild from raw data and its static audit are lost; the module's other tests still "
                  "run. The test runs again wherever the data exists (owner, OD-3, 2026-10-30)"),
+    SkipRule("genesis-v04-isolation-needs-root", "tests/genesis_lite/test_v04_isolation.py",
+             "needs Linux, root and a tree readable by uid 65534", _C,
+             tests=("test_the_isolated_process_is_verified_from_outside",
+                    "test_hidden_secrets_cannot_be_read_or_listed",
+                    "test_the_hide_is_what_protects_it_positive_control",
+                    "test_no_outbound_network_and_no_visible_operator",
+                    "test_the_observe_relay_works_through_the_isolated_process",
+                    "test_a_campaign_runs_with_six_verified_processes_and_stays_valid",
+                    "test_no_state_passes_from_one_proposer_process_to_the_next"),
+             why="the OS-isolated proposer needs Linux namespaces, root to create them and a code tree under /opt that "
+                 "uid 65534 can read; the assurance clone is a non-root checkout under /home. Only these integration "
+                 "tests are lost: the module's pure command, hide and fail-closed tests still run. A skip here is never "
+                 "evidence of isolation; isolation is shown only by running them as root on the /opt deployment "
+                 "(owner, OD-3, 2026-10-30)"),
+    SkipRule("genesis-v04-pilot-needs-root", "tests/genesis_lite/test_v04_pilot.py",
+             "needs Linux, root and a tree readable by uid 65534", _C,
+             tests=("test_a_development_run_commits_before_running_and_never_writes_the_root",),
+             why="the development run goes through the same OS-isolated proposer path (root, namespaces, a tree under "
+                 "/opt readable by uid 65534), absent in the non-root /home assurance clone. Only this run is lost; "
+                 "the module's other tests still run, and the skip is never evidence of isolation (owner, OD-3, "
+                 "2026-10-30)"),
+    SkipRule("genesis-v04-pysr-absent-path", "tests/genesis_lite/test_v04_arms.py",
+             "PySR installed: the failure path needs it absent", _C,
+             tests=("test_a_missing_library_raises_instead_of_earning_a_refusal",),
+             why="this test checks the pysr_units arm raises when PySR is missing, so it can only run where PySR is "
+                 "not installed; the assurance environment has PySR. The arm's other tests still run, and on hosts "
+                 "without PySR this test runs (owner, OD-3, 2026-10-30)"),
     # Not admitted: tests/test_blind_challenge_guards.py::test_importing_the_truth_layer_loads_no_runtime_module
     # used to skip whenever its pytest worker had already imported engcore -- in every gate. It now
     # runs its check in a fresh interpreter and never skips.
