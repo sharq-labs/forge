@@ -156,7 +156,7 @@ def test_workers_receive_only_their_campaign_seed_and_report_threads_in_force(tm
     pilot_v3.run_pilot(["always_refuse"], out=tmp_path, campaigns=1, presentations=("anonymous",), seeds=(0,), workers=2,
                        deadline_seconds=120.0, root=bytes(32))
     run = json.loads((tmp_path / "runs.jsonl").read_text().splitlines()[0])
-    assert run["threads_in_force"]["blas_max"] in (1, None)
+    assert set(run["threads_in_force"]) == {"os_threads", "thread_env", "torch"}
 
 
 def test_a_duplicated_arm_name_is_refused(tmp_path):
@@ -216,16 +216,25 @@ def test_the_estimate_states_its_scope():
 
 
 def test_the_parent_environment_is_restored_and_workers_run_one_blas_thread(tmp_path, monkeypatch):
-    import importlib.util
     import os
+    import sys
     from benchmarks.genesis_lite import pilot_v3
     monkeypatch.setenv("OMP_NUM_THREADS", "7")
     pilot_v3.run_pilot(["always_refuse"], out=tmp_path, campaigns=1, presentations=("anonymous",), seeds=(0,), workers=2,
                        deadline_seconds=120.0, root=bytes(32))
     assert os.environ["OMP_NUM_THREADS"] == "7"
     run = json.loads((tmp_path / "runs.jsonl").read_text().splitlines()[0])
-    if importlib.util.find_spec("threadpoolctl") is not None:
-        assert run["threads_in_force"]["blas_max"] == 1
+    threads = run["threads_in_force"]
+    assert threads["thread_env"] == pilot_v3.THREAD_LIMITS          # what every BLAS read when it loaded
+    if sys.platform.startswith("linux"):
+        assert 1 <= threads["os_threads"] <= 3                       # one BLAS thread: no thread pool in the worker
+
+
+def test_the_pilot_measures_threads_without_an_undeclared_library():
+    """Mutation G19b uses threadpoolctl as the installed-but-undeclared package GUARD 19 must catch (2026-10-30)."""
+    import inspect
+    from benchmarks.genesis_lite import pilot_v3
+    assert "threadpoolctl" not in inspect.getsource(pilot_v3)
 
 
 def test_adapter_refusal_and_mind_refused_universes_are_counted_and_reported_apart():

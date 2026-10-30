@@ -109,15 +109,23 @@ def arm_available(name: str) -> bool:
     return availability_v3()[name]["status"] == "AVAILABLE_DEVELOPMENT"
 
 
-def _threads_in_force() -> dict[str, Any]:
-    """The numerical thread counts actually in force in this process (not the requested ones)."""
-    out: dict[str, Any] = {"blas_max": None, "torch": None}
+def _os_threads() -> int | None:
+    """Threads of this process as the kernel counts them (every BLAS or torch pool included); Linux only."""
     try:
-        from threadpoolctl import threadpool_info
-        counts = [int(lib.get("num_threads", 0)) for lib in threadpool_info()]
-        out["blas_max"] = max(counts) if counts else None
-    except Exception:  # noqa: BLE001 - recorded as unknown, never assumed
+        for line in pathlib.Path("/proc/self/status").read_text().splitlines():
+            if line.startswith("Threads:"):
+                return int(line.split()[1])
+    except (OSError, ValueError):
         pass
+    return None
+
+
+def _threads_in_force() -> dict[str, Any]:
+    """The thread counts in force in this process: the kernel's thread count (not a requested limit), the thread
+    variables in this process's own environment (what each BLAS read when it loaded), and torch's own count. No
+    library-level BLAS reader is a dependency: mutation G19b keeps that package undeclared on purpose (2026-10-30)."""
+    out: dict[str, Any] = {"os_threads": _os_threads(), "thread_env": {k: os.environ.get(k) for k in THREAD_LIMITS},
+                           "torch": None}
     if "torch" in sys.modules:
         out["torch"] = sys.modules["torch"].get_num_threads()
     return out
