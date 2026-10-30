@@ -137,17 +137,21 @@ def formal_identity_check(identity: str) -> str:
     return ""
 
 
-def _work(task: Task, seed_hex: str, tier: str, hidden: tuple[str, ...], exposed: tuple[str, ...]) -> dict[str, Any]:
+def _work(task: Task, seed_hex: str, tier: str, hidden: tuple[str, ...], exposed: tuple[str, ...],
+          env: Mapping[str, str]) -> dict[str, Any]:
     spec, _role = ROSTER[task.arm]
     rec = run_one_v4(task.arm, spec, master_seed=bytes.fromhex(seed_hex), campaign_id=campaign_id(tier, task),
-                     presentation=task.presentation, seed=task.seed, hidden=hidden, exposed=exposed)
+                     presentation=task.presentation, seed=task.seed, hidden=hidden, exposed=exposed, env=env)
     rec["task"] = asdict(task)
     return rec
 
 
 def run(arms: Sequence[str], *, root_file: str, out: str, tier: str = "development", campaigns: int = 1,
         presentations: Iterable[str] = PRESENTATIONS, seeds: Iterable[int] = (0,), workers: int = 4,
-        deadline_seconds: float = 2700.0) -> dict[str, Any]:
+        deadline_seconds: float = 2700.0, env: Mapping[str, str] | None = None,
+        expose: Sequence[str] = ()) -> dict[str, Any]:
+    """``env`` reaches every proposer process (e.g. a read-only Julia depot for PySR); ``expose`` binds extra
+    directories under /opt back read-only. Both are recorded in the commitment."""
     if tier not in ("development", "formal"):
         raise ValueError("tier is development or formal")
     ok, why = support()
@@ -164,12 +168,15 @@ def run(arms: Sequence[str], *, root_file: str, out: str, tier: str = "developme
         refusal = ("the tree is not clean" if dirty else "") or formal_identity_check(identity)
         if refusal:
             raise RuntimeError(f"formal tier refused: {refusal}")
-    exposed = exposures()
+    exposed = exposures(expose)
+    env = dict(env or {})
     hidden = hidden_paths([pathlib.Path(root_file).resolve().parent, out_dir], exposed=exposed)
     tasks = plan(arms, campaigns=campaigns, presentations=presentations, seeds=seeds)
     commitment = {"root_commitment_sha256": hashlib.sha256(root).hexdigest(), "tier": tier, "git_head": head,
                   "tree_dirty": dirty, "development_identity_v4": identity, "v0_2_pin_changed": changed,
-                  "planned_campaigns": len(tasks), "started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
+                  "custody": "SELF_ADMINISTERED", "planned_campaigns": len(tasks), "tasks": [asdict(t) for t in tasks],
+                  "proposer_env": env, "exposed": list(exposed), "hidden": list(hidden),
+                  "started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     (out_dir / "commitment.json").write_text(json.dumps(commitment, indent=1, sort_keys=True))
     manifest = environment_manifest(hidden, exposed)
     text = json.dumps(manifest, indent=1, sort_keys=True)
@@ -189,7 +196,7 @@ def run(arms: Sequence[str], *, root_file: str, out: str, tier: str = "developme
         return master_seed(root, task.campaign, task.presentation, task.seed).hex()
 
     with cf.ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn")) as ex:
-        futures = {ex.submit(_work, t, seed_hex(t), tier, hidden, exposed): t for t in tasks}
+        futures = {ex.submit(_work, t, seed_hex(t), tier, hidden, exposed, env): t for t in tasks}
         try:
             for f in cf.as_completed(futures, timeout=deadline_seconds):
                 t = futures[f]
@@ -218,9 +225,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     ap.add_argument("--seeds", nargs="+", type=int, default=[0])
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--deadline-seconds", type=float, default=2700.0)
+    ap.add_argument("--env", nargs="*", default=[], help="KEY=VALUE pairs passed to every proposer process")
+    ap.add_argument("--expose", nargs="*", default=[], help="extra directories under /opt bound back read-only")
     a = ap.parse_args(argv)
+    env = dict(kv.split("=", 1) for kv in a.env)
     summary = run(a.arms, root_file=a.root_file, out=a.out, tier=a.tier, campaigns=a.campaigns,
-                  presentations=a.presentations, seeds=a.seeds, workers=a.workers, deadline_seconds=a.deadline_seconds)
+                  presentations=a.presentations, seeds=a.seeds, workers=a.workers, deadline_seconds=a.deadline_seconds,
+                  env=env, expose=a.expose)
     print(json.dumps({k: summary[k] for k in ("completed", "not_run_at_deadline", "elapsed_seconds", "runs_sha256")}))
     return 0
 

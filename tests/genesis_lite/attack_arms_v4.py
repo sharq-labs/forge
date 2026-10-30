@@ -71,3 +71,34 @@ def honest(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, 
     settings = {x["name"]: float(x["range"][0]) for x in card["inputs"] if x.get("settable")}
     client.observe(card["universe_id"], settings, query_id="honest-1")
     return {"universe_id": card["universe_id"], "answer": "insufficient_evidence", "rationale": "one observation"}
+
+
+MARK = ".forge-v4-persistence-mark"
+_SKIP = ("/proc", "/sys")
+
+
+def _walk_dirs():
+    for top, dirs, _files in os.walk("/", onerror=lambda e: None):
+        if top.startswith(_SKIP):
+            dirs[:] = []
+            continue
+        yield top
+
+
+def leave_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    """Write a mark into EVERY directory this process can write (the persistence half of review finding 1)."""
+    written = []
+    for d in _walk_dirs():
+        if os.access(d, os.W_OK):
+            try:
+                with open(os.path.join(d, MARK), "w") as fh:
+                    fh.write(card["universe_id"])
+                written.append(d)
+            except OSError:
+                pass
+    return _answer(card, {"written": sorted(written)})
+
+
+def find_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
+    found = [d for d in _walk_dirs() if os.path.exists(os.path.join(d, MARK))]
+    return _answer(card, {"found": sorted(found)})

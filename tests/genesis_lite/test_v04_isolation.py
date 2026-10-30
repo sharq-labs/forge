@@ -97,12 +97,15 @@ def test_the_whitelist_stages_exposures_before_covering_opt_and_binds_them_back_
 def test_outside_verification_fails_closed_on_any_missing_property():
     good = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": {"CapEff": 0},
             "no_new_privs": True, "private_namespaces": {"mnt": True, "pid": True}, "hidden": {"/home": True},
-            "private_tmp": True, "whitelist_covered": True, "exposed_read_only": {"/opt/code": True}}
+            "private_tmp": True, "whitelist_covered": True, "exposed_read_only": {"/opt/code": True},
+            "private_writable": {"/tmp": True, "/dev/shm": True}, "shared_state_covered": {"/run": True}}
     assert ih.verified(good)
     for key, bad in (("uid", [0] * 4), ("groups", [27]), ("caps", {"CapEff": 1}), ("no_new_privs", False),
                      ("private_namespaces", {"mnt": True, "pid": False}), ("hidden", {"/home": False}),
                      ("hidden", {}), ("private_tmp", False), ("inspected", False), ("whitelist_covered", False),
-                     ("exposed_read_only", {}), ("exposed_read_only", {"/opt/code": False})):
+                     ("exposed_read_only", {}), ("exposed_read_only", {"/opt/code": False}),
+                     ("private_writable", {}), ("private_writable", {"/dev/shm": False}),
+                     ("shared_state_covered", {"/run": False})):
         assert not ih.verified({**good, key: bad}), key
 
 
@@ -217,3 +220,27 @@ def test_a_campaign_runs_with_six_verified_processes_and_stays_valid():
     assert rec["status"] == "VALID", rec.get("reasons")
     assert len(rec["isolation_checks"]) == 6 and all(ih.verified(c) for c in rec["isolation_checks"])
     assert rec["isolation"] == ih.ISOLATION_LABEL
+
+
+
+def test_an_infrastructure_failure_is_recorded_so_the_run_becomes_invalid(monkeypatch):
+    # finding 5: a launch failure must not reach the campaign as an arm's -1; it is recorded for INVALID_BENCHMARK
+    def boom(*a, **k):
+        raise ih.IsolationUnavailable("no namespaces here")
+    monkeypatch.setattr(ih, "IsolatedProposerHost", boom)
+    checks = []
+    arm = ih.per_universe_arm("careful", (), checks)
+    with pytest.raises(ih.IsolationUnavailable):
+        arm(CARD, _Client(), seed=0)
+    assert checks and "infrastructure_failure" in checks[0] and not ih.verified(checks[0])
+
+
+@integration
+def test_no_state_passes_from_one_proposer_process_to_the_next():
+    # finding 1: process A writes a mark into every directory it can write; process B, a later universe, finds none
+    first, outside_a = _attack("leave_marks", ih.hidden_paths())
+    assert ih.verified(outside_a)
+    found, _ = _attack("find_marks", ih.hidden_paths())
+    assert found["found"] == [], found
+    writable = set(first["written"])
+    assert writable <= {"/tmp", "/dev/shm", "/dev/mqueue"} | {w for w in writable if w.startswith(("/tmp/", "/dev/shm/"))}, writable

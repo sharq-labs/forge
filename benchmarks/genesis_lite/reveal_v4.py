@@ -18,6 +18,7 @@ from collections.abc import Iterable, Mapping
 from typing import Any
 
 from .analysis_v4 import LAW_KINDS
+from .evaluator import score_v3
 from .expressibility_v3 import expressibility, worlds
 from .pilot_v4 import Task, campaign_id, master_seed, read_root
 
@@ -37,7 +38,9 @@ def represented(records: Iterable[Mapping[str, Any]], root: bytes) -> dict[str, 
             if kinds.setdefault(uid, u["kind"]) != u["kind"]:
                 raise ValueError(f"records disagree on the kind of universe {uid}")
             if u["kind"] in LAW_KINDS:
-                in_family[uid] = bool(u["truth_in_searched_family"])
+                flag = bool(u["truth_in_searched_family"])
+                if in_family.setdefault(uid, flag) != flag:
+                    raise ValueError(f"records disagree whether universe {uid}'s truth is in the monomial family")
     expr: dict[str, str] = {}
     for cid, task in world_sets.values():
         for w in worlds(master_seed(root, task.campaign, task.presentation, task.seed), cid):
@@ -45,12 +48,16 @@ def represented(records: Iterable[Mapping[str, Any]], root: bytes) -> dict[str, 
                 if w.kind.value != kinds[w.universe_id]:
                     raise ValueError(f"re-derived world {w.universe_id} is {w.kind.value}; the run says {kinds[w.universe_id]}")
                 if w.kind.value in LAW_KINDS:
+                    # recomputed from the re-derived world, never trusted from a record (review finding 8)
+                    if w.law is None or score_v3.v2.in_monomial_family(w.law) != in_family[w.universe_id]:
+                        raise ValueError(f"universe {w.universe_id}: the record's monomial-family flag is not the world's")
                     expr[w.universe_id] = expressibility(w)
     missing = sorted(set(in_family) - set(expr))
     if missing:
         raise ValueError(f"{len(missing)} law-kind universes were not re-derived from this root: wrong root or records")
     verdicts = {u: in_family[u] or expr[u] == "EXPRESSIBLE_BY_FIT" for u in sorted(in_family)}
-    return {"schema": "forge.genesis_lite.reveal/4", "represented": verdicts, "expressibility": dict(sorted(expr.items())),
+    return {"schema": "forge.genesis_lite.reveal/4", "root_commitment_sha256": hashlib.sha256(root).hexdigest(),
+            "represented": verdicts, "expressibility": dict(sorted(expr.items())),
             "monomial_family": dict(sorted(in_family.items())),
             "rule": "represented = monomial family OR five-shape grammar EXPRESSIBLE_BY_FIT"}
 
@@ -60,9 +67,14 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--runs", required=True)
     ap.add_argument("--root-file", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--commitment", required=True, help="the run's commitment.json, written before the run")
     a = ap.parse_args(argv)
+    root = read_root(a.root_file)
+    committed = json.loads(pathlib.Path(a.commitment).read_text())["root_commitment_sha256"]
+    if hashlib.sha256(root).hexdigest() != committed:
+        raise SystemExit("the root file does not match the run's commitment")
     runs = pathlib.Path(a.runs).read_text().splitlines()
-    out = represented([json.loads(line) for line in runs if line.strip()], read_root(a.root_file))
+    out = represented([json.loads(line) for line in runs if line.strip()], root)
     out["runs_sha256"] = hashlib.sha256(pathlib.Path(a.runs).read_bytes()).hexdigest()
     pathlib.Path(a.out).write_text(json.dumps(out, indent=1, sort_keys=True))
     print(json.dumps({"law_universes": len(out["represented"]),

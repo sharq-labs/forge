@@ -7,9 +7,13 @@ v0.3 (``analysis_v3.py``) has valid inference but none of the structure. v0.4 jo
 * UNIT: a world set = one campaign (one hidden world of every kind) under one (presentation, seed) master root; the
   primary endpoint is the six-kind credit sum (in [-6, 6]); a paired difference lies in [-12, 12].
 * INFERENCE (D9): the empirical-Bernstein bound of Maurer & Pontil (2009, Theorem 4) on independent-unit paired
-  differences. It is finite-sample valid for i.i.d. bounded units and adapts to the observed variance; the
+  differences. It is finite-sample valid for independent identically distributed bounded units (independent but
+  non-identical presentations: conservative per the 2026-10-30 review, not formally proven here) and adapts to the
+  observed variance; the
   bootstrap tail and the sign-flip test are not used (the sign-flip test is anti-conservative under a skewed null:
-  docs/work/proposals/BLINDFOLD_V04_POWER_AND_INFERENCE_DRAFT.md).
+  docs/work/proposals/BLINDFOLD_V04_POWER_AND_INFERENCE_DRAFT.md). Units must be INDEPENDENT (fresh worlds per
+  (campaign, presentation, seed) and a stateless proposer per universe); presentations need not be identically
+  distributed.
 * COMPARATORS: every registered non-adversarial arm must have a VALID record on every world set of the grid. The
   superiority claim needs, against the pre-declared family, a Holm-adjusted rejection (``multiplicity="holm_family"``,
   the owner's D9 choice), or, as an alternative put to the owner, an intersection-union test at alpha against EVERY
@@ -119,7 +123,7 @@ def _bound(n: int, mean: float, var: float, delta: float, value_range: float) ->
 
 
 def bernstein_lower_bound(values: Sequence[float], delta: float, value_range: float) -> float:
-    """A one-sided (1 - delta) lower confidence bound on E[X] for i.i.d. X of known range ``value_range``:
+    """A one-sided (1 - delta) lower confidence bound on E[X] for independent X of known range ``value_range``:
     mean - sqrt(2 V ln(2/delta) / n) - 7 R ln(2/delta) / (3 (n - 1)), V the unbiased sample variance."""
     if not (isinstance(delta, (int, float)) and math.isfinite(delta) and 0 < delta < 1):
         raise AnalysisRefused("delta must lie strictly between zero and one")
@@ -221,6 +225,9 @@ def decision(records: Iterable[Mapping[str, Any]], candidate: str, roles: Mappin
         raise AnalysisRefused(f"multiplicity must be one of {MULTIPLICITY}")
     rows = [dict(r) for r in records]
     grid = frozenset(grid)
+    presentations = {w[0] for w in grid}
+    if presentations != set(PRESENTATIONS):
+        raise AnalysisRefused(f"the grid must cover exactly the presentations {PRESENTATIONS}: {sorted(presentations)}")
     if candidate in roles:
         raise AnalysisRefused(f"candidate {candidate!r} takes a registered arm's name")
     strangers = sorted({r["arm"] for r in rows} - set(roles) - {candidate})
@@ -264,17 +271,24 @@ def decision(records: Iterable[Mapping[str, Any]], candidate: str, roles: Mappin
         for arm in tests:
             tests[arm]["reject"] = tests[arm]["p_value"] <= ALPHA
     strongest = max(required, key=lambda a: (statistics.fmean(sum(on[a][w].values()) for w in shared), a))
+    # Non-inferiority is an intersection-union test against EVERY non-adversarial arm (review finding 2): a single
+    # data-chosen reference arm would let a candidate correlated with it pass while losing to an equally strong arm.
     presentation_ok = {}
     for p in PRESENTATIONS:
         subset = [w for w in shared if w[0] == p]
-        t = _test(primary(strongest, subset), UNIT_RANGE, margin=PRESENTATION_MARGIN)
-        presentation_ok[p] = {**t, "ok": t["lower_bound"] > -PRESENTATION_MARGIN}
+        per_arm = {a: _test(primary(a, subset), UNIT_RANGE, margin=PRESENTATION_MARGIN) for a in required}
+        worst = min(per_arm, key=lambda a: (per_arm[a]["lower_bound"], a))
+        presentation_ok[p] = {**per_arm[worst], "worst_arm": worst,
+                              "ok": all(t["lower_bound"] > -PRESENTATION_MARGIN for t in per_arm.values())}
     kind_ok = {}
     for kind in KINDS:
-        ref = max(required, key=lambda a: (statistics.fmean(on[a][w][kind] for w in shared), a))
-        diffs = [capped(on[candidate][w], on[ref][w], w, off_family, limited)[kind] - on[ref][w][kind] for w in shared]
-        t = _test(diffs, KIND_RANGE, margin=NONINFERIORITY_MARGIN)
-        kind_ok[kind] = {**t, "reference_arm": ref, "ok": t["lower_bound"] > -NONINFERIORITY_MARGIN}
+        per_arm = {}
+        for a in required:
+            diffs = [capped(on[candidate][w], on[a][w], w, off_family, limited)[kind] - on[a][w][kind] for w in shared]
+            per_arm[a] = _test(diffs, KIND_RANGE, margin=NONINFERIORITY_MARGIN)
+        worst = min(per_arm, key=lambda a: (per_arm[a]["lower_bound"], a))
+        kind_ok[kind] = {**per_arm[worst], "worst_arm": worst,
+                         "ok": all(t["lower_bound"] > -NONINFERIORITY_MARGIN for t in per_arm.values())}
     result.update({
         "world_sets": len(shared), "strongest_baseline": strongest, "superiority": tests,
         "presentation_noninferiority": presentation_ok, "kind_noninferiority": kind_ok,

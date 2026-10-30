@@ -20,13 +20,17 @@ from . import harness_v3 as h3
 from .isolated_host import ISOLATION_LABEL, per_universe_arm, verified
 
 HERE = pathlib.Path(__file__).resolve().parent
-V4_FILES = ("analysis_v4.py", "arms_v4.py", "harness_v4.py", "isolated_host.py", "pilot_v4.py", "proposer_host.py")
+V4_FILES = ("analysis_v4.py", "arms_v4.py", "decide_v4.py", "expressibility_v3.py", "harness_v4.py", "isolated_host.py",
+            "pilot_v4.py", "proposer_host.py", "reveal_v4.py")
+#: substrate the v0.4 files rely on outside the v0.3 closure (outside verification constants and /proc walk)
+SUBSTRATE_V4_FILES = ("src/engcore/blindfold/isolation.py",)
 KINDS = h2.KINDS
 
 
 def development_identity_v4() -> tuple[str, list[str]]:
     v3_identity, changed = h3.development_identity()
     files = {name: hashlib.sha256((HERE / name).read_bytes()).hexdigest() for name in V4_FILES}
+    files.update({name: hashlib.sha256((HERE.parents[1] / name).read_bytes()).hexdigest() for name in SUBSTRATE_V4_FILES})
     return h2._digest({"v0_3_development_identity": v3_identity, "v0_4_files": files}), changed
 
 
@@ -60,4 +64,4 @@ def run_one_v4(arm_name: str, spec: str, *, master_seed: bytes, campaign_id: str
     return out
 
 
-__all__ = ["V4_FILES", "development_identity_v4", "run_one_v4"]
+__all__ = ["SUBSTRATE_V4_FILES", "V4_FILES", "development_identity_v4", "run_one_v4"]

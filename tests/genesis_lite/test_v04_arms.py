@@ -47,7 +47,7 @@ def test_random_grammar_draws_few_structures_from_the_same_grammar(monkeypatch):
     monkeypatch.setattr(arms_v4, "select", spy)
     out = arms_v4.random_grammar(CARD, World(), seed=3)
     assert out["answer"] in {"law", "insufficient_evidence", "no_law", "confounded"}
-    every = {s.key for s in enumerate_structures(2, max_structures=10**9)[0]}
+    every = {s.key for s in enumerate_structures(2)[0]}             # the capped set grammar_enumeration fits
     assert len(seen["structures"]) == arms_v4.RANDOM_DRAWS == seen["generated"]
     assert {s.key for s in seen["structures"]} <= every
 
@@ -114,3 +114,20 @@ def test_the_log_space_law_is_exp_of_the_equation():
 def test_a_missing_library_raises_instead_of_earning_a_refusal():
     with pytest.raises(arms_v4.ArmFailure):
         arms_v4.pysr_units(CARD, World(), seed=0)
+
+
+
+def test_the_v04_identity_covers_every_file_that_decides_the_cap_and_the_verification():
+    from benchmarks.genesis_lite.harness_v4 import SUBSTRATE_V4_FILES, V4_FILES
+    assert {"reveal_v4.py", "expressibility_v3.py", "decide_v4.py", "analysis_v4.py", "isolated_host.py"} <= set(V4_FILES)
+    assert "src/engcore/blindfold/isolation.py" in SUBSTRATE_V4_FILES
+
+
+def test_the_reveal_refuses_records_that_disagree_on_the_monomial_family():
+    from benchmarks.genesis_lite.reveal_v4 import represented
+    rec = {"status": "VALID", "arm": "a", "campaign_id": "gl-v04-development-0-0-anonymous",
+           "task": {"campaign": 0, "presentation": "anonymous", "seed": 0},
+           "universes": [{"universe_id": "u1", "kind": "discoverable", "truth_in_searched_family": True}]}
+    other = {**rec, "arm": "b", "universes": [{**rec["universes"][0], "truth_in_searched_family": False}]}
+    with pytest.raises(ValueError, match="disagree"):
+        represented([rec, other], b"\x00" * 32)

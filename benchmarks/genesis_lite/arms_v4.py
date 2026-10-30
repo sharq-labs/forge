@@ -26,7 +26,6 @@ import hashlib
 import json
 import math
 import random
-import sys
 import tempfile
 from typing import Any, Callable, Mapping
 
@@ -71,7 +70,7 @@ def random_grammar(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> di
     if sigma is None or not sigma > 0:
         return _refuse(card, "no replicate-noise estimate: the grammar's likelihood is not defined")
     train, _, _, _ = arms._split(rows, replicate)
-    every, _ = enumerate_structures(len(basis.groups), max_structures=sys.maxsize)
+    every, _ = enumerate_structures(len(basis.groups))           # the same capped set grammar_enumeration fits
     drawn = random.Random(f"random_grammar:draw:{seed}:{uid}").sample(every, min(RANDOM_DRAWS, len(every)))
     L, z = design_matrix(basis, train, out)
     bound = hashlib.sha256(json.dumps([uid, seed, train], sort_keys=True).encode()).hexdigest()[:24]
@@ -165,7 +164,7 @@ def pysr_units(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[s
                                   random_state=_int_seed("pysr_units", seed, uid), progress=False, verbosity=0,
                                   output_directory=scratch)
             model.fit(np.array([[r[n] for n in names] for r in fit_rows]), np.log([r[out] for r in fit_rows]),
-                      variable_names=list(aliases), X_units=units)
+                      variable_names=list(aliases), X_units=units, y_units="1")    # ln y is dimensionless
             front = [(int(row["complexity"]), sympy.sympify(row["sympy_format"]))
                      for _, row in model.equations_.iterrows()]
     except Exception as exc:  # noqa: BLE001 - every library failure must score inadmissible, never a refusal (D14)
@@ -182,15 +181,17 @@ def pysr_units(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[s
         if np.all(np.isfinite(pred)):
             scored.append((float(np.mean((pred - target) ** 2)), complexity, eq))
     if not scored:
-        return _refuse(card, "no Pareto-front equation is finite on the validation rows")
+        raise ArmFailure("no Pareto-front equation is finite on the validation rows")    # a method failure (D14)
     best = min(s[0] for s in scored)
     mse, complexity, equation = min((s for s in scored if s[0] <= best * (1 + OCCAM_SLACK) + 1e-300),
                                     key=lambda s: (s[1], s[0]))
     law = _log_space_law(equation, aliases)
-    consistent = _dimension(equation, dims, len(bases))
+    consistent = _dimension(equation, dims, len(bases)) == (0.0,) * len(bases)
     why = (f"PySR (units passed; chosen complexity {complexity} of {len(front)} on the Pareto front, validation mse "
-           f"{mse:.3g}; dimensionally consistent with dimensionless constants: {consistent == (0.0,) * len(bases)})")
-    return gate(card, rows, replicate, law, max(1, _constants(equation)), why)
+           f"{mse:.3g})")
+    out = dict(gate(card, rows, replicate, law, max(1, _constants(equation)), why))
+    out["dimensionally_consistent"] = consistent             # EXC-5: recorded per universe, never a scoring input
+    return out
 
 
 #: name -> (callable, family, stochastic, role), the arms.ARMS layout

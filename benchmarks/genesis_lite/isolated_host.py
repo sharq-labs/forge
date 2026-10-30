@@ -11,6 +11,9 @@ stdin/stdout pipes -- the operator keeps the escrow, the presentation and the qu
   explicitly exposed directories bound back READ-ONLY (another checkout's results under /opt stay invisible);
 * an empty mode-000 tmpfs over every HIDDEN path (by default /home, /root, /mnt, /var/tmp, /srv, plus every
   ``pilot_results`` directory of the tree and the operator's extra paths), and a fresh private /tmp;
+* PRIVATE instances of every location a process may write and a later one read (review finding 1): /tmp and
+  /dev/shm as fresh tmpfs, /dev/mqueue as a fresh mqueue of the new ipc namespace, /run and /var/crash covered; so no
+  state passes from one proposer process to the next (D11, and the unit independence D9 relies on);
 * uid/gid 65534 with cleared groups, empty inheritable and bounding capability sets and no_new_privs (``setpriv``);
 * an environment of only PATH, HOME=/tmp, the thread limits and the explicitly passed variables.
 
@@ -47,6 +50,10 @@ from . import harness as h2
 ISOLATION_LABEL = "os_isolated_per_universe"
 DEFAULT_HIDDEN = ("/home", "/root", "/mnt", "/var/tmp", "/srv")
 WHITELIST_ROOT = "/opt"
+#: covered (mode 000) when present: shared writable state a proposer could leave for the next one
+SHARED_STATE = ("/run", "/var/crash")
+#: fresh private instances, writable by the proposer, gone with its mount namespace
+PRIVATE_WRITABLE = ("/tmp", "/dev/shm")
 THREAD_ENV = {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"}
 _HOST = pathlib.Path(__file__).resolve().parent / "proposer_host.py"
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -128,7 +135,9 @@ def command(hidden: Sequence[str], env: Mapping[str, str], python: str = sys.exe
     for i, e in enumerate(exposed):
         steps += [f"mkdir -p {q(e)}", f"mount --bind /mnt/fg{i} {q(e)}", f"mount -o remount,bind,ro {q(e)}"]
     steps += [f"mount -t tmpfs -o size=64k,mode=000 tmpfs {q(p)}" for p in hidden]
-    steps += ["mount -t tmpfs -o size=1g,mode=1777 tmpfs /tmp", "cd /tmp"]
+    steps += [f"if [ -d {p} ]; then mount -t tmpfs -o size=64k,mode=000 tmpfs {p}; fi" for p in SHARED_STATE]
+    steps += ["mount -t tmpfs -o size=1g,mode=1777 tmpfs /tmp", "mount -t tmpfs -o size=256m,mode=1777 tmpfs /dev/shm",
+              "if [ -d /dev/mqueue ]; then mount -t mqueue mqueue /dev/mqueue; fi", "cd /tmp"]
     clean = " ".join(q(f"{k}={v}") for k, v in sorted({"PATH": "/usr/bin:/bin", "HOME": "/tmp", **THREAD_ENV,
                                                        **dict(env)}.items()))
     inner = " && ".join(steps) + (
@@ -153,9 +162,17 @@ def inspect(pid: int, hidden: Sequence[str], exposed: Sequence[str] = ()) -> dic
     mounts = [ln.split() for ln in open(f"/proc/{pid}/mountinfo").read().splitlines()]
     tmpfs = {m[4] for m in mounts if "-" in m and m[m.index("-") + 1] == "tmpfs"}
     read_only = {m[4] for m in mounts if len(m) > 5 and m[5].split(",")[0] == "ro"}
+    # a private instance has a device id the operator's own namespace does not have at that path
+    theirs = {m[4]: m[2] for m in mounts if len(m) > 4}
+    ours = {m[4]: m[2] for m in (ln.split() for ln in open("/proc/self/mountinfo").read().splitlines()) if len(m) > 4}
+    fresh = {path: path in theirs and theirs[path] != ours.get(path) for path in PRIVATE_WRITABLE}
+    if os.path.isdir("/dev/mqueue"):
+        fresh["/dev/mqueue"] = "/dev/mqueue" in theirs and theirs["/dev/mqueue"] != ours.get("/dev/mqueue")
+    shared = {path: path in tmpfs for path in SHARED_STATE if os.path.isdir(path)}
     return {"inspected": True, "uid": ids("Uid"), "gid": ids("Gid"), "groups": ids("Groups"), "caps": caps,
             "no_new_privs": status.get("NoNewPrivs", "").strip() == "1", "private_namespaces": ns,
             "hidden": {p: p in tmpfs for p in hidden}, "private_tmp": "/tmp" in tmpfs,
+            "private_writable": fresh, "shared_state_covered": shared,
             "whitelist_covered": WHITELIST_ROOT in tmpfs, "exposed_read_only": {e: e in read_only for e in exposed}}
 
 
@@ -164,7 +181,8 @@ def verified(o: Mapping[str, Any]) -> bool:
                 and not o["groups"] and not any(o["caps"].values()) and o["no_new_privs"]
                 and all(o["private_namespaces"].values()) and o["hidden"] and all(o["hidden"].values())
                 and o["private_tmp"] and o.get("whitelist_covered") is True and bool(o.get("exposed_read_only"))
-                and all(o["exposed_read_only"].values()))
+                and all(o["exposed_read_only"].values()) and bool(o.get("private_writable"))
+                and all(o["private_writable"].values()) and all(o.get("shared_state_covered", {"": False}).values()))
 
 
 class IsolatedProposerHost(h2.ProposerHost):
@@ -228,10 +246,21 @@ def per_universe_arm(spec: str, hidden: Sequence[str], checks: list[dict[str, An
     """An arm callable for ``harness_v3._run_v3``: a fresh verified isolated process for every universe. Each
     process's outside verification is appended to ``checks`` (the run record keeps them)."""
     def arm(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> Mapping[str, Any]:
-        host = IsolatedProposerHost(hidden, env=env, timeout=timeout, exposed=exposed)
+        # An INFRASTRUCTURE failure (the launch, the outside verification, a dead or silent process) is recorded so
+        # the run becomes INVALID_BENCHMARK; only the arm's own reported error is a method failure (inadmissible).
+        try:
+            host = IsolatedProposerHost(hidden, env=env, timeout=timeout, exposed=exposed)
+        except Exception as exc:
+            checks.append({"universe_id": card["universe_id"], "infrastructure_failure": f"{type(exc).__name__}: {exc}"[:400]})
+            raise
         try:
             checks.append({"universe_id": card["universe_id"], **host.outside})
-            return host.propose(spec, card, seed, client)
+            try:
+                return host.propose(spec, card, seed, client)
+            except RuntimeError as exc:
+                if not str(exc).startswith("the proposer failed:"):
+                    checks.append({"universe_id": card["universe_id"], "infrastructure_failure": str(exc)[:400]})
+                raise
         finally:
             host.close()
     return arm

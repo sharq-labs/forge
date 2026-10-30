@@ -231,3 +231,37 @@ def test_strata_are_descriptive_and_separate_out_of_family_credit():
     cells = out["arms"]["mind"]
     assert cells["representation:out_of_family|kind:discoverable"]["n"] == 1
     assert "region:box|kind:discoverable" in cells
+
+
+# ----------------------------------------------------------------------------- review 2026-10-30
+
+
+def test_noninferiority_is_tested_against_every_arm_not_a_data_chosen_one():
+    # finding 2: careful and grammar tie on no_solution (mean 0); the candidate copies space_filling exactly, which a
+    # single max-mean reference (ties broken by name) would pick; against careful its differences are +-2 per unit
+    rows = []
+    for i, ws in enumerate(sorted(GRID)):
+        flip = 1.0 if i % 2 else -1.0
+        for arm, role in ROLES.items():
+            credits = dict(FLOOR) if role != "competence" else dict(BASE)
+            if role == "competence":
+                credits["no_solution"] = -flip if arm == "careful" else flip
+            rows.append(record(arm, ws, credits))
+        rows.append(record("mind", ws, {**BETTER, "no_solution": flip}))
+    result = a4.decision(rows, "mind", ROLES, everything_represented(), GRID, multiplicity="iut_all")
+    assert result["kind_noninferiority"]["no_solution"]["ok"] is False
+    assert result["kind_noninferiority"]["no_solution"]["worst_arm"] == "careful"
+    assert result["lift_claimed"] is False
+
+
+@pytest.mark.parametrize("grid", [frozenset(w for w in GRID if w[0] != "trap"),
+                                  GRID | {("upside_down", "c0", 0)}])
+def test_a_grid_with_a_missing_or_unknown_presentation_refuses(grid):
+    with pytest.raises(AnalysisRefused, match="presentations"):
+        a4.decision(field(grid=grid) + candidate(BETTER, grid=grid), "mind", ROLES, everything_represented(grid), grid)
+
+
+def test_the_representation_limited_cap_applies_inside_the_decision():
+    # grammar earns full credit on every no_solution world: that cell measures the representation, so a candidate's
+    # gain there (vs the floor arms) is capped at each comparator's credit and cannot help it
+    assert ("no_solution", "anonymous") in a4.representation_limited({w: BASE for w in GRID if w[0] == "anonymous"})
