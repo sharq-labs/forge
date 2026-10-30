@@ -11417,3 +11417,22 @@ v0_3-dev-grammar-2026-10-30b/README.md`. EXC-4 exit condition: pilot report, con
 closure is the owner's.
 
 EXC-4 CLOSED 2026-10-30 by the owner ("Close EXC-4"); recorded in ACTIVE_PLAN. No code change.
+
+## 2026-10-30 — owner "Install the libraries" (OD-3 skips): findings, OD-3 not rerun
+
+- pysr 2.7.2, pysindy 2.1.0, botorch 0.18.1 (juliacall 0.9.36, torch 2.15.0+cpu) were already installed in
+  `/home/dev_kaeem/forge-od3-b622af5e/.forge/venvs/3.11` (17:03) and `/3.12` (17:14), after the refusal, by the other
+  OD-3 session. Not reinstalled.
+- Executed (clean clone of `ea3cc473db0dff7f28382a43c25bec955d6cdb12`, those venvs, `-p no:cacheprovider -rs`):
+  `pytest tests/genesis_lite/test_v03_baseline_arms.py tests/genesis_lite/test_v03_baseline_arms_e2e.py
+  tests/genesis_lite/test_v03_budget_cap.py::test_the_contrasted_arms_keep_to_the_cap` -> 3.11: 16 passed; 3.12: 16 passed;
+  no skips. These cover the 18 v0.3 UNEXPECTED_SKIP entries of the refused run.
+- Root cause: `tools/certification/local_assurance.py` INSTALL is `.[dev,mcp,oracles]` (also every job in
+  `.github/workflows/recertify-hardened-core.yml`); the `genesis-baselines` extra is never installed, while pyproject
+  states those tests skip on a bare install by design, and skip admission has no rule for them. A fresh `prepare` would
+  reproduce the skips. Not changed: choosing between installing the extra in local + CI assurance (Julia download per
+  job) and a declared conditional skip rule is an owner decision.
+- Remaining blocker: `benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_bundle_rebuilds_byte_identically_and_static_audit_passes`
+  skips because the raw archives (FORGE_DATA_ROOT, D:/forge-data) are absent on this host; no library fixes it. The other
+  session drafted a skip rule for it and reverted it (its scratch `battery_undo.sh`); no reason is recorded. With this skip
+  open, an OD-3 rerun (about 3.5 h) would refuse again at `assurance_build`, so it was not started.
