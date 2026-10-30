@@ -384,7 +384,8 @@ RULES: tuple[SkipRule, ...] = (
                     "test_no_outbound_network_and_no_visible_operator",
                     "test_the_observe_relay_works_through_the_isolated_process",
                     "test_a_campaign_runs_with_six_verified_processes_and_stays_valid",
-                    "test_no_state_passes_from_one_proposer_process_to_the_next"),
+                    "test_no_state_passes_from_one_proposer_process_to_the_next",
+                    "test_a_proposer_cannot_create_a_nested_user_namespace"),
              why="the OS-isolated proposer needs Linux namespaces, root to create them and a code tree under /opt that "
                  "uid 65534 can read; the assurance clone is a non-root checkout under /home. Only these integration "
                  "tests are lost: the module's pure command, hide and fail-closed tests still run. A skip here is never "

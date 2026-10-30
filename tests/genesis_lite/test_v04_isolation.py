@@ -290,7 +290,10 @@ def test_a_proposer_cannot_create_a_nested_user_namespace():
 @integration
 def test_no_state_passes_from_one_proposer_process_to_the_next():
     # finding 1: process A writes a mark into every directory it can write and a key on its uid's kernel keyring
-    # (re-review M3); process B, a later universe of the same uid, finds none
+    # (re-review M3); process B, a later universe of the same uid, finds none. The launcher holds a session keyring,
+    # as under sudo or ssh, so a child that inherited it would share it (review 2026-10-31 M-a)
+    import ctypes
+    assert ctypes.CDLL(None).syscall(250, 1, b"forge-test-launcher-session") > 0    # KEYCTL_JOIN_SESSION_KEYRING
     first, outside_a = _attack("leave_marks", ih.hidden_paths())
     assert ih.verified(outside_a) and outside_a["private_namespaces"]["user"]
     assert {"keyring:@u", "keyring:@s"} <= set(first["written"])   # the keys were really left: the probe is live
