@@ -11458,3 +11458,37 @@ before the pilot result files existed, so it could not catch this; new committed
 record in the same commit. Fix: seven DERIVED/RECORDED_COMPUTE_RESULT records in
 `benchmarks/domain_real_data/CURRENT_PROVENANCE.json` (format of the earlier pilot records, producing commits
 `e5af5f55` / `a5c343f0`). `pytest benchmarks/domain_real_data/tests/test_domain_real_data.py` (Windows `.venv`) -> 14 passed.
+
+## 2026-10-30 — Blindfold Step 1 gap closure, Session A: A0, A3, A4 and the owner checkpoint
+
+Start `7d24c9485043ab31e49601c33a9334c1e6a44368` (another session had committed the SELF_ADMINISTERED custodian
+decision). An OD-3 `local_assurance run` on `921f8d26` was running in WSL (started 18:43), so no tier, pilot or
+measurement ran. Scope recorded in ACTIVE_PLAN, with EXC-5 copied in (D2).
+
+Executed (WSL Ubuntu 24.04, system `python3`, `nice -n 19`):
+- `python3 docs/work/proposals/power_from_pilot.py /home/dev_kaeem/exc4-evidence/runs-b.jsonl` -> exit 0. The input
+  SHA-256 `8f72b352...9288588` equals the recorded `runs.jsonl.sha256`. Unit = one campaign (6 universes). All 720
+  universe ids per arm were distinct, so n = 120 independent units. Formal plan in code: 2400 units per arm. Median
+  paired sd 1.066. mind_full - grammar = +0.096 per unit. The three Mind ablations stay within 0.07 of mind_full.
+- `python3 -I docs/work/proposals/power_typeI_check.py 400` -> exit 0, 7.4 s. Hoeffding and empirical-Bernstein reject
+  at 0.0000 under every null law. Sign-flip rejects at 0.105 under a skewed mean-zero null (n = 120).
+- Results: `docs/work/proposals/BLINDFOLD_V04_POWER_AND_INFERENCE_DRAFT.md`. Static design options:
+  `BLINDFOLD_V04_DESIGN_OPTIONS_DRAFT.md`. Read-only inventories (two Explore subagents) of the v0.3 roster and of the
+  isolation path; their facts are quoted there.
+
+Owner decisions (chat): D9 empirical-Bernstein; D10 FDA-06 A+B; D11 one isolated process per universe; D12 Codex;
+D14 roster and scope. D13: A was chosen first, then withdrawn, and C chosen.
+
+Failed approach: the revision-2 session prompt assumed 30 formal units. The code's formal plan has 2400. Read
+`FORMAL_CAMPAIGNS` and `master_seed` before sizing power. Failed approach: recommending FDA-22 option A (extended
+region for every kind) without reading the gated arms. Every gated arm refuses on an extended region, so A would have
+made all of them refuse every world. Read the consumers of a card field before changing its distribution.
+
+Isolation facts that set A2's scope (read-only):
+- every v0.3 arm runs in-process (`pilot_v3._work` passes no `isolation`);
+- `run_isolation_demo` needs root and serves only the v0.2 `EscrowService` with storage, which `EscrowServiceV3`
+  refuses;
+- no v0.3 arm has ever run through `isolation.py`;
+- `scan_for_leaks` does not cover the root file, master seeds, presentation keys, other campaigns' outputs or
+  `pilot_results`;
+- the YAMA test assumes a non-root operator, while the isolated launcher requires root.

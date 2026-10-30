@@ -38,6 +38,80 @@ The owner approved applying the 2026-10-30 time-saving review (chat). Executed o
   EXC5 and EXC6 drafts; v0.3 preregistration, formal campaign budget (Genesis-lite, below; custodian decided above);
   pushing or merging `main` (38 commits ahead of `origin/main` at `a9ddbf27`); the next OD-3 batch after EXC-4.
 
+## Current bounded task — Blindfold Step 1 gap closure, Session A (owner, 2026-10-30)
+
+Owner direction in chat, 2026-10-30: "Accept defaults" on the decision block of
+[the session prompt draft](proposals/BLINDFOLD_FIRST_EXPERIMENT_10H_PROMPT_DRAFT.md) (revision 2), then "يلا ابدا".
+Time is not a constraint (owner). The gap register G1-G16 lives in that draft (§2); this section is the executable
+scope. Started at `7d24c9485043ab31e49601c33a9334c1e6a44368`.
+
+1. **Exact scope:** phases A0-A7 of the draft: baseline roster (EXC-5 below, FDA-21/22 checks); the isolated v0.3
+   campaign path and the FDA-19 probe extension; a power analysis with inference options (no statistics code change
+   before D9); FDA-06 / FDA-18 / circularity design options; an in-tree sealed-root formal driver and an environment
+   manifest; an isolated cost measurement on a fresh development root; a preregistration v0.4 **candidate** (new files).
+2. **Allowed work:** red-first code and tests in `benchmarks/genesis_lite/**`, `src/engcore/blindfold/isolation*.py`
+   and their tests; development pilots on fresh development roots only; local commits; pushes of `backup/…` branches.
+3. **Reason:** close the Step-1 blockers of the deep-audit matrix (FDA-06, FDA-18, FDA-19, FDA-21/22, B-LEAK, O-1,
+   P-4, P-5) and the power gap G1 before any freeze, so a formal Step-1 campaign is valid and informative.
+4. **Start condition:** this entry, before any code. Decided: D1 Step 1 baselines only; D2 EXC-5, falling back to
+   `NOT_QUALIFIED`; D3 OS isolation on WSL `/opt`, level stated; D4 sealed root, labelled SELF_ADMINISTERED (decided
+   above); D5 cap at launch; D7 `backup/…` pushes only; D8 deferred. Owner decisions D9 (inference and unit count),
+   D10 (FDA-06 rule), D11 (FDA-18 mix) and D12 (preregistration reviewer) are asked at one checkpoint.
+5. **Exit condition:** a step record with every gap CLOSED (with evidence), DECIDED, DISCLOSED or OPEN; the v0.4
+   candidate reviewed by `forge-scientific-review`.
+6. **Expiry:** 2026-11-13.
+7. **Owner approval:** as quoted above.
+8. **Prohibited:** launching a formal campaign; generating, reading or logging the formal root; freezing or digesting
+   the preregistration; reusing any pilot root; tuning any arm, threshold, prior or scoring rule on earlier pilot
+   results; Gen1 Mind changes or Stage 2b; editing v0.2-pinned files, the credit table or SHA-pinned evidence; widening
+   a tolerance or adding a skip to pass a gate; running OD-3; merging; pushing `main`; installing dependencies beyond the
+   present `genesis-baselines` extra; any lift, novelty, validation or maturity claim.
+
+Scheduling: an OD-3 `local_assurance run` on `921f8d26df920d209ee07faf11f435d88f4a1023` (WSL
+`/home/dev_kaeem/forge-od3-b622af5e`, started 18:43, 6 h timeout) was running when this section was written; its
+mutation shards are load-sensitive, so tiers, pilots and measurements wait until it ends. Until then only single
+targeted test files run, at low priority. Design and reading work goes first.
+
+- [x] DECIDED 2026-10-30 (owner, in chat, answering the checkpoint questions), on
+  [the power draft](proposals/BLINDFOLD_V04_POWER_AND_INFERENCE_DRAFT.md) and
+  [the design-options draft](proposals/BLINDFOLD_V04_DESIGN_OPTIONS_DRAFT.md):
+  - **D9 = empirical-Bernstein** on independent-unit paired six-kind totals, Holm over the pre-declared family
+    (grammar_enumeration, careful, space_filling), every other arm descriptive, per-kind non-inferiority on controls;
+    the sign-flip test is rejected (type-I 0.105 under a skewed null);
+  - **D10 = FDA-06 option A+B**: cap every law-credited kind when the truth is outside every run arm's family;
+    out-of-family law credit reported as a secondary endpoint;
+  - **D13 = FDA-22 option C (corrected)**: the owner first chose A, then, after the builder found that A makes every
+    gated baseline refuse every world (they never extrapolate), chose C in chat: keep the generator, disclose the
+    region tell, and report every arm by box vs extended region and on indistinguishable apart; the gated arms'
+    +0.5 on indistinguishable is the same for all of them and cancels in paired differences;
+  - **D14 = roster and scope** of the design draft §5: add `random_grammar`; `pysr_units` mapping or library failure
+    scores inadmissible; Step 1 = law recovery plus the five controls; other §10.5 classes declared out of scope;
+  - **D11 = FDA-18 option A**: one isolated, stateless proposer process per universe;
+  - **D12 = Codex** reviews the v0.4 preregistration before the freeze (the owner runs it).
+  All are implemented in new v0.4 files; v0.2/v0.3 files, the credit table and `engcore.blindfold.universe` stay
+  unchanged.
+
+### EXC-5 -- units-aware PySR development arm (APPROVED 2026-10-30 by the owner via D2)
+
+Copied from [the EXC-5 draft](proposals/EXC5_PYSR_UNITS_BASELINE_DRAFT.md) at `7d24c948`:
+1. **Exact scope:** a new arm `pysr_units` in a new `benchmarks/genesis_lite/arms_pysr_units_v3.py`, registered in
+   `pilot_v3.py` and bound into `harness_v3.development_identity`, plus its tests. `pysr_symbolic`, `PYSR_SETTINGS`,
+   the pinned v0.2 files, the escrows and the credit table are not touched.
+2. **Allowed work:** pass the card's public units as `X_units`/`y_units` (refuse on unparseable units); `^` with a
+   constant exponent; the same budget as `grammar_enumeration` (wall-clock and evaluations, declared before the pilot);
+   choose on PySR's Pareto front with the shared held-out gate; record per campaign whether the dimensional constraint
+   was satisfied. Added by D2/G7: run without network under the isolated Discovery uid, with a Julia depot it can read.
+3. **Reason:** remove a plausible baseline-weakness confound before any Mind lift is measured.
+4. **Start condition:** met (owner approval; EXC-4 reports recorded).
+5. **Exit condition:** red-first tests (units refused/accepted, constraint flag recorded, gate parity with
+   `pysr_symbolic` on a units-free card); `forge-scientific-review`; one development pilot on fresh worlds reporting
+   `pysr_units` vs `pysr_symbolic` vs `grammar_enumeration`, descriptive only. If discoverable credit stays 0 after one
+   bounded attempt, the arm is recorded `NOT_QUALIFIED` and tuning stops.
+6. **Expiry:** 2026-12-15.
+7. **Owner approval:** the owner, in chat, 2026-10-30 ("Accept defaults", D2 = EXC-5 as drafted).
+8. **Prohibited:** editing `pysr_symbolic` or its recorded results; tuning on EXC-2/3/4 results or roots; any
+   preregistration, formal campaign, lift or superiority claim; dependency installs beyond the existing venvs.
+
 ## Current bounded task — Scientific MVP delivery preparation (2026-10-28)
 
 ### Public development integration — bounded L3 (owner continuation 2026-10-28)
