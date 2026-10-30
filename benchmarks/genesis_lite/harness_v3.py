@@ -47,7 +47,8 @@ from .presentation import Presented, PresentationRefused, TranslatingClient, che
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
-V3_FILES = ("adjudication_v3.py", "arms_v3.py", "harness_v3.py", "mind_arm_v3.py", "pilot_v3.py", "evaluator/score_v3.py")
+V3_FILES = ("adjudication_v3.py", "arms_v3.py", "arms_grammar_v3.py", "harness_v3.py", "mind_arm_v3.py", "pilot_v3.py",
+            "evaluator/score_v3.py")
 
 
 def engcore_closure(*modules: str) -> tuple[str, ...]:
@@ -91,8 +92,10 @@ def engcore_closure(*modules: str) -> tuple[str, ...]:
 
 #: v0.3 substrate beside the pinned v0.2 escrow (repository-relative), plus (EXC-2) every engcore file the Minimal Mind
 #: imports: it is measured read-only as an arm, so the code it runs binds the identity
-SUBSTRATE_V3_FILES = ("src/engcore/blindfold/escrow_v3.py", *engcore_closure("engcore.mind.minimal"))
-LIBRARIES = ("numpy", "sympy", "pysr", "pysindy", "botorch", "gpytorch", "torch")
+SUBSTRATE_V3_FILES = ("src/engcore/blindfold/escrow_v3.py",
+                      # (EXC-4) the grammar arm's engcore closure is bound the same way
+                      *sorted(set(engcore_closure("engcore.mind.minimal")) | set(engcore_closure("engcore.mind.grammar"))))
+LIBRARIES = ("numpy", "scipy", "sympy", "pysr", "pysindy", "botorch", "gpytorch", "torch")   # scipy: EXC-4 grammar fits
 
 
 def library_versions() -> dict[str, str]:

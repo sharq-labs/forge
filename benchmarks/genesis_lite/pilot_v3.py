@@ -34,6 +34,7 @@ from dataclasses import asdict, dataclass
 from typing import Any, Iterable, Mapping, Sequence
 
 from . import arms as arms_v2
+from .arms_grammar_v3 import GRAMMAR_ARMS
 from .arms_v3 import ARMS_V3, availability_v3
 from .mind_arm_v3 import MIND_ARMS
 from .harness import code_identity
@@ -92,11 +93,11 @@ def master_seed(root: bytes, campaign: int, presentation: str, seed: int) -> byt
 
 
 def _arm(name: str):
-    return (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or MIND_ARMS[name])[0]
+    return (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or GRAMMAR_ARMS.get(name) or MIND_ARMS[name])[0]
 
 
 def all_arms() -> list[str]:
-    return sorted(arms_v2.ARMS) + sorted(ARMS_V3) + sorted(MIND_ARMS)
+    return sorted(arms_v2.ARMS) + sorted(ARMS_V3) + sorted(GRAMMAR_ARMS) + sorted(MIND_ARMS)
 
 
 def proposer_kind(name: str) -> str:
@@ -104,7 +105,7 @@ def proposer_kind(name: str) -> str:
 
 
 def arm_available(name: str) -> bool:
-    if name in arms_v2.ARMS or name in MIND_ARMS:
+    if name in arms_v2.ARMS or name in MIND_ARMS or name in GRAMMAR_ARMS:     # EXC-4: numpy/scipy only
         return True
     return availability_v3()[name]["status"] == "AVAILABLE_DEVELOPMENT"
 
@@ -428,7 +429,8 @@ def _summarize_pooled(arm_names, available, records, not_run, interrupted, prese
         wall_clean = (sum(r["wall_seconds"] for r in clean) / len(clean)) if clean else None
         arms_out[name] = {
             "status": "AVAILABLE" if available[name] else "ARM_UNAVAILABLE",
-            "family": (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or MIND_ARMS.get(name) or (None, ""))[1],
+            "family": (arms_v2.ARMS.get(name) or ARMS_V3.get(name) or GRAMMAR_ARMS.get(name) or MIND_ARMS.get(name)
+                       or (None, ""))[1],
             "runs": len(rs), "valid": len(valid), "invalid": sum(r["status"] == "INVALID_BENCHMARK" for r in rs),
             "worker_failures": sum(r["status"] == "WORKER_FAILED" for r in rs),
             "evaluator_disagreement_invalid": sum(any("separate v0.3 evaluator" in x for x in r["reasons"]) for r in rs),
