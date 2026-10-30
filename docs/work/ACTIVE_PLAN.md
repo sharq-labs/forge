@@ -1069,6 +1069,11 @@ VALID, report `benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30
 the three contrasts are recorded, but per-world grammar expressibility is NOT MET because the pilot did not persist
 its root. OWNER_DECISION_REQUIRED: a second pilot that writes a sealed root reveal (outside this exception's "one
 pilot"), or close EXC-4 without the expressibility split.
+**DECIDED 2026-10-30 (owner, in chat, "Second pilot"):** one second development pilot, same arms, 4 workers, budget
+fraction 1.0, 45-minute cap, on a fresh root that is written to a file outside the tree (mode 0600) before the run
+starts and passed to `run_pilot(root=...)` by a driver outside the tree (no repository code change). Workers still
+receive only per-campaign master seeds. The first pilot's results stay recorded unchanged. All field 8 prohibitions
+still apply (no tuning on either pilot's results).
 
 Full draft with rationale and risks: `docs/work/proposals/EXC4_MIND_HYPOTHESIS_LANGUAGE_DRAFT.md` (at `b622af5e`).
 
