@@ -55,30 +55,54 @@ def test_the_operator_environment_never_reaches_the_proposer(monkeypatch):
     assert "FORGE_ROOT_SECRET" not in inner and "s3cr3t" not in inner
 
 
+EXPOSED = (str(ROOT.resolve()),)
+
+
 def test_a_missing_hidden_path_refuses_instead_of_being_skipped(tmp_path):
-    with pytest.raises(ih.IsolationUnavailable):
-        ih.hidden_paths([tmp_path / "does-not-exist"])
+    with pytest.raises(ih.IsolationUnavailable, match="not an existing directory"):
+        ih.hidden_paths([tmp_path / "does-not-exist"], exposed=EXPOSED)
 
 
 def test_hiding_the_code_tree_itself_refuses():
-    with pytest.raises(ih.IsolationUnavailable):
-        ih.hidden_paths([ROOT])
+    with pytest.raises(ih.IsolationUnavailable, match="contains an exposed directory"):
+        ih.hidden_paths([ROOT], exposed=EXPOSED)
 
 
 def test_every_pilot_results_directory_of_the_tree_is_hidden():
-    hidden = ih.hidden_paths()
+    hidden = ih.hidden_paths(exposed=EXPOSED)
     for p in ROOT.glob("benchmarks/**/pilot_results"):
-        assert str(p) in hidden
+        assert str(p.resolve()) in hidden
+
+
+def test_nested_hides_collapse_to_their_ancestor():
+    assert ih._minimal(["/root/a/b", "/root", "/home/x", "/home/x/y"]) == ("/home/x", "/root")
+
+
+def test_the_code_tree_must_live_under_the_whitelist_root():
+    if ih._under(str(ROOT.resolve()), ih.WHITELIST_ROOT):
+        pytest.skip("this checkout is under /opt")
+    with pytest.raises(ih.IsolationUnavailable, match="not under /opt"):
+        ih.exposures()
+
+
+def test_the_whitelist_stages_exposures_before_covering_opt_and_binds_them_back_read_only():
+    inner = ih.command(["/mnt", "/home"], {}, python="/usr/bin/python3", exposed=("/opt/code", "/opt/venv"))[-1]
+    order = [inner.index(s) for s in ("mount -t tmpfs -o size=1m,mode=755 tmpfs /mnt", "mount --bind /opt/code /mnt/fg0",
+                                       "mount -t tmpfs -o size=1m,mode=755 tmpfs /opt", "mount --bind /mnt/fg0 /opt/code",
+                                       "mount -o remount,bind,ro /opt/code", "mount -o remount,bind,ro /opt/venv",
+                                       "mount -t tmpfs -o size=64k,mode=000 tmpfs /mnt", "setpriv")]
+    assert order == sorted(order)
 
 
 def test_outside_verification_fails_closed_on_any_missing_property():
     good = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": {"CapEff": 0},
             "no_new_privs": True, "private_namespaces": {"mnt": True, "pid": True}, "hidden": {"/home": True},
-            "private_tmp": True}
+            "private_tmp": True, "whitelist_covered": True, "exposed_read_only": {"/opt/code": True}}
     assert ih.verified(good)
     for key, bad in (("uid", [0] * 4), ("groups", [27]), ("caps", {"CapEff": 1}), ("no_new_privs", False),
                      ("private_namespaces", {"mnt": True, "pid": False}), ("hidden", {"/home": False}),
-                     ("hidden", {}), ("private_tmp", False), ("inspected", False)):
+                     ("hidden", {}), ("private_tmp", False), ("inspected", False), ("whitelist_covered", False),
+                     ("exposed_read_only", {}), ("exposed_read_only", {"/opt/code": False})):
         assert not ih.verified({**good, key: bad}), key
 
 
@@ -114,7 +138,8 @@ def _attack(fn: str, hidden):
 
 @pytest.fixture
 def secret_dir(tmp_path_factory):
-    d = pathlib.Path("/root") / f"forge-v4-secret-{secrets.token_hex(4)}"
+    # world-traversable and world-readable on purpose, next to the code tree under /opt: only the whitelist protects it
+    d = pathlib.Path("/opt") / f"forge-v4-secret-{secrets.token_hex(4)}"
     d.mkdir(mode=0o755)
     token = secrets.token_hex(16)
     (d / "root.bin").write_text(token)
@@ -139,17 +164,20 @@ def test_hidden_secrets_cannot_be_read_or_listed(secret_dir):
     report, outside = _attack("read_secrets", ih.hidden_paths([d]))
     assert ih.verified(outside)
     assert token not in json.dumps(report)
-    assert not [p for p in report["seen"] if p.startswith(("/root/", "/home/", "/mnt/")) or "pilot_results/" in p]
+    assert not [p for p in report["seen"] if p.startswith(("/root/", "/home/", "/mnt/", str(d)))
+                or "pilot_results/" in p], report["seen"]
+    others = [p for p in report["seen"] if p.startswith("/opt/") and not p.startswith(str(ROOT.resolve()))]
+    assert not others, others                                    # another checkout under /opt is invisible
     assert report["uid"] == 65534 and report["ppid"] == 0
     assert not any(k.startswith("FORGE") for k in report["env"])
 
 
 @integration
 def test_the_hide_is_what_protects_it_positive_control(secret_dir):
-    # without hiding /root the same world-readable secret IS readable: the attack and the probe can see a real leak
+    # exposing the same directory makes the secret readable: the attack and the probe can see a real leak
     d, token = secret_dir
-    hidden = tuple(p for p in ih.hidden_paths() if p != "/root")
-    host = ih.IsolatedProposerHost(hidden)
+    exposed = ih.exposures([d])
+    host = ih.IsolatedProposerHost(ih.hidden_paths(exposed=exposed), exposed=exposed)
     try:
         out = host.propose("tests.genesis_lite.attack_arms_v4:read_secrets", CARD, 0, _Client())
     finally:
