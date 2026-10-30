@@ -4,9 +4,9 @@ doc_id: FORGE-BLINDFOLD-STEP1-GAP-CLOSURE-SESSION-A
 doc_kind: EVIDENCE_REPORT
 doc_status: ACTIVE
 authority_scope: NONE
-source_ref: cb24af3ea13187fff91f88bf0eb906337d8c6cf9
+source_ref: 0af67b4bd9f7846bca59c66719a793f4a7a3a044
 evidence_level: EXECUTED
-last_reviewed: 2026-10-30
+last_reviewed: 2026-10-31
 supersedes: none
 ---
 
@@ -31,7 +31,7 @@ its latest update describes.**
 |---|---|---|
 | G1 power | **DECIDED + IMPLEMENTED.** Empirical-Bernstein (`analysis_v4`). Detects about 0.18/unit at n = 2400 (development estimate) | power draft; `test_analysis_v4.py` |
 | G2 FDA-06 | **CLOSED (code).** Every law kind is capped; out-of-family credit is reported apart | the FDA-06 test is parametrized over all three kinds; mutation KILLED |
-| G3 FDA-18 | **CLOSED (code).** One isolated proposer per universe; no state passes between processes | persistence test; the F1 integration mutant was KILLED (marks found in /dev/shm, /run/lock, /var/crash without the fix) |
+| G3 FDA-18 | **CLOSED (code).** One isolated proposer per universe; no state passes between processes | persistence test; the F1 integration mutant was KILLED (marks found in /dev/shm, /run/lock, /var/crash without the fix). 2026-10-31: the kernel user keyring was a channel (reproduced); a fresh user namespace per process closes it, and its mutant is KILLED (`0af67b4b`) |
 | G4 FDA-19 | **CLOSED (tests).** v0.4 attacks cover the root dir, operator outputs, pilot_results, other /opt checkouts, drvfs, network, /proc and persistence | `test_v04_isolation.py`, 14 → 16 integration tests |
 | G5 B-LEAK | **IMPLEMENTED + EXECUTED on this host.** OS isolation per universe, verified from outside per process | root runs at `8fbcb710`; no claim beyond this host/config |
 | G6 FDA-21/22 | **DECIDED / DISCLOSED.** pysr_units uses the precision bar with its constant count; the region tell is disclosed and stratified | design draft §4–5; strata in `analysis_v4` |
@@ -54,7 +54,13 @@ its latest update describes.**
 - **Recorded, not fixed:**
   - 12b, the control-kind margin 0.10 vs P-1 "no loss allowed": an owner reading;
   - the IUT-vs-Holm proposal: D9 stands until the owner decides.
-- **Not yet done:** re-review of the fixes; Codex review of the candidate (D12).
+- Re-review of those fixes (forked, read-only, static), 2026-10-31, at `1979907f`: **CHANGES REQUIRED**:
+  - 2 HIGH: `decide_v4` trusted a supplied reveal; no identity or freeze check at decision time;
+  - 3 MEDIUM: incomplete runs not blocked; unknown outcome scored 0; kernel keyring shared across proposers;
+  - 4 LOW.
+  All fixed in `0fd4376a` and `0af67b4b` (PROGRESS 2026-10-31). 15/15 fix-reverting mutations are KILLED. M3 was
+  reproduced on this host before the fix, and its integration mutant is KILLED.
+- **Not yet done:** a fresh review of the 2026-10-31 fixes; Codex review of the candidate (D12).
 
 ## 4. Evidence and readiness
 

@@ -11602,3 +11602,85 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
 - Scope limit: the certificate binds `921f8d26`. Local `main` has since moved 19 commits on (`7d24c948`..`5d9c362c`,
   including v0.4 Genesis-lite source changes from another session), so it does **not** certify current main. `44ff750f`
   is not pushed, not merged and not in this checkout. Integrating it (or recertifying the new HEAD) is an owner decision.
+
+### 2026-10-30/31 — OD-3 on the new HEAD: pre-checks, three blockers fixed, run 3 started
+
+- Owner, in chat: "Recertify new HEAD", then "Add the 9 rules".
+- Pre-check before the 4 h run, in the WSL OD-3 clone at `3ae12282`: `.forge/venvs/3.12/bin/python -m pytest -q
+  -p no:cacheprovider -n 4 --dist loadfile benchmarks/domain_real_data/tests tests/test_skip_admission.py` -> 2 failed
+  (`test_synthetic_data_is_never_called_measured`, `test_current_repository_inventory_has_no_unreviewed_provenance`).
+  - Cause: `docs/work/proposals/genesis_lite_v0_4.CANDIDATE.json` had no provenance record.
+  - Fix: a `DERIVED / PREREGISTRATION_DOCUMENT` record, NOT FROZEN (`5f03c7b7`).
+- Pre-check with `tests/genesis_lite` added, at `5f03c7b7`: 1 failed
+  (`test_every_pilot_results_directory_of_the_tree_is_hidden`).
+  - Cause: on any Linux checkout under `/home` (including a GitHub runner), `hidden_paths` correctly refuses, because
+    `/home` is a default hide that contains the code tree. The test sits in the "every platform" section.
+  - Fix: test-only. Monkeypatch away the one default hide that holds the tree, so the per-directory hides are still
+    checked (`ff12119e`); 11 passed under `/home`.
+  - Failed approach: a `pytest.skip` for that case. It would have been an unadmitted skip in OD-3. Replaced by the
+    monkeypatch.
+- 9 v0.4 environment skips had no admission rule. Declared rules (owner "Add the 9 rules"), each exact test plus exact
+  reason, plus adversarial tests (`1979907f`):
+  - 7 isolation integration tests and 1 pilot test: needs Linux, root and a tree readable by uid 65534;
+  - the PySR-absent path.
+  - Each `why` states the skip is never evidence of isolation.
+  - Pre-check: `pytest -q -n 4 --dist loadfile tests/test_skip_admission.py tests/genesis_lite
+    benchmarks/domain_real_data/tests` -> 550 passed, 9 skipped.
+- OD-3 run 3 started 2026-10-30 23:54:36 on `1979907f789a50987a14bdf9d1cfcc17eeede06c` (same command as run 2). The
+  921f8d26 logs were kept as `run-921f8d26-pass.log` / `verify-921f8d26-pass.log`; the certificate child is kept on
+  branch `od3-cert-921f8d26` in that clone. Result pending.
+
+### 2026-10-31 — v0.4 re-review (forge-scientific-review, static) and fixes H1, H2, M1-M3, L1-L4
+
+- Re-review of Session A's fixes (forked, read-only, static, at `1979907f`): **CHANGES REQUIRED**. Findings 1-12 fixed
+  or partially fixed. New findings:
+  - **H1:** `decide_v4` trusted a supplied reveal; a hand-written all-represented reveal removes the D10 cap.
+  - **H2:** no identity, tier or freeze check at decision time.
+  - **M1:** incomplete runs and non-VALID records were not blocked, against the candidate's run rules.
+  - **M2:** an unknown outcome string scored 0, which beats inadmissible's -1.
+  - **M3:** the kernel user keyring is shared by every uid-65534 process.
+  - **L1-L4:** smaller binding gaps, and no tests for fixes 7, 8, 9.
+- Fixed in `0fd4376a` and `0af67b4b`:
+  - `decide(out_dir, root_file, candidate)` checks the root against the commitment, recomputes `reveal_v4.represented`
+    and uses only that; a supplied reveal must equal it.
+  - It refuses when the current `development_identity_v4` differs from the committed one, when the v0.2 pin changed,
+    or for a formal run without a matching frozen preregistration. A development run is DEVELOPMENT_ONLY with
+    `lift_claimed=False`.
+  - It refuses deadline misses, incomplete runs, any non-VALID record (any arm), missing bound summary keys, and records
+    not bound to exactly one committed task.
+  - `analysis_v4.OUTCOMES` is the closed evaluator vocabulary. An evaluator outcome the kind's table does not list
+    keeps the frozen 0 (`EvaluatorConfig`: unlisted outcomes score 0); any other string refuses.
+  - The proposer runs in a fresh user namespace after the uid switch
+    (`unshare --user --map-root-user -- setpriv --inh-caps=-all --bounding-set=-all`), and the outside verification
+    requires `user` among the private namespaces. The process is uid 0 only of its own empty namespace; outside it is
+    65534 with every capability 0 (CapBnd too) and NoNewPrivs.
+  - A dead pipe or other OSError during relay is an infrastructure failure (L2).
+- M3 REPRODUCED before the fix, as root in WSL (`6.18.33.2-microsoft-standard-WSL2`), with a ctypes `add_key` /
+  `keyctl` probe: a key written by one uid-65534 process (unshare mnt/pid/ipc + setpriv) was read by a later,
+  sequential process (`b'universe-secret'`). With a per-process user namespace, the later process read None.
+  Persistent keyrings: EOPNOTSUPP on this kernel. The probe keys were cleared (`keyctl clear @u`).
+- Failed approach: `unshare --user --map-user=65534` run by uid 65534 isolates the keyring but leaves CapBnd full,
+  which `verified()` rightly refuses, and setpriv cannot drop it there.
+- Failed approach: root-created `--map-users=65534:65534:1` needs `newuidmap` (package uidmap, not installed;
+  installs are out of scope).
+- Found while testing fix 9: a front equation that sympifies to `zoo` crashed `lambdify` with a `KeyError` before the
+  finiteness check, so one bad equation crashed the universe. Now dropped like a nan equation (`arms_v4`).
+- Executed:
+  - Windows `.venv`: `python -m pytest -q -p no:cacheprovider tests/genesis_lite/` -> 432 passed, 24 skipped
+    (platform and sympy skips).
+  - Fix-reverting mutations (scratch `mutate_rereview.py`, 15 mutants over decide_v4, analysis_v4 and isolated_host)
+    -> 15/15 KILLED.
+    - Failed approach: the first L3 mutant, `False and A or B`, disabled only A and SURVIVED; replaced by removing the
+      raise.
+  - Fix 8 reverted (`reveal_v4` line 52 -> `if False:`) -> the new reveal test FAILED; restored.
+  - WSL `/opt` venv (non-root, niced): `python -m pytest -q -p no:cacheprovider -p no:randomly
+    tests/genesis_lite/test_v04_arms.py` -> 15 passed, 1 skipped (PySR installed).
+  - WSL root, clean clone `/opt/forge-v4-fa0ae0773448` at `0af67b4bd9f7846bca59c66719a793f4a7a3a044`, niced, three
+    consecutive runs: `python -m pytest tests/genesis_lite/test_v04_isolation.py tests/genesis_lite/test_v04_pilot.py
+    -q -p no:randomly -p no:cacheprovider` -> 31 passed, 2 skipped each time.
+  - M3 integration mutant (no user namespace, outside check blinded) -> the persistence test FAILED with
+    `{'found': ['keyring:@u']}`; the clone was restored clean and the keyring cleared.
+- Boundary: one host and one config; no security level is claimed. Static review is not execution. The v0.4 candidate
+  preregistration is now stale (its identity moved) and must be rebuilt.
+- Not done: a fresh review of these fixes.
+- OD-3 run 3 was active throughout; every run above was single-file or single-directory and niced.
