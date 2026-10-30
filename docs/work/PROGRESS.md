@@ -11415,3 +11415,5 @@ discoverable credit grammar 0.350, mind_full 0.292, pysindy 0.217, careful 0.183
 0 false laws on controls (grammar, careful, mind_full). Report: `benchmarks/genesis_lite/pilot_results/
 v0_3-dev-grammar-2026-10-30b/README.md`. EXC-4 exit condition: pilot report, contrasts and expressibility recorded;
 closure is the owner's.
+
+EXC-4 CLOSED 2026-10-30 by the owner ("Close EXC-4"); recorded in ACTIVE_PLAN. No code change.

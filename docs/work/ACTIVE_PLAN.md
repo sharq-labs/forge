@@ -1062,7 +1062,9 @@ therapeutic work.
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).
 
-### EXC-4 -- richer hypothesis language, Stage 2a: grammar enumeration as a frozen development baseline (OPEN 2026-10-30)
+### EXC-4 -- richer hypothesis language, Stage 2a: grammar enumeration as a frozen development baseline (CLOSED 2026-10-30 by the owner)
+
+**Closed 2026-10-30 by the owner (in chat, "Close EXC-4")** on both pilot reports (`pilot_results/v0_3-dev-grammar-2026-10-30/`, `.../v0_3-dev-grammar-2026-10-30b/`). DEVELOPMENT_DESCRIPTIVE only: no lift, novelty or superiority claim. Carried forward: `grammar_enumeration` is the strongest discoverable baseline in both pilots and is the bar for any later Mind lift; representation circularity (89/120 discoverable laws expressible) is disclosed; Stage 2b, EXC-5 and EXC-6 each need their own decision. Its tests are certification_pinned, so they enter the next OD-3 batch.
 
 **Status 2026-10-30:** code `16236c66`; FAST at `e5af5f55` 3131 passed / 2 certificate failures; pilot done (2520/2520
 VALID, report `benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/`). Exit condition **partly met**:
