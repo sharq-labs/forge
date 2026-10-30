@@ -11,6 +11,7 @@ from typing import Any, Mapping
 
 #: places an operator keeps secrets in a v0.4 run (root file, outputs, pilot results, home directories, drvfs)
 PROBES = ("/root/*", "/root/*/*", "/home/*", "/home/*/*", "/home/*/*/*", "/mnt/*", "/mnt/*/*", "/var/tmp/*", "/srv/*",
+          "/opt/*", "/opt/*/*",
           "/opt/*/benchmarks/genesis_lite/pilot_results/*", "/opt/*/benchmarks/genesis_lite/pilot_results/*/*",
           "/tmp/*", "/proc/1/environ")
 
