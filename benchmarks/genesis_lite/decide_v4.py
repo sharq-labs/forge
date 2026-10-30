@@ -1,4 +1,5 @@
-"""The v0.4 decision from a sealed run directory (review findings 3, 4 and 10 of 2026-10-30).
+"""The v0.4 decision from a sealed run directory (review findings 3, 4 and 10 of 2026-10-30; re-review H1, H2, M1,
+L1 and L3).
 
 ``analysis_v4.decision`` is the pure rule; it takes roles, grid and representation verdicts as arguments. This entry
 point takes NONE of them from the caller:
@@ -6,8 +7,14 @@ point takes NONE of them from the caller:
 * roles come from the frozen roster in code (:func:`pilot_v4.roles`), bound by ``development_identity_v4``;
 * the grid comes from the task list in ``commitment.json``, written before the first campaign; every planned arm must
   appear and nothing else may;
-* ``runs.jsonl`` must match the digest in ``summary.json``, and the reveal must name the same runs and the same root
-  commitment;
+* ``runs.jsonl`` must match the digest in ``summary.json``; the run must be complete (nothing cancelled at the
+  deadline, every planned task exactly once and VALID), and every record must belong to its committed task;
+* the representation verdicts that drive the D10 cap are RECOMPUTED here from the revealed root
+  (:func:`reveal_v4.represented`), after the root is checked against the commitment; a supplied reveal file can only
+  be compared for equality, never trusted;
+* the code deciding must be the code that ran: this tree's ``development_identity_v4`` must equal the committed one
+  with the v0.2 pin unchanged, and a formal decision also needs the frozen v0.4 preregistration to match this tree. A
+  development run is analysed DEVELOPMENT_ONLY and never claims lift;
 * every VALID record must be OS-isolated per universe with six passing outside verifications, carry the committed
   development identity, and have a campaign id of the committed tier.
 
@@ -24,8 +31,12 @@ from typing import Any
 
 from . import analysis_v4 as a4
 from .analysis import AnalysisRefused
+from .harness_v4 import development_identity_v4
 from .isolated_host import ISOLATION_LABEL, verified
-from .pilot_v4 import Task, campaign_id, roles
+from .pilot_v4 import Task, campaign_id, formal_identity_check, read_root, roles
+from .reveal_v4 import represented
+
+_BOUND = ("root_commitment_sha256", "development_identity_v4", "tier", "tasks", "planned_campaigns")
 
 
 def _load(out_dir: pathlib.Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
@@ -34,8 +45,10 @@ def _load(out_dir: pathlib.Path) -> tuple[dict[str, Any], dict[str, Any], bytes]
     runs = (out_dir / "runs.jsonl").read_bytes()
     if hashlib.sha256(runs).hexdigest() != summary.get("runs_sha256"):
         raise AnalysisRefused("runs.jsonl does not match the digest recorded in summary.json")
-    for key in ("root_commitment_sha256", "development_identity_v4", "tier", "tasks"):
-        if summary.get(key, commitment.get(key)) != commitment.get(key):
+    for key in _BOUND:
+        if key not in summary or key not in commitment:
+            raise AnalysisRefused(f"summary.json or commitment.json lacks {key}")
+        if summary[key] != commitment[key]:
             raise AnalysisRefused(f"summary.json and commitment.json disagree on {key}")
     return commitment, summary, runs
 
@@ -56,28 +69,73 @@ def provenance_problems(rec: Mapping[str, Any], commitment: Mapping[str, Any]) -
     return out
 
 
-def decide(out_dir: str | pathlib.Path, reveal_path: str | pathlib.Path, candidate: str, *,
-           multiplicity: str = "holm_family") -> dict[str, Any]:
+def _completeness(records: list[dict[str, Any]], tasks: list[Task], summary: Mapping[str, Any], tier: str) -> None:
+    """Re-review M1 and L3: the candidate's run rules (a run that missed its cap, or any non-VALID world set, supports
+    no decision) and every record bound to exactly one committed task."""
+    if summary.get("not_run_at_deadline") != 0:
+        raise AnalysisRefused(f"{summary.get('not_run_at_deadline')!r} planned campaign(s) did not run before the "
+                              "deadline: an incomplete run supports no decision")
+    if summary.get("completed") != len(tasks) or summary.get("planned_campaigns") != len(tasks):
+        raise AnalysisRefused(f"the run completed {summary.get('completed')!r} of {len(tasks)} planned campaigns")
+    if len(records) != len(tasks):
+        raise AnalysisRefused(f"{len(records)} record(s) for {len(tasks)} planned campaigns")
+    planned = {(t.arm, campaign_id(tier, t)): t for t in tasks}
+    seen: set[tuple[str, str]] = set()
+    for r in records:
+        task = Task(**r.get("task", {}))
+        key = (str(r.get("arm")), campaign_id(tier, task))
+        if key not in planned or planned[key] != task or key in seen:
+            raise AnalysisRefused(f"record {key} is not one committed task")
+        if r.get("arm") != task.arm or r.get("campaign_id") != key[1] or r.get("presentation") != task.presentation \
+                or r.get("seed") != task.seed:
+            raise AnalysisRefused(f"record {key} names another campaign, presentation or seed than its task")
+        if r.get("status") != "VALID":
+            raise AnalysisRefused(f"record {key} is {r.get('status')!r}: any non-VALID world set blocks the decision")
+        seen.add(key)
+
+
+def decide(out_dir: str | pathlib.Path, root_file: str | pathlib.Path, candidate: str, *,
+           multiplicity: str = "holm_family", reveal_path: str | pathlib.Path | None = None) -> dict[str, Any]:
     out_dir = pathlib.Path(out_dir)
-    commitment, _summary, runs = _load(out_dir)
-    reveal = json.loads(pathlib.Path(reveal_path).read_text())
-    if reveal.get("runs_sha256") != hashlib.sha256(runs).hexdigest():
-        raise AnalysisRefused("the reveal was computed on other runs")
-    if reveal.get("root_commitment_sha256") != commitment["root_commitment_sha256"]:
-        raise AnalysisRefused("the reveal's root does not match the run's commitment")
+    commitment, summary, runs = _load(out_dir)
+    tier = commitment["tier"]
+    identity, changed = development_identity_v4()
+    if identity != commitment["development_identity_v4"] or changed:
+        raise AnalysisRefused("the deciding code is not the code that ran (development identity or v0.2 pin differs)")
+    if tier == "formal":
+        refusal = formal_identity_check(identity)
+        if refusal:
+            raise AnalysisRefused(f"formal decision refused: {refusal}")
+    elif tier != "development":
+        raise AnalysisRefused(f"unknown tier {tier!r}")
+    root = read_root(root_file)
+    if hashlib.sha256(root).hexdigest() != commitment["root_commitment_sha256"]:
+        raise AnalysisRefused("the root does not match the run's commitment")
     tasks = [Task(**t) for t in commitment["tasks"]]
     frozen = roles()
     planned = {t.arm for t in tasks}
-    expected = {a for a, r in frozen.items()} | {candidate}
+    expected = set(frozen) | {candidate}
     if planned != expected:
         raise AnalysisRefused(f"the committed task list does not run exactly the frozen roster plus the candidate: "
                               f"missing {sorted(expected - planned)}, extra {sorted(planned - expected)}")
-    grid = {(t.presentation, campaign_id(commitment["tier"], t), t.seed) for t in tasks}
     records = [json.loads(line) for line in runs.decode().splitlines() if line.strip()]
+    _completeness(records, tasks, summary, tier)
     bad = {r.get("campaign_id"): p for r in records if (p := provenance_problems(r, commitment))}
     if bad:
         raise AnalysisRefused(f"{len(bad)} VALID record(s) fail provenance, e.g. {next(iter(bad.items()))}")
-    result = a4.decision(records, candidate, frozen, reveal["represented"], grid, multiplicity=multiplicity)
+    try:
+        verdicts = represented(records, root)["represented"]
+    except ValueError as exc:
+        raise AnalysisRefused(f"the reveal cannot be recomputed from this root and these records: {exc}") from exc
+    if reveal_path is not None:
+        supplied = json.loads(pathlib.Path(reveal_path).read_text())
+        if supplied.get("runs_sha256") != hashlib.sha256(runs).hexdigest() or supplied.get("represented") != verdicts:
+            raise AnalysisRefused("the supplied reveal differs from the one recomputed from the root")
+    grid = {(t.presentation, campaign_id(tier, t), t.seed) for t in tasks}
+    result = a4.decision(records, candidate, frozen, verdicts, grid, multiplicity=multiplicity)
+    if tier == "development":
+        result["lift_claimed"] = False
+    result["tier_status"] = "FORMAL" if tier == "formal" else "DEVELOPMENT_ONLY"
     result["commitment"] = {k: commitment[k] for k in ("root_commitment_sha256", "development_identity_v4", "tier")}
     return result
 

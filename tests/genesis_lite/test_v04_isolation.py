@@ -47,6 +47,18 @@ def test_the_command_builds_every_namespace_hide_and_privilege_drop():
     assert "--reuid=65534 --regid=65534 --clear-groups --inh-caps=-all --bounding-set=-all --no-new-privs" in inner
     assert "/usr/bin/env -i" in inner and "EXTRA=1" in inner and "OMP_NUM_THREADS=1" in inner
     assert inner.index("mount -t tmpfs") < inner.index("setpriv")          # hides are mounted before the uid switch
+    # re-review M3: a fresh user namespace after the uid switch (private keyrings), the bounding set dropped again in it
+    assert inner.index("--no-new-privs") < inner.index(ih.USER_NAMESPACE) < inner.index("/usr/bin/env -i")
+    assert ih.USER_NAMESPACE.startswith("unshare --user --map-root-user -- setpriv --inh-caps=-all --bounding-set=-all")
+
+
+def test_the_outside_verification_requires_a_private_user_namespace():
+    good = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": {"CapEff": 0},
+            "no_new_privs": True, "private_namespaces": {"mnt": True, "user": True}, "hidden": {"/home": True},
+            "private_tmp": True, "whitelist_covered": True, "exposed_read_only": {"/opt/code": True},
+            "private_writable": {"/tmp": True}, "shared_state_covered": {"/run": True}}
+    assert ih.verified(good)
+    assert not ih.verified({**good, "private_namespaces": {"mnt": True, "user": False}})
 
 
 def test_the_operator_environment_never_reaches_the_proposer(monkeypatch):
@@ -238,12 +250,36 @@ def test_an_infrastructure_failure_is_recorded_so_the_run_becomes_invalid(monkey
     assert checks and "infrastructure_failure" in checks[0] and not ih.verified(checks[0])
 
 
+@pytest.mark.parametrize("error,infrastructure", [(BrokenPipeError("pipe closed"), True), (OSError("io"), True),
+                                                  (RuntimeError("the proposer failed: bad law"), False)])
+def test_a_proposer_dying_mid_relay_is_an_infrastructure_failure(monkeypatch, error, infrastructure):
+    # re-review L2: a dead pipe is the host's failure, never the arm's -1 on a run that stays VALID
+    class Host:
+        outside = {"inspected": True}
+
+        def __init__(self, *a, **k):
+            pass
+
+        def propose(self, *a, **k):
+            raise error
+
+        def close(self):
+            pass
+    monkeypatch.setattr(ih, "IsolatedProposerHost", Host)
+    checks = []
+    with pytest.raises(type(error)):
+        ih.per_universe_arm("careful", (), checks)(CARD, _Client(), seed=0)
+    assert any("infrastructure_failure" in c for c in checks) is infrastructure
+
+
 @integration
 def test_no_state_passes_from_one_proposer_process_to_the_next():
-    # finding 1: process A writes a mark into every directory it can write; process B, a later universe, finds none
+    # finding 1: process A writes a mark into every directory it can write and a key on its uid's kernel keyring
+    # (re-review M3); process B, a later universe of the same uid, finds none
     first, outside_a = _attack("leave_marks", ih.hidden_paths())
-    assert ih.verified(outside_a)
+    assert ih.verified(outside_a) and outside_a["private_namespaces"]["user"]
+    assert "keyring:@u" in first["written"]                         # the key was really left: the probe is live
     found, _ = _attack("find_marks", ih.hidden_paths())
     assert found["found"] == [], found
-    writable = set(first["written"])
+    writable = set(first["written"]) - {"keyring:@u"}
     assert writable <= {"/tmp", "/dev/shm", "/dev/mqueue"} | {w for w in writable if w.startswith(("/tmp/", "/dev/shm/"))}, writable

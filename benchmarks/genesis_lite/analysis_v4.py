@@ -58,14 +58,21 @@ MULTIPLICITY = ("holm_family", "iut_all")
 REPRESENTATION_ARM = "grammar_enumeration"
 REPRESENTATION_LIMIT = 0.5
 FULL_CREDIT = 1.0
+#: every outcome the v0.3 evaluator can write (``score.score_universe`` and ``score_v3``); anything else refuses
+OUTCOMES = frozenset({"law_pass", "law_fail", "indistinguishable_hit", "indistinguishable_miss",
+                      "indistinguishable_unresolved", "inadmissible", *score_v3.v2.REFUSALS})
 
 
 def expected_credit(kind: str, outcome: str) -> float:
     """The v0.3 evaluator's credit for (kind, outcome): the frozen v0.2 table, except that a bracketing-only pair
-    (``indistinguishable_unresolved``) keeps only a non-positive penalty (``score_v3.score_universe``)."""
+    (``indistinguishable_unresolved``) keeps only a non-positive penalty (``score_v3.score_universe``). An evaluator
+    outcome the kind's table does not list keeps the frozen 0; a string the evaluator never writes refuses (re-review
+    M2: it would otherwise score 0 and beat ``inadmissible``)."""
     table = score_v3.v2.CREDIT.get(kind)
     if table is None:
         raise AnalysisRefused(f"unknown universe kind {kind!r}")
+    if outcome not in OUTCOMES:
+        raise AnalysisRefused(f"outcome {outcome!r} is outside the evaluator's vocabulary")
     if outcome == "indistinguishable_unresolved":
         return min(0.0, float(table.get("indistinguishable_hit", 0.0)))
     return float(table.get(outcome, 0.0))

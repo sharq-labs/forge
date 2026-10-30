@@ -54,6 +54,11 @@ WHITELIST_ROOT = "/opt"
 SHARED_STATE = ("/run", "/var/crash")
 #: fresh private instances, writable by the proposer, gone with its mount namespace
 PRIVATE_WRITABLE = ("/tmp", "/dev/shm")
+#: after the uid switch, a fresh user namespace per process (re-review M3): kernel user keyrings are per user namespace,
+#: so a key one proposer leaves on uid 65534's keyring (it outlives the process) is not there for the next one. The
+#: process is root only inside its own empty namespace (65534 outside); dropping the bounding set again there leaves
+#: every capability at zero, which the outside verification checks
+USER_NAMESPACE = "unshare --user --map-root-user -- setpriv --inh-caps=-all --bounding-set=-all --"
 THREAD_ENV = {"OMP_NUM_THREADS": "1", "OPENBLAS_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"}
 _HOST = pathlib.Path(__file__).resolve().parent / "proposer_host.py"
 _ROOT = pathlib.Path(__file__).resolve().parents[2]
@@ -142,7 +147,7 @@ def command(hidden: Sequence[str], env: Mapping[str, str], python: str = sys.exe
                                                        **dict(env)}.items()))
     inner = " && ".join(steps) + (
         f" && exec setpriv --reuid={DISCOVERY_UID} --regid={DISCOVERY_UID} --clear-groups --inh-caps=-all "
-        f"--bounding-set=-all --no-new-privs -- /usr/bin/env -i {clean} {q(python)} -I "
+        f"--bounding-set=-all --no-new-privs -- {USER_NAMESPACE} /usr/bin/env -i {clean} {q(python)} -I "
         f"{q(str(_HOST))} {q(str(_ROOT))} {q(str(_ROOT / 'src'))}")
     return ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--", "/bin/sh", "-c",
             inner]
@@ -158,7 +163,8 @@ def inspect(pid: int, hidden: Sequence[str], exposed: Sequence[str] = ()) -> dic
     status = dict(line.split(":", 1) for line in open(f"/proc/{pid}/status").read().splitlines() if ":" in line)
     ids = lambda k: [int(x) for x in status.get(k, "").split()]  # noqa: E731
     caps = {k: int(status.get(k, "f").strip() or "f", 16) for k in ("CapInh", "CapPrm", "CapEff", "CapBnd", "CapAmb")}
-    ns = {n: os.readlink(f"/proc/{pid}/ns/{n}") != os.readlink(f"/proc/self/ns/{n}") for n in ("mnt", "pid", "net", "ipc", "uts")}
+    ns = {n: os.readlink(f"/proc/{pid}/ns/{n}") != os.readlink(f"/proc/self/ns/{n}")
+          for n in ("mnt", "pid", "net", "ipc", "uts", "user")}
     mounts = [ln.split() for ln in open(f"/proc/{pid}/mountinfo").read().splitlines()]
     tmpfs = {m[4] for m in mounts if "-" in m and m[m.index("-") + 1] == "tmpfs"}
     read_only = {m[4] for m in mounts if len(m) > 5 and m[5].split(",")[0] == "ro"}
@@ -257,8 +263,8 @@ def per_universe_arm(spec: str, hidden: Sequence[str], checks: list[dict[str, An
             checks.append({"universe_id": card["universe_id"], **host.outside})
             try:
                 return host.propose(spec, card, seed, client)
-            except RuntimeError as exc:
-                if not str(exc).startswith("the proposer failed:"):
+            except Exception as exc:  # noqa: BLE001 - a dead pipe (OSError) is the host's failure too (re-review L2)
+                if not (isinstance(exc, RuntimeError) and str(exc).startswith("the proposer failed:")):
                     checks.append({"universe_id": card["universe_id"], "infrastructure_failure": str(exc)[:400]})
                 raise
         finally:

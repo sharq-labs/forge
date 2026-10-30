@@ -175,9 +175,12 @@ def pysr_units(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[s
     target = np.log([r[out] for r in val_rows])
     scored = []
     for complexity, eq in front:
-        fn = sympy.lambdify(list(aliases), eq, modules="numpy")
-        with np.errstate(all="ignore"):
-            pred = np.broadcast_to(np.asarray(fn(*[xv[a] for a in aliases]), dtype=float), target.shape)
+        try:   # an equation numpy cannot evaluate (zoo, a complex value) is as non-finite as a nan one (fix 9)
+            fn = sympy.lambdify(list(aliases), eq, modules="numpy")
+            with np.errstate(all="ignore"):
+                pred = np.broadcast_to(np.asarray(fn(*[xv[a] for a in aliases]), dtype=float), target.shape)
+        except Exception:  # noqa: BLE001 - dropped from the front, never a crash of the whole universe
+            continue
         if np.all(np.isfinite(pred)):
             scored.append((float(np.mean((pred - target) ** 2)), complexity, eq))
     if not scored:

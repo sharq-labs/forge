@@ -15,8 +15,9 @@ GRID = frozenset((p, f"c{i}", s) for p in PRESENTATIONS for i in range(150) for 
 
 
 def outcome_for(kind, credit):
-    if credit == 0.0:
-        return "no_credit"                                   # not in the table: the evaluator's value is 0
+    if credit == 0.0:                                        # an evaluator outcome the kind's table does not list
+        return next(o for o in sorted(a4.OUTCOMES) if o != "indistinguishable_unresolved"
+                    and o not in score_v3.v2.CREDIT[kind])
     for outcome, value in score_v3.v2.CREDIT[kind].items():
         if value == credit:
             return outcome
@@ -199,6 +200,22 @@ def test_a_record_whose_credit_disagrees_with_its_outcome_refuses():
     rows[-1]["universes"][0]["outcome"] = "law_fail"
     with pytest.raises(AnalysisRefused):
         a4.decision(rows, "mind", ROLES, everything_represented(), GRID)
+
+
+@pytest.mark.parametrize("outcome", ["no_credit", "", "LAW_PASS", "unknown"])
+def test_an_outcome_outside_the_evaluator_vocabulary_refuses_instead_of_scoring_zero(outcome):
+    # re-review M2: an unknown outcome at credit 0 would beat inadmissible (-1), so UNKNOWN would improve an arm
+    with pytest.raises(AnalysisRefused, match="vocabulary"):
+        a4.expected_credit("discoverable", outcome)
+    rows = field() + candidate(BETTER)
+    rows[0]["universes"][0].update(outcome=outcome, credit=0.0)
+    with pytest.raises(AnalysisRefused, match="vocabulary"):
+        a4.decision(rows, "mind", ROLES, everything_represented(), GRID)
+
+
+def test_an_evaluator_refusal_the_kind_does_not_list_keeps_the_frozen_zero():
+    assert a4.expected_credit("discoverable", "no_law") == 0.0          # EvaluatorConfig: unlisted outcomes score 0
+    assert a4.OUTCOMES >= {o for table in score_v3.v2.CREDIT.values() for o in table}
 
 
 def test_an_unresolved_pair_keeps_its_penalty_and_earns_no_recovery():

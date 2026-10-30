@@ -1,5 +1,5 @@
-"""decide_v4: the formal entry takes roles, grid and provenance from the sealed run, never from the caller (review
-findings 3, 4 and 10)."""
+"""decide_v4: the formal entry takes roles, grid, provenance and representation verdicts from the sealed run and the
+revealed root, never from the caller (review findings 3, 4 and 10; re-review H1, H2, M1, L1, L3)."""
 
 from __future__ import annotations
 
@@ -16,7 +16,9 @@ from benchmarks.genesis_lite.isolated_host import ISOLATION_LABEL
 from .test_analysis_v4 import BASE, FLOOR, outcome_for
 
 IDENTITY = "i" * 64
-ROOT_C = "r" * 64
+ROOT = bytes(range(32))
+ROOT_C = hashlib.sha256(ROOT).hexdigest()
+LAW_KINDS = ("confounded", "discoverable", "spurious_correlate")
 GOOD_CHECK = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": {"CapEff": 0},
               "no_new_privs": True, "private_namespaces": {"mnt": True}, "hidden": {"/home": True}, "private_tmp": True,
               "whitelist_covered": True, "exposed_read_only": {"/opt/x": True},
@@ -33,59 +35,195 @@ def _record(arm, task, credits, *, tier="formal", isolation=ISOLATION_LABEL, ide
                           for k in KINDS]}
 
 
-def _run_dir(tmp_path, *, drop_arm=None, tamper=None):
+def _all_represented(records, root):
+    """Stand-in for reveal_v4.represented on synthetic records (the real one re-derives worlds from the root)."""
+    assert root == ROOT
+    return {"represented": {u["universe_id"]: True for r in records for u in r["universes"] if u["kind"] in LAW_KINDS}}
+
+
+@pytest.fixture(autouse=True)
+def _tree(monkeypatch):
+    monkeypatch.setattr(decide_v4, "development_identity_v4", lambda: (IDENTITY, []))
+    monkeypatch.setattr(decide_v4, "formal_identity_check", lambda identity: "")
+    monkeypatch.setattr(decide_v4, "read_root", lambda path: ROOT)
+    monkeypatch.setattr(decide_v4, "represented", _all_represented)
+
+
+def _run_dir(tmp_path, *, drop_arm=None, tamper=None, tier="formal", summary=None):
     arms = sorted(pilot_v4.roles()) + ["mind"]
     tasks = [pilot_v4.Task(a, c, p, 0) for c in range(2) for p in pilot_v4.PRESENTATIONS for a in arms]
     if drop_arm:
         tasks = [t for t in tasks if t.arm != drop_arm]
     roles = pilot_v4.roles()
-    recs = [_record(t.arm, t, FLOOR if roles.get(t.arm) in ("floor", "sanity", "adversarial") else BASE) for t in tasks]
+    recs = [_record(t.arm, t, FLOOR if roles.get(t.arm) in ("floor", "sanity", "adversarial") else BASE, tier=tier)
+            for t in tasks]
     if tamper:
         tamper(recs)
     runs = "".join(json.dumps(r, sort_keys=True) + "\n" for r in recs).encode()
-    commitment = {"root_commitment_sha256": ROOT_C, "development_identity_v4": IDENTITY, "tier": "formal",
-                  "tasks": [asdict(t) for t in tasks]}
+    commitment = {"root_commitment_sha256": ROOT_C, "development_identity_v4": IDENTITY, "tier": tier,
+                  "tasks": [asdict(t) for t in tasks], "planned_campaigns": len(tasks)}
     (tmp_path / "commitment.json").write_text(json.dumps(commitment))
-    (tmp_path / "summary.json").write_text(json.dumps({**commitment, "runs_sha256": hashlib.sha256(runs).hexdigest()}))
+    done = {**commitment, "runs_sha256": hashlib.sha256(runs).hexdigest(), "completed": len(tasks),
+            "not_run_at_deadline": 0, **(summary or {})}
+    (tmp_path / "summary.json").write_text(json.dumps(done))
     (tmp_path / "runs.jsonl").write_bytes(runs)
-    law = {u["universe_id"]: True for r in recs for u in r["universes"] if u["kind"] in ("confounded", "discoverable",
-                                                                                         "spurious_correlate")}
-    reveal = {"runs_sha256": hashlib.sha256(runs).hexdigest(), "root_commitment_sha256": ROOT_C, "represented": law}
-    (tmp_path / "reveal.json").write_text(json.dumps(reveal))
     return tmp_path
 
 
+def _decide(d, **kw):
+    return decide_v4.decide(d, d / "root.bin", "mind", **kw)
+
+
 def test_a_complete_sealed_run_is_analysed_under_the_frozen_roster(tmp_path):
-    out = decide_v4.decide(_run_dir(tmp_path), tmp_path / "reveal.json", "mind")
+    out = _decide(_run_dir(tmp_path))
     assert out["coverage_problems"] == [] and out["lift_claimed"] is False
-    assert out["commitment"]["tier"] == "formal"
+    assert out["commitment"]["tier"] == "formal" and out["tier_status"] == "FORMAL"
 
 
 def test_dropping_a_baseline_from_the_task_list_refuses(tmp_path):
     with pytest.raises(AnalysisRefused, match="frozen roster"):
-        decide_v4.decide(_run_dir(tmp_path, drop_arm="grammar_enumeration"), tmp_path / "reveal.json", "mind")
+        _decide(_run_dir(tmp_path, drop_arm="grammar_enumeration"))
 
 
 @pytest.mark.parametrize("field,value", [("isolation", "in_process"), ("development_identity_v4", "x" * 64),
-                                         ("campaign_id", "gl-v04-development-0-0-anonymous"),
                                          ("isolation_checks", [GOOD_CHECK] * 5)])
 def test_a_record_of_other_provenance_refuses(tmp_path, field, value):
     def tamper(recs):
         recs[0][field] = value
     with pytest.raises(AnalysisRefused, match="provenance"):
-        decide_v4.decide(_run_dir(tmp_path, tamper=tamper), tmp_path / "reveal.json", "mind")
+        _decide(_run_dir(tmp_path, tamper=tamper))
 
 
 def test_edited_runs_refuse(tmp_path):
     d = _run_dir(tmp_path)
     (d / "runs.jsonl").write_bytes((d / "runs.jsonl").read_bytes()[:-10] + b"0000000000")
     with pytest.raises(AnalysisRefused, match="digest"):
-        decide_v4.decide(d, d / "reveal.json", "mind")
+        _decide(d)
 
 
-def test_a_reveal_from_another_root_refuses(tmp_path):
+# ------------------------------------------------------------------- H1: the reveal is recomputed, never trusted
+
+
+def test_another_root_refuses(tmp_path, monkeypatch):
+    monkeypatch.setattr(decide_v4, "read_root", lambda path: b"\x01" * 32)
+    with pytest.raises(AnalysisRefused, match="root does not match"):
+        _decide(_run_dir(tmp_path))
+
+
+def test_the_cap_inputs_come_from_the_recomputed_reveal_not_from_a_supplied_file(tmp_path, monkeypatch):
+    # nothing is represented: every law-kind cell is capped. A hand-written reveal claiming the opposite must not lift it
+    seen = {}
+
+    def nothing_represented(records, root):
+        out = {u["universe_id"]: False for r in records for u in r["universes"] if u["kind"] in LAW_KINDS}
+        seen["verdicts"] = out
+        return {"represented": out}
+    monkeypatch.setattr(decide_v4, "represented", nothing_represented)
     d = _run_dir(tmp_path)
-    reveal = json.loads((d / "reveal.json").read_text())
-    (d / "reveal.json").write_text(json.dumps({**reveal, "root_commitment_sha256": "z" * 64}))
-    with pytest.raises(AnalysisRefused, match="root"):
-        decide_v4.decide(d, d / "reveal.json", "mind")
+    runs_sha = hashlib.sha256((d / "runs.jsonl").read_bytes()).hexdigest()
+    forged = {"runs_sha256": runs_sha, "root_commitment_sha256": ROOT_C,
+              "represented": {u: True for u in _all_represented(
+                  [json.loads(x) for x in (d / "runs.jsonl").read_text().splitlines()], ROOT)["represented"]}}
+    (d / "reveal.json").write_text(json.dumps(forged))
+    with pytest.raises(AnalysisRefused, match="differs from the one recomputed"):
+        _decide(d, reveal_path=d / "reveal.json")
+    calls = []
+    real = decide_v4.a4.decision
+    monkeypatch.setattr(decide_v4.a4, "decision", lambda *a, **k: calls.append(a[3]) or real(*a, **k))
+    _decide(d)
+    assert calls == [seen["verdicts"]]
+
+
+def test_a_root_that_does_not_reproduce_the_worlds_refuses(tmp_path, monkeypatch):
+    def wrong(records, root):
+        raise ValueError("law-kind universes were not re-derived from this root")
+    monkeypatch.setattr(decide_v4, "represented", wrong)
+    with pytest.raises(AnalysisRefused, match="cannot be recomputed"):
+        _decide(_run_dir(tmp_path))
+
+
+# ------------------------------------------------------------------- H2: the deciding code is the code that ran
+
+
+def test_code_changed_after_the_run_refuses(tmp_path, monkeypatch):
+    monkeypatch.setattr(decide_v4, "development_identity_v4", lambda: ("j" * 64, []))
+    with pytest.raises(AnalysisRefused, match="not the code that ran"):
+        _decide(_run_dir(tmp_path))
+
+
+def test_a_changed_v02_pin_refuses(tmp_path, monkeypatch):
+    monkeypatch.setattr(decide_v4, "development_identity_v4", lambda: (IDENTITY, ["scoring.py"]))
+    with pytest.raises(AnalysisRefused, match="not the code that ran"):
+        _decide(_run_dir(tmp_path))
+
+
+def test_a_formal_decision_needs_the_frozen_preregistration(tmp_path, monkeypatch):
+    monkeypatch.setattr(decide_v4, "formal_identity_check", lambda identity: "no frozen v0.4 preregistration")
+    with pytest.raises(AnalysisRefused, match="formal decision refused"):
+        _decide(_run_dir(tmp_path))
+
+
+def test_the_real_formal_check_refuses_without_a_freeze(tmp_path, monkeypatch):
+    monkeypatch.setattr(decide_v4, "formal_identity_check", pilot_v4.formal_identity_check)
+    if not pilot_v4.PREREG.exists():
+        with pytest.raises(AnalysisRefused, match="formal decision refused"):
+            _decide(_run_dir(tmp_path))
+
+
+def test_a_development_run_is_development_only_and_never_claims_lift(tmp_path, monkeypatch):
+    real = decide_v4.a4.decision
+    monkeypatch.setattr(decide_v4.a4, "decision", lambda *a, **k: {**real(*a, **k), "lift_claimed": True})
+    monkeypatch.setattr(decide_v4, "formal_identity_check", lambda identity: "must not be consulted")
+    out = _decide(_run_dir(tmp_path, tier="development"))
+    assert out["lift_claimed"] is False and out["tier_status"] == "DEVELOPMENT_ONLY"
+
+
+# ------------------------------------------------------------------- M1, L1, L3: complete runs and bound records
+
+
+@pytest.mark.parametrize("summary,match", [({"not_run_at_deadline": 3}, "deadline"),
+                                           ({"completed": 1}, "completed"),
+                                           ({"not_run_at_deadline": None}, "deadline")])
+def test_an_incomplete_run_refuses(tmp_path, summary, match):
+    with pytest.raises(AnalysisRefused, match=match):
+        _decide(_run_dir(tmp_path, summary=summary))
+
+
+@pytest.mark.parametrize("status", ["INVALID_BENCHMARK", "WORKER_FAILED"])
+def test_any_non_valid_record_blocks_even_for_an_adversarial_arm(tmp_path, status):
+    def tamper(recs):
+        next(r for r in recs if r["arm"] == "historical_answer")["status"] = status
+    with pytest.raises(AnalysisRefused, match="non-VALID"):
+        _decide(_run_dir(tmp_path, tamper=tamper))
+
+
+def test_a_missing_record_refuses(tmp_path):
+    with pytest.raises(AnalysisRefused, match="record"):
+        _decide(_run_dir(tmp_path, tamper=lambda recs: recs.pop()))
+
+
+@pytest.mark.parametrize("field,value", [("campaign_id", "gl-v04-formal-9-anonymous"), ("seed", 7),
+                                         ("presentation", "trap")])
+def test_a_record_that_names_another_campaign_than_its_task_refuses(tmp_path, field, value):
+    def tamper(recs):
+        r = next(r for r in recs if r["presentation"] != "trap")
+        r[field] = value
+    with pytest.raises(AnalysisRefused, match="another campaign"):
+        _decide(_run_dir(tmp_path, tamper=tamper))
+
+
+def test_a_duplicated_record_refuses(tmp_path):
+    def tamper(recs):
+        recs[-1] = dict(recs[0])
+    with pytest.raises(AnalysisRefused, match="not one committed task"):
+        _decide(_run_dir(tmp_path, tamper=tamper))
+
+
+@pytest.mark.parametrize("key", ["tier", "planned_campaigns", "root_commitment_sha256"])
+def test_a_summary_missing_a_bound_key_refuses(tmp_path, key):
+    d = _run_dir(tmp_path)
+    s = json.loads((d / "summary.json").read_text())
+    s.pop(key)
+    (d / "summary.json").write_text(json.dumps(s))
+    with pytest.raises(AnalysisRefused, match="lacks"):
+        _decide(d)

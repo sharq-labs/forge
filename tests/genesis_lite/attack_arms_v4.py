@@ -85,9 +85,27 @@ def _walk_dirs():
         yield top
 
 
+_KEY_SPEC_USER_KEYRING, _SYS_ADD_KEY, _SYS_KEYCTL, _KEYCTL_SEARCH = -4, 248, 250, 10    # x86_64
+
+
+def _libc():
+    import ctypes  # noqa: PLC0415
+    return ctypes.CDLL(None, use_errno=True)
+
+
+def _leave_key(payload: bytes) -> bool:
+    """A kernel key on this uid's user keyring: it outlives the process (re-review M3)."""
+    return _libc().syscall(_SYS_ADD_KEY, b"user", MARK.encode(), payload, len(payload), _KEY_SPEC_USER_KEYRING) > 0
+
+
+def _find_key() -> bool:
+    return _libc().syscall(_SYS_KEYCTL, _KEYCTL_SEARCH, _KEY_SPEC_USER_KEYRING, b"user", MARK.encode(), 0) > 0
+
+
 def leave_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
-    """Write a mark into EVERY directory this process can write (the persistence half of review finding 1)."""
-    written = []
+    """Write a mark into EVERY directory this process can write (the persistence half of review finding 1), and a
+    key on the uid's kernel keyring."""
+    written = ["keyring:@u"] if _leave_key(card["universe_id"].encode()) else []
     for d in _walk_dirs():
         if os.access(d, os.W_OK):
             try:
@@ -101,4 +119,6 @@ def leave_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[
 
 def find_marks(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     found = [d for d in _walk_dirs() if os.path.exists(os.path.join(d, MARK))]
+    if _find_key():
+        found.append("keyring:@u")
     return _answer(card, {"found": sorted(found)})
