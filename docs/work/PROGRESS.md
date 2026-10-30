@@ -11522,3 +11522,38 @@ Smoke on the real EXC-4b records (`/opt` venv, WSL, nice): `world_credits` accep
 and spurious_correlate credit is 0.000 for grammar_enumeration, mind_full and careful (they refuse to extrapolate),
 so about half of the law worlds carry no discriminating information for those arms. It is disclosed in the strata,
 and it is a Step 2 / Stage 2b design input (correct extrapolation is where discovery shows).
+
+### 2026-10-30 — Session A: v0.4 arms and the per-universe OS-isolated proposer path (A1, A2)
+
+- `arms_v4.py`: `random_grammar` (10 structures drawn from the five-shape grammar, same selection and gate) and
+  `pysr_units` (EXC-5: ln y on settable inputs, card units renamed to SI symbols as `X_units`, Pareto choice on a
+  training-validation part, grammar gate with the precision bar; method failures raise, so they score inadmissible).
+  - Windows `.venv`: `pytest tests/genesis_lite/test_v04_arms.py` -> 7 passed, 3 skipped (no sympy).
+  - WSL `/opt` venv: 9 passed, 1 deselected (the missing-PySR test needs PySR absent).
+  - No PySR run yet.
+  - Failed approach: a "same seed, same result" determinism test reran one universe. The multiplicity ledger
+    correctly refuses a second ledger for the same campaign id, so the test now asserts that refusal.
+- `isolated_host.py` + `harness_v4.py`: one fresh proposer process per universe (D11). It speaks the
+  `proposer_host` protocol, runs under unshare (mnt/pid/net/ipc/uts) and setpriv (uid 65534, no capabilities,
+  no_new_privs), and sees /opt only as a whitelist: a tmpfs, with the code tree and the venv bound back read-only.
+  /home, /root, /mnt, /var/tmp, /srv and the tree's `pilot_results` are covered by tmpfs, and /tmp is private. Each
+  process is verified from outside through /proc before any card. The v0.3 campaign flow is reused unchanged.
+- Executed as root in WSL, from the clean clone `/opt/forge-v4-fa0ae0773448` at
+  `99bea4fe7b10cf24e7f11e390c5bd0ca8455bbe3`, `/opt/forge-mvp-20261028/.venv` (3.12.3), nice:
+  `python -m pytest tests/genesis_lite/test_v04_isolation.py -q -p no:randomly -p no:cacheprovider` -> 14 passed,
+  2 skipped (the off-Linux test and the not-under-/opt test), three consecutive runs. Covered:
+  - outside verification;
+  - a world-readable secret beside the tree under /opt neither listed nor read, and no other checkout visible;
+  - the positive control: exposing that directory makes the secret readable;
+  - no outbound network, no visible or readable operator process;
+  - the observe relay works;
+  - a full `careful` campaign through `run_one_v4` is VALID with 6 verified processes.
+- Failed approaches, each found by the first root run:
+  1. A hide nested under an already hidden path (/root/x under /root) aborts the launch, because the mount point no
+     longer exists. Hides are now collapsed to a minimal set.
+  2. A blacklist of hidden paths left another checkout's `pilot_results` under /opt readable, so /opt became a
+     whitelist.
+  3. A heredoc Python patch failed in Git Bash on Windows (quote parsing). Patches are now files (lessons, trap 8).
+- Boundary level: these tests exercise the mechanism on one host and one config (WSL2, umask=077 drvfs). Nothing here
+  sets or claims a security level. The formal run's record must carry its own per-process verifications.
+- An OD-3 run was active throughout; every run above was single-file and niced.
