@@ -11404,3 +11404,14 @@ laws on controls for grammar, careful, mind_full. Failed approach: `pilot_v3` CL
 post-reveal per-world expressibility (`expressibility_v3`, an EXC-4 exit item) cannot be computed for this run;
 contrasts (i)-(iii) were computed from the records alone. A pilot that reveals its root after sealing must be decided
 first (owner), and the reveal file has to be written before the run, not reconstructed.
+
+EXC-4 second pilot (owner "Second pilot", 2026-10-30; code `a5c343f01f7829a030ca87ab146ce273b6ac4017`, same environment):
+sealed root file (0600, outside the tree) passed to `run_pilot(root=...)` by an out-of-tree driver. Failed approach: the
+first attempt's driver had no `if __name__ == "__main__"` guard, so every spawn-started worker died at bootstrap
+(2520 WORKER_FAILED in 1.8 s, BrokenProcessPool); no campaign ran, so the same root was reused. Rerun: exit 0,
+2520/2520, all 21 arms 120/120 VALID, 1079.0 s. `python -m benchmarks.genesis_lite.expressibility_v3 --runs ... --root-file
+... --out ...` -> exit 0, every universe re-derived. Discoverable: 89 EXPRESSIBLE_BY_FIT / 31 NOT_FOUND_BY_FIT. Mean
+discoverable credit grammar 0.350, mind_full 0.292, pysindy 0.217, careful 0.183, monomial 0.175, pysr 0.000;
+0 false laws on controls (grammar, careful, mind_full). Report: `benchmarks/genesis_lite/pilot_results/
+v0_3-dev-grammar-2026-10-30b/README.md`. EXC-4 exit condition: pilot report, contrasts and expressibility recorded;
+closure is the owner's.

@@ -1074,6 +1074,7 @@ fraction 1.0, 45-minute cap, on a fresh root that is written to a file outside t
 starts and passed to `run_pilot(root=...)` by a driver outside the tree (no repository code change). Workers still
 receive only per-campaign master seeds. The first pilot's results stay recorded unchanged. All field 8 prohibitions
 still apply (no tuning on either pilot's results).
+**Second pilot done 2026-10-30:** 2520/2520 VALID with expressibility (`pilot_results/v0_3-dev-grammar-2026-10-30b/`). Exit condition met; closing EXC-4 is the owner's decision.
 
 Full draft with rationale and risks: `docs/work/proposals/EXC4_MIND_HYPOTHESIS_LANGUAGE_DRAFT.md` (at `b622af5e`).
 
