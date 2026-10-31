@@ -39,7 +39,7 @@ def read(directory):
         raise ValueError(f"runs digest mismatch: {directory}")
     runs = [json.loads(line) for line in raw.splitlines()]
     manifest = json.loads((directory / "manifest.json").read_text())
-    if len(runs) != summary["completed"] or manifest["dirty"]:
+    if len(runs) != summary.get("records", summary["completed"]) or manifest["dirty"]:
         raise ValueError(f"incomplete or dirty run: {directory}")
     return runs, summary, manifest
 
@@ -151,9 +151,10 @@ def summarize(directory, reference):
                             "campaign_total_seconds" in r]) for arm in sorted({r["arm"] for r in runs})}
     startup = [t["launch_to_hello_seconds"] for r in runs for t in r.get("operator_timings", [])]
     lifetimes = [t["lifetime_seconds"] for r in runs for t in r.get("operator_timings", [])]
-    resources = summary["resources"]
-    changes = {k: summary["host_after"][k] - summary["host_before"][k]
-               for k in ("swap_in_pages", "swap_out_pages", "oom_kill")}
+    resources, cpu = summary.get("resources"), summary.get("cpu")
+    host_before, host_after = summary.get("host_before"), summary.get("host_after")
+    changes = ({k: host_after[k] - host_before[k] for k in ("swap_in_pages", "swap_out_pages", "oom_kill")}
+               if host_before is not None and host_after is not None else None)
     identities = [tuple(sorted(t["operator_process_identity"].items())) for r in runs
                   for t in r.get("operator_timings", []) if "operator_process_identity" in t]
     return {"directory": str(directory), "source_sha": manifest["git_head"], "workers": summary["workers"],
@@ -162,14 +163,15 @@ def summarize(directory, reference):
             "failures": [{"key": key(r), "status": r["status"], "reasons": r.get("reasons", [])}
                          for r in runs if r["status"] not in ("VALID", "PUBLIC_FIT_COMPLETED")],
             "elapsed_includes_manifest_preflight": summary.get("elapsed_includes_manifest_preflight", False),
-            "valid_campaigns_per_hour": valid * 3600 / summary["elapsed_seconds"], "arm_seconds": arm_times,
+            "valid_campaigns_per_hour": (valid * 3600 / summary["elapsed_seconds"]
+                                         if manifest["arguments"].get("mode") == "campaign" else None), "arm_seconds": arm_times,
             "parent_launch_to_python_hello_seconds": stats(startup), "universe_lifetime_seconds": stats(lifetimes),
             "parent_arrival_phase_durations_untrusted_labels": phase_durations(runs), "resources": resources,
-            "cpu": summary["cpu"], "child_cpu_core_equivalents":
-                (summary["cpu"]["cpu_user_seconds"] + summary["cpu"]["cpu_system_seconds"]) / summary["elapsed_seconds"],
-            "memory_pressure_changes": changes, "host_before": summary["host_before"],
+            "cpu": cpu, "child_cpu_core_equivalents":
+                ((cpu["cpu_user_seconds"] + cpu["cpu_system_seconds"]) / summary["elapsed_seconds"] if cpu else None),
+            "memory_pressure_changes": changes, "host_before": host_before,
             "recorded_process_identities": len(identities), "distinct_process_identities": len(set(identities)),
-            "host_after": summary["host_after"], "comparison": comparison(reference, runs),
+            "host_after": host_after, "comparison": comparison(reference, runs),
             "runs_sha256": summary["runs_sha256"]}
 
 

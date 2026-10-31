@@ -68,6 +68,11 @@ def _work(item):
                        presentation="anonymous", seed=index, hidden=hidden, exposed=exposed, env=env)
 
 
+def _bounded_work(task, item):
+    """Use the pilot's actual bounded worker lifecycle with public fixtures."""
+    return _work(item)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--out", required=True)
@@ -75,6 +80,8 @@ def main():
     ap.add_argument("--arms", nargs="+", default=["pysr_units", "pysr_symbolic"])
     ap.add_argument("--repeats", type=int, default=1)
     ap.add_argument("--workers", type=int, default=1)
+    ap.add_argument("--executor", choices=("pool", "bounded"), default="pool")
+    ap.add_argument("--deadline-seconds", type=float, default=3600.0)
     ap.add_argument("--env", nargs="*", default=[])
     ap.add_argument("--expose", nargs="*", default=[])
     args = ap.parse_args()
@@ -82,7 +89,7 @@ def main():
         ap.error("workers and repeats must be positive")
     output = pathlib.Path(args.out)
     output.mkdir(parents=True, exist_ok=False)
-    from .pilot_v4 import _git, environment_manifest
+    from .pilot_v4 import Task, _git, environment_manifest
     from .telemetry_v4 import ProcessSampler, usage
     start = time.perf_counter()
     started_utc = datetime.now(timezone.utc).isoformat()
@@ -100,22 +107,41 @@ def main():
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2))
     items = [(a, i, args.mode, env, args.expose) for i in range(args.repeats) for a in args.arms]
     preflight_seconds = time.perf_counter() - start
-    with cf.ProcessPoolExecutor(max_workers=args.workers, mp_context=mp.get_context("spawn")) as pool:
-        futures = {pool.submit(_work, item): item for item in items}
-        with (output / "runs.jsonl").open("w") as stream:
-            for future in cf.as_completed(futures):
-                try:
-                    rec = future.result()
-                except Exception as exc:
-                    item = futures[future]
-                    rec = {"arm": item[0], "index": item[1], "status": "WORKER_FAILED",
-                           "reasons": [f"{type(exc).__name__}: {exc}"]}
-                    if item[2] == "campaign":
-                        rec.update(seed=item[1], campaign_id=f"public-perf-{item[1]}", presentation="anonymous")
-                stream.write(json.dumps(rec, sort_keys=True) + "\n")
-                stream.flush()
-                print(json.dumps({"arm": rec["arm"], "status": rec["status"], "elapsed": time.perf_counter() - start}), flush=True)
-    summary = {"elapsed_seconds": time.perf_counter() - start, "completed": len(items), "workers": args.workers,
+    records = []
+    deadline_outcome = None
+    with (output / "runs.jsonl").open("w") as stream:
+        def keep(rec):
+            if "task" in rec:
+                rec.setdefault("index", rec["task"]["campaign"])
+            if args.mode == "campaign" and "task" in rec and "campaign_id" not in rec:
+                rec.update(seed=rec["task"]["seed"], campaign_id=f"public-perf-{rec['task']['campaign']}",
+                           presentation="anonymous")
+            records.append(rec)
+            stream.write(json.dumps(rec, sort_keys=True) + "\n")
+            stream.flush()
+            print(json.dumps({"arm": rec["arm"], "status": rec["status"], "elapsed": time.perf_counter() - start}), flush=True)
+
+        if args.executor == "bounded":
+            from .deadline_v4 import execute
+            arguments = [(Task(item[0], item[1], "anonymous", item[1]), item) for item in items]
+            deadline_outcome = execute(_bounded_work, arguments, directory=output / "task_results", workers=args.workers,
+                                       deadline_seconds=args.deadline_seconds, keep=keep)
+        else:
+            with cf.ProcessPoolExecutor(max_workers=args.workers, mp_context=mp.get_context("spawn")) as pool:
+                futures = {pool.submit(_work, item): item for item in items}
+                for future in cf.as_completed(futures):
+                    try:
+                        rec = future.result()
+                    except Exception as exc:
+                        item = futures[future]
+                        rec = {"arm": item[0], "index": item[1], "status": "WORKER_FAILED",
+                               "reasons": [f"{type(exc).__name__}: {exc}"]}
+                        if item[2] == "campaign":
+                            rec.update(seed=item[1], campaign_id=f"public-perf-{item[1]}", presentation="anonymous")
+                    keep(rec)
+    summary = {"elapsed_seconds": time.perf_counter() - start, "records": len(records),
+               "completed": sum(r["status"] in ("VALID", "PUBLIC_FIT_COMPLETED") for r in records), "workers": args.workers,
+               "executor": args.executor, "deadline_outcome": deadline_outcome,
                "preflight_seconds": preflight_seconds, "elapsed_includes_manifest_preflight": True,
                "runs_sha256": hashlib.sha256((output / "runs.jsonl").read_bytes()).hexdigest(),
                "resources": sampler.close(), "host_before": host_before, "host_after": host_state(),

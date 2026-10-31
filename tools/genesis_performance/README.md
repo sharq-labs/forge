@@ -56,6 +56,13 @@ original JuliaCall default; `threads` explicitly sets one Julia and one GC threa
 import-only native-cache control. Every proposer still gets a private writable
 first depot, a fresh OS process and outside isolation verification.
 
+Use `--executor bounded --deadline-seconds 3600` for scaling measurements through
+the pilot's actual hard-deadline executor: a fresh trusted worker per campaign,
+atomic result retention and no live workers left past the cutoff. The original
+pool controls keep the deadline change separate from the A/B/C/D comparison.
+Compare worker counts within the same executor and fixed task count. Summaries
+distinguish retained record count from successfully completed records.
+
 ```bash
 bash tools/genesis_performance/run_control.sh threads --mode campaign \
   --arms pysr_units pysr_symbolic --repeats 3 --workers 4 --out /root/public-control-new

@@ -12009,3 +12009,10 @@ Later batches include manifest preflight and additional depot hashing; original 
 preflight. This accounting distinction must remain explicit, not silently normalized away.
 Historical G10 raw timings were read without reading any root: its runs.jsonl hash matches
 1312ac47ff2f5fabd926658727101b4eef2ded6141d3719f3780c75f590cd9cf; extracted only 228 VALID arm/seed/campaign/time records.
+
+Performance report compatibility: the first micro-controls predate aggregate resource fields; the first analyzer
+attempt raised KeyError rather than fabricate missing data. It now preserves absent CPU/RAM/host-pressure fields
+as null/UNKNOWN, and fit controls do not report a campaign rate. A regression test covers the older schema.
+Added an opt-in public `--executor bounded` mode using the pilot's actual deadline executor so outer-worker scaling
+can include fresh trusted-worker and ledger overhead. The default pool remains for the separate A/B/C/D controls.
+This measurement-helper delta does not alter the pilot, algorithms, budgets or scientific scoring. Execution pending.

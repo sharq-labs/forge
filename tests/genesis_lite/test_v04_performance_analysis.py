@@ -70,3 +70,20 @@ def test_explicit_method_failure_can_be_compared_but_missing_failure_cannot():
     assert comparison([run], [deepcopy(run)])["equivalence_status"] == "PASS"
     timing["proposer_failure"] = {}
     assert comparison([run], [deepcopy(run)])["equivalence_status"] == "UNKNOWN"
+
+
+def test_older_control_without_resource_measurements_keeps_them_unknown(tmp_path):
+    import hashlib
+    import json
+    from tools.genesis_performance.analyse import summarize
+    run = {"arm": "pysr_symbolic", "index": 0, "status": "PUBLIC_FIT_COMPLETED",
+           "runtime_diagnostic": {"equations": [[1, .5, "1"]]}, "operator_timings": []}
+    raw = json.dumps(run).encode() + b"\n"
+    (tmp_path / "runs.jsonl").write_bytes(raw)
+    (tmp_path / "summary.json").write_text(json.dumps({"runs_sha256": hashlib.sha256(raw).hexdigest(),
+                           "completed": 1, "workers": 1, "elapsed_seconds": 1}))
+    (tmp_path / "manifest.json").write_text(json.dumps({"git_head": "source", "dirty": False,
+                                                       "arguments": {"mode": "fit"}}))
+    out = summarize(tmp_path, [run])
+    for field in ("resources", "cpu", "child_cpu_core_equivalents", "memory_pressure_changes", "valid_campaigns_per_hour"):
+        assert out[field] is None
