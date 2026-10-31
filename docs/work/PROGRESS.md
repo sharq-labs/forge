@@ -11828,3 +11828,8 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
     `ef201b62de66c0c1f65621bc4757c02e3c9829f4ef4680f67a04b975a724d3b6`.
   - Its `development_identity_v4` equals the G7 and G10 commitments' identity (`fd779c3b…`).
   - Status `CANDIDATE_NOT_FROZEN`. Freezing remains the owner's.
+- Provenance check of the rebound record: in a clean WSL clone at `1906367715e73436aaee13fc7d4aa46a1013643b`,
+  `pytest -q -p no:randomly benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance
+  tests/genesis_lite/test_v04_preregistration.py` -> 6 passed.
+  - Failed approach: the same provenance test on the Windows checkout reports 1659 UNKNOWN_PROVENANCE files, because
+    `core.autocrlf=true` changes the bytes it hashes. Run byte-hashing provenance checks in an LF clone.
