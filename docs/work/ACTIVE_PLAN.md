@@ -6,7 +6,25 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
-## Current bounded task — Genesis-lite v0.4 performance (owner, 2026-10-31)
+## Current bounded task - mesh record serialization performance (owner, 2026-10-31)
+
+Owner approved the first project-wide review candidate at 14:17 UTC: reduce
+repeated representation construction within one call, with identical workers,
+workloads, hashes, mutation/substitution detection, authority and refusal semantics.
+This isolated branch starts at `d05b25eec565b48b4a024799cbda4f046e872d6c`.
+Only mesh/vertex serialization is being changed. No persistent identity cache,
+skipped validation, security change, scientific protocol or solver setting change,
+push, merge, formal/OD-3, or 1000-campaign run is authorized.
+
+The first two bounded candidates preserved exact serialized thermal records in
+three alternating A/B repetitions. The broader mesh/thermal/field pack passed
+201 tests before the final conservative fallback refinement. Independent review
+required builtin-shape eligibility before reading material and the complete
+original fallback expression; those corrections are under final verification.
+Final matched timing, ordinary FAST/SCIENTIFIC gates, and the independent review
+are required before delivery. Other project-wide review candidates remain proposals.
+
+## Completed bounded task - Genesis-lite v0.4 performance (owner, 2026-10-31)
 
 Follow-up authorized 2026-10-31 12:40 UTC: implement and compare residual PySR
 precompilation and unnecessary eager grammar/claims imports locally. Use bounded

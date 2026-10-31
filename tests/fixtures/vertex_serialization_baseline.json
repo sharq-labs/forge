@@ -1,0 +1,189 @@
+{
+  "baseline_sha": "d05b25eec565b48b4a024799cbda4f046e872d6c",
+  "records": [
+    {
+      "context": "2222222222222222222222222222222222222222222222222222222222222222",
+      "data": {
+        "count": 3,
+        "digest": "c108aaa485c73cd167a13ce563ccad1b88a20ddd1a5dd82e26679f462430f367",
+        "digest_algorithm": "sha256",
+        "dtype": "float64",
+        "name": "q",
+        "schema": "scientific_data_reference/1",
+        "unit": "kilogram"
+      },
+      "mesh_version": "3a8bb00e5b7fd5de9ff5c2b3e6ce652906e4b550da32810388876f9a682ffac4",
+      "name": "q",
+      "parents": [],
+      "placement": "dual_cell_integrated",
+      "schema": "vertex_dual_state/1",
+      "semantics": {
+        "conserved_quantity": {
+          "meaning_id": "fixture:species_A",
+          "schema": "conserved_quantity/1",
+          "unit": "kilogram"
+        },
+        "interface": null,
+        "kind": "cell_integrated",
+        "measure_unit": "meter",
+        "quantity": {
+          "conserved_quantity": {
+            "meaning_id": "fixture:species_A",
+            "schema": "conserved_quantity/1",
+            "unit": "kilogram"
+          },
+          "meaning_id": "fixture:species_A",
+          "other_role": "",
+          "roles": [
+            "integrated"
+          ],
+          "schema": "quantity_semantics/1",
+          "unit": "kilogram"
+        },
+        "schema": "field_semantics/1"
+      },
+      "source": {
+        "document_digest": "750f6093511f4bb4d124999771c065343ae92c5d7abb1493925007c29bfded9a",
+        "issuer": "synthetic test author",
+        "locator": "fixture://not-measured/not-material-evidence",
+        "published_at": "",
+        "retrieved_at": "",
+        "schema": "scientific_knowledge_source/1",
+        "source_class": "other",
+        "source_id": "fixture:normalized_input",
+        "version": "fixture-v1"
+      },
+      "support": "a0663413b68d4fc99e7d181105dd084761b82ae20e6f119bd0472fa14324ae52",
+      "uncertainty": {
+        "confidence_level": null,
+        "kind": "unknown",
+        "lower": null,
+        "method": "",
+        "notes": "synthetic fixture, not measured data",
+        "schema": "uncertainty/1",
+        "source": "",
+        "standard_uncertainty": null,
+        "upper": null
+      },
+      "unit": "kilogram"
+    },
+    {
+      "context": "2222222222222222222222222222222222222222222222222222222222222222",
+      "data": {
+        "count": 5,
+        "digest": "26b95a43eac88e72c5ef3b5f2556e543070b594a1697e86380a2fbbec2bf997a",
+        "digest_algorithm": "sha256",
+        "dtype": "float64",
+        "name": "q",
+        "schema": "scientific_data_reference/1",
+        "unit": "kilogram"
+      },
+      "mesh_version": "cfcbbc875a3d9ef6095b5797c3532eb4a0255a24c22caaf0096957d1e7a578cd",
+      "name": "q",
+      "parents": [
+        "c10411814f931d14c45141e50b0a587c67b7a214ab3df3ae62b8f732c440e039",
+        "c31f04e0db6dc7487bf4cdcfea2aa9a106c8c0c338e96634bb9329acfdc97b1e"
+      ],
+      "placement": "dual_cell_integrated",
+      "schema": "vertex_dual_state/1",
+      "semantics": {
+        "conserved_quantity": {
+          "meaning_id": "fixture:species_A",
+          "schema": "conserved_quantity/1",
+          "unit": "kilogram"
+        },
+        "interface": null,
+        "kind": "cell_integrated",
+        "measure_unit": "meter",
+        "quantity": {
+          "conserved_quantity": {
+            "meaning_id": "fixture:species_A",
+            "schema": "conserved_quantity/1",
+            "unit": "kilogram"
+          },
+          "meaning_id": "fixture:species_A",
+          "other_role": "",
+          "roles": [
+            "integrated"
+          ],
+          "schema": "quantity_semantics/1",
+          "unit": "kilogram"
+        },
+        "schema": "field_semantics/1"
+      },
+      "source": null,
+      "support": "414c7e4bbd74349fae2f4d3f0ccb82f8897081abd4cc5a3d9422e7378c463f9e",
+      "uncertainty": {
+        "confidence_level": null,
+        "kind": "unknown",
+        "lower": null,
+        "method": "",
+        "notes": "input, storage-law discrepancy and spatial transfer error are unquantified",
+        "schema": "uncertainty/1",
+        "source": "",
+        "standard_uncertainty": null,
+        "upper": null
+      },
+      "unit": "kilogram"
+    },
+    {
+      "context": "2222222222222222222222222222222222222222222222222222222222222222",
+      "data": {
+        "count": 3,
+        "digest": "c108aaa485c73cd167a13ce563ccad1b88a20ddd1a5dd82e26679f462430f367",
+        "digest_algorithm": "sha256",
+        "dtype": "float64",
+        "name": "q",
+        "schema": "scientific_data_reference/1",
+        "unit": "kilogram"
+      },
+      "mesh_version": "8fdd2b0dc5b5d6fd327f31c2431ceb040a4a13f541142b81609056d69753a843",
+      "name": "q",
+      "parents": [
+        "8071d6bc9ef9ecdc393720404353851db8c4b278498b17636893ae5cc77c239e",
+        "e1bfad24cd073fa794c8b97adb86c4ab210c56a937f354ce99a171488d0be3dc"
+      ],
+      "placement": "dual_cell_integrated",
+      "schema": "vertex_dual_state/1",
+      "semantics": {
+        "conserved_quantity": {
+          "meaning_id": "fixture:species_A",
+          "schema": "conserved_quantity/1",
+          "unit": "kilogram"
+        },
+        "interface": null,
+        "kind": "cell_integrated",
+        "measure_unit": "meter",
+        "quantity": {
+          "conserved_quantity": {
+            "meaning_id": "fixture:species_A",
+            "schema": "conserved_quantity/1",
+            "unit": "kilogram"
+          },
+          "meaning_id": "fixture:species_A",
+          "other_role": "",
+          "roles": [
+            "integrated"
+          ],
+          "schema": "quantity_semantics/1",
+          "unit": "kilogram"
+        },
+        "schema": "field_semantics/1"
+      },
+      "source": null,
+      "support": "98918bc4404eb1fe9d856efa1539903865b434a10651fe9a3ca5d2d6bb9b1312",
+      "uncertainty": {
+        "confidence_level": null,
+        "kind": "unknown",
+        "lower": null,
+        "method": "",
+        "notes": "input, storage-law discrepancy and spatial transfer error are unquantified",
+        "schema": "uncertainty/1",
+        "source": "",
+        "standard_uncertainty": null,
+        "upper": null
+      },
+      "unit": "kilogram"
+    }
+  ]
+}

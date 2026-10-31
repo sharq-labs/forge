@@ -314,7 +314,45 @@ class MeshVersion1D(_AuditOnlyRecord):
         return self.version_id
 
     def to_dict(self):
-        return {**self._material(), "version_id": self.version_id}
+        # Reuse only this call's material; later reads still rebuild it so the
+        # issuer can detect mutation. Custom representations keep their reads.
+        if not _plain_mesh_material(self):
+            return {**self._material(), "version_id": self.version_id}
+        material = self._material()
+        return {**material, "version_id": canonical_digest(material)}
+
+
+def _plain_grid_material(grid):
+    """Non-converting shape check for serialization reuse, never admission."""
+    try:
+        return (type(grid) is Grid1D and type(grid.nodes) is tuple and type(grid.unit) is str
+                and all(type(x) is float for x in grid.nodes))
+    except AttributeError:
+        return False
+
+
+def _plain_mesh_material(mesh):
+    """Only builtin values have side-effect-free repeated material reads.
+
+    A custom iterable or numeric conversion may mutate or raise on a later
+    read. Inspect exact containers before traversing, and retain the original
+    serialization path for anything else, including malformed records.
+    """
+    try:
+        return (type(mesh) is MeshVersion1D and _plain_grid_material(mesh.grid)
+                and type(mesh.root_id) is str
+                and (mesh.parent_version_id is None or type(mesh.parent_version_id) is str)
+                and type(mesh.operation) is str and type(mesh.coordinate_frame) is str
+                and type(mesh.root_context) is str and type(mesh.cells) is tuple
+                and all(type(cell) is LineageCell1D and type(cell.root_id) is str
+                        and (cell.parent_id is None or type(cell.parent_id) is str)
+                        and type(cell.left) is float and type(cell.right) is float for cell in mesh.cells)
+                and type(mesh.bisection_ids) is tuple and all(type(x) is str for x in mesh.bisection_ids)
+                and type(mesh.policy) is tuple
+                and all(type(pair) is tuple and len(pair) == 2
+                        and type(pair[0]) is str and type(pair[1]) is str for pair in mesh.policy))
+    except AttributeError:
+        return False
 
 
 @dataclass(frozen=True)

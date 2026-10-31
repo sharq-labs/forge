@@ -12289,3 +12289,38 @@ It includes public raw runs/manifests/summaries, asset manifests, failed control
 comparisons and static-review summaries. The selected binaries remain under root-owned/read-only /opt in WSL.
 All 873 indexed file SHA256 values were recomputed with PowerShell Get-FileHash and matched (native exit 0).
 Final `docs/ai/check_docs.py` execution: AI_DOCS PASS, exit 0; staged `git diff --cached --check` clean.
+# Mesh serialization performance - local work, 2026-10-31
+
+Owner approval at 14:17 UTC follows the comprehensive project-wide review.
+Base `d05b25eec565b48b4a024799cbda4f046e872d6c`; isolated branch
+`codex/mesh-record-performance`; original published worktree preserved.
+
+Only invocation-local mesh/vertex representation reuse is implemented. No
+identity persists across calls and issuance/lineage/authority checks are unchanged.
+Candidate 1 (mesh serialization only), one worker/one numeric thread, three
+alternating public synthetic A/B pairs: setup32 mean 211.256 -> 175.385 ms;
+setup+step+read32 591.301 -> 533.980 ms. Candidate 2 adds vertex support material
+reuse: setup32 194.743 -> 151.849 ms, step32 571.292 -> 437.330 ms, four steps on
+8 cells 709.256 -> 545.837 ms, two steps on32 cells 1019.050 -> 802.368 ms.
+These are intermediate candidates, not final speed claims. All serialized wires
+and SHA-256 values agree exactly across each matched comparison. Native evidence:
+`/home/dev_kaeem/forge-mesh-record-evidence-20261031/candidate1-summary.json` and
+`candidate2-summary.json`; driver in the separate task workspace `mesh_bench.py`.
+
+Executed from the native candidate with Python 3.12, PYTHONPATH=src and one numeric
+thread: `python -m pytest tests/test_mesh_record_serialization.py -q` initially
+12 passed. Broader command `python -m pytest tests/test_mesh_record_serialization.py
+tests/test_m1a_mesh_lineage.py tests/test_m1b_vertex_dual_state.py
+tests/test_m1c_transient_fv.py tests/numerical/test_mesh_adaptation.py
+tests/test_phase3_br16_mesh_validity_and_adaptation.py
+tests/test_phase2_field_transfer.py -q -n 4 --dist loadfile` passed all201 tests
+in74.553s (targeted.xml/log). This preceded the final fallback refinement.
+
+Independent scientific review found two compatibility risks: checking eligibility
+after a stateful serialization read, and moving a VertexState name read after
+support serialization. Both were corrected: eligibility checks exact builtin
+shapes without conversion, unknown/custom shapes keep the complete old path,
+and normal records reuse only the current invocation's material. Added adversarial
+cases cover one-shot iterators, fields becoming plain during serialization,
+later-conversion errors, malformed records, and subclass access/exception order.
+No broad cache or gate weakening was adopted. Final results follow below when run.

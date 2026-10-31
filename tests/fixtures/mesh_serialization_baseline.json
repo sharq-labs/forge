@@ -1,0 +1,148 @@
+{
+  "baseline_sha": "d05b25eec565b48b4a024799cbda4f046e872d6c",
+  "records": [
+    {
+      "bisection_ids": [],
+      "cells": [
+        {
+          "cell_id": "4e4e9e770f52529a91d616a842c14c51f599eae812d70173cd6f9bf46c66d447",
+          "left": "0x0.0p+0",
+          "parent_id": null,
+          "right": "0x1.0000000000000p+0",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        },
+        {
+          "cell_id": "29dac6c028c8dc3bcaa8a72a163e30e21bb5c9c8664764bdb32d1741a40bb5e4",
+          "left": "0x1.0000000000000p+0",
+          "parent_id": null,
+          "right": "0x1.0000000000000p+2",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        }
+      ],
+      "coordinate_frame": "fixture:axis",
+      "grid": {
+        "nodes": [
+          0.0,
+          1.0,
+          4.0
+        ],
+        "unit": "meter"
+      },
+      "grid_digest": "e049750090dd87bc4a41d6b85c9d93b61fae2adf1f4567b2cf26fd862fcfde11",
+      "operation": "root",
+      "parent_version_id": null,
+      "policy": {},
+      "root_context": "serialization-fixture",
+      "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+      "schema": "mesh_version_1d/1",
+      "version_id": "fcb652c271f907b844560d161867bd8d3a8b86eb1c0ff402c2744049dc29298f"
+    },
+    {
+      "bisection_ids": [
+        "dded628f49f80a51e3944f820cdd2ddf80940823162b5ba8522c6cc60e877b17",
+        "dc35e09808099d809f7086c395f7960e896497982db5f2d819daad7799cdd64c"
+      ],
+      "cells": [
+        {
+          "cell_id": "79b2f0b23d9a56fe366bd38c9170e92a18e85c95d86fea69bec0860cc0a85f10",
+          "left": "0x0.0p+0",
+          "parent_id": "4e4e9e770f52529a91d616a842c14c51f599eae812d70173cd6f9bf46c66d447",
+          "right": "0x1.0000000000000p-1",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        },
+        {
+          "cell_id": "9769d91996fea07b13c2b39e36a9961679e261085e72450d970b70c8f8596df3",
+          "left": "0x1.0000000000000p-1",
+          "parent_id": "4e4e9e770f52529a91d616a842c14c51f599eae812d70173cd6f9bf46c66d447",
+          "right": "0x1.0000000000000p+0",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        },
+        {
+          "cell_id": "e8d0afc6dffc27e303a82f755f2f909fa64e1f6592944a54fca74f6a1a70ddb2",
+          "left": "0x1.0000000000000p+0",
+          "parent_id": "29dac6c028c8dc3bcaa8a72a163e30e21bb5c9c8664764bdb32d1741a40bb5e4",
+          "right": "0x1.4000000000000p+1",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        },
+        {
+          "cell_id": "d38855597c1c541872cda2aae5cb94ac9f7679866298bd02168fdc5989b0a260",
+          "left": "0x1.4000000000000p+1",
+          "parent_id": "29dac6c028c8dc3bcaa8a72a163e30e21bb5c9c8664764bdb32d1741a40bb5e4",
+          "right": "0x1.0000000000000p+2",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        }
+      ],
+      "coordinate_frame": "fixture:axis",
+      "grid": {
+        "nodes": [
+          0.0,
+          0.5,
+          1.0,
+          2.5,
+          4.0
+        ],
+        "unit": "meter"
+      },
+      "grid_digest": "7de5636a338c8e45c3e12b78e1eefd24b9b75e7a6ec060dea27c5ae3ad570baa",
+      "operation": "refine",
+      "parent_version_id": "fcb652c271f907b844560d161867bd8d3a8b86eb1c0ff402c2744049dc29298f",
+      "policy": {
+        "max_ratio": "0x1.4000000000000p+3",
+        "minimum_cell_in_grid_unit": "0x1.47ae147ae147bp-7"
+      },
+      "root_context": "serialization-fixture",
+      "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+      "schema": "mesh_version_1d/1",
+      "version_id": "a6b2cd72ef6038ded5539ab3190d40320fc6aa32d5fa8e952ada9237a3f48881"
+    },
+    {
+      "bisection_ids": [
+        "dded628f49f80a51e3944f820cdd2ddf80940823162b5ba8522c6cc60e877b17",
+        "dc35e09808099d809f7086c395f7960e896497982db5f2d819daad7799cdd64c"
+      ],
+      "cells": [
+        {
+          "cell_id": "4e4e9e770f52529a91d616a842c14c51f599eae812d70173cd6f9bf46c66d447",
+          "left": "0x0.0p+0",
+          "parent_id": null,
+          "right": "0x1.0000000000000p+0",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        },
+        {
+          "cell_id": "29dac6c028c8dc3bcaa8a72a163e30e21bb5c9c8664764bdb32d1741a40bb5e4",
+          "left": "0x1.0000000000000p+0",
+          "parent_id": null,
+          "right": "0x1.0000000000000p+2",
+          "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+          "schema": "lineage_cell_1d/1"
+        }
+      ],
+      "coordinate_frame": "fixture:axis",
+      "grid": {
+        "nodes": [
+          0.0,
+          1.0,
+          4.0
+        ],
+        "unit": "meter"
+      },
+      "grid_digest": "e049750090dd87bc4a41d6b85c9d93b61fae2adf1f4567b2cf26fd862fcfde11",
+      "operation": "coarsen",
+      "parent_version_id": "a6b2cd72ef6038ded5539ab3190d40320fc6aa32d5fa8e952ada9237a3f48881",
+      "policy": {
+        "max_ratio": "0x1.4000000000000p+3"
+      },
+      "root_context": "serialization-fixture",
+      "root_id": "2489f77001c829447e32e2796713c480d71841b142c6a73f5ded5ad6a9f728de",
+      "schema": "mesh_version_1d/1",
+      "version_id": "2abc457da43ae18a392d61d25771caee0767dcfdb219c817b50caf035bd8f22d"
+    }
+  ]
+}

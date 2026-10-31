@@ -20,7 +20,7 @@ from ..scientific.units.quantity import Quantity, dimensionality, is_ratio_scale
 from .core import NumericalRefusal
 from .field_mapping import map_cells_1d
 from .interval_transfer import AdaptiveMesh1D
-from .mesh_adaptation import Grid1D, MeshVersion1D, _AuditOnlyRecord, _IssuedRecords
+from .mesh_adaptation import Grid1D, MeshVersion1D, _AuditOnlyRecord, _IssuedRecords, _plain_grid_material, _plain_mesh_material
 
 
 class StateAdapterAdmission(str, Enum):
@@ -80,8 +80,23 @@ class VertexState1D(_AuditOnlyRecord):
         return canonical_digest(self.to_dict())
 
     def to_dict(self):
-        return {"schema": "vertex_dual_state/1", "name": self.name, "support": self.support.record_id,
-                "mesh_version": self.support.mesh.version_id, "placement": self.placement.value,
+        # The support representation already contains this mesh version. Keep
+        # reuse local to serialization; authority checks still rebuild records.
+        try:
+            concrete = (type(self) is VertexState1D and type(self.support) is DualSupport1D
+                        and _plain_mesh_material(self.support.mesh) and _plain_grid_material(self.support.intervals))
+        except AttributeError:
+            concrete = False
+        if not concrete:
+            return {"schema": "vertex_dual_state/1", "name": self.name, "support": self.support.record_id,
+                    "mesh_version": self.support.mesh.version_id, "placement": self.placement.value,
+                    "semantics": self.semantics.to_dict(), "unit": self.unit, "data": self.data.to_dict(),
+                    "uncertainty": self.uncertainty.to_dict(), "context": self.context_digest,
+                    "source": None if self.source is None else self.source.to_dict(), "parents": list(self.parents)}
+        name = self.name
+        support_material = self.support.to_dict()
+        return {"schema": "vertex_dual_state/1", "name": name, "support": canonical_digest(support_material),
+                "mesh_version": support_material["mesh_version"], "placement": self.placement.value,
                 "semantics": self.semantics.to_dict(), "unit": self.unit, "data": self.data.to_dict(),
                 "uncertainty": self.uncertainty.to_dict(), "context": self.context_digest,
                 "source": None if self.source is None else self.source.to_dict(), "parents": list(self.parents)}
