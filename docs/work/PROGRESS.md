@@ -11876,3 +11876,26 @@ At `ff723f8c` (full SHA recorded by Git), WSL root /opt clone, Python 3.12.3:
 Failed approach: direct script invocation with PYTHONPATH=src could not import benchmarks (exit 1); use `python -m`.
 The compiler installer completed in the separate `/opt/forge-sysimage-build-20261031/compiler` project: pinned
 PackageCompiler 2.4.4 and GCCBootstrap_jll 9.4.0+0. No system package installation or experiment-environment Pkg.add.
+#### Independent scientific review repairs and failed build approach
+
+Review of `ba9c9f84c8b7b27603d96286cc790b963db27b18`: CHANGES REQUIRED (3 HIGH, 2 MEDIUM), not test execution.
+Accepted all five: distinguish late completed records; bind recorded runtime at decision replay and per worker;
+reject unsolicited/timeout-extending diagnostic traffic; walk children from every thread; fix active-child cleanup.
+
+Failed approach: the first parent-death test only observed stdin EOF. A stronger public test starts a sleeping arm
+and a detached grandchild, then kills the worker. On the previous implementation,
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m tools.genesis_performance.check_deadline`
+FAILED with live descendants [407,431]. Linux clears PDEATHSIG at setuid/setgid. Keeping the trusted shell as
+PID-namespace init (explicit wait, public argv and PATH only) preserves the signal across the child's privilege drop.
+Same command after the fix -> PASS: no live namespace init, busy proposer or detached child. Existing adversarial
+isolation checks are rerun below; this bounded test is not a general security certification.
+
+Build attempt 1: PackageCompiler generated native objects, but GCCBootstrap_jll's executable needs an absent musl
+loader (ENOENT). No system loader was installed. Replaced that link-only invocation with an explicit argv adapter to
+Julia 1.11.9's bundled LLD; the adapter rejects compilation requests, and its bytes/linker are bound in the asset manifest.
+Build attempt 2 is underway; no sysimage speedup claim yet.
+
+Full SHAs for earlier abbreviated diary references: instrumentation `a70b8f0f0f5dd5e9d007e8aec32496fc851aefff`;
+deadline `ff723f8c43fcf1bcf3fd13a4d6d529102b45a9d4`.
+At ba9c9f84…: `PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_runtime_assets.py tests/genesis_lite/test_v04_arms.py tests/genesis_lite/test_v04_decide.py tests/genesis_lite/test_v04_preregistration.py tests/genesis_lite/test_analysis_v4.py`
+-> 105 passed, 1 skipped (missing-PySR test when PySR is installed), 13.51 s.

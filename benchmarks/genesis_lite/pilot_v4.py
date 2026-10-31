@@ -137,6 +137,14 @@ def formal_identity_check(identity: str) -> str:
     return ""
 
 
+def formal_runtime_check(manifest: Mapping[str, Any]) -> str:
+    """The future freeze must bind runtime assets/settings as well as source."""
+    registered = json.loads(PREREG.read_text()).get("proposer_runtime_identity_sha256")
+    if not registered or registered != manifest["proposer_runtime_identity"]["sha256"]:
+        return "the proposer runtime/environment is not bound by the frozen v0.4 preregistration"
+    return ""
+
+
 def _work(task: Task, seed_hex: str, tier: str, hidden: tuple[str, ...], exposed: tuple[str, ...],
           env: Mapping[str, str]) -> dict[str, Any]:
     spec, _role = ROSTER[task.arm]
@@ -171,24 +179,31 @@ def run(arms: Sequence[str], *, root_file: str, out: str, tier: str = "developme
     exposed = exposures(expose)
     env = dict(env or {})
     hidden = hidden_paths([pathlib.Path(root_file).resolve().parent, out_dir], exposed=exposed)
+    manifest = environment_manifest(hidden, exposed, env)
+    manifest_text = json.dumps(manifest, indent=1, sort_keys=True)
+    manifest_digest = hashlib.sha256(manifest_text.encode()).hexdigest()
+    if tier == "formal":
+        refusal = formal_runtime_check(manifest)
+        if refusal:
+            raise RuntimeError(f"formal tier refused: {refusal}")
     tasks = plan(arms, campaigns=campaigns, presentations=presentations, seeds=seeds)
     commitment = {"root_commitment_sha256": hashlib.sha256(root).hexdigest(), "tier": tier, "git_head": head,
                   "tree_dirty": dirty, "development_identity_v4": identity, "v0_2_pin_changed": changed,
                   "custody": "SELF_ADMINISTERED", "planned_campaigns": len(tasks), "tasks": [asdict(t) for t in tasks],
                   "proposer_env": env, "exposed": list(exposed), "hidden": list(hidden),
+                  "proposer_runtime_identity_sha256": manifest["proposer_runtime_identity"]["sha256"],
+                  "environment_manifest_sha256": manifest_digest,
                   "started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     (out_dir / "commitment.json").write_text(json.dumps(commitment, indent=1, sort_keys=True))
-    manifest = environment_manifest(hidden, exposed, env)
-    text = json.dumps(manifest, indent=1, sort_keys=True)
-    (out_dir / "environment.json").write_text(text)
-    (out_dir / "environment.json.sha256").write_text(hashlib.sha256(text.encode()).hexdigest() + "  environment.json\n")
+    (out_dir / "environment.json").write_text(manifest_text)
+    (out_dir / "environment.json.sha256").write_text(manifest_digest + "  environment.json\n")
     runs = out_dir / "runs.jsonl"
     runs.write_text("")
     done = 0
 
     def keep(rec: Mapping[str, Any]) -> None:
         nonlocal done
-        done += rec.get("status") not in ("NOT_STARTED", "DEADLINE_TERMINATED")
+        done += rec.get("status") not in ("NOT_STARTED", "DEADLINE_TERMINATED", "DEADLINE_COMPLETED")
         with runs.open("a") as fh:
             fh.write(json.dumps(rec, sort_keys=True, default=str) + "\n")
 

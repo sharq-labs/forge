@@ -25,8 +25,22 @@ def _entry(function, arguments, destination):
                   "reasons": [f"{type(exc).__name__}: {str(exc)[:300]}"]}
     path = pathlib.Path(destination)
     pending = path.with_suffix(".part")
-    pending.write_text(json.dumps(record, sort_keys=True, default=str), encoding="utf-8")
+    envelope = {"operator_finished_monotonic": time.monotonic(), "record": record}
+    pending.write_text(json.dumps(envelope, sort_keys=True, default=str), encoding="utf-8")
     pending.replace(path)
+
+
+def completed_record(envelope, cutoff):
+    """Keep late output for audit; it cannot count as completed within budget."""
+    record = dict(envelope["record"])
+    finished = envelope["operator_finished_monotonic"]
+    if not isinstance(finished, (float, int)) or not math.isfinite(finished):
+        raise ValueError("missing/invalid operator completion time")
+    record["completed_within_deadline"] = finished <= cutoff
+    if finished > cutoff:
+        record["status_before_deadline_classification"] = record["status"]
+        record["status"] = "DEADLINE_COMPLETED"
+    return record
 
 
 def execute(function, arguments, *, directory, workers, deadline_seconds, keep):
@@ -45,7 +59,7 @@ def execute(function, arguments, *, directory, workers, deadline_seconds, keep):
     def collect(index, process):
         path = directory / f"{index}.json"
         if path.exists():
-            keep(json.loads(path.read_text(encoding="utf-8")))
+            keep(completed_record(json.loads(path.read_text(encoding="utf-8")), cutoff))
         else:
             task = arguments[index][0]
             keep({"arm": task.arm, "task": asdict(task),

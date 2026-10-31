@@ -4,7 +4,7 @@ from dataclasses import asdict
 
 import pytest
 
-from benchmarks.genesis_lite.deadline_v4 import execute
+from benchmarks.genesis_lite.deadline_v4 import completed_record, execute
 from benchmarks.genesis_lite.pilot_v4 import Task
 
 
@@ -37,3 +37,13 @@ def test_no_record_is_dropped_when_all_finish(tmp_path):
 def test_invalid_deadlines_refuse_before_starting(tmp_path, deadline):
     with pytest.raises(ValueError, match="finite and positive"):
         execute(_sleep_task, [], directory=tmp_path / "records", workers=1, deadline_seconds=deadline, keep=lambda r: None)
+
+
+def test_a_completed_record_in_the_cutoff_race_is_retained_but_never_valid():
+    original = {"status": "VALID", "total_credit": 6}
+    late = completed_record({"record": original, "operator_finished_monotonic": 10.001}, 10.0)
+    assert late["status"] == "DEADLINE_COMPLETED"
+    assert late["total_credit"] == 6 and not late["completed_within_deadline"]
+    assert late["status_before_deadline_classification"] == "VALID"
+    on_time = completed_record({"record": original, "operator_finished_monotonic": 9.999}, 10.0)
+    assert on_time["status"] == "VALID" and on_time["completed_within_deadline"]

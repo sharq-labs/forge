@@ -20,6 +20,9 @@ ROOT = bytes(range(32))
 ROOT_C = hashlib.sha256(ROOT).hexdigest()
 LAW_KINDS = ("confounded", "discoverable", "spurious_correlate")
 HIDDEN = ["/home", "/root"]
+RUNTIME = {"public_test_fixture": True}
+RUNTIME_DIGEST = hashlib.sha256(json.dumps(RUNTIME, sort_keys=True).encode()).hexdigest()
+MANIFEST = json.dumps({"proposer_runtime_identity": {"sha256": RUNTIME_DIGEST, "content": RUNTIME}}, sort_keys=True).encode()
 GOOD_CHECK = {"inspected": True, "uid": [65534] * 4, "gid": [65534] * 4, "groups": [], "caps": dict.fromkeys(CAP_SETS, 0),
               "no_new_privs": True, "private_namespaces": dict.fromkeys(NAMESPACES, True),
               "hidden": dict.fromkeys(HIDDEN, True), "private_tmp": True,
@@ -31,7 +34,8 @@ def _record(arm, task, credits, *, tier="formal", isolation=ISOLATION_LABEL, ide
     cid = pilot_v4.campaign_id(tier, task)
     return {"arm": arm, "status": "VALID", "presentation": task.presentation, "campaign_id": cid, "seed": task.seed,
             "task": asdict(task), "isolation": isolation, "isolation_checks": [GOOD_CHECK] * 6,
-            "development_identity_v4": identity,
+            "development_identity_v4": identity, "proposer_runtime_identity_sha256": RUNTIME_DIGEST,
+            "completed_within_deadline": True,
             "universes": [{"kind": k, "credit": float(credits[k]), "outcome": outcome_for(k, float(credits[k])),
                            "independent_agrees": True, "universe_id": f"u-{cid}-{k}", "region_tell": "box"}
                           for k in KINDS]}
@@ -47,6 +51,7 @@ def _all_represented(records, root):
 def _tree(monkeypatch):
     monkeypatch.setattr(decide_v4, "development_identity_v4", lambda: (IDENTITY, []))
     monkeypatch.setattr(decide_v4, "formal_identity_check", lambda identity: "")
+    monkeypatch.setattr(decide_v4, "formal_runtime_check", lambda manifest: "")
     monkeypatch.setattr(decide_v4, "read_root", lambda path: ROOT)
     monkeypatch.setattr(decide_v4, "represented", _all_represented)
 
@@ -68,12 +73,15 @@ def _run_dir(tmp_path, *, drop_arm=None, tamper=None, tier="formal", summary=Non
     commitment = {"root_commitment_sha256": ROOT_C, "development_identity_v4": IDENTITY, "tier": tier,
                   "tasks": [asdict(t) for t in tasks], "planned_campaigns": len(tasks), "tree_dirty": False,
                   "v0_2_pin_changed": [], "proposer_env": {}, "exposed": ["/opt/x"], "hidden": HIDDEN,
+                  "proposer_runtime_identity_sha256": RUNTIME_DIGEST,
+                  "environment_manifest_sha256": hashlib.sha256(MANIFEST).hexdigest(),
                   **(commit or {})}
     (tmp_path / "commitment.json").write_text(json.dumps(commitment))
     done = {**commitment, "runs_sha256": hashlib.sha256(runs).hexdigest(), "completed": len(tasks),
             "not_run_at_deadline": 0, **(summary or {})}
     (tmp_path / "summary.json").write_text(json.dumps(done))
     (tmp_path / "runs.jsonl").write_bytes(runs)
+    (tmp_path / "environment.json").write_bytes(MANIFEST)
     return tmp_path
 
 
@@ -248,7 +256,7 @@ def test_an_incomplete_run_refuses(tmp_path, summary, match):
         _decide(_run_dir(tmp_path, summary=summary))
 
 
-@pytest.mark.parametrize("status", ["INVALID_BENCHMARK", "WORKER_FAILED"])
+@pytest.mark.parametrize("status", ["INVALID_BENCHMARK", "WORKER_FAILED", "DEADLINE_COMPLETED", "DEADLINE_TERMINATED"])
 def test_any_non_valid_record_blocks_even_for_an_adversarial_arm(tmp_path, status):
     def tamper(recs):
         next(r for r in recs if r["arm"] == "historical_answer")["status"] = status
@@ -278,7 +286,8 @@ def test_a_duplicated_record_refuses(tmp_path):
         _decide(_run_dir(tmp_path, tamper=tamper))
 
 
-@pytest.mark.parametrize("key", ["tier", "planned_campaigns", "root_commitment_sha256", "hidden", "proposer_env"])
+@pytest.mark.parametrize("key", ["tier", "planned_campaigns", "root_commitment_sha256", "hidden", "proposer_env",
+                                "proposer_runtime_identity_sha256", "environment_manifest_sha256"])
 def test_a_summary_missing_a_bound_key_refuses(tmp_path, key):
     d = _run_dir(tmp_path)
     s = json.loads((d / "summary.json").read_text())
@@ -286,3 +295,35 @@ def test_a_summary_missing_a_bound_key_refuses(tmp_path, key):
     (d / "summary.json").write_text(json.dumps(s))
     with pytest.raises(AnalysisRefused, match="lacks"):
         _decide(d)
+
+
+@pytest.mark.parametrize("mutation", ["missing", "modified"])
+def test_saved_runtime_manifest_must_survive_replay(tmp_path, mutation):
+    d = _run_dir(tmp_path)
+    if mutation == "missing":
+        (d / "environment.json").unlink()
+    else:
+        (d / "environment.json").write_text(MANIFEST.decode().replace("true", "false"))
+    with pytest.raises(AnalysisRefused, match="manifest refused"):
+        _decide(d)
+
+
+def test_same_source_run_cannot_be_replayed_under_another_registered_runtime(tmp_path, monkeypatch):
+    monkeypatch.setattr(decide_v4, "formal_runtime_check", pilot_v4.formal_runtime_check)
+    path = tmp_path / "registration.json"
+    path.write_text(json.dumps({"proposer_runtime_identity_sha256": "another-runtime"}))
+    monkeypatch.setattr(pilot_v4, "PREREG", path)
+    with pytest.raises(AnalysisRefused, match="runtime/environment"):
+        _decide(_run_dir(tmp_path))
+
+
+def test_each_worker_record_is_bound_to_the_committed_runtime(tmp_path):
+    def tamper(records):
+        records[0]["proposer_runtime_identity_sha256"] = "another-runtime"
+    with pytest.raises(AnalysisRefused, match="provenance"):
+        _decide(_run_dir(tmp_path, tamper=tamper))
+
+
+def test_missing_operator_deadline_evidence_never_means_on_time(tmp_path):
+    with pytest.raises(AnalysisRefused, match="operator deadline"):
+        _decide(_run_dir(tmp_path, tamper=lambda rows: rows[0].pop("completed_within_deadline")))

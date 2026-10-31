@@ -80,6 +80,7 @@ def build() -> dict[str, Any]:
         "schema": "forge.genesis_lite.preregistration/4", "benchmark_id": BENCHMARK_ID, "status": "CANDIDATE_NOT_FROZEN",
         "step": "Genesis §18 Step 1: frozen roster, baseline distributions over >= 20 seeds; no Mind arm (D1)",
         "development_identity_v4": identity,
+        "proposer_runtime_identity_sha256": None,  # owner binds the measured runtime manifest before freezing
         "files": {name: _sha(HERE / name) for name in V4_FILES} | {name: _sha(ROOT / name) for name in SUBSTRATE_V4_FILES},
         "master_seed_domain": DOMAIN, "grid": FORMAL_GRID,
         "campaign_id": "gl-v04-formal-{seed}-{campaign}-{presentation}",

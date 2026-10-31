@@ -156,9 +156,12 @@ def command(hidden: Sequence[str], env: Mapping[str, str], python: str = sys.exe
                                                        **dict(env)}.items()))
     host_script = _HOST.with_name("proposer_profile_v4.py") if env.get("FORGE_PERF_DIAGNOSTICS") == "1" else _HOST
     inner = " && ".join(steps) + (
-        f" && exec setpriv --reuid={DISCOVERY_UID} --regid={DISCOVERY_UID} --clear-groups --inh-caps=-all "
+        f" && setpriv --reuid={DISCOVERY_UID} --regid={DISCOVERY_UID} --clear-groups --inh-caps=-all "
         f"--bounding-set=-all --no-new-privs -- {USER_NAMESPACE} /usr/bin/env -i {clean} {q(python)} -I "
-        f"{q(str(host_script))} {q(str(_ROOT))} {q(str(_ROOT / 'src'))}")
+        f"{q(str(host_script))} {q(str(_ROOT))} {q(str(_ROOT / 'src'))}; task_status=$?; exit \"$task_status\"")
+    # Keep the trusted shell as PID-namespace init, waiting for its unprivileged
+    # child. An exec here would clear unshare's parent-death signal at setuid.
+    # The shell receives only PATH and public argv, never operator secrets.
     return ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--kill-child=KILL", "--", "/bin/sh", "-c",
             inner]
 
@@ -229,6 +232,7 @@ class IsolatedProposerHost(h2.ProposerHost):
         self._sampler = None
         self._usage_before = None
         self._closed = False
+        self._diagnostics = (env or {}).get("FORGE_PERF_DIAGNOSTICS") == "1"
         if (env or {}).get("FORGE_PERF_RESOURCES") == "1":
             from .telemetry_v4 import usage
             self._usage_before = usage()
@@ -297,11 +301,24 @@ class IsolatedProposerHost(h2.ProposerHost):
             return ""
 
     def _recv(self) -> dict[str, Any]:
+        deadline = time.monotonic() + self._timeout
         try:
             while True:
-                msg = super()._recv()
+                remaining = deadline - time.monotonic()
+                try:
+                    if remaining <= 0:
+                        raise queue.Empty
+                    line = self._lines.get(timeout=remaining)
+                except queue.Empty:
+                    self.close()
+                    raise RuntimeError(f"the proposer process gave no answer within {self._timeout} s") from None
+                if not line:
+                    raise RuntimeError("the proposer process exited")
+                msg = json.loads(line)
                 if msg.get("op") != "diagnostic":
                     return msg
+                if not self._diagnostics:
+                    raise RuntimeError("unsolicited proposer diagnostic message")
                 events = self.timing["diagnostic_events_untrusted"]
                 if len(events) >= 200:
                     raise RuntimeError("too many proposer diagnostic messages")

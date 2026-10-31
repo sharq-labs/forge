@@ -33,16 +33,16 @@ from . import analysis_v4 as a4
 from .analysis import AnalysisRefused
 from .harness_v4 import development_identity_v4
 from .isolated_host import ISOLATION_LABEL, verified
-from .pilot_v4 import Task, campaign_id, formal_identity_check, read_root, roles
+from .pilot_v4 import Task, campaign_id, formal_identity_check, formal_runtime_check, read_root, roles
 from .reveal_v4 import represented
 
 _BOUND = ("root_commitment_sha256", "development_identity_v4", "tier", "tasks", "planned_campaigns", "tree_dirty",
-          "v0_2_pin_changed", "proposer_env", "exposed", "hidden")
+          "v0_2_pin_changed", "proposer_env", "exposed", "hidden", "proposer_runtime_identity_sha256", "environment_manifest_sha256")
 #: D9: the superiority test is Holm over the pre-declared family; the caller cannot choose another (review M H-a)
 MULTIPLICITY = "holm_family"
 
 
-def _load(out_dir: pathlib.Path) -> tuple[dict[str, Any], dict[str, Any], bytes]:
+def _load(out_dir: pathlib.Path) -> tuple[dict[str, Any], dict[str, Any], bytes, dict[str, Any]]:
     commitment = json.loads((out_dir / "commitment.json").read_text())
     summary = json.loads((out_dir / "summary.json").read_text())
     runs = (out_dir / "runs.jsonl").read_bytes()
@@ -53,7 +53,18 @@ def _load(out_dir: pathlib.Path) -> tuple[dict[str, Any], dict[str, Any], bytes]
             raise AnalysisRefused(f"summary.json or commitment.json lacks {key}")
         if summary[key] != commitment[key]:
             raise AnalysisRefused(f"summary.json and commitment.json disagree on {key}")
-    return commitment, summary, runs
+    try:
+        raw_manifest = (out_dir / "environment.json").read_bytes()
+        manifest = json.loads(raw_manifest)
+        runtime = manifest["proposer_runtime_identity"]
+        digest = hashlib.sha256(json.dumps(runtime["content"], sort_keys=True).encode()).hexdigest()
+        if digest != runtime["sha256"] or digest != commitment["proposer_runtime_identity_sha256"]:
+            raise ValueError("runtime content/digest mismatch")
+        if hashlib.sha256(raw_manifest).hexdigest() != commitment["environment_manifest_sha256"]:
+            raise ValueError("environment manifest digest mismatch")
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise AnalysisRefused(f"saved runtime/environment manifest refused: {exc}") from exc
+    return commitment, summary, runs, manifest
 
 
 def provenance_problems(rec: Mapping[str, Any], commitment: Mapping[str, Any]) -> list[str]:
@@ -69,6 +80,8 @@ def provenance_problems(rec: Mapping[str, Any], commitment: Mapping[str, Any]) -
         out.append("an outside verification checked other hides than the committed ones")
     if rec.get("development_identity_v4") != commitment["development_identity_v4"]:
         out.append("another development identity")
+    if rec.get("proposer_runtime_identity_sha256") != commitment["proposer_runtime_identity_sha256"]:
+        out.append("another proposer runtime identity")
     if not str(rec.get("campaign_id", "")).startswith(f"gl-v04-{commitment['tier']}-"):
         out.append("a campaign id of another tier")
     return out
@@ -99,13 +112,15 @@ def _completeness(records: list[dict[str, Any]], tasks: list[Task], summary: Map
             raise AnalysisRefused(f"record {key} names another campaign, presentation or seed than its task")
         if r.get("status") != "VALID":
             raise AnalysisRefused(f"record {key} is {r.get('status')!r}: any non-VALID world set blocks the decision")
+        if r.get("completed_within_deadline") is not True:
+            raise AnalysisRefused(f"record {key} lacks completion within the operator deadline")
         seen.add(key)
 
 
 def decide(out_dir: str | pathlib.Path, root_file: str | pathlib.Path, candidate: str, *,
            reveal_path: str | pathlib.Path | None = None) -> dict[str, Any]:
     out_dir = pathlib.Path(out_dir)
-    commitment, summary, runs = _load(out_dir)
+    commitment, summary, runs, manifest = _load(out_dir)
     tier = commitment["tier"]
     identity, changed = development_identity_v4()
     if identity != commitment["development_identity_v4"] or changed:
@@ -113,7 +128,7 @@ def decide(out_dir: str | pathlib.Path, root_file: str | pathlib.Path, candidate
     if tier == "formal":
         refusal = ("the run started from a dirty tree" if commitment["tree_dirty"] else "") or \
             ("the run's v0.2 pin had changed" if commitment["v0_2_pin_changed"] else "") or \
-            formal_identity_check(identity)
+            formal_identity_check(identity) or formal_runtime_check(manifest)
         if refusal:
             raise AnalysisRefused(f"formal decision refused: {refusal}")
     elif tier != "development":

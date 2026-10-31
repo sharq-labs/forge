@@ -53,3 +53,15 @@ def test_missing_manifest_never_becomes_an_unbound_image(tmp_path, monkeypatch):
 def test_thread_configuration_changes_environment_identity(monkeypatch):
     monkeypatch.setattr(assets, "python_packages", lambda: {})
     assert assets.runtime_identity({"PYTHON_JULIACALL_THREADS": "1"})["sha256"] != assets.runtime_identity({})["sha256"]
+
+
+def test_formal_runtime_must_be_explicitly_bound(tmp_path, monkeypatch):
+    from benchmarks.genesis_lite import pilot_v4
+    path = tmp_path / "prereg.json"
+    monkeypatch.setattr(pilot_v4, "PREREG", path)
+    manifest = {"proposer_runtime_identity": {"sha256": "runtime-a"}}
+    for content in ({}, {"proposer_runtime_identity_sha256": None}, {"proposer_runtime_identity_sha256": "runtime-b"}):
+        path.write_text(json.dumps(content))
+        assert "not bound" in pilot_v4.formal_runtime_check(manifest)
+    path.write_text(json.dumps({"proposer_runtime_identity_sha256": "runtime-a"}))
+    assert pilot_v4.formal_runtime_check(manifest) == ""

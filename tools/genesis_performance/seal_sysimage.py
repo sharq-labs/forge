@@ -20,11 +20,12 @@ def main():
     # The experiment's environment is never resolved/modified by the build.
     for name in ("Project.toml", "Manifest.toml"):
         assert sha(project / name) == sha(build / "project" / name), f"build changed {name}"
-    scripts = ["setup_build.jl", "build_sysimage.jl", "precompile_workload.jl"]
+    scripts = ["setup_build.jl", "build_sysimage.jl", "precompile_workload.jl", "link_sysimage.py"]
     doc = {"schema": "forge.development.sysimage/1", "purpose": "public synthetic precompilation only",
            "sysimage_sha256": sha(args.image), "mode": args.mode, "cpu_target": "generic",
            "julia_version": subprocess.check_output([str(binary), "--version"], text=True).strip(),
            "base_sysimage_sha256": sha(project / "pyjuliapkg/install/lib/julia/sys.so"),
+           "linker_sha256": sha(project / "pyjuliapkg/install/libexec/julia/lld"),
            "python_packages": python_packages(),
            "runtime_files": {k: {"path": str(p), "sha256": sha(p)} for k, p in files.items()},
            "runtime_thread_env": {"PYTHON_JULIACALL_THREADS": "1", "JULIA_NUM_GC_THREADS": "1",

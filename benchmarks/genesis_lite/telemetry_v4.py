@@ -8,7 +8,12 @@ from __future__ import annotations
 
 import pathlib
 import threading
-import time
+
+PROC = pathlib.Path("/proc")
+
+
+def start_time(pid):
+    return (PROC / str(pid) / "stat").read_text().rsplit(")", 1)[1].split()[19]
 
 
 def tree_pids(pid: int) -> list[int]:
@@ -19,7 +24,8 @@ def tree_pids(pid: int) -> list[int]:
             continue
         found.append(current)
         try:
-            pending.extend(int(p) for p in pathlib.Path(f"/proc/{current}/task/{current}/children").read_text().split())
+            for task in (PROC / str(current) / "task").iterdir():
+                pending.extend(int(p) for p in (task / "children").read_text().split())
         except (OSError, ValueError):
             pass
     return found
@@ -35,8 +41,10 @@ def usage():
 class ProcessSampler:
     def __init__(self, pid: int, interval: float = 0.1):
         self.pid, self.interval = pid, interval
+        self.root_start_time = start_time(pid)
         self.peaks = dict.fromkeys(("rss_kib", "pss_kib", "threads", "processes"), 0)
         self.samples, self.incomplete = 0, 0
+        self.pss_observations = 0
         self.sysimages: set[str] = set()
         self.stop_event = threading.Event()
         self.thread = threading.Thread(target=self._run, daemon=True)
@@ -44,14 +52,25 @@ class ProcessSampler:
 
     def sample(self):
         totals = dict.fromkeys(self.peaks, 0)
+        try:
+            if start_time(self.pid) != self.root_start_time:
+                return  # PID reuse after the tracked root exits is not our tree
+        except OSError:
+            return
         for pid in tree_pids(self.pid):
             try:
+                born = start_time(pid)
                 status = dict(line.split(":", 1) for line in pathlib.Path(f"/proc/{pid}/status").read_text().splitlines())
                 totals["rss_kib"] += int(status.get("VmRSS", "0 kB").split()[0])
                 totals["threads"] += int(status["Threads"])
                 totals["processes"] += 1
                 rollup = pathlib.Path(f"/proc/{pid}/smaps_rollup").read_text().splitlines()
-                totals["pss_kib"] += sum(int(line.split()[1]) for line in rollup if line.startswith("Pss:"))
+                pss = sum(int(line.split()[1]) for line in rollup if line.startswith("Pss:"))
+                if start_time(pid) != born:
+                    self.incomplete += 1
+                    continue
+                totals["pss_kib"] += pss
+                self.pss_observations += 1
                 for line in pathlib.Path(f"/proc/{pid}/maps").read_text().splitlines():
                     path = line.split()[-1]
                     if path.startswith("/") and (path.endswith("/sys.so") or "forge-sysimage" in path):
@@ -70,6 +89,9 @@ class ProcessSampler:
     def close(self):
         self.stop_event.set()
         self.thread.join(timeout=5)
-        return {"sample_interval_seconds": self.interval, "sampled_peak": self.peaks,
+        peaks = dict(self.peaks)
+        if not self.pss_observations:
+            peaks["pss_kib"] = None
+        return {"sample_interval_seconds": self.interval, "sampled_peak": peaks,
                 "samples": self.samples, "incomplete_process_samples": self.incomplete,
                 "mapped_sysimages": sorted(self.sysimages), "memory_peak_is_lower_bound": True}

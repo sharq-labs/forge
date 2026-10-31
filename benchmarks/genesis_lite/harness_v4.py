@@ -42,13 +42,15 @@ def run_one_v4(arm_name: str, spec: str, *, master_seed: bytes, campaign_id: str
     checks: list[dict[str, Any]] = []
     timings: list[dict[str, Any]] = []
     started = time.perf_counter()
+    from .runtime_assets_v4 import runtime_identity
+    runtime = runtime_identity(env or {})
     arm = per_universe_arm(spec, hidden, checks, env=env, timeout=timeout, exposed=exposed, timings=timings)
     rec = h3.run_one_v3(arm_name, arm, master_seed=master_seed, campaign_id=campaign_id, presentation=presentation,
                         seed=seed, isolation="in_process", budget_fraction=budget_fraction)
     out = rec.to_dict()
     identity, changed = development_identity_v4()
     out.update({"isolation": ISOLATION_LABEL, "isolation_checks": checks, "development_identity_v4": identity,
-                "arm_spec": spec, "operator_timings": timings,
+                "arm_spec": spec, "operator_timings": timings, "proposer_runtime_identity_sha256": runtime["sha256"],
                 "campaign_total_seconds": time.perf_counter() - started,
                 "host_start_seconds": sum(t["launch_to_hello_seconds"] for t in timings)})
     problems = []
