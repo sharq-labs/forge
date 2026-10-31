@@ -82,13 +82,17 @@ def main():
     output = pathlib.Path(args.out)
     output.mkdir(parents=True, exist_ok=False)
     from .pilot_v4 import _git, environment_manifest
+    from .telemetry_v4 import ProcessSampler, usage
     env = dict(item.split("=", 1) for item in args.env)
     manifest = {"label": "PUBLIC_DEVELOPMENT_SOFTWARE_CONTROL_NOT_BLINDFOLD", "git_head": _git("rev-parse", "HEAD"),
                 "dirty": bool(_git("status", "--porcelain")), "arguments": vars(args),
-                "environment": environment_manifest(ih.hidden_paths(exposed=ih.exposures(args.expose)), ih.exposures(args.expose)),
+                "environment": environment_manifest(ih.hidden_paths(exposed=ih.exposures(args.expose)), ih.exposures(args.expose), env),
                 "parent_thread_env": {k: os.environ.get(k) for k in ih.THREAD_ENV}}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2))
     items = [(a, i, args.mode, env, args.expose) for i in range(args.repeats) for a in args.arms]
+    host_before = host_state()
+    cpu_before = usage()
+    sampler = ProcessSampler(os.getpid(), interval=0.5)
     start = time.perf_counter()
     with cf.ProcessPoolExecutor(max_workers=args.workers, mp_context=mp.get_context("spawn")) as pool:
         futures = [pool.submit(_work, item) for item in items]
@@ -99,9 +103,19 @@ def main():
                 stream.flush()
                 print(json.dumps({"arm": rec["arm"], "status": rec["status"], "elapsed": time.perf_counter() - start}), flush=True)
     summary = {"elapsed_seconds": time.perf_counter() - start, "completed": len(items), "workers": args.workers,
-               "runs_sha256": hashlib.sha256((output / "runs.jsonl").read_bytes()).hexdigest()}
+               "runs_sha256": hashlib.sha256((output / "runs.jsonl").read_bytes()).hexdigest(),
+               "resources": sampler.close(), "host_before": host_before, "host_after": host_state(),
+               "cpu": {k: v - cpu_before[k] for k, v in usage().items()}}
     (output / "summary.json").write_text(json.dumps(summary, indent=2))
     print(json.dumps(summary))
+
+
+def host_state():
+    mem = dict(line.split(":", 1) for line in pathlib.Path("/proc/meminfo").read_text().splitlines())
+    vm = dict(line.split() for line in pathlib.Path("/proc/vmstat").read_text().splitlines())
+    return {"load_average": os.getloadavg(), "mem_available_kib": int(mem["MemAvailable"].split()[0]),
+            "swap_free_kib": int(mem["SwapFree"].split()[0]),
+            "oom_kill": int(vm["oom_kill"]), "swap_in_pages": int(vm["pswpin"]), "swap_out_pages": int(vm["pswpout"])}
 
 
 if __name__ == "__main__":

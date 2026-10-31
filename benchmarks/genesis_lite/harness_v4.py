@@ -22,7 +22,7 @@ from .isolated_host import ISOLATION_LABEL, per_universe_arm, verified
 
 HERE = pathlib.Path(__file__).resolve().parent
 V4_FILES = ("analysis_v4.py", "arms_v4.py", "decide_v4.py", "deadline_v4.py", "expressibility_v3.py", "harness_v4.py", "isolated_host.py",
-            "pilot_v4.py", "proposer_host.py", "proposer_profile_v4.py", "telemetry_v4.py", "reveal_v4.py")
+            "pilot_v4.py", "proposer_host.py", "proposer_profile_v4.py", "telemetry_v4.py", "runtime_assets_v4.py", "reveal_v4.py")
 #: substrate the v0.4 files rely on outside the v0.3 closure (outside verification constants and /proc walk)
 SUBSTRATE_V4_FILES = ("src/engcore/blindfold/isolation.py",)
 KINDS = h2.KINDS

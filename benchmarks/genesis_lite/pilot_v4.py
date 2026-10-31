@@ -110,7 +110,8 @@ def _git(*args: str) -> str:
                           cwd=ROOT).stdout.strip()
 
 
-def environment_manifest(hidden: Sequence[str], exposed: Sequence[str]) -> dict[str, Any]:
+def environment_manifest(hidden: Sequence[str], exposed: Sequence[str], env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    from .runtime_assets_v4 import runtime_identity
     dists = sorted({f"{d.metadata['Name']}=={d.version}" for d in importlib.metadata.distributions()
                     if d.metadata["Name"]}, key=str.lower)
     try:
@@ -120,7 +121,8 @@ def environment_manifest(hidden: Sequence[str], exposed: Sequence[str]) -> dict[
     return {"python": sys.version, "executable": sys.executable, "platform": platform.platform(),
             "kernel": platform.release(), "cpu_count": os.cpu_count(), "thread_env": THREAD_ENV,
             "distributions": dists, "distributions_sha256": hashlib.sha256("\n".join(dists).encode()).hexdigest(),
-            "wsl_conf": wsl_conf, "isolation_support": support(), "exposed": list(exposed), "hidden": list(hidden)}
+            "wsl_conf": wsl_conf, "isolation_support": support(), "exposed": list(exposed), "hidden": list(hidden),
+            "proposer_runtime_identity": runtime_identity(env or {})}
 
 
 def formal_identity_check(identity: str) -> str:
@@ -176,7 +178,7 @@ def run(arms: Sequence[str], *, root_file: str, out: str, tier: str = "developme
                   "proposer_env": env, "exposed": list(exposed), "hidden": list(hidden),
                   "started": time.strftime("%Y-%m-%dT%H:%M:%S%z")}
     (out_dir / "commitment.json").write_text(json.dumps(commitment, indent=1, sort_keys=True))
-    manifest = environment_manifest(hidden, exposed)
+    manifest = environment_manifest(hidden, exposed, env)
     text = json.dumps(manifest, indent=1, sort_keys=True)
     (out_dir / "environment.json").write_text(text)
     (out_dir / "environment.json.sha256").write_text(hashlib.sha256(text.encode()).hexdigest() + "  environment.json\n")

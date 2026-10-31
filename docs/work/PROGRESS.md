@@ -11866,3 +11866,13 @@ Deadline defect reproduced independently with the original executor pattern: sub
 ProcessPoolExecutor; after 0.1 s `future.cancel()` returned False; shutdown returned after 2.092 s. A separate fix
 uses bounded campaign processes, an atomic result ledger and a launcher parent-death kill chain. No timing comparison
 mixes this correction into the two measurements above. Full regression and adversarial cleanup checks follow.
+#### Hard deadline execution (separate from the performance pair)
+
+At `ff723f8c` (full SHA recorded by Git), WSL root /opt clone, Python 3.12.3:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_deadline.py tests/genesis_lite/test_v04_performance.py tests/genesis_lite/test_v04_isolation.py tests/genesis_lite/test_v04_pilot.py`
+-> 40 passed, 2 inapplicable environment skips, 19.77 s.
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m tools.genesis_performance.check_deadline`
+-> PASS: killing the worker left no live namespace launcher or proposer; outside verification passed before killing.
+Failed approach: direct script invocation with PYTHONPATH=src could not import benchmarks (exit 1); use `python -m`.
+The compiler installer completed in the separate `/opt/forge-sysimage-build-20261031/compiler` project: pinned
+PackageCompiler 2.4.4 and GCCBootstrap_jll 9.4.0+0. No system package installation or experiment-environment Pkg.add.

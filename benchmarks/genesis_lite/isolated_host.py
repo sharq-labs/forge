@@ -32,6 +32,7 @@ from __future__ import annotations
 
 import json
 import functools
+import hashlib
 import os
 import pathlib
 import queue
@@ -324,13 +325,30 @@ def per_universe_arm(spec: str, hidden: Sequence[str], checks: list[dict[str, An
             raise
         try:
             checks.append({"universe_id": card["universe_id"], **host.outside})
+            trace = hashlib.sha256()
+            class TraceClient:
+                def observe(self, universe_id, settings, query_id=""):
+                    request = {"universe_id": universe_id, "settings": dict(settings)}
+                    # query_id includes a random transport nonce, unrelated to the
+                    # selected query or observation; exclude ONLY that nonce field.
+                    try:
+                        response = client.observe(universe_id, settings, query_id=query_id)
+                    except Exception as exc:
+                        trace.update(json.dumps({"request": request, "error": str(exc)}, sort_keys=True).encode() + b"\n")
+                        raise
+                    trace.update(json.dumps({"request": request, "response": response}, sort_keys=True).encode() + b"\n")
+                    return response
             try:
-                return host.propose(spec, card, seed, client)
+                proposal = host.propose(spec, card, seed, TraceClient())
+                host.timing["proposal_sha256"] = hashlib.sha256(json.dumps(proposal, sort_keys=True).encode()).hexdigest()
+                return proposal
             except Exception as exc:  # noqa: BLE001 - a dead pipe (OSError) is the host's failure too (re-review L2)
                 if not (isinstance(exc, RuntimeError) and str(exc).startswith("the proposer failed:")):
                     checks.append({"universe_id": card["universe_id"], "infrastructure_failure": str(exc)[:400]})
                 raise
         finally:
+            if "trace" in locals():
+                host.timing["query_trace_without_transport_nonce_sha256"] = trace.hexdigest()
             host.close()
             if timings is not None:
                 timings.append({"universe_id": card["universe_id"], **host.timing})
