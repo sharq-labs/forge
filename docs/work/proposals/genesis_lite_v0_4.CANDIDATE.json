@@ -7,14 +7,14 @@
   "label": "SELF_ADMINISTERED",
   "root": "the owner writes 32 random bytes to a 0600 file outside the tree before the run; the driver writes its SHA-256 commitment before the first campaign; revealed only after every campaign is sealed"
  },
- "development_identity_v4": "ab3869e2bca9cb2e7803ac1918da5b44b31d2f4a1d8ca2eb9fba0920a0a739dd",
+ "development_identity_v4": "fd779c3bf220e99182a67aac2ccbfbb04830799b8ee1845746f07c2089e11680",
  "files": {
-  "analysis_v4.py": "21ebbde7407525a1895add18c8d50aae01cb815ab2d28b830ff1e09054e69567",
-  "arms_v4.py": "f3e1278598693a0390d5c5bb88d354009df06d7baf0e0c2692fca9fcca816a82",
-  "decide_v4.py": "641dbfcec31144217c7d3c1247dec69cce254e18d9d04c5fa2c6e4ae2e51bfcd",
+  "analysis_v4.py": "f51088cfab28a5ddb0341ff0fceb90702b16d716fab17462a190ac3057fe70ab",
+  "arms_v4.py": "c413258bff85a5b2c2b81be1555d317b6d266dd7b984613556d6842872ba0280",
+  "decide_v4.py": "a5385c7408b67394877d7348911b7852f29c11568fd886e8d2b32e7cdc098d93",
   "expressibility_v3.py": "44a0b309eb38512b09d13c1f96b17af4600d341877a7953371832b8324c4abc3",
   "harness_v4.py": "7f4e5bfa1175c497b4613bb2609007f9525c45eced99763dadff0f89b8ae4a23",
-  "isolated_host.py": "35ea03175ad026a375be5ac413c0f3340ee4c60a0c7a4ca713d7adfc710b3819",
+  "isolated_host.py": "28c433e441eec958d65f31511166181bf659ec32bc970417a919881b5b41de6b",
   "pilot_v4.py": "fa6a4d70aad101bdb68ebd68709b5b31df7487c721a34dcced662051c779c4f4",
   "proposer_host.py": "a4b9331780351232d3007596e6c9949eb9e6bdabcb88f7057c6c4e33b25c31a4",
   "reveal_v4.py": "0047470f18489bcb1523397a5250c0035949d44845cff6dcbce861a02768a20e",
@@ -80,6 +80,10 @@
    "blocking": true,
    "what": "EXC-5 exit: pysr_units development pilot (fresh dev root, under isolation) and QUALIFIED / NOT_QUALIFIED record"
   },
+  "A1b-proposer-env": {
+   "blocking": true,
+   "what": "the formal proposer environment and exposures fixed here and checked by the formal driver (G7 pilot: JULIA_DEPOT_PATH with a read-only depot under /opt, PYTHON_JULIACALL_PROJECT/EXE, PYTHON_JULIAPKG_OFFLINE, JULIA_NUM_THREADS)"
+  },
   "A6-cost": {
    "blocking": true,
    "what": "isolated per-universe cost at the 10-campaign rung, BLAS 1, 4 workers; ESTIMATE with interval for the formal grid"
@@ -87,6 +91,14 @@
   "D12-codex-review": {
    "blocking": true,
    "what": "independent (Codex) review of this preregistration, findings closed"
+  },
+  "D15-crash-classification": {
+   "blocking": true,
+   "what": "owner decision: a proposer crash or timeout after its outside verification is infrastructure (A), the arm's failure (B) or mixed (C), plus a per-root attempt ledger"
+  },
+  "M-d-candidate-registration": {
+   "blocking": false,
+   "what": "a registration path for a candidate arm with its own identity binding; Step 1 needs none, a Step 2 lift decision does"
   },
   "OD-18-budget": {
    "blocking": true,
@@ -244,7 +256,7 @@
     "y_units": "1"
    },
    "file": "benchmarks/genesis_lite/arms_v4.py",
-   "file_sha256": "f3e1278598693a0390d5c5bb88d354009df06d7baf0e0c2692fca9fcca816a82",
+   "file_sha256": "c413258bff85a5b2c2b81be1555d317b6d266dd7b984613556d6842872ba0280",
    "role": "competence",
    "spec": "benchmarks.genesis_lite.arms_v4:pysr_units"
   },
@@ -253,7 +265,7 @@
     "random_draws": 10
    },
    "file": "benchmarks/genesis_lite/arms_v4.py",
-   "file_sha256": "f3e1278598693a0390d5c5bb88d354009df06d7baf0e0c2692fca9fcca816a82",
+   "file_sha256": "c413258bff85a5b2c2b81be1555d317b6d266dd7b984613556d6842872ba0280",
    "role": "competence",
    "spec": "benchmarks.genesis_lite.arms_v4:random_grammar"
   },

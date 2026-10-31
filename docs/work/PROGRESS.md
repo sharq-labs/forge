@@ -11787,3 +11787,44 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
   measurement.
 - Open for the preregistration: the PySR proposer environment (the variables and exposure above) must be fixed by the
   preregistration, not left to the operator.
+
+### 2026-10-31 — G10 isolated cost rung, the formal-grid estimate, and the v0.4 candidate rebuild
+
+- G10 (scratch `g10_cost.sh`), as root in the clean clone `/opt/forge-v4-fa0ae0773448` at
+  `85fe073f6b3355977983cd1285a6ebec3dc8c6d4`, on a fresh development root:
+  - Command: `PYTHONPATH=/opt/forge-v4-fa0ae0773448/src nice -n 10 python -m benchmarks.genesis_lite.pilot_v4
+    --root-file <fresh 0600 dev root> --out /root/gl-g10cost-20261031052451/out --campaigns 3 --seeds 0 --workers 4
+    --deadline-seconds 13800`, with the G7 PySR environment and exposure. All 19 roster arms, 3 campaigns x
+    4 presentations.
+  - Result: 228/228 VALID, 0 not run, elapsed 4608 s. Summed campaign wall 18261 s, so packing efficiency 0.991.
+    `runs.jsonl` sha256 `1312ac47ff2f5fabd926658727101b4eef2ded6141d3719f3780c75f590cd9cf`.
+- Per-arm mean campaign wall (MEASURED, n = 12 each, scratch `g10_cost.py`):
+
+  | arm | mean campaign wall |
+  |---|---|
+  | `pysr_units` | 741.8 s |
+  | `pysr_symbolic` | 713.4 s |
+  | `bo_botorch_variance` | 29.5 s |
+  | `grammar_enumeration` | 10.7 s |
+  | `random_grammar` | 8.8 s |
+  | `pysindy_stlsq` | 6.1 s |
+  | each of the other 13 arms | 1.1 s or less |
+
+- Formal grid ESTIMATE (2400 campaigns per arm, 4 workers, perfect packing assumed): **253.6 h**, percentile bootstrap
+  95% of the per-arm means **[227.8, 280.5] h** (10,000 draws, seed 20261031). The two PySR arms make up about 95% of
+  it.
+  - The interval covers rung sampling only, not host load, thermal drift or scaling beyond 4 workers.
+  - The cap and budget are the owner's (OD-18 / D5).
+  - Levers for the owner: more workers (20 cores, 22 GB here; untested beyond 4), or a smaller grid for the PySR arms.
+    A warm persistent Julia process would conflict with D11 (one isolated process per universe).
+- v0.4 preregistration, commit `761a7d71`:
+  - New blocking open items: `D15-crash-classification` and `A1b-proposer-env` (the formal proposer environment and
+    exposures fixed in the document and checked by the formal driver).
+  - New non-blocking item `M-d-candidate-registration`.
+  - New test `test_the_crash_classification_and_the_proposer_environment_block_the_freeze`. Windows `.venv`:
+    `pytest -q -p no:randomly tests/genesis_lite/test_v04_preregistration.py` -> 5 passed.
+- Candidate rebuilt in a fresh clean clone `/home/dev_kaeem/forge-prereg-761a7d71` at `761a7d71`:
+  - Command: `PYTHONPATH=src python -c "...write_candidate()"` -> sha256
+    `ef201b62de66c0c1f65621bc4757c02e3c9829f4ef4680f67a04b975a724d3b6`.
+  - Its `development_identity_v4` equals the G7 and G10 commitments' identity (`fd779c3b…`).
+  - Status `CANDIDATE_NOT_FROZEN`. Freezing remains the owner's.

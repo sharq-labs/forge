@@ -4,7 +4,7 @@ doc_id: FORGE-BLINDFOLD-STEP1-GAP-CLOSURE-SESSION-A
 doc_kind: EVIDENCE_REPORT
 doc_status: ACTIVE
 authority_scope: NONE
-source_ref: 0af67b4bd9f7846bca59c66719a793f4a7a3a044
+source_ref: 761a7d710f5ff5664b716013f2560cee02959250
 evidence_level: EXECUTED
 last_reviewed: 2026-10-31
 supersedes: none
@@ -38,7 +38,7 @@ its latest update describes.**
 | G7 PySR | **EXECUTED (development, descriptive).** Isolated pilot at `85fe073f`: 24/24 VALID. On discoverable worlds `pysr_units` passed the law in 2 of 8, `pysr_symbolic` in 0 of 8, `grammar_enumeration` in 4 of 8. So the EXC-5 rule (discoverable credit above 0) is met and the arm is not `NOT_QUALIFIED`. PySR needs a read-only depot copy under /opt and `PYTHON_JULIACALL_PROJECT`/`_EXE` (juliapkg writes a lock in the read-only venv). That proposer environment must be fixed by the preregistration | PROGRESS 2026-10-31 G7; `runs.jsonl` sha256 `420f6da3…` |
 | G8 driver | **CLOSED.** `pilot_v4` is in-tree; the root comes from a 0600 file outside the tree; the commitment is written before the run | `test_v04_pilot.py` root run |
 | G9 manifest | **CLOSED.** `environment.json` and its digest | same |
-| G10 cost | **OPEN.** Isolated measurement not run yet | waits for OD-3 |
+| G10 cost | **MEASURED at the rung + ESTIMATE for the formal grid.** Isolated, all 19 arms × 12 campaigns, 4 workers, BLAS 1, at `85fe073f`: 228/228 VALID in 4608 s. The two PySR arms take about 0.2 h per campaign (mean 742 s and 713 s); every other arm takes 30 s or less. Formal grid (2400 campaigns per arm), 4 workers: **ESTIMATE 254 h, bootstrap 95% [228, 281] h**, about 95% of it PySR. The interval covers rung sampling only, not host load or scaling past 4 workers. The cap (OD-18 / D5) is the owner's | PROGRESS 2026-10-31 G10; `runs.jsonl` sha256 `1312ac47…` |
 | G11 certificate | **OPEN (Session B).** OD-3 run 3 PASSED on `1979907f` (certificate child `1c45f51b`, verify PASS). That predates the review fixes, so the final OD-3 must run on the candidate SHA | PROGRESS 2026-10-31 OD-3 run 3 |
 | G12 independent review | **DECIDED (Codex, owner runs it).** Not done | — |
 | G13 dress rehearsal | **OPEN (Session B)** | — |

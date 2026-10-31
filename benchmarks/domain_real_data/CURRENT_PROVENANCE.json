@@ -33774,19 +33774,19 @@
     },
     {
       "path": "docs/work/proposals/genesis_lite_v0_4.CANDIDATE.json",
-      "sha256": "2d87e5814afe1225e93aa604b82a0cafcde3380c22b74dc0c2f86fb6c60bbfa2",
+      "sha256": "ef201b62de66c0c1f65621bc4757c02e3c9829f4ef4680f67a04b975a724d3b6",
       "class": "DERIVED",
       "role": "PREREGISTRATION_DOCUMENT",
       "rationale": "Genesis-lite v0.4 preregistration CANDIDATE written by benchmarks/genesis_lite/preregistration_v4.py at the builder commit named in evidence, in a clean clone; author-defined design and criteria, not scientific observations. NOT FROZEN: the owner-only freeze step has not run and the session step record lists open blocking items. Origin classification only: not rebuilt here; approval, freeze and any result are not inferred.",
       "evidence": [
         {
           "path": "benchmarks/genesis_lite/preregistration_v4.py",
-          "sha256": "bf7953c41c3f241b9239811cbaade1766e1f0f1be91409483daefc00ff61ae83",
-          "commit": "8b6f43d0e0bb437f60e2655dcbd45d8e15adbbeb"
+          "sha256": "6eb19a7b0ffe498606270373bdae9dd8ce98b6b3b007525a334bad6c0b61a9b8",
+          "commit": "761a7d710f5ff5664b716013f2560cee02959250"
         },
         {
           "path": "docs/work/BLINDFOLD_STEP1_GAP_CLOSURE_SESSION_A.md",
-          "sha256": "521c5f40368a0f3a3d4863cd0f95ac6140795bf3a7210143b839694940d7e764"
+          "sha256": "1e1fec4c77c9b7687b35c450e0bb21028af247c6bcb4febcf1af9a96af066839"
         }
       ]
     }
