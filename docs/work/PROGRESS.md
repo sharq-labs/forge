@@ -11728,3 +11728,22 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
     - The file was restored byte-identical to HEAD.
 - Boundary: one host and one config; no security level is claimed. The candidate preregistration stays stale until it
   is rebuilt.
+
+### 2026-10-31 — OD-3 run 3 on 1979907f: PASS
+
+- Clone `/home/dev_kaeem/forge-od3-b622af5e` (WSL) at `1979907f789a50987a14bdf9d1cfcc17eeede06c`.
+  `scratchpad/od3_rerun.sh` ran `local_assurance run --repository sharq-labs/forge --python311 .forge/venvs/3.11/bin/python
+  --python312 .forge/venvs/3.12/bin/python --workers 4 --mutation-workers 2 --reuse` from 2026-10-30T23:54 to
+  2026-10-31T04:03 (+02:00).
+  - Result: `LOCAL_ASSURANCE: SOURCE_PASS`. `SKIP_ADMISSION: skipped 550, accepted 550, unexpected 0`.
+  - Receipt `bd6e26d068004a9e9bc4d3b59986e8d2d67d03f7d3ccaa12a799defd0cebea6a`.
+  - Claim: "CORE ASSURANCE PASSED WITH DECLARED OPTIONAL PROVIDERS UNAVAILABLE AND DECLARED CONDITIONAL SKIPS".
+- Certificate child commit `1c45f51b29c4677b587f2193a4779fd207d1f458` ("certification: recertify hardened core"), in
+  the clone only.
+  - `local_assurance verify --python312 .forge/venvs/3.12/bin/python`: 22 certificate self-checks passed.
+  - Result: `LOCAL_ASSURANCE: PASS`. Receipt `e4ec3eb76bbab65bc0910489d22c4963a0272a243c5514ef5bf096aee6375e55`.
+- Scope: this certificate binds `1979907f`, not the later fixes (`5d4e4760`, `027e0088`, `f2e49bd2`). The final OD-3
+  must run on the candidate SHA (Session B). Not pushed; not merged.
+- Failed approach: `git commit` in the WSL clone failed with "empty ident name" (no git identity in WSL). Pass the
+  identity per command with `git -c user.name=... -c user.email=...`, taken from the Windows checkout's config, rather
+  than writing a global config.
