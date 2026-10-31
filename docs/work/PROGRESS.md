@@ -1,5 +1,23 @@
 # Forge Work Progress
 
+## 2026-10-31 - fixed-worker follow-up, bridge build candidate
+
+Added an offline incremental image build mode using public analytic PySR arrays
+and compilation statements only. No fitted population or Forge world enters the
+builder. The existing runtime verifier and isolation code are unchanged. The
+parent-image manifest must match package/runtime/thread/Julia/CPU identities;
+the independent scientific reviewer requested this check, then statically passed
+the corrected code. Static review is not empirical acceptance.
+
+Native build `bridge-candidate-1.so` completed in 119.298 s using 313 statements.
+SHA256 `4870c813abc90d06c8bb335a55f89cd311718ab1cd675cfa4fcc7ecfb3fc021e`;
+manifest `3f5f917f4dab68f39fbb88d7fe9b613473e9ac16d431feb317d64ab9378f9d81`.
+`python -m pytest tests/genesis_lite/test_v04_sysimage_build.py
+tests/genesis_lite/test_v04_runtime_assets.py -q`: **20 passed**, 2.10 s.
+Build/seal/test command evidence is in `/root/forge-perf2-evidence-20261031`.
+Complete isolated Pareto and fixed-worker campaign comparisons remain pending;
+this candidate is not yet accepted or a measured campaign speedup.
+
 ## 2026-10-31 — fixed-worker performance follow-up, imports
 
 Owner authorized implementing the two researched opportunities; at 12:45 UTC

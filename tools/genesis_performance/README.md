@@ -51,6 +51,29 @@ root, campaign result, fitted population or discovered law enters the image buil
 The generic CPU-target image failed exact-output comparison and is rejected.
 Native images are specific to the measured CPU environment.
 
+The optional `bridge` mode layers PythonCall/PySR call-site specializations on a
+previously sealed, compatible native image. In a separate build directory with
+the same copied compiler and runtime Project/Manifest files, run
+`precompile_pysr.py OUTPUT.json` with `PYTHON_JULIACALL_TRACE_COMPILE` pointing to
+`bridge-statements.jl` and `PYTHON_JULIACALL_SYSIMAGE` pointing to the parent image.
+Use the existing pinned Python/Julia executables, offline project, private first
+depot and one runtime thread, as in the controls. Only those compilation
+statements enter the image builder; the tracing process and its fitted state exit.
+
+```bash
+bash build.sh /opt/forge-sysimage-20261031/new-bridge.so bridge native \
+  /opt/forge-sysimage-20261031/functions-reviewed.so
+PYTHONPATH=src /opt/forge-mvp-20261028/.venv/bin/python -m tools.genesis_performance.seal_sysimage \
+  /opt/forge-sysimage-20261031/new-bridge.so --build /path/to/separate-build \
+  --mode bridge --cpu-target native \
+  --base-image /opt/forge-sysimage-20261031/functions-reviewed.so
+```
+
+The sealer checks the parent binary, runtime and package identities, CPU target
+and runtime thread configuration before creating a child manifest. Sealing is
+provenance, not acceptance: full Pareto, campaign trace and cleanup comparisons
+must pass before adopting the image. Keep worker counts identical in each pair.
+
 ## Public comparisons
 
 Run one batch at a time, without simultaneous tests/builds. `baseline` retains the
