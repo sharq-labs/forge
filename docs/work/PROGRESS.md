@@ -11972,3 +11972,40 @@ duplicate task keys collapsed, and a retained WORKER_FAILED record was not summa
 using the helper for any acceptance: full six-world trace coverage, explicit proposal or method-failure evidence,
 duplicate refusal, missing/extra task reporting, nonempty evidence and matched-only speedup statistics. Paired
 bootstrap groups both arms by their shared public seed/world set. Direct adversarial tests added; execution pending.
+
+#### Regression and bounded mutations at 97167b0453c2d8afb784b993086a6b1e0d543e2e
+
+Clean LF `/opt/forge-perf-20261031`, WSL root, Python 3.12.3:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_deadline.py tests/genesis_lite/test_v04_performance.py tests/genesis_lite/test_v04_performance_analysis.py tests/genesis_lite/test_v04_runtime_assets.py tests/genesis_lite/test_v04_telemetry.py tests/genesis_lite/test_v04_isolation.py tests/genesis_lite/test_v04_pilot.py tests/genesis_lite/test_v04_decide.py tests/genesis_lite/test_v04_preregistration.py tests/genesis_lite/test_v04_arms.py tests/genesis_lite/test_analysis_v4.py`
+-> 172 passed, 3 expected environment skips in 32.40 s, native command exit 0. Log: targeted-final.log.
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m tools.genesis_performance.check_deadline`
+-> PASS, exit 0: no surviving namespace init, busy proposer or detached child; outside verification passed first.
+
+Disposable clone `/opt/forge-perf-mutations-20261031`, same SHA/interpreter:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m tools.genesis_performance.check_mutations --out /root/forge-perf-evidence-20261031/mutations`
+-> control passed; 9/9 KILLED with native exit 1 and named assertion failures, source restored and SHA-checked after
+all mutants. Overall helper exit 0. Covers depot marker bypass, sysimage digest, late completion, PID reuse,
+unsolicited diagnostics, private /tmp, missing traces, duplicate tasks and empty comparisons. Not OD-3.
+Failed approach: cloning a branch-only bundle without `-b codex/genesis-v04-performance` leaves no checkout;
+first mutation invocation exited 1 before collection (`No module named tools`). Explicitly checked out that branch.
+
+Red-before: new depot-marker test on clean 89ddd787db6b09b64063e9c60787a0c766a48d76 (only test copied in)
+-> 1 failed with unchanged identity after native bytes changed. New comparison tests on
+076625030a7ccd32d9b43a38aa1b166dc3126d39 -> 9 failed; some failures hit the missing new verdict API, so these
+are not claimed as nine semantic mutation kills. The subsequent 9/9 bounded mutation run supplies guard-sensitive
+execution evidence. Failed approach: inline shell exit capture after pytest was unreliable across PowerShell/WSL
+and cleanup also masks the top-level status; the red-before `.exit` files are NOT authoritative. Named failures in
+logs are retained. Final pytest and mutation results use the tool's native exit status, without a following command.
+
+Independent static scientific review PASS at afdd693bf6a41dcd3f3589c9288b48b8edb8fa82. The following 97167b04...
+delta adds mutation cases and reorders one test assertion only. No scientific validation or certification claim.
+
+Original-thread public full campaign baseline at 89ddd787db6b09b64063e9c60787a0c766a48d76:
+`bash tools/genesis_performance/run_control.sh baseline --mode campaign --repeats 3 --workers 4 --out /root/forge-perf-evidence-20261031/A-campaign-w4`
+-> 6/6 VALID, 36 fresh universes, 1124.512 s batch; units mean 711.246 s, symbolic mean 685.042 s.
+Sampled peak PSS 10239620 KiB, RSS 13040048 KiB, 414 threads; zero OOM/swap-counter changes.
+Raw JSONL SHA256 01b5553df598c170c64cfb4ea0c2edfdd99c04391fd9fae2b624d6a3a132ec55.
+Later batches include manifest preflight and additional depot hashing; original controls exclude one-time manifest
+preflight. This accounting distinction must remain explicit, not silently normalized away.
+Historical G10 raw timings were read without reading any root: its runs.jsonl hash matches
+1312ac47ff2f5fabd926658727101b4eef2ded6141d3719f3780c75f590cd9cf; extracted only 228 VALID arm/seed/campaign/time records.
