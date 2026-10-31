@@ -8,7 +8,7 @@ import re
 
 from ..errors import InvalidScientificProblem
 from .candidate import DiscoveredEquationCandidate, DiscoveryCandidateStatus
-from .campaign import DiscoveryDecision, DiscoveryReview
+from .campaign import DiscoveryDecision, DiscoveryReview, review_discovery_candidate
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -73,11 +73,12 @@ class ClosedLoopDiscoveryCampaign:
                 "discovery campaign requires id and context digest"
             )
         if any(
-            not isinstance(candidate, DiscoveredEquationCandidate)
+            type(candidate) is not DiscoveredEquationCandidate
             for candidate in candidates
         ):
             raise InvalidScientificProblem(
-                "discovery campaign candidates must be typed"
+                "discovery campaign candidates must be exact "
+                "DiscoveredEquationCandidate records (no subclasses)"
             )
         if any(
             candidate.context_digest != context for candidate in candidates
@@ -99,12 +100,22 @@ class ClosedLoopDiscoveryCampaign:
             raise InvalidScientificProblem(
                 "falsification records must bind campaign candidates"
             )
+        # exact types before anything else is read: a subclass could override the
+        # equality the replay below relies on, or the candidate identity it binds
+        if any(
+            type(review) is not DiscoveryReview
+            or type(review.candidate) is not DiscoveredEquationCandidate
+            for review in reviews
+        ):
+            raise InvalidScientificProblem(
+                "a discovery review must be an exact DiscoveryReview of an exact "
+                "DiscoveredEquationCandidate (no subclasses)"
+            )
         review_fingerprints = [
             review.candidate.fingerprint for review in reviews
         ]
         if any(
-            not isinstance(review, DiscoveryReview)
-            or review.candidate.fingerprint not in known
+            review.candidate.fingerprint not in known
             for review in reviews
         ):
             raise InvalidScientificProblem(
@@ -134,6 +145,21 @@ class ClosedLoopDiscoveryCampaign:
                 raise InvalidScientificProblem(
                     "discovery review skipped explicit falsification stage"
                 )
+            # no decision is taken on the caller's word, a rejection included: re-run the
+            # review from the frozen selection, final data and verification it carries
+            replayed = review_discovery_candidate(
+                review.candidate,
+                verification=review.verification,
+                final_selection=review.final_selection,
+                final_data=review.final_data,
+            )
+            if replayed != review:
+                raise InvalidScientificProblem(
+                    "a discovery review is admitted only as "
+                    "review_discovery_candidate's result, re-run here from its "
+                    "frozen selection, final data and verification; this review "
+                    "did not replay to the same decision"
+                )
 
         object.__setattr__(self, "campaign_id", campaign_id)
         object.__setattr__(self, "context_digest", context)
@@ -161,6 +187,9 @@ class ClosedLoopDiscoveryCampaign:
             if record.survived
         }
         if not surviving <= set(review_by):
+            return DiscoveryCampaignStage.HOLDOUT_REVIEW
+        if any(review_by[fingerprint].decision is DiscoveryDecision.CANDIDATE
+               for fingerprint in surviving):
             return DiscoveryCampaignStage.HOLDOUT_REVIEW
         pending_independent = [
             review
@@ -226,6 +255,12 @@ class ClosedLoopDiscoveryCampaign:
         self,
         review: DiscoveryReview,
     ) -> "ClosedLoopDiscoveryCampaign":
+        if type(review) is not DiscoveryReview or type(review.candidate) is not DiscoveredEquationCandidate:
+            # checked before any field is read, so a non-review is a scientific refusal, not an AttributeError
+            raise InvalidScientificProblem(
+                "a discovery review must be an exact DiscoveryReview of an exact "
+                "DiscoveredEquationCandidate (no subclasses)"
+            )
         fingerprint = review.candidate.fingerprint
         if fingerprint not in {
             candidate.fingerprint for candidate in self.candidates

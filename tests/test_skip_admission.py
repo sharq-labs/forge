@@ -632,6 +632,62 @@ def test_a_broad_or_unbound_rule_is_refused(rule, fragment):
     assert any(fragment in p for p in sa.policy_problems(policy)), sa.policy_problems(policy)
 
 
+BATTERY_V3 = "benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py"
+BATTERY_V3_TEST = "test_bundle_rebuilds_byte_identically_and_static_audit_passes"
+
+
+@pytest.mark.parametrize("suite", ["junit_fast", "junit_scientific"])
+def test_the_battery_v3_raw_archive_skip_is_admitted_only_with_its_declared_reason(suite):
+    """Owner, 2026-10-30: the raw archives live outside the repository (FORGE_DATA_ROOT) and are absent on this host."""
+    def skip(reason, test=BATTERY_V3_TEST):
+        return sa.ObservedSkip(f"{BATTERY_V3}::{test}", BATTERY_V3, test, reason, f"{BATTERY_V3}:99")
+
+    row = sa.classify(skip("needs the local raw archives"), suite=suite, statuses={},
+                      protected=(frozenset(), frozenset()))
+    assert row["admitted"] and row["classification"] == sa.DECLARED_CONDITIONAL_SKIP, row
+    for other in (skip("needs the local raw archive"), skip("needs the local raw archives", "test_other")):
+        assert not sa.classify(other, suite=suite, statuses={}, protected=(frozenset(), frozenset()))["admitted"]
+
+
+GENESIS_V04_ROOT = "needs Linux, root and a tree readable by uid 65534"
+GENESIS_V04_SKIPS = [
+    ("tests/genesis_lite/test_v04_isolation.py", "test_hidden_secrets_cannot_be_read_or_listed", GENESIS_V04_ROOT),
+    ("tests/genesis_lite/test_v04_isolation.py", "test_no_state_passes_from_one_proposer_process_to_the_next",
+     GENESIS_V04_ROOT),
+    ("tests/genesis_lite/test_v04_pilot.py", "test_a_development_run_commits_before_running_and_never_writes_the_root",
+     GENESIS_V04_ROOT),
+    ("tests/genesis_lite/test_v04_arms.py", "test_a_missing_library_raises_instead_of_earning_a_refusal",
+     "PySR installed: the failure path needs it absent"),
+]
+
+
+@pytest.mark.parametrize("suite", ["junit_fast", "junit_scientific"])
+@pytest.mark.parametrize("path,test,reason", GENESIS_V04_SKIPS)
+def test_the_genesis_v04_environment_skips_are_admitted_only_by_exact_test_and_reason(suite, path, test, reason):
+    """Owner, 2026-10-30: the isolated-proposer tests need root on /opt, and the PySR-absent path needs PySR missing."""
+    def skip(reason, test=test, path=path):
+        return sa.ObservedSkip(f"{path}::{test}", path, test, reason, f"{path}:99")
+
+    def admitted(observed):
+        return sa.classify(observed, suite=suite, statuses={}, protected=(frozenset(), frozenset()))
+
+    row = admitted(skip(reason))
+    assert row["admitted"] and row["classification"] == sa.DECLARED_CONDITIONAL_SKIP, row
+    for other in (skip(reason + "."), skip(reason, "test_other"),
+                  skip(reason, path="tests/genesis_lite/test_v04_decision.py")):
+        assert not admitted(other)["admitted"]
+    # the isolation module's pure tests never skip on the root reason
+    assert not admitted(skip(GENESIS_V04_ROOT, "test_hiding_the_code_tree_itself_refuses",
+                             "tests/genesis_lite/test_v04_isolation.py"))["admitted"]
+
+
+@pytest.mark.parametrize("path", ["src/engcore/claims/test_x.py", "benchmarks/", "tools/test_x.py"])
+def test_a_rule_outside_the_collected_test_trees_is_still_refused(path):
+    rule = sa.SkipRule("x", path, "descendant", sa.DECLARED_CONDITIONAL_SKIP, tests=("t",), why="x")
+    policy = sa.SkipPolicy(POLICY.providers, (*POLICY.rules, rule))
+    assert any("not one exact test file" in p for p in sa.policy_problems(policy)), sa.policy_problems(policy)
+
+
 def test_module_scope_must_be_the_modules_own_pytestmark(repo):
     assert sa.policy_problems(POLICY, repo, trust_script=TRUST_SCRIPT) == []
     borrowed = sa.SkipPolicy(POLICY.providers, (

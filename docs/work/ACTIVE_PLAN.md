@@ -6,6 +6,281 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Owner direction 2026-10-30 — time-saving review applied ("طبق كل ده")
+
+The owner approved applying the 2026-10-30 time-saving review (chat). Executed order and limits:
+
+1. EXC-4 to its exit gate (already approved below). The pilot and the FAST tier wait until the owner's running OD-3
+   `local_assurance run` in WSL (on `a9ddbf274cc5d24a8f14236586d8bd94a2760fcb`) ends: its mutation shards are
+   load-sensitive. EXC-4 changes land after that HEAD, so their certification_pinned tests need the next OD-3.
+2. Backup: `a9ddbf27…` pushed to `refs/heads/backup/local-main-2026-10-30` on `sharq-labs/forge` (no PR; push
+   workflows run on `main` only). `main` itself was not pushed.
+3. OD-3: D4 already running (another session); not restarted or touched. One OD-3 batch per certified-scope batch from
+   now on, instead of a recertification per change.
+4. Documentation: one step record replaces the four per-step files
+   ([STEP_RECORD_TEMPLATE.md](templates/STEP_RECORD_TEMPLATE.md)) for new steps; existing records are not rewritten.
+5. Drafts only, no code: [EXC5](proposals/EXC5_PYSR_UNITS_BASELINE_DRAFT.md) (a units-aware PySR arm) and
+   [EXC6](proposals/EXC6_PUBLIC_BENCHMARK_COMPARISON_DRAFT.md) (public equation-recovery benchmarks as
+   development comparison). Each needs its own eight-field approval.
+
+- [x] DECIDED 2026-10-30 (owner, in chat: "blind fold مش محتاج حد من بره ده هيقيس قوه الاستنتاج عندنا"): the
+  Blindfold measurement of Forge's own inference (Genesis Steps 1-5) runs **without an independent custodian**; custody
+  is the sealed-root mechanism (root written outside the tree before the run, commitment recorded, revealed after
+  sealing). Results are labelled SELF_ADMINISTERED and are never presented as an external or independent score.
+  Genesis §26 is unchanged: Step 6 (held-out graduation) still needs a named external evaluator and stays
+  DEFERRED_BY_OWNER; §26 also asks that, before the v0.3 preregistration fixes its held-out protocol, this plan record
+  either the evaluator or a selection process with a deadline (OWNER_DECISION_REQUIRED, needed by then, not now).
+- [ ] OWNER_DECISION_REQUIRED (Master Plan §5.3 control-plane warning, raised 2026-10-30): by commit-subject heuristic,
+  of 856 commits since 2026-10-01, 236 are `docs` and 179 control-plane (ci/test/chore/certification/gate/mutation),
+  i.e. about 49 % against the 20 % planning threshold. ESTIMATE, not a measurement (subjects, not effort). Options: accept
+  as front-loaded trust work; or cap control-plane work per checkpoint. Not a scientific rule; no work stopped.
+- Open owner decisions gathered in one place (each is decided where it lives): M-3 and review-r5 (discovery, below);
+  EXC5 and EXC6 drafts; v0.3 preregistration, formal campaign budget (Genesis-lite, below; custodian decided above);
+  pushing or merging `main` (38 commits ahead of `origin/main` at `a9ddbf27`); the next OD-3 batch after EXC-4.
+
+## Current bounded task — Blindfold Step 1 gap closure, Session A (owner, 2026-10-30)
+
+Owner direction in chat, 2026-10-30: "Accept defaults" on the decision block of
+[the session prompt draft](proposals/BLINDFOLD_FIRST_EXPERIMENT_10H_PROMPT_DRAFT.md) (revision 2), then "يلا ابدا".
+Time is not a constraint (owner). The gap register G1-G16 lives in that draft (§2); this section is the executable
+scope. Started at `7d24c9485043ab31e49601c33a9334c1e6a44368`.
+
+1. **Exact scope:** phases A0-A7 of the draft: baseline roster (EXC-5 below, FDA-21/22 checks); the isolated v0.3
+   campaign path and the FDA-19 probe extension; a power analysis with inference options (no statistics code change
+   before D9); FDA-06 / FDA-18 / circularity design options; an in-tree sealed-root formal driver and an environment
+   manifest; an isolated cost measurement on a fresh development root; a preregistration v0.4 **candidate** (new files).
+2. **Allowed work:** red-first code and tests in `benchmarks/genesis_lite/**`, `src/engcore/blindfold/isolation*.py`
+   and their tests; development pilots on fresh development roots only; local commits; pushes of `backup/…` branches.
+3. **Reason:** close the Step-1 blockers of the deep-audit matrix (FDA-06, FDA-18, FDA-19, FDA-21/22, B-LEAK, O-1,
+   P-4, P-5) and the power gap G1 before any freeze, so a formal Step-1 campaign is valid and informative.
+4. **Start condition:** this entry, before any code. Decided: D1 Step 1 baselines only; D2 EXC-5, falling back to
+   `NOT_QUALIFIED`; D3 OS isolation on WSL `/opt`, level stated; D4 sealed root, labelled SELF_ADMINISTERED (decided
+   above); D5 cap at launch; D7 `backup/…` pushes only; D8 deferred. Owner decisions D9 (inference and unit count),
+   D10 (FDA-06 rule), D11 (FDA-18 mix) and D12 (preregistration reviewer) are asked at one checkpoint.
+5. **Exit condition:** a step record with every gap CLOSED (with evidence), DECIDED, DISCLOSED or OPEN; the v0.4
+   candidate reviewed by `forge-scientific-review`.
+6. **Expiry:** 2026-11-13.
+7. **Owner approval:** as quoted above.
+8. **Prohibited:** launching a formal campaign; generating, reading or logging the formal root; freezing or digesting
+   the preregistration; reusing any pilot root; tuning any arm, threshold, prior or scoring rule on earlier pilot
+   results; Gen1 Mind changes or Stage 2b; editing v0.2-pinned files, the credit table or SHA-pinned evidence; widening
+   a tolerance or adding a skip to pass a gate; running OD-3; merging; pushing `main`; installing dependencies beyond the
+   present `genesis-baselines` extra; any lift, novelty, validation or maturity claim.
+
+Scheduling: an OD-3 `local_assurance run` on `921f8d26df920d209ee07faf11f435d88f4a1023` (WSL
+`/home/dev_kaeem/forge-od3-b622af5e`, started 18:43, 6 h timeout) was running when this section was written; its
+mutation shards are load-sensitive, so tiers, pilots and measurements wait until it ends. Until then only single
+targeted test files run, at low priority. Design and reading work goes first.
+
+- [x] DECIDED 2026-10-30 (owner, in chat, answering the checkpoint questions), on
+  [the power draft](proposals/BLINDFOLD_V04_POWER_AND_INFERENCE_DRAFT.md) and
+  [the design-options draft](proposals/BLINDFOLD_V04_DESIGN_OPTIONS_DRAFT.md):
+  - **D9 = empirical-Bernstein** on independent-unit paired six-kind totals, Holm over the pre-declared family
+    (grammar_enumeration, careful, space_filling), every other arm descriptive, per-kind non-inferiority on controls;
+    the sign-flip test is rejected (type-I 0.105 under a skewed null);
+  - **D10 = FDA-06 option A+B**: cap every law-credited kind when the truth is outside every run arm's family;
+    out-of-family law credit reported as a secondary endpoint;
+  - **D13 = FDA-22 option C (corrected)**: the owner first chose A, then, after the builder found that A makes every
+    gated baseline refuse every world (they never extrapolate), chose C in chat: keep the generator, disclose the
+    region tell, and report every arm by box vs extended region and on indistinguishable apart; the gated arms'
+    +0.5 on indistinguishable is the same for all of them and cancels in paired differences;
+  - **D14 = roster and scope** of the design draft §5: add `random_grammar`; `pysr_units` mapping or library failure
+    scores inadmissible; Step 1 = law recovery plus the five controls; other §10.5 classes declared out of scope;
+  - **D11 = FDA-18 option A**: one isolated, stateless proposer process per universe;
+  - **D12 = Codex** reviews the v0.4 preregistration before the freeze (the owner runs it).
+  All are implemented in new v0.4 files; v0.2/v0.3 files, the credit table and `engcore.blindfold.universe` stay
+  unchanged.
+- [ ] OWNER_DECISION_REQUIRED (D15, raised 2026-10-31 by the second v0.4 review, M-e): how a proposer process that
+  dies or times out AFTER its outside verification passed is classified. Today (`isolated_host.per_universe_arm`) it is
+  an infrastructure failure, so the whole run becomes INVALID_BENCHMARK and `decide_v4` refuses it (run rule
+  "any INVALID_BENCHMARK world set blocks"). Two reviews pull in opposite directions:
+  - L2 (2026-10-31): a dead pipe scored as the arm's -1 would favour a candidate over a baseline that crashed;
+  - M-e: one transient crash (OOM, a Julia segfault) over ~2400 units x 6 processes makes a formal run undecidable;
+    a candidate that kills itself turns a loss into "no decision"; and nothing counts reruns on fresh roots.
+  Options:
+  - (A) keep it as infrastructure, and add a per-root attempt ledger in the commitment so reruns are counted and
+    reported;
+  - (B) after a passed outside verification, death or timeout is the arm's own failure (inadmissible, -1), for every
+    arm alike, plus the ledger;
+  - (C) as B for the candidate only, A for baselines.
+  Recommendation: B plus the ledger. It is symmetric, a self-kill cannot rescue a loss, and a host failure before
+  verification stays infrastructure. Needed before the freeze.
+- [ ] OWNER_DECISION_REQUIRED (raised 2026-10-31 by the same review, M-d): the formal driver `pilot_v4.plan` accepts
+  only the frozen baseline roster, while `analysis_v4.decision` refuses a candidate inside it. Step 1 (D1, baselines
+  only) needs no candidate. But a Step 2 lift decision through `decide_v4` needs a registration path for the
+  candidate arm (for example the Mind), with its own identity binding. Not needed for Step 1; record before Step 2.
+
+### EXC-5 -- units-aware PySR development arm (APPROVED 2026-10-30 by the owner via D2)
+
+Copied from [the EXC-5 draft](proposals/EXC5_PYSR_UNITS_BASELINE_DRAFT.md) at `7d24c948`:
+1. **Exact scope:** a new arm `pysr_units` in a new `benchmarks/genesis_lite/arms_pysr_units_v3.py`, registered in
+   `pilot_v3.py` and bound into `harness_v3.development_identity`, plus its tests. `pysr_symbolic`, `PYSR_SETTINGS`,
+   the pinned v0.2 files, the escrows and the credit table are not touched.
+2. **Allowed work:** pass the card's public units as `X_units`/`y_units` (refuse on unparseable units); `^` with a
+   constant exponent; the same budget as `grammar_enumeration` (wall-clock and evaluations, declared before the pilot);
+   choose on PySR's Pareto front with the shared held-out gate; record per campaign whether the dimensional constraint
+   was satisfied. Added by D2/G7: run without network under the isolated Discovery uid, with a Julia depot it can read.
+3. **Reason:** remove a plausible baseline-weakness confound before any Mind lift is measured.
+4. **Start condition:** met (owner approval; EXC-4 reports recorded).
+5. **Exit condition:** red-first tests (units refused/accepted, constraint flag recorded, gate parity with
+   `pysr_symbolic` on a units-free card); `forge-scientific-review`; one development pilot on fresh worlds reporting
+   `pysr_units` vs `pysr_symbolic` vs `grammar_enumeration`, descriptive only. If discoverable credit stays 0 after one
+   bounded attempt, the arm is recorded `NOT_QUALIFIED` and tuning stops.
+6. **Expiry:** 2026-12-15.
+7. **Owner approval:** the owner, in chat, 2026-10-30 ("Accept defaults", D2 = EXC-5 as drafted).
+8. **Prohibited:** editing `pysr_symbolic` or its recorded results; tuning on EXC-2/3/4 results or roots; any
+   preregistration, formal campaign, lift or superiority claim; dependency installs beyond the existing venvs.
+
+## Current bounded task — Scientific MVP delivery preparation (2026-10-28)
+
+### Public development integration — bounded L3 (owner continuation 2026-10-28)
+
+Exercise existing sparse discovery over explicit dimensionless x,x²,x³ features
+and intercept, all seven nonempty supports. Normalize physical I/V by declared
+1 A/1 V scales. Fit on calibration; select only on separate public development
+rows. Report smallest compatible support or ambiguity, never final evidence.
+Include mixed-term, indistinguishable-support, out-of-grammar and no-information
+controls; compare dense polynomial least squares with equal observations.
+This is bounded dictionary-support recovery, not unrestricted symbolic discovery.
+Preserve existing engine/policy, L1/L2 files, hidden data and mandatory gates.
+
+### Public development integration — L2 (owner continuation 2026-10-28)
+
+Compare two explicitly declared one-parameter families on separate selection
+observations after calibration-only fitting. Public noiseless software controls
+include ambiguity and neither-family adequacy. Selection is not a final test.
+Use existing repsem.v2 records and model execution; no Core or frozen benchmark
+change. Any numerical selection bar is an explicitly labelled development input,
+not a new scientific acceptance policy. Preserve L1 files/records and all gates.
+
+### Public development integration — L1 (owner-authorized 2026-10-28)
+
+Build the smallest executable synthetic electrical development example using
+repsem.v2, existing assessment/replay, explicit units, informative/uninformative
+and misspecified cases. Include an equal-observation analytic L1 reference.
+This is public integration verification, not blindfold, a new scientific verdict,
+or L2/L3 qualification. Other local thread verified idle before editing.
+No final truth/seeds, campaigns, dependency installs or full assurance. Preserve
+all mandatory gates. L2/L3 and independent custody remain subsequent work.
+
+### Follow-up review repairs R1–R7 (owner-authorized 2026-10-28)
+
+Owner requested all findings in REPO_REVIEW_2026_10_28.md repaired, starting with
+shared-symbol consistency and checking concurrent work first. The other local
+scientific-repair thread was verified idle with its last turn completed before
+these edits. Preserve its existing work. R1 shared bindings; R2/R3 strict versioned
+repsem units and executable identity using the existing engine; R4 replay before
+promotion; R5 symmetric pair comparison; R6 scratch placement; R7 package identity.
+Owner explicitly approved v3 pair distance |A-B|/max(|A|,|B|), zero for two zeros.
+No threshold change, historical v1/v2 replay rewrite, campaign, full assurance,
+commit/push/merge. Run red-first controls and regressions for each bounded repair.
+
+### Scientific audit repair scope (2026-10-28, current local main)
+
+The owner explicitly requested all five findings in the local scientific audit
+be repaired on `main` ("حل المشاكل دى كلها و كله علىا لmain"). This authorizes
+the bounded identity, data-role, scoring and statistical corrections below;
+it does not start a formal campaign, rewrite historical benchmark identities,
+or confer certification. Existing local MVP/isolation work is preserved.
+
+- S-01: bind feature expressions, evaluated values, data splits, lineage, policy
+  and implementation to generated candidate identities; refuse inconsistent values.
+- S-02/S-05: complete development v0.3 scoring: no bracketing-only recovery;
+  exact zero matches pass without a new absolute tolerance. Preserve frozen v2.
+- S-03: the v0.3 boundary refuses to promote old bootstrap-tail diagnostics;
+  preserve hash-pinned v0.2 replay and add bounded independent-unit paired inference,
+  complete paired grids, repeated-setting aggregation and all-baseline correction.
+- S-04: generated scores are explicitly selection; freeze one selected model
+  and its final threshold before separate final data; refuse sample/group overlap.
+- Validation: targeted regressions, compatibility/architecture checks and affected
+  gates. Report platform and certification limitations separately from code fixes.
+
+Discovery final-test review rounds 1-5 (2026-10-28, owner-approved repairs
+I-1..I-4, H-1/M-1 (r2), M-A/M-B/I-6 (r3), H-1/M-1/M-2 (r4); round 5 static
+review PASS; evidence in PROGRESS.md). Not committed; certified `core` area
+drift still needs commit + recertification under their own approval.
+- OWNER DECISION (2026-10-28) — discovery threat model: code running in the same
+  Python process is trusted; untrusted input must cross a serialization boundary
+  (re-derived via from_dict) or a process-isolation boundary (Blindfold). Exact-type
+  checks and use-time rebuilds are defence in depth, not a security boundary.
+- [ ] OWNER_DECISION_REQUIRED (M-3): what counts as INDEPENDENTLY_REPRODUCED for a
+  discovered equation. Today a complete `VerificationRunRecord` bound only by
+  `subject_digest` suffices; its observations, evidence and route independence are
+  caller-declared and need not concern the candidate's prediction (a 300 K vs
+  300.2 K record "reproduces" dimensionless y = x). Options: require the verified
+  quantity to be the candidate's prediction on declared rows, or rename/narrow the
+  decision. Not decided; no code change until decided.
+- [ ] OWNER_DECISION_REQUIRED (review r5, pre-existing): one `survived=True`
+  falsification record suffices for promotion; a `survived=False` record for the
+  same candidate never blocks it. Decide whether a recorded failed challenge must
+  block promotion (it is caller-declared, so possibly inadmissible as evidence).
+- [x] r5 LOW L-1 (fingerprints compared too), L-2 (`with_review` type check incl.
+  its candidate) and L-3 test gaps repaired 2026-10-28, owner-approved; review
+  round 6 PASS (static). Evidence in PROGRESS.md.
+- [ ] Deferred, not authorized: I-5 minimum independent final units/uncertainty;
+  I-7..I-9; L-4 replay cost O(steps x reviews x search).
+
+Genesis-lite v0.3 development path (owner-approved 2026-10-28: v0.3 escrow/evaluator
+path keeping v0.2, PySINDy/BoTorch-CPU/PySR+Julia in the /opt venv, a 30-minute
+4-worker development pilot). Done on local main: `69597fbe` v0.3 path, `7c2e120f`
+baseline arms, `ef9eeeb0`/`ea894e61` review fixes, `1e913d92`/`5daaba81` pilot
+runner; pilot 1920/1920 campaigns VALID in 675.7 s, formal-tier ESTIMATE 3.67 h at
+4 workers (`benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/`). The v0.2
+preregistered identity is unchanged. DEVELOPMENT_ONLY: not a formal campaign, no lift.
+- [x] DECIDED 2026-10-29 (owner, option B) — v0.3 pair rule: the five v0.3 rules
+  (symmetric |a-b|/max distance in and outside the box, sign-correct bracketing,
+  outside divergence over every outside point, exact zero predictions of zero truths)
+  are applied by the new `engcore.blindfold.escrow_v3.EscrowServiceV3`; the pinned
+  v0.2 `escrow.py` is unchanged. Done in `cb1dfe44`, `d398c800`; review PASS. The new
+  file is in the certified `verdict_authority` area: part of the pending OD-3 scope.
+  Agreement with score_v3 now checks the interpreter and plumbing, not the shared
+  rule text. Deferred LOW: broader random differential forms; refusals after sealing.
+- [ ] Next toward formal Blindfold (each needs its own approval): v0.3
+  preregistration (thresholds, power, units), independent custodian, Minimal Mind as
+  an arm (active-epic exception), formal campaign budget. The pilot's ~3.7 h ESTIMATE
+  covers the baseline arms only, in-process, measured with 20 BLAS threads per worker
+  (review round 3); the Mind arm and isolation overhead are UNMEASURED. A corrected
+  re-measurement (one BLAS thread per worker) needs its own approval.
+
+Owner requested implementation of the review's work packages in this chat
+("اعمل انتى كل ده"). Starting source: `dd567d53d2444950f57ffaeb9903c74d7c38f04d`,
+clean local `main`. This section is the executable continuation; earlier R21/R22
+paragraphs below remain historical checkpoints, not a claim about current failures.
+
+- [ ] WP-01: current source/environment/certificate inventory and bounded claim map.
+- [ ] WP-02: isolated supported environment, measured current gates, bounded red-first repairs.
+- [x] WP-03: zero-RMSE ordering regression and minimal correction (6 targeted tests; independent static review PASS; integration/certification still open).
+- [ ] WP-04/05: data-role, units and implementation-identity boundary proposals and approved repairs.
+- [ ] WP-06/07: synthetic scoring controls and concrete scoring/statistical amendment for owner review.
+- [ ] WP-08/09: executable isolation and competent baseline preparation; measured development cost estimate.
+- [ ] WP-10: real-measurement feasibility, rights and measurement audit; no new final data exposure.
+- [ ] WP-11: bounded development only after prerequisite gates and active-epic decision.
+- [ ] WP-12/13: independent final evaluation and reproducible delivery only after their prerequisite decisions.
+
+The immediate scope is stabilization, defect repair and evaluation preparation;
+no maturity promotion or new scientific capability is authorized by this queue.
+Reuse current evidence/provenance owners. Preserve historical artifacts and all
+mandatory gates; no tolerance widening, skip inflation or rewritten old evidence.
+No commit, push, merge, paid service, formal campaign or full assurance is started
+by this section. Local dependency setup and bounded development checks are part
+of the requested implementation. Campaign/assurance budget and independent
+custodian are pending concrete owner decisions. The owner will appoint the
+custodian later and requested cost estimates before campaign/assurance approval.
+FDA-05 was explicitly approved for a NEW benchmark version on 2026-10-28:
+bracketing alone earns no recovery; one law must pass the existing accuracy rule.
+The development v0.3 scorer now implements this, preserving negative control
+penalties and an explicit unresolved outcome. It is not a frozen campaign.
+Other scoring semantics and any frozen
+contract/active-epic change require their own reviewable decision, not an inference.
+Candidate development must not read hidden truth, final datasets, evaluator seeds
+or final evaluation outputs. Use synthetic development fixtures for repairs.
+
+Checkpoint: [SCIENTIFIC_MVP_CHECKPOINT_2026_10_28.md](SCIENTIFIC_MVP_CHECKPOINT_2026_10_28.md).
+FAST is RED on native Windows; Technical Stabilization and Scientific MVP remain
+OPEN. Linux execution, SCIENTIFIC, formal isolation, full assurance and final
+evaluation are NOT RUN for this patch. Historical authorizations below do not
+override the current owner's campaign-budget decision.
+
 ## Current bounded task — R22 required-gate repair (2026-10-24)
 
 Owner explicitly authorized bounded repair of the59 remaining R21 failures,
@@ -847,7 +1122,7 @@ therapeutic work.
 |---|---|---|
 | OD-1 | Merge-gate enforcement: make the repository public, upgrade the plan, or formally accept local SHA-bound assurance as the only merge control. | Rulesets API 403; red gates cannot block merges. |
 | OD-2 | Supported Python policy. | `requires-python >=3.11`; CI 3.11/3.12; local runs on 3.13 and 3.14. |
-| OD-3 | Recertification: which HEAD, and when (owner-run). | Certificate binds `39d43456`, not `main` `2d0fa6c3`; #126, #123, #117 and #129 all touch certified scope and landed unrecertified. |
+| OD-3 | Recertification: which HEAD, and when (owner-run). **Update 2026-10-29:** the stored certificate binds `0d1d6823` (child `68ebe4d7`), not `39d43456`; drift is `core`, `verdict_authority`, `certification_control` and `runtime_dependencies`. Owner approved D1/D2 and the two blocker fixes; the preflight at `39ca5de4` is clean apart from the two deferred self-checks. Pending owner: D3 `local_assurance prepare`, D4 `local_assurance run`. | Certificate binds `39d43456`, not `main` `2d0fa6c3`; #126, #123, #117 and #129 all touch certified scope and landed unrecertified. |
 | OD-4 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #123 lands by a merge commit (no rebase); it closes R3-01/R3-02 only. | Its certificate binds `39d43456` (the PR tree), not the merged `main`; recertification stays OD-3. |
 | OD-5 | RESOLVED 2026-10-12 (owner direction: merge the open PRs that pass every gate). PR #126 lands as one PR; it creates no new scientific capability stage and changes no maturity. | +8,043 lines; new `engcore.authority`; real escrow is relevant to Genesis leakage controls. Not recertified (OD-3). |
 | OD-6 | DECIDED 2026-10-18 (owner, in session): the active epic becomes the research program `engrt.numerical_foundations` ([contract](../project/ENGINEERING_FOUNDATIONS_PROGRAM.md)); in force since the branch `feat/od6-engineering-program-epic` merged via PR #157 (`0284ae16`, 2026-10-18; checked 2026-10-23 with `git merge-base --is-ancestor`). Gates DV0, M1, M2, E1, E2, E3; build-first. Battery stays tracked at FUNCTIONAL; Genesis A2 still needs an epic change or an exception; EXC-1 is superseded on merge. | Pinned by the ledger, `tests/test_capability_completion.py` and the PR template (CONTRACT_PIN: a change needs its own reviewed PR). Blocks A2. No blanket Track A/B exemption exists (Completion Policy, anti-loophole rule). |
@@ -886,6 +1161,126 @@ therapeutic work.
 
 An exception is valid only with every field the Completion Policy requires (scope, allowed work, reason, start, exit,
 expiry, owner approval, prohibitions).
+
+### EXC-4 -- richer hypothesis language, Stage 2a: grammar enumeration as a frozen development baseline (CLOSED 2026-10-30 by the owner)
+
+**Closed 2026-10-30 by the owner (in chat, "Close EXC-4")** on both pilot reports (`pilot_results/v0_3-dev-grammar-2026-10-30/`, `.../v0_3-dev-grammar-2026-10-30b/`). DEVELOPMENT_DESCRIPTIVE only: no lift, novelty or superiority claim. Carried forward: `grammar_enumeration` is the strongest discoverable baseline in both pilots and is the bar for any later Mind lift; representation circularity (89/120 discoverable laws expressible) is disclosed; Stage 2b, EXC-5 and EXC-6 each need their own decision. Its tests are certification_pinned, so they enter the next OD-3 batch.
+
+**Status 2026-10-30:** code `16236c66`; FAST at `e5af5f55` 3131 passed / 2 certificate failures; pilot done (2520/2520
+VALID, report `benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/`). Exit condition **partly met**:
+the three contrasts are recorded, but per-world grammar expressibility is NOT MET because the pilot did not persist
+its root. OWNER_DECISION_REQUIRED: a second pilot that writes a sealed root reveal (outside this exception's "one
+pilot"), or close EXC-4 without the expressibility split.
+**DECIDED 2026-10-30 (owner, in chat, "Second pilot"):** one second development pilot, same arms, 4 workers, budget
+fraction 1.0, 45-minute cap, on a fresh root that is written to a file outside the tree (mode 0600) before the run
+starts and passed to `run_pilot(root=...)` by a driver outside the tree (no repository code change). Workers still
+receive only per-campaign master seeds. The first pilot's results stay recorded unchanged. All field 8 prohibitions
+still apply (no tuning on either pilot's results).
+**Second pilot done 2026-10-30:** 2520/2520 VALID with expressibility (`pilot_results/v0_3-dev-grammar-2026-10-30b/`). Exit condition met; closing EXC-4 is the owner's decision.
+
+Full draft with rationale and risks: `docs/work/proposals/EXC4_MIND_HYPOTHESIS_LANGUAGE_DRAFT.md` (at `b622af5e`).
+
+1. **Exact scope:** new package `src/engcore/mind/grammar/` (`dimensions.py`, `grammar.py`, `fit.py`, `evidence.py`);
+   new development arm `grammar_enumeration` in `benchmarks/genesis_lite/arms_grammar_v3.py`, registered in
+   `pilot_v3.py` and bound into `harness_v3.development_identity`; their tests; this section. Not touched:
+   `src/engcore/mind/minimal/**` (Gen1 byte-identical, MIND_VERSION 1.0.0), the v0.2-pinned files, `escrow.py`,
+   `escrow_v3.py`, `engcore.blindfold.universe`, the credit table.
+2. **Allowed capability work:** Buckingham-pi groups from the presented card's public units only (refuse on
+   unparseable/inconsistent units); a structure grammar `scale x F(groups)` over `engcore.blindfold.expression` operators
+   (mul, pow with fitted constant exponent, add, exp, piecewise on one group) with limits <= 2 additive terms, <= 1 exp,
+   <= 1 piecewise, depth <= 4, <= 12 nodes, <= 5,000 structures per universe, defined by operators and limits, never by
+   templates from `universe.py`; constant fitting with the scipy `least_squares` deterministic multi-start pattern of
+   `repsem.assess._fit`; ln-scale likelihood with replicate noise plus a BIC complexity penalty under a declared prior,
+   every structure counted in `MultiplicityLedger`; CV selection inside the training split and judgement on the
+   hold-out through the shared gate logic of `arms._gate` generalised to nonlinear predictions. One development pilot on
+   fresh worlds (new root seed generated only after the grammar and arm code are frozen by digest), v0.3 harness,
+   budget fraction 1.0, all registered v0.3 arms plus `grammar_enumeration`, 4 workers, 45-minute cap. Pre-declared
+   paired descriptive contrasts: (i) `grammar_enumeration` - `monomial_enumeration` split in-family / out-of-family
+   discoverable; (ii) `grammar_enumeration` - `pysr_symbolic`; (iii) false-law rate on no_solution, confounded and
+   insufficient_evidence vs `careful`.
+3. **Reason:** EXC-2 found 69/92 of `mind_full`'s discoverable refusals have the truth outside its family, and EXC-3
+   found no selection advantage at any budget; Genesis requires a frozen `full_grammar_enumeration`-class baseline before
+   any Mind lift claim.
+4. **Start condition:** owner approval (below); this entry recorded before any code. Narrow exception under the
+   Completion Policy; not A2.
+5. **Exit condition:** red-first tests per module; a `forge-scientific-review` of dimensions, evidence and the gate; a
+   recorded pilot report with the three contrasts and per-world grammar expressibility. No inferential statistics.
+6. **Expiry / timebox:** 2026-11-27, even if unfinished.
+7. **Owner approval:** the owner, in chat, 2026-10-30 ("Approve as drafted"), on the drafted eight fields with the
+   default limits, timebox, 4 workers and 45-minute cap. **H2 decision** (owner, in chat, 2026-10-30, "Five shapes,
+   disclosed"): after the 2026-10-30 forge-scientific-review (CHANGES REQUIRED; H1, M1-M3, L1-L3 fixed) found that the
+   grammar is five declared shapes (power, sum, exp, sum_exp, regime), a strict subset of the operator/limit closure in
+   field 2, the pilot runs with those five shapes; the report must state the narrowing and the representation-circularity
+   risk (three shapes overlap the Blindfold generator's families) and judge expressibility against the structures
+   actually enumerated.
+8. **What remains prohibited:** changing Gen1 Mind code, thresholds or answer mapping; grammar rivals inside the Mind's
+   competition (Stage 2b); a Search Tree, Attempt Memory, Model Critic or causal reasoning; AI/LLM proposals; tuning the
+   grammar, limits, prior or gate on EXC-2, EXC-3 or this pilot's results; reusing the EXC-2/EXC-3 roots; changing the
+   credit table or pinned files; any preregistration, formal campaign, A2 closure, lift, novelty or superiority claim;
+   widening this scope.
+
+### EXC-3 -- experiment selection under a scarce budget (Genesis-lite v0.3 development pilot) (CLOSED 2026-10-29 by the owner)
+
+1. **Exact scope:** a `budget_fraction` in `benchmarks/genesis_lite/harness_v3.py` and `pilot_v3.py` and their tests:
+   the harness copies the presented card with `query_budget = min(budget, max(d + 2, floor(f x budget)))` (d = number of
+   inputs) and wraps the arm's client so it refuses past that cap with the escrow's own budget-refusal text; the summary
+   reports queries used and each budget level apart, plus the two pre-declared contrasts; this section. Not touched:
+   the v0.2-pinned files, `escrow.py`, `escrow_v3.py`, the credit table, `src/engcore/mind/**`.
+2. **Allowed capability work:** the cap and parameter, red-first, with a forge-scientific-review; one development pilot
+   on fresh worlds (new root seed) at budget fractions 1.0 (control), 0.5 and 0.25 on the same worlds, all 20 arms,
+   4 workers, 45-minute cap. Pre-declared contrasts (paired, per level): `mind_full` vs `mind_no_adaptive_selection`,
+   and `bo_botorch_variance` vs `space_filling`. Descriptive only.
+3. **Reason:** the EXC-2 pilot could not detect any contribution from experiment selection: every arm spent its whole
+   budget and a space-filling design sufficed at 12-60 queries over 3-4 inputs. If smart selection has value, a scarce
+   budget is the first place it should show.
+4. **Start condition:** owner approval (below); this entry recorded before any code.
+5. **Exit condition:** a recorded pilot report with both contrasts at every budget level on the same worlds, plus a
+   scientific review; no inferential statistics (they would need a statistical review and their own decision).
+6. **Expiry / timebox:** 2026-11-19, even if unfinished.
+7. **Owner approval:** the owner, in chat, 2026-10-29 ("موافق على EXC-3 زي المسودة بالـ defaults المقترحة"), on the
+   drafted eight fields with defaults: fractions 1.0 / 0.5 / 0.25 with a d+2 floor, 45-minute cap, 4 workers, Mind 1.0.0
+   unchanged.
+8. **What remains prohibited:** changing Mind code, thresholds or the answer mapping; tuning on this or the EXC-2
+   pilot's results; changing the credit table or pinned files; AI/LLM proposals to the Mind; any preregistration,
+   formal campaign, A2 closure, lift or superiority claim; widening this scope. A reward for saved queries (a cost-aware
+   Mind stop rule) is NOT part of EXC-3 and needs its own decision.
+
+**Status 2026-10-29:** built `a9734570`, review fixes `1648ce7b`/`6f0bc58d` (CHANGES REQUIRED, then APPROVE WITH NOTES);
+pilot 7200/7200 VALID, report in `benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/`. Provenance MIXED: a
+fork session committed `56b33d42` and synced /opt mid-run (executed code inferred `6f0bc58d`; 3261 runs record the
+post-change identity). No adaptive design was ahead of a space-filling design at any budget level. **Closed** by the owner
+in chat, 2026-10-29 ("Accept with note"): the run is accepted with its written provenance correction (executed code
+inferred `6f0bc58d`; the recorded identity of 3261 runs and environment.json's git_head are post-change labels), and EXC-3
+is closed. Field 8's prohibitions outlive the closure. Still open: coordinating the fork session that writes to the same
+main and /opt.
+
+### EXC-2 -- Minimal Mind as a measurement arm in the Genesis-lite v0.3 development pilot (CLOSED 2026-10-29 by the owner)
+
+1. **Exact scope:** a new adapter `benchmarks/genesis_lite/mind_arm_v3.py` and its tests; registering its arms in
+   `benchmarks/genesis_lite/pilot_v3.py` and binding the Mind files into `harness_v3.development_identity`; this
+   section. `src/engcore/mind/**` is read-only: not one line may change.
+2. **Allowed capability work:** an adapter that poses a presented Blindfold card to the existing Minimal Mind
+   (`engcore.mind.minimal`, MIND_VERSION 1.0.0) as an `ExperimentalProblem`, observes through the escrow client, and
+   translates its conclusion by a mapping frozen in code before any run; four arms (full, no_adaptive_selection,
+   no_belief_update, no_falsifier); one development pilot (30-minute cap, 4 workers).
+3. **Reason:** measure, before any A2 investment, whether the Mind and its experiment selection add anything over the
+   strong development baselines (careful, BoTorch, PySR, PySINDy) on paired worlds; the owner asked for experiment
+   selection that is demonstrably smart.
+4. **Start condition:** owner approval (below); this entry recorded.
+5. **Exit condition:** a recorded pilot report plus a forge-scientific-review of the adapter; no A2, lift or maturity
+   claim.
+6. **Expiry / timebox:** 2026-11-12, even if unfinished.
+7. **Owner approval:** the owner, in chat, 2026-10-29 ("موافق على الاستثناء"), on the drafted eight fields.
+8. **What remains prohibited:** changing Mind code; tuning the Mind or the mapping on pilot results; AI/LLM proposals to
+   the Mind; any preregistration, formal campaign, A2 closure, lift or superiority claim; widening this scope.
+   A1 PASS has not happened, so any result is DEVELOPMENT_ONLY and not A2 evidence.
+
+**Status 2026-10-29:** adapter `896efd72`, review fixes `7a75e916` and `992deeba` (the `proposer_kind` parameter of
+`harness_v3.run_one_v3` is a review fix slightly beyond field 1, recorded in PROGRESS); re-review APPROVE WITH NOTES (notes
+closed); pilot 2400/2400 VALID, report in `benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/`. The pilot
+showed no ablation worse than the full Mind. **Closed** by the owner in chat, 2026-10-29 ("Close EXC-2, analyze"), with a
+read-only analysis of why the ablations are not worse (no Mind code change). Field 8's prohibitions outlive the closure:
+any Mind change, re-run or new arm needs a new owner decision.
 
 ### EXC-1 -- adaptive mesh control, slice 1: adaptive resolution (Engineering Runtime V1 BR19)
 

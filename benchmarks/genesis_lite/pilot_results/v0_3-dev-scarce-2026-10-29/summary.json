@@ -1,0 +1,5094 @@
+{
+ "arms": {
+  "always_insufficient": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.5,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 1.0,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 1.5,
+    "paired_mean_total_excluding_mind_refused": 1.5,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "floor: blanket refusal (existing)",
+   "formal_cost_estimate_seconds": 49.1,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 0.0,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.126,
+   "wall_seconds_mean_all": 0.0204,
+   "wall_seconds_mean_clean": 0.0204,
+   "wall_seconds_total": 7.358,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "always_law": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -1.0,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": -0.2611,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": -0.8361,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": -1.0,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": -1.0,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": -0.95,
+      "n": 360
+     }
+    },
+    "paired_mean_total": -5.0472,
+    "paired_mean_total_excluding_mind_refused": -5.0472,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "floor: always proposes (existing)",
+   "formal_cost_estimate_seconds": 159.3,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.172,
+   "wall_seconds_mean_all": 0.0664,
+   "wall_seconds_mean_clean": 0.0664,
+   "wall_seconds_total": 23.898,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "always_refuse": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 1.0,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 1.0,
+    "paired_mean_total_excluding_mind_refused": 1.0,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "floor: never proposes (existing)",
+   "formal_cost_estimate_seconds": 48.4,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 0.0,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.13,
+   "wall_seconds_mean_all": 0.0202,
+   "wall_seconds_mean_clean": 0.0202,
+   "wall_seconds_total": 7.264,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "bo_botorch_variance": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.05,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1167,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4736,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.8833,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.65,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0833,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.1569,
+    "paired_mean_total_excluding_mind_refused": 2.1569,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "experiment selection: BoTorch GP posterior-sd design",
+   "formal_cost_estimate_seconds": 19513.0,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 42.159,
+   "wall_seconds_mean_all": 8.1304,
+   "wall_seconds_mean_clean": 8.1304,
+   "wall_seconds_total": 2926.943,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "careful": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.4222,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1278,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4986,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.9111,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.5694,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.1167,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.6458,
+    "paired_mean_total_excluding_mind_refused": 2.6458,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "experiment selection: random design + replicate/holdout (existing)",
+   "formal_cost_estimate_seconds": 151.0,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.161,
+   "wall_seconds_mean_all": 0.0629,
+   "wall_seconds_mean_clean": 0.0629,
+   "wall_seconds_total": 22.654,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "extrapolating_fit": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.2306,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1833,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.0625,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.8444,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6444,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0889,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 1.5931,
+    "paired_mean_total_excluding_mind_refused": 1.5931,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery that extrapolates outside the query box",
+   "formal_cost_estimate_seconds": 191.4,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.206,
+   "wall_seconds_mean_all": 0.0798,
+   "wall_seconds_mean_clean": 0.0798,
+   "wall_seconds_total": 28.715,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "extrapolation_pair": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.425,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.0347,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.2139,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.925,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.5417,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": -0.0056,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.1347,
+    "paired_mean_total_excluding_mind_refused": 2.1347,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "indistinguishable answer: fixed rival-pair heuristic",
+   "formal_cost_estimate_seconds": 155.9,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 32,
+   "valid": 360,
+   "wall_seconds_max": 0.184,
+   "wall_seconds_mean_all": 0.065,
+   "wall_seconds_mean_clean": 0.065,
+   "wall_seconds_total": 23.387,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "fit_all_gated": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.4722,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.2,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.0625,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.0694,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.5111,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": -0.1972,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 0.1736,
+    "paired_mean_total_excluding_mind_refused": 0.1736,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+   "formal_cost_estimate_seconds": 152.7,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.168,
+   "wall_seconds_mean_all": 0.0636,
+   "wall_seconds_mean_clean": 0.0636,
+   "wall_seconds_total": 22.905,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "greedy_forward": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.0472,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1028,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4597,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.8417,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6722,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0139,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.0431,
+    "paired_mean_total_excluding_mind_refused": 2.0431,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "variable-primitive selection: greedy forward",
+   "formal_cost_estimate_seconds": 171.8,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.192,
+   "wall_seconds_mean_all": 0.0716,
+   "wall_seconds_mean_clean": 0.0716,
+   "wall_seconds_total": 25.768,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "historical_answer": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.25,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": -0.25,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.125,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.5,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": -0.25,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": -0.25,
+      "n": 360
+     }
+    },
+    "paired_mean_total": -0.375,
+    "paired_mean_total_excluding_mind_refused": -0.375,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "adversarial: textbook answer for familiar vocabulary",
+   "formal_cost_estimate_seconds": 74.0,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 29.86,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.127,
+   "wall_seconds_mean_all": 0.0308,
+   "wall_seconds_mean_clean": 0.0308,
+   "wall_seconds_total": 11.105,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "mind_full": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.5222,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1444,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4764,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.9417,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6417,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.1556,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.8819,
+    "paired_mean_total_excluding_mind_refused": 2.8819,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "Minimal Mind 1.0.0: adaptive selection, belief update, falsifier",
+   "formal_cost_estimate_seconds": 3764.9,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 6.406,
+   "wall_seconds_mean_all": 1.5687,
+   "wall_seconds_mean_clean": 1.5687,
+   "wall_seconds_total": 564.73,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "mind_no_adaptive_selection": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.6028,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1667,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4736,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.9417,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6167,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.1639,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.9653,
+    "paired_mean_total_excluding_mind_refused": 2.9653,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "Mind ablation: fixed space-filling design after the shared initial design (no adaptive selection, no falsifier-targeted experiments, no early stop on a decided leader)",
+   "formal_cost_estimate_seconds": 3349.2,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 5.607,
+   "wall_seconds_mean_all": 1.3955,
+   "wall_seconds_mean_clean": 1.3955,
+   "wall_seconds_total": 502.373,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "mind_no_belief_update": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.525,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1417,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4819,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.9389,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6722,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.15,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.9097,
+    "paired_mean_total_excluding_mind_refused": 2.9097,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "Mind ablation: prior weights in experiment selection only (the conclusion still uses the posterior)",
+   "formal_cost_estimate_seconds": 3699.7,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 6.305,
+   "wall_seconds_mean_all": 1.5416,
+   "wall_seconds_mean_clean": 1.5416,
+   "wall_seconds_total": 554.96,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "mind_no_falsifier": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.5444,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1444,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4819,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.9417,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6417,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.1611,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.9153,
+    "paired_mean_total_excluding_mind_refused": 2.9153,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "Mind ablation: no falsifier",
+   "formal_cost_estimate_seconds": 3272.2,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 5.127,
+   "wall_seconds_mean_all": 1.3634,
+   "wall_seconds_mean_clean": 1.3634,
+   "wall_seconds_total": 490.833,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "monomial_enumeration": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.0722,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1194,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4722,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.8722,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6444,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0556,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.0917,
+    "paired_mean_total_excluding_mind_refused": 2.0917,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: enumeration of the frozen v0 monomial family",
+   "formal_cost_estimate_seconds": 190.7,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.2,
+   "wall_seconds_mean_all": 0.0795,
+   "wall_seconds_mean_clean": 0.0795,
+   "wall_seconds_total": 28.611,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "pysindy_stlsq": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.1306,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1139,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4917,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.9194,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.5194,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": -0.0639,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 1.85,
+    "paired_mean_total_excluding_mind_refused": 1.85,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "sparse identification: PySINDy STLSQ over the log-monomial library",
+   "formal_cost_estimate_seconds": 177.2,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.748,
+   "wall_seconds_mean_all": 0.0738,
+   "wall_seconds_mean_clean": 0.0738,
+   "wall_seconds_total": 26.583,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "pysr_symbolic": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.05,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4569,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.7111,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.4444,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0056,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 1.5681,
+    "paired_mean_total_excluding_mind_refused": 1.5681,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: PySR symbolic regression (development configuration)",
+   "formal_cost_estimate_seconds": 9072.0,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 13.474,
+   "wall_seconds_mean_all": 3.78,
+   "wall_seconds_mean_clean": 3.78,
+   "wall_seconds_total": 1360.795,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "random_structures": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": -0.0306,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.0889,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4667,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.8556,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.6278,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0389,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.0472,
+    "paired_mean_total_excluding_mind_refused": 2.0472,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "law recovery: constrained random structures (v0 family)",
+   "formal_cost_estimate_seconds": 191.5,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.214,
+   "wall_seconds_mean_all": 0.0798,
+   "wall_seconds_mean_clean": 0.0798,
+   "wall_seconds_total": 28.728,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "single_setting": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 1.0,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4542,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.8778,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.0,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.0,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.3319,
+    "paired_mean_total_excluding_mind_refused": 2.3319,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "non-discoverer control (existing)",
+   "formal_cost_estimate_seconds": 149.5,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.212,
+   "wall_seconds_mean_all": 0.0623,
+   "wall_seconds_mean_clean": 0.0623,
+   "wall_seconds_total": 22.428,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  },
+  "space_filling": {
+   "adapter_or_refusal_failure_universes": 0,
+   "cost_basis_runs": 360,
+   "descriptive_credit": {
+    "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+    "paired_mean_per_kind": {
+     "confounded": {
+      "mean": 0.4389,
+      "n": 360
+     },
+     "discoverable": {
+      "mean": 0.1306,
+      "n": 360
+     },
+     "indistinguishable": {
+      "mean": 0.4931,
+      "n": 360
+     },
+     "insufficient_evidence": {
+      "mean": 0.9333,
+      "n": 360
+     },
+     "no_solution": {
+      "mean": 0.5611,
+      "n": 360
+     },
+     "spurious_correlate": {
+      "mean": 0.1167,
+      "n": 360
+     }
+    },
+    "paired_mean_total": 2.6736,
+    "paired_mean_total_excluding_mind_refused": 2.6736,
+    "paired_world_sets": 360
+   },
+   "design_fallback_universes": 0,
+   "evaluator_disagreement_invalid": 0,
+   "family": "experiment selection: space-filling design",
+   "formal_cost_estimate_seconds": 151.4,
+   "inadmissible_universes": 0,
+   "interrupted": 0,
+   "invalid": 0,
+   "invalid_reasons_top": {},
+   "library_failure_universes": 0,
+   "mind_refused_universes": 0,
+   "not_run": 0,
+   "observe_calls_mean": 121.56,
+   "runs": 360,
+   "status": "AVAILABLE",
+   "unresolved_universes": 0,
+   "valid": 360,
+   "wall_seconds_max": 0.173,
+   "wall_seconds_mean_all": 0.0631,
+   "wall_seconds_mean_clean": 0.0631,
+   "wall_seconds_total": 22.703,
+   "worker_failures": 0,
+   "worker_rss_high_water_kib": 1254636
+  }
+ },
+ "arms_label": "every budget level pooled; compare levels only through budget_levels",
+ "benchmark_id": "genesis_lite.blindfold_l5.v0_3",
+ "budget_levels": {
+  "0.25": {
+   "arms": {
+    "always_insufficient": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.5,
+      "paired_mean_total_excluding_mind_refused": 1.5,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: blanket refusal (existing)",
+     "formal_cost_estimate_seconds": 47.8,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 0.0,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.046,
+     "wall_seconds_mean_all": 0.0199,
+     "wall_seconds_mean_clean": 0.0199,
+     "wall_seconds_total": 2.388,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "always_law": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": -0.4667,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": -0.9,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.9833,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -5.35,
+      "paired_mean_total_excluding_mind_refused": -5.35,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: always proposes (existing)",
+     "formal_cost_estimate_seconds": 107.9,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.137,
+     "wall_seconds_mean_all": 0.0449,
+     "wall_seconds_mean_clean": 0.0449,
+     "wall_seconds_total": 5.393,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "always_refuse": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.0,
+      "paired_mean_total_excluding_mind_refused": 1.0,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: never proposes (existing)",
+     "formal_cost_estimate_seconds": 47.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 0.0,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.039,
+     "wall_seconds_mean_all": 0.0197,
+     "wall_seconds_mean_clean": 0.0197,
+     "wall_seconds_total": 2.363,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "bo_botorch_variance": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.025,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.075,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8667,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.3167,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0167,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.7417,
+      "paired_mean_total_excluding_mind_refused": 1.7417,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: BoTorch GP posterior-sd design",
+     "formal_cost_estimate_seconds": 1598.1,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 1.768,
+     "wall_seconds_mean_all": 0.6659,
+     "wall_seconds_mean_clean": 0.6659,
+     "wall_seconds_total": 79.905,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "careful": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.2667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0667,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4958,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9333,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.3,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0417,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.1042,
+      "paired_mean_total_excluding_mind_refused": 2.1042,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: random design + replicate/holdout (existing)",
+     "formal_cost_estimate_seconds": 95.7,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.064,
+     "wall_seconds_mean_all": 0.0399,
+     "wall_seconds_mean_clean": 0.0399,
+     "wall_seconds_total": 4.786,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "extrapolating_fit": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.0583,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.05,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.2208,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8917,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.2917,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.4042,
+      "paired_mean_total_excluding_mind_refused": 1.4042,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery that extrapolates outside the query box",
+     "formal_cost_estimate_seconds": 117.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.085,
+     "wall_seconds_mean_all": 0.0488,
+     "wall_seconds_mean_clean": 0.0488,
+     "wall_seconds_total": 5.859,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "extrapolation_pair": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.25,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0083,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.2542,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.925,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.2833,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.0167,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.7042,
+      "paired_mean_total_excluding_mind_refused": 1.7042,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "indistinguishable answer: fixed rival-pair heuristic",
+     "formal_cost_estimate_seconds": 98.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 4,
+     "valid": 120,
+     "wall_seconds_max": 0.069,
+     "wall_seconds_mean_all": 0.0409,
+     "wall_seconds_mean_clean": 0.0409,
+     "wall_seconds_total": 4.91,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "fit_all_gated": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.2667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.2375,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.55,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.3083,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.0583,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 0.8708,
+      "paired_mean_total_excluding_mind_refused": 0.8708,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+     "formal_cost_estimate_seconds": 97.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.065,
+     "wall_seconds_mean_all": 0.0405,
+     "wall_seconds_mean_clean": 0.0405,
+     "wall_seconds_total": 4.861,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "greedy_forward": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0333,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.025,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4667,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.3417,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.0083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.7583,
+      "paired_mean_total_excluding_mind_refused": 1.7583,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "variable-primitive selection: greedy forward",
+     "formal_cost_estimate_seconds": 107.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.074,
+     "wall_seconds_mean_all": 0.0447,
+     "wall_seconds_mean_clean": 0.0447,
+     "wall_seconds_total": 5.36,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "historical_answer": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.125,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.25,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -0.375,
+      "paired_mean_total_excluding_mind_refused": -0.375,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "adversarial: textbook answer for familiar vocabulary",
+     "formal_cost_estimate_seconds": 59.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 13.77,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.059,
+     "wall_seconds_mean_all": 0.0247,
+     "wall_seconds_mean_clean": 0.0247,
+     "wall_seconds_total": 2.959,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_full": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.3167,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0917,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4542,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.55,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.4208,
+      "paired_mean_total_excluding_mind_refused": 2.4208,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Minimal Mind 1.0.0: adaptive selection, belief update, falsifier",
+     "formal_cost_estimate_seconds": 1175.5,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 1.085,
+     "wall_seconds_mean_all": 0.4898,
+     "wall_seconds_mean_clean": 0.4898,
+     "wall_seconds_total": 58.774,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_adaptive_selection": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.3583,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0917,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4583,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8917,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.4,
+      "paired_mean_total_excluding_mind_refused": 2.4,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: fixed space-filling design after the shared initial design (no adaptive selection, no falsifier-targeted experiments, no early stop on a decided leader)",
+     "formal_cost_estimate_seconds": 1045.4,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 1.004,
+     "wall_seconds_mean_all": 0.4356,
+     "wall_seconds_mean_clean": 0.4356,
+     "wall_seconds_total": 52.268,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_belief_update": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.3167,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4583,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8917,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.4667,
+      "paired_mean_total_excluding_mind_refused": 2.4667,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: prior weights in experiment selection only (the conclusion still uses the posterior)",
+     "formal_cost_estimate_seconds": 1166.9,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 1.029,
+     "wall_seconds_mean_all": 0.4862,
+     "wall_seconds_mean_clean": 0.4862,
+     "wall_seconds_total": 58.344,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_falsifier": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.3333,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0917,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4583,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.55,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.4417,
+      "paired_mean_total_excluding_mind_refused": 2.4417,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: no falsifier",
+     "formal_cost_estimate_seconds": 1118.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 1.036,
+     "wall_seconds_mean_all": 0.4659,
+     "wall_seconds_mean_clean": 0.4659,
+     "wall_seconds_total": 55.908,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "monomial_enumeration": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0167,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.075,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.3167,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.8167,
+      "paired_mean_total_excluding_mind_refused": 1.8167,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: enumeration of the frozen v0 monomial family",
+     "formal_cost_estimate_seconds": 116.7,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.093,
+     "wall_seconds_mean_all": 0.0486,
+     "wall_seconds_mean_clean": 0.0486,
+     "wall_seconds_total": 5.835,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "pysindy_stlsq": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.0667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0667,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9083,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.2833,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.025,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.6583,
+      "paired_mean_total_excluding_mind_refused": 1.6583,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "sparse identification: PySINDy STLSQ over the log-monomial library",
+     "formal_cost_estimate_seconds": 115.1,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.627,
+     "wall_seconds_mean_all": 0.0479,
+     "wall_seconds_mean_clean": 0.0479,
+     "wall_seconds_total": 5.753,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "pysr_symbolic": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": -0.0083,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4792,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8083,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.2167,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.4958,
+      "paired_mean_total_excluding_mind_refused": 1.4958,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: PySR symbolic regression (development configuration)",
+     "formal_cost_estimate_seconds": 5241.7,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 10.708,
+     "wall_seconds_mean_all": 2.184,
+     "wall_seconds_mean_clean": 2.184,
+     "wall_seconds_total": 262.084,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "random_structures": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.025,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9333,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.3167,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.0083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.7667,
+      "paired_mean_total_excluding_mind_refused": 1.7667,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: constrained random structures (v0 family)",
+     "formal_cost_estimate_seconds": 115.9,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.093,
+     "wall_seconds_mean_all": 0.0483,
+     "wall_seconds_mean_clean": 0.0483,
+     "wall_seconds_total": 5.794,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "single_setting": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.425,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.225,
+      "paired_mean_total_excluding_mind_refused": 2.225,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "non-discoverer control (existing)",
+     "formal_cost_estimate_seconds": 99.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.082,
+     "wall_seconds_mean_all": 0.0413,
+     "wall_seconds_mean_clean": 0.0413,
+     "wall_seconds_total": 4.958,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "space_filling": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.275,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0833,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.975,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.2833,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0417,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.15,
+      "paired_mean_total_excluding_mind_refused": 2.15,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: space-filling design",
+     "formal_cost_estimate_seconds": 96.6,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 55.47,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.07,
+     "wall_seconds_mean_all": 0.0402,
+     "wall_seconds_mean_clean": 0.0402,
+     "wall_seconds_total": 4.828,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    }
+   },
+   "contrasts": [
+    {
+     "a": "mind_full",
+     "a_better": 22,
+     "b": "mind_no_adaptive_selection",
+     "b_better": 20,
+     "common_mean_difference": 0.0208,
+     "common_world_sets": 120,
+     "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; pre-declared EXC-3 contrast: a minus b",
+     "mean_difference": 0.0208,
+     "note": "design only: the same Mind analysis; the arms differ only after the shared initial design, so a universe with no selection query left measures nothing but noise",
+     "observe_calls_mean_a": 55.47,
+     "observe_calls_mean_b": 55.47,
+     "paired_world_sets": 120,
+     "per_universe": {
+      "all": {
+       "a_better": 24,
+       "b_better": 22,
+       "mean_difference": 0.0035,
+       "n": 720,
+       "ties": 674
+      },
+      "by_query_budget": {
+       "12": {
+        "a_better": 0,
+        "b_better": 0,
+        "mean_difference": 0.0,
+        "n": 229,
+        "ties": 229
+       },
+       "30": {
+        "a_better": 7,
+        "b_better": 4,
+        "mean_difference": 0.012,
+        "n": 249,
+        "ties": 238
+       },
+       "60": {
+        "a_better": 17,
+        "b_better": 18,
+        "mean_difference": -0.0021,
+        "n": 242,
+        "ties": 207
+       }
+      },
+      "opportunity_field": "mind_selection_queries",
+      "unknown_opportunity": 0,
+      "with_selection_opportunity": {
+       "a_better": 24,
+       "b_better": 22,
+       "mean_difference": 0.0075,
+       "n": 333,
+       "ties": 287
+      },
+      "without_selection_opportunity": {
+       "a_better": 0,
+       "b_better": 0,
+       "mean_difference": 0.0,
+       "n": 387,
+       "ties": 387
+      }
+     },
+     "ties": 78
+    },
+    {
+     "a": "bo_botorch_variance",
+     "a_better": 6,
+     "b": "space_filling",
+     "b_better": 45,
+     "common_mean_difference": -0.4083,
+     "common_world_sets": 120,
+     "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; pre-declared EXC-3 contrast: a minus b",
+     "mean_difference": -0.4083,
+     "note": "design and analysis confounded: BoTorch also searches input subsets and the covariate (_select_and_gate) where space_filling gates the settable inputs (_gate), and their Latin-hypercube seeds differ",
+     "observe_calls_mean_a": 55.47,
+     "observe_calls_mean_b": 55.47,
+     "paired_world_sets": 120,
+     "per_universe": {
+      "all": {
+       "a_better": 10,
+       "b_better": 54,
+       "mean_difference": -0.0681,
+       "n": 720,
+       "ties": 656
+      },
+      "by_query_budget": {
+       "12": {
+        "a_better": 0,
+        "b_better": 0,
+        "mean_difference": 0.0,
+        "n": 229,
+        "ties": 229
+       },
+       "30": {
+        "a_better": 0,
+        "b_better": 0,
+        "mean_difference": 0.0,
+        "n": 249,
+        "ties": 249
+       },
+       "60": {
+        "a_better": 10,
+        "b_better": 54,
+        "mean_difference": -0.2025,
+        "n": 242,
+        "ties": 178
+       }
+      },
+      "opportunity_field": "bo_selection_queries",
+      "unknown_opportunity": 0,
+      "with_selection_opportunity": {
+       "a_better": 10,
+       "b_better": 54,
+       "mean_difference": -0.2025,
+       "n": 242,
+       "ties": 178
+      },
+      "without_selection_opportunity": {
+       "a_better": 0,
+       "b_better": 0,
+       "mean_difference": 0.0,
+       "n": 478,
+       "ties": 478
+      }
+     },
+     "ties": 69
+    }
+   ],
+   "paired_world_sets_complete": 120,
+   "realised_fraction_mean": 0.3132
+  },
+  "0.5": {
+   "arms": {
+    "always_insufficient": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.5,
+      "paired_mean_total_excluding_mind_refused": 1.5,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: blanket refusal (existing)",
+     "formal_cost_estimate_seconds": 50.1,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 0.0,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.126,
+     "wall_seconds_mean_all": 0.0209,
+     "wall_seconds_mean_clean": 0.0209,
+     "wall_seconds_total": 2.503,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "always_law": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": -0.2667,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": -0.8167,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.95,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -5.0333,
+      "paired_mean_total_excluding_mind_refused": -5.0333,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: always proposes (existing)",
+     "formal_cost_estimate_seconds": 141.0,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.09,
+     "wall_seconds_mean_all": 0.0588,
+     "wall_seconds_mean_clean": 0.0588,
+     "wall_seconds_total": 7.052,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "always_refuse": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.0,
+      "paired_mean_total_excluding_mind_refused": 1.0,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: never proposes (existing)",
+     "formal_cost_estimate_seconds": 50.0,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 0.0,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.13,
+     "wall_seconds_mean_all": 0.0208,
+     "wall_seconds_mean_clean": 0.0208,
+     "wall_seconds_total": 2.499,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "bo_botorch_variance": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.075,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1333,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4833,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9167,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6417,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.2083,
+      "paired_mean_total_excluding_mind_refused": 2.2083,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: BoTorch GP posterior-sd design",
+     "formal_cost_estimate_seconds": 13013.0,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 13.932,
+     "wall_seconds_mean_all": 5.4221,
+     "wall_seconds_mean_clean": 5.4221,
+     "wall_seconds_total": 650.648,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "careful": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.45,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1417,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6083,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1333,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.7333,
+      "paired_mean_total_excluding_mind_refused": 2.7333,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: random design + replicate/holdout (existing)",
+     "formal_cost_estimate_seconds": 134.8,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.111,
+     "wall_seconds_mean_all": 0.0562,
+     "wall_seconds_mean_clean": 0.0562,
+     "wall_seconds_total": 6.741,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "extrapolating_fit": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.2917,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.2333,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.0333,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8417,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.675,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.5917,
+      "paired_mean_total_excluding_mind_refused": 1.5917,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery that extrapolates outside the query box",
+     "formal_cost_estimate_seconds": 176.1,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.132,
+     "wall_seconds_mean_all": 0.0734,
+     "wall_seconds_mean_clean": 0.0734,
+     "wall_seconds_total": 8.805,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "extrapolation_pair": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.475,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.05,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.225,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.95,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.55,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.0042,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.2458,
+      "paired_mean_total_excluding_mind_refused": 2.2458,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "indistinguishable answer: fixed rival-pair heuristic",
+     "formal_cost_estimate_seconds": 141.7,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 15,
+     "valid": 120,
+     "wall_seconds_max": 0.099,
+     "wall_seconds_mean_all": 0.059,
+     "wall_seconds_mean_clean": 0.059,
+     "wall_seconds_total": 7.084,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "fit_all_gated": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.5583,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.225,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": -0.0458,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": -0.1333,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.5667,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.225,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -0.1708,
+      "paired_mean_total_excluding_mind_refused": -0.1708,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+     "formal_cost_estimate_seconds": 137.8,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.093,
+     "wall_seconds_mean_all": 0.0574,
+     "wall_seconds_mean_clean": 0.0574,
+     "wall_seconds_total": 6.891,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "greedy_forward": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.0417,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1417,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.475,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8917,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6833,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0167,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.1667,
+      "paired_mean_total_excluding_mind_refused": 2.1667,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "variable-primitive selection: greedy forward",
+     "formal_cost_estimate_seconds": 157.6,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.171,
+     "wall_seconds_mean_all": 0.0657,
+     "wall_seconds_mean_clean": 0.0657,
+     "wall_seconds_total": 7.882,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "historical_answer": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.125,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.25,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -0.375,
+      "paired_mean_total_excluding_mind_refused": -0.375,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "adversarial: textbook answer for familiar vocabulary",
+     "formal_cost_estimate_seconds": 70.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 25.27,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.095,
+     "wall_seconds_mean_all": 0.0292,
+     "wall_seconds_mean_clean": 0.0292,
+     "wall_seconds_total": 3.508,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_full": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.4833,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1417,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4833,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.95,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6417,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.15,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.85,
+      "paired_mean_total_excluding_mind_refused": 2.85,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Minimal Mind 1.0.0: adaptive selection, belief update, falsifier",
+     "formal_cost_estimate_seconds": 2959.8,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 2.513,
+     "wall_seconds_mean_all": 1.2333,
+     "wall_seconds_mean_clean": 1.2333,
+     "wall_seconds_total": 147.992,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_adaptive_selection": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.5833,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1833,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9417,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6417,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1583,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 3.0,
+      "paired_mean_total_excluding_mind_refused": 3.0,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: fixed space-filling design after the shared initial design (no adaptive selection, no falsifier-targeted experiments, no early stop on a decided leader)",
+     "formal_cost_estimate_seconds": 2616.9,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 2.508,
+     "wall_seconds_mean_all": 1.0904,
+     "wall_seconds_mean_clean": 1.0904,
+     "wall_seconds_total": 130.843,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_belief_update": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.15,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4958,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.95,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.7083,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1333,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.9292,
+      "paired_mean_total_excluding_mind_refused": 2.9292,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: prior weights in experiment selection only (the conclusion still uses the posterior)",
+     "formal_cost_estimate_seconds": 2924.1,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 2.687,
+     "wall_seconds_mean_all": 1.2184,
+     "wall_seconds_mean_clean": 1.2184,
+     "wall_seconds_total": 146.203,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_falsifier": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.5083,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1583,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4875,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.95,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6417,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1583,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.9042,
+      "paired_mean_total_excluding_mind_refused": 2.9042,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: no falsifier",
+     "formal_cost_estimate_seconds": 2644.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 2.325,
+     "wall_seconds_mean_all": 1.1018,
+     "wall_seconds_mean_clean": 1.1018,
+     "wall_seconds_total": 132.216,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "monomial_enumeration": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.1167,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.15,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8917,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6417,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0583,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.1167,
+      "paired_mean_total_excluding_mind_refused": 2.1167,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: enumeration of the frozen v0 monomial family",
+     "formal_cost_estimate_seconds": 176.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.139,
+     "wall_seconds_mean_all": 0.0734,
+     "wall_seconds_mean_clean": 0.0734,
+     "wall_seconds_total": 8.812,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "pysindy_stlsq": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.1583,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.125,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8833,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.5917,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.0667,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.8667,
+      "paired_mean_total_excluding_mind_refused": 1.8667,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "sparse identification: PySINDy STLSQ over the log-monomial library",
+     "formal_cost_estimate_seconds": 153.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.169,
+     "wall_seconds_mean_all": 0.0639,
+     "wall_seconds_mean_clean": 0.0639,
+     "wall_seconds_total": 7.666,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "pysr_symbolic": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.0667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0083,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4333,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.6333,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.5167,
+      "paired_mean_total_excluding_mind_refused": 1.5167,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: PySR symbolic regression (development configuration)",
+     "formal_cost_estimate_seconds": 10767.8,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 12.796,
+     "wall_seconds_mean_all": 4.4866,
+     "wall_seconds_mean_clean": 4.4866,
+     "wall_seconds_total": 538.391,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "random_structures": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.05,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1167,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4792,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8667,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6333,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.1458,
+      "paired_mean_total_excluding_mind_refused": 2.1458,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: constrained random structures (v0 family)",
+     "formal_cost_estimate_seconds": 175.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.132,
+     "wall_seconds_mean_all": 0.0731,
+     "wall_seconds_mean_clean": 0.0731,
+     "wall_seconds_total": 8.766,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "single_setting": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4458,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8667,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.3125,
+      "paired_mean_total_excluding_mind_refused": 2.3125,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "non-discoverer control (existing)",
+     "formal_cost_estimate_seconds": 130.7,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.101,
+     "wall_seconds_mean_all": 0.0545,
+     "wall_seconds_mean_clean": 0.0545,
+     "wall_seconds_total": 6.536,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "space_filling": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1417,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6083,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1417,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.775,
+      "paired_mean_total_excluding_mind_refused": 2.775,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: space-filling design",
+     "formal_cost_estimate_seconds": 137.1,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 103.08,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.094,
+     "wall_seconds_mean_all": 0.0571,
+     "wall_seconds_mean_clean": 0.0571,
+     "wall_seconds_total": 6.857,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    }
+   },
+   "contrasts": [
+    {
+     "a": "mind_full",
+     "a_better": 18,
+     "b": "mind_no_adaptive_selection",
+     "b_better": 35,
+     "common_mean_difference": -0.15,
+     "common_world_sets": 120,
+     "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; pre-declared EXC-3 contrast: a minus b",
+     "mean_difference": -0.15,
+     "note": "design only: the same Mind analysis; the arms differ only after the shared initial design, so a universe with no selection query left measures nothing but noise",
+     "observe_calls_mean_a": 103.08,
+     "observe_calls_mean_b": 103.08,
+     "paired_world_sets": 120,
+     "per_universe": {
+      "all": {
+       "a_better": 22,
+       "b_better": 39,
+       "mean_difference": -0.025,
+       "n": 720,
+       "ties": 659
+      },
+      "by_query_budget": {
+       "12": {
+        "a_better": 0,
+        "b_better": 0,
+        "mean_difference": 0.0,
+        "n": 229,
+        "ties": 229
+       },
+       "30": {
+        "a_better": 15,
+        "b_better": 17,
+        "mean_difference": -0.008,
+        "n": 249,
+        "ties": 217
+       },
+       "60": {
+        "a_better": 7,
+        "b_better": 22,
+        "mean_difference": -0.0661,
+        "n": 242,
+        "ties": 213
+       }
+      },
+      "opportunity_field": "mind_selection_queries",
+      "unknown_opportunity": 0,
+      "with_selection_opportunity": {
+       "a_better": 22,
+       "b_better": 39,
+       "mean_difference": -0.0367,
+       "n": 491,
+       "ties": 430
+      },
+      "without_selection_opportunity": {
+       "a_better": 0,
+       "b_better": 0,
+       "mean_difference": 0.0,
+       "n": 229,
+       "ties": 229
+      }
+     },
+     "ties": 67
+    },
+    {
+     "a": "bo_botorch_variance",
+     "a_better": 13,
+     "b": "space_filling",
+     "b_better": 58,
+     "common_mean_difference": -0.5667,
+     "common_world_sets": 120,
+     "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; pre-declared EXC-3 contrast: a minus b",
+     "mean_difference": -0.5667,
+     "note": "design and analysis confounded: BoTorch also searches input subsets and the covariate (_select_and_gate) where space_filling gates the settable inputs (_gate), and their Latin-hypercube seeds differ",
+     "observe_calls_mean_a": 103.08,
+     "observe_calls_mean_b": 103.08,
+     "paired_world_sets": 120,
+     "per_universe": {
+      "all": {
+       "a_better": 25,
+       "b_better": 80,
+       "mean_difference": -0.0944,
+       "n": 720,
+       "ties": 615
+      },
+      "by_query_budget": {
+       "12": {
+        "a_better": 0,
+        "b_better": 0,
+        "mean_difference": 0.0,
+        "n": 229,
+        "ties": 229
+       },
+       "30": {
+        "a_better": 22,
+        "b_better": 34,
+        "mean_difference": -0.0643,
+        "n": 249,
+        "ties": 193
+       },
+       "60": {
+        "a_better": 3,
+        "b_better": 46,
+        "mean_difference": -0.2149,
+        "n": 242,
+        "ties": 193
+       }
+      },
+      "opportunity_field": "bo_selection_queries",
+      "unknown_opportunity": 0,
+      "with_selection_opportunity": {
+       "a_better": 25,
+       "b_better": 80,
+       "mean_difference": -0.1385,
+       "n": 491,
+       "ties": 386
+      },
+      "without_selection_opportunity": {
+       "a_better": 0,
+       "b_better": 0,
+       "mean_difference": 0.0,
+       "n": 229,
+       "ties": 229
+      }
+     },
+     "ties": 49
+    }
+   ],
+   "paired_world_sets_complete": 120,
+   "realised_fraction_mean": 0.5
+  },
+  "1.0": {
+   "arms": {
+    "always_insufficient": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.5,
+      "paired_mean_total_excluding_mind_refused": 1.5,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: blanket refusal (existing)",
+     "formal_cost_estimate_seconds": 49.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 0.0,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.033,
+     "wall_seconds_mean_all": 0.0206,
+     "wall_seconds_mean_clean": 0.0206,
+     "wall_seconds_total": 2.467,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "always_law": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": -0.05,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": -0.7917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": -1.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.9167,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -4.7583,
+      "paired_mean_total_excluding_mind_refused": -4.7583,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: always proposes (existing)",
+     "formal_cost_estimate_seconds": 229.0,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.172,
+     "wall_seconds_mean_all": 0.0954,
+     "wall_seconds_mean_clean": 0.0954,
+     "wall_seconds_total": 11.452,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "always_refuse": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.0,
+      "paired_mean_total_excluding_mind_refused": 1.0,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "floor: never proposes (existing)",
+     "formal_cost_estimate_seconds": 48.0,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 0.0,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.046,
+     "wall_seconds_mean_all": 0.02,
+     "wall_seconds_mean_clean": 0.02,
+     "wall_seconds_total": 2.402,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "bo_botorch_variance": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.05,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1417,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4458,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8667,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.9917,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.125,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.5208,
+      "paired_mean_total_excluding_mind_refused": 2.5208,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: BoTorch GP posterior-sd design",
+     "formal_cost_estimate_seconds": 43927.8,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 42.159,
+     "wall_seconds_mean_all": 18.3032,
+     "wall_seconds_mean_clean": 18.3032,
+     "wall_seconds_total": 2196.389,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "careful": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.55,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.175,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.8,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.175,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 3.1,
+      "paired_mean_total_excluding_mind_refused": 3.1,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: random design + replicate/holdout (existing)",
+     "formal_cost_estimate_seconds": 222.5,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.161,
+     "wall_seconds_mean_all": 0.0927,
+     "wall_seconds_mean_clean": 0.0927,
+     "wall_seconds_total": 11.127,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "extrapolating_fit": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.3417,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.2667,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": -0.0667,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.8,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.9667,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1583,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.7833,
+      "paired_mean_total_excluding_mind_refused": 1.7833,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery that extrapolates outside the query box",
+     "formal_cost_estimate_seconds": 281.0,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.206,
+     "wall_seconds_mean_all": 0.1171,
+     "wall_seconds_mean_clean": 0.1171,
+     "wall_seconds_total": 14.051,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "extrapolation_pair": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.55,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0458,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.1625,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.7917,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0042,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.4542,
+      "paired_mean_total_excluding_mind_refused": 2.4542,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "indistinguishable answer: fixed rival-pair heuristic",
+     "formal_cost_estimate_seconds": 227.9,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 13,
+     "valid": 120,
+     "wall_seconds_max": 0.184,
+     "wall_seconds_mean_all": 0.0949,
+     "wall_seconds_mean_clean": 0.0949,
+     "wall_seconds_total": 11.393,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "fit_all_gated": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.5917,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.275,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": -0.0042,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": -0.2083,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6583,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.3083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -0.1792,
+      "paired_mean_total_excluding_mind_refused": -0.1792,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: all-variable fit behind the control checks (v0.1)",
+     "formal_cost_estimate_seconds": 223.1,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.168,
+     "wall_seconds_mean_all": 0.0929,
+     "wall_seconds_mean_clean": 0.0929,
+     "wall_seconds_total": 11.153,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "greedy_forward": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.1333,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1417,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4375,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.7333,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.9917,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0333,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.2042,
+      "paired_mean_total_excluding_mind_refused": 2.2042,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "variable-primitive selection: greedy forward",
+     "formal_cost_estimate_seconds": 250.5,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.192,
+     "wall_seconds_mean_all": 0.1044,
+     "wall_seconds_mean_clean": 0.1044,
+     "wall_seconds_total": 12.526,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "historical_answer": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.125,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": -0.25,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.25,
+        "n": 120
+       }
+      },
+      "paired_mean_total": -0.375,
+      "paired_mean_total_excluding_mind_refused": -0.375,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "adversarial: textbook answer for familiar vocabulary",
+     "formal_cost_estimate_seconds": 92.8,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 50.55,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.127,
+     "wall_seconds_mean_all": 0.0387,
+     "wall_seconds_mean_clean": 0.0387,
+     "wall_seconds_total": 4.639,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_full": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.7667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.2,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.975,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.7333,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.2083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 3.375,
+      "paired_mean_total_excluding_mind_refused": 3.375,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Minimal Mind 1.0.0: adaptive selection, belief update, falsifier",
+     "formal_cost_estimate_seconds": 7159.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 6.406,
+     "wall_seconds_mean_all": 2.983,
+     "wall_seconds_mean_clean": 2.983,
+     "wall_seconds_total": 357.964,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_adaptive_selection": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.8667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.225,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4708,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9917,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.7083,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.2333,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 3.4958,
+      "paired_mean_total_excluding_mind_refused": 3.4958,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: fixed space-filling design after the shared initial design (no adaptive selection, no falsifier-targeted experiments, no early stop on a decided leader)",
+     "formal_cost_estimate_seconds": 6385.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 5.607,
+     "wall_seconds_mean_all": 2.6605,
+     "wall_seconds_mean_clean": 2.6605,
+     "wall_seconds_total": 319.263,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_belief_update": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.7667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.175,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.975,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.7083,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.2167,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 3.3333,
+      "paired_mean_total_excluding_mind_refused": 3.3333,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: prior weights in experiment selection only (the conclusion still uses the posterior)",
+     "formal_cost_estimate_seconds": 7008.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 6.305,
+     "wall_seconds_mean_all": 2.9201,
+     "wall_seconds_mean_clean": 2.9201,
+     "wall_seconds_total": 350.413,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "mind_no_falsifier": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.7917,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1833,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.5,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.975,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.7333,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.2167,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 3.4,
+      "paired_mean_total_excluding_mind_refused": 3.4,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "Mind ablation: no falsifier",
+     "formal_cost_estimate_seconds": 6054.2,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 5.127,
+     "wall_seconds_mean_all": 2.5226,
+     "wall_seconds_mean_clean": 2.5226,
+     "wall_seconds_total": 302.709,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "monomial_enumeration": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.1167,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1333,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.425,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.825,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.975,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.3417,
+      "paired_mean_total_excluding_mind_refused": 2.3417,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: enumeration of the frozen v0 monomial family",
+     "formal_cost_estimate_seconds": 279.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.2,
+     "wall_seconds_mean_all": 0.1164,
+     "wall_seconds_mean_clean": 0.1164,
+     "wall_seconds_total": 13.964,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "pysindy_stlsq": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.1667,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.15,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9667,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6833,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": -0.1,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.025,
+      "paired_mean_total_excluding_mind_refused": 2.025,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "sparse identification: PySINDy STLSQ over the log-monomial library",
+     "formal_cost_estimate_seconds": 263.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.748,
+     "wall_seconds_mean_all": 0.1097,
+     "wall_seconds_mean_clean": 0.1097,
+     "wall_seconds_total": 13.164,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "pysr_symbolic": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.0833,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4583,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.6917,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.6167,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0083,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 1.6917,
+      "paired_mean_total_excluding_mind_refused": 1.6917,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: PySR symbolic regression (development configuration)",
+     "formal_cost_estimate_seconds": 11206.4,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 13.474,
+     "wall_seconds_mean_all": 4.6693,
+     "wall_seconds_mean_clean": 4.6693,
+     "wall_seconds_total": 560.32,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "random_structures": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": -0.0417,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.125,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4208,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.7667,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.9333,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.025,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.2292,
+      "paired_mean_total_excluding_mind_refused": 2.2292,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "law recovery: constrained random structures (v0 family)",
+     "formal_cost_estimate_seconds": 283.4,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.214,
+     "wall_seconds_mean_all": 0.1181,
+     "wall_seconds_mean_clean": 0.1181,
+     "wall_seconds_total": 14.168,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "single_setting": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 1.0,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4917,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.9667,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.0,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.0,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 2.4583,
+      "paired_mean_total_excluding_mind_refused": 2.4583,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "non-discoverer control (existing)",
+     "formal_cost_estimate_seconds": 218.7,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.212,
+     "wall_seconds_mean_all": 0.0911,
+     "wall_seconds_mean_clean": 0.0911,
+     "wall_seconds_total": 10.934,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    },
+    "space_filling": {
+     "adapter_or_refusal_failure_universes": 0,
+     "cost_basis_runs": 120,
+     "descriptive_credit": {
+      "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; paired world sets only (every runnable arm VALID there)",
+      "paired_mean_per_kind": {
+       "confounded": {
+        "mean": 0.55,
+        "n": 120
+       },
+       "discoverable": {
+        "mean": 0.1667,
+        "n": 120
+       },
+       "indistinguishable": {
+        "mean": 0.4958,
+        "n": 120
+       },
+       "insufficient_evidence": {
+        "mean": 0.925,
+        "n": 120
+       },
+       "no_solution": {
+        "mean": 0.7917,
+        "n": 120
+       },
+       "spurious_correlate": {
+        "mean": 0.1667,
+        "n": 120
+       }
+      },
+      "paired_mean_total": 3.0958,
+      "paired_mean_total_excluding_mind_refused": 3.0958,
+      "paired_world_sets": 120
+     },
+     "design_fallback_universes": 0,
+     "evaluator_disagreement_invalid": 0,
+     "family": "experiment selection: space-filling design",
+     "formal_cost_estimate_seconds": 220.3,
+     "inadmissible_universes": 0,
+     "interrupted": 0,
+     "invalid": 0,
+     "invalid_reasons_top": {},
+     "library_failure_universes": 0,
+     "mind_refused_universes": 0,
+     "not_run": 0,
+     "observe_calls_mean": 206.15,
+     "runs": 120,
+     "status": "AVAILABLE",
+     "unresolved_universes": 0,
+     "valid": 120,
+     "wall_seconds_max": 0.173,
+     "wall_seconds_mean_all": 0.0918,
+     "wall_seconds_mean_clean": 0.0918,
+     "wall_seconds_total": 11.017,
+     "worker_failures": 0,
+     "worker_rss_high_water_kib": 1254636
+    }
+   },
+   "contrasts": [
+    {
+     "a": "mind_full",
+     "a_better": 19,
+     "b": "mind_no_adaptive_selection",
+     "b_better": 33,
+     "common_mean_difference": -0.1208,
+     "common_world_sets": 120,
+     "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; pre-declared EXC-3 contrast: a minus b",
+     "mean_difference": -0.1208,
+     "note": "design only: the same Mind analysis; the arms differ only after the shared initial design, so a universe with no selection query left measures nothing but noise",
+     "observe_calls_mean_a": 206.15,
+     "observe_calls_mean_b": 206.15,
+     "paired_world_sets": 120,
+     "per_universe": {
+      "all": {
+       "a_better": 28,
+       "b_better": 40,
+       "mean_difference": -0.0201,
+       "n": 720,
+       "ties": 652
+      },
+      "by_query_budget": {
+       "12": {
+        "a_better": 11,
+        "b_better": 14,
+        "mean_difference": -0.0153,
+        "n": 229,
+        "ties": 204
+       },
+       "30": {
+        "a_better": 9,
+        "b_better": 13,
+        "mean_difference": -0.0201,
+        "n": 249,
+        "ties": 227
+       },
+       "60": {
+        "a_better": 8,
+        "b_better": 13,
+        "mean_difference": -0.0248,
+        "n": 242,
+        "ties": 221
+       }
+      },
+      "opportunity_field": "mind_selection_queries",
+      "unknown_opportunity": 0,
+      "with_selection_opportunity": {
+       "a_better": 28,
+       "b_better": 40,
+       "mean_difference": -0.0201,
+       "n": 720,
+       "ties": 652
+      },
+      "without_selection_opportunity": {
+       "a_better": 0,
+       "b_better": 0,
+       "mean_difference": null,
+       "n": 0,
+       "ties": 0
+      }
+     },
+     "ties": 68
+    },
+    {
+     "a": "bo_botorch_variance",
+     "a_better": 22,
+     "b": "space_filling",
+     "b_better": 67,
+     "common_mean_difference": -0.575,
+     "common_world_sets": 120,
+     "label": "DEVELOPMENT_DESCRIPTIVE: not a rate, a lift or a benchmark result; pre-declared EXC-3 contrast: a minus b",
+     "mean_difference": -0.575,
+     "note": "design and analysis confounded: BoTorch also searches input subsets and the covariate (_select_and_gate) where space_filling gates the settable inputs (_gate), and their Latin-hypercube seeds differ",
+     "observe_calls_mean_a": 206.15,
+     "observe_calls_mean_b": 206.15,
+     "paired_world_sets": 120,
+     "per_universe": {
+      "all": {
+       "a_better": 43,
+       "b_better": 100,
+       "mean_difference": -0.0958,
+       "n": 720,
+       "ties": 577
+      },
+      "by_query_budget": {
+       "12": {
+        "a_better": 34,
+        "b_better": 26,
+        "mean_difference": 0.0611,
+        "n": 229,
+        "ties": 169
+       },
+       "30": {
+        "a_better": 5,
+        "b_better": 34,
+        "mean_difference": -0.1566,
+        "n": 249,
+        "ties": 210
+       },
+       "60": {
+        "a_better": 4,
+        "b_better": 40,
+        "mean_difference": -0.1818,
+        "n": 242,
+        "ties": 198
+       }
+      },
+      "opportunity_field": "bo_selection_queries",
+      "unknown_opportunity": 0,
+      "with_selection_opportunity": {
+       "a_better": 17,
+       "b_better": 84,
+       "mean_difference": -0.1426,
+       "n": 582,
+       "ties": 481
+      },
+      "without_selection_opportunity": {
+       "a_better": 26,
+       "b_better": 16,
+       "mean_difference": 0.1014,
+       "n": 138,
+       "ties": 96
+      }
+     },
+     "ties": 31
+    }
+   ],
+   "paired_world_sets_complete": 120,
+   "realised_fraction_mean": 1.0
+  }
+ },
+ "claims": "COST_MEASUREMENT_ONLY",
+ "design": {
+  "budget_fractions": [
+   1.0,
+   0.5,
+   0.25
+  ],
+  "campaigns_per_presentation_per_seed": 10,
+  "deadline_seconds": 2400.0,
+  "presentations": [
+   "anonymous",
+   "renamed",
+   "paraphrased",
+   "trap"
+  ],
+  "seeds": [
+   0,
+   1,
+   2
+  ],
+  "workers": 4
+ },
+ "elapsed_seconds": 1741.39,
+ "excluded_world_sets": [],
+ "formal_tier_estimate": {
+  "arms_without_measurement": [],
+  "campaigns_per_arm": 2400,
+  "label": "ESTIMATE from the mean wall of clean VALID campaigns, each measured inside one of 4 concurrent workers",
+  "scope": "the arms planned here, in_process isolation; Mind arms included (EXC-2); proposer-process isolation overhead UNMEASURED; budget levels pooled",
+  "status": "ESTIMATE",
+  "sum_over_measured_arms_seconds": 44684.9,
+  "wall_hours_at_4_workers": 3.1
+ },
+ "paired_world_sets_complete": 360,
+ "readiness": "DEVELOPMENT_ONLY",
+ "tasks": {
+  "completed": 7200,
+  "interrupted": 0,
+  "missing_records": 0,
+  "not_run": 0,
+  "planned": 7200,
+  "worker_failed": 0
+ },
+ "worker_rss_high_water_kib_pool": 1254636
+}

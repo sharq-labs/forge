@@ -103,6 +103,7 @@ CAMPAIGN_TESTS: dict[str, str] = {
 # --------------------------------------------------------------------------
 
 EXPENSIVE_MODULES: dict[str, str] = {
+    "tests/genesis_lite/test_v03_baseline_arms_e2e.py": "runs PySR (Julia), PySINDy and BoTorch arms through full v0.3 campaigns",
     "tests/test_thermal_t1_fidelity_inference.py": "reproduces the T1 fidelity-inference experiment",
     "tests/test_thermal_t2_repeated_draw_calibration.py": "reproduces the T2 repeated-draw calibration experiment",
     "tests/test_thermal_t3_decision_aware_fidelity.py": "reproduces the T3 decision-aware fidelity experiment",

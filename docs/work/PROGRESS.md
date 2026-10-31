@@ -10078,3 +10078,1758 @@ running. No full local_assurance run or certificate-child issuance started.
 SAFE_TO_PUSH remains NO for the new source; no push or merge performed.
 The existing R22 evidence remains unchanged. Local repairs and failure logs
 are preserved; no independent review or protection bypass was attempted.
+
+## 2026-10-28 — Scientific MVP bounded implementation checkpoint (local main)
+
+Base/HEAD `dd567d53d2444950f57ffaeb9903c74d7c38f04d`; initially clean, now local
+working changes, no commit/push/merge. Owner requested implementation after the
+review. Owner will appoint the independent evaluator later, requested estimates
+before campaign/full-assurance approval, and explicitly approved FDA-05 semantics
+for a NEW benchmark version only. Historical R22 permission is not reused for a
+new campaign. Full checkpoint, commands, classifications and cost assumptions:
+[SCIENTIFIC_MVP_CHECKPOINT_2026_10_28.md](SCIENTIFIC_MVP_CHECKPOINT_2026_10_28.md).
+
+Environment: native Windows, isolated CPython3.11.15 .venv, declared
+`pip install -e ".[dev,mcp,oracles]"`; pip check PASS. WSL executable exists but
+status/list both exit1 (system cannot find file). No Docker/ngspice on PATH.
+No platform installation or permissions changes. Source and log hashes:
+`.forge/mvp-2026-10-28/checkpoint-manifest.json` (local, ignored).
+
+Bounded repairs and execution:
+- zero RMSE wrongly sorted as infinity: red2failed4passed, fixed6passed;
+  combined capability suite34passed. No tolerance change or status promotion.
+- non-Linux isolation probe called missing geteuid: red2failed2passed;
+  explicit Linux refusal guard plus isolation tests6passed. OS boundary NOT_PROVEN.
+- FDA-05 v0.3 development scorer: red3failed10passed against historical v2;
+  a read-only scientific reviewer then caught penalty removal on controls in
+  the first v3 draft; reproduced5failed15passed, corrected with min(0,old_credit).
+  All six kinds and both accurate-member positions now tested:32passed.
+  Existing v2 source/preregistrations untouched; no campaign API or formal run.
+- Independent scientific skill reviews: RMSE PASS; protocol initially CHANGES
+  REQUIRED (A2/B1 gate clarity, audit access, baseline parity) then PASS;
+  v3 initially CHANGES REQUIRED (control penalty) then PASS after correction.
+  Static reviews are not independent final evaluation or executed science.
+- Regression pack: initial1failed278passed due to own ACTIVE_PLAN insertion
+  moving the pinned third line; restored layout, no assertion change; final
+  `tools/forge_check.py --regression --workers 4`:279passed26.42s.
+- FAST `pytest -m "not expensive" -q -n 4 --dist loadfile` with JUnit:
+  141failed12939passed266skipped22errors691.04s. Ran after RMSE fix, before
+  isolation/v3 changes; source not an immutable assurance checkout. Failure
+  inventory and tracebacks saved to fast-failures.json, raw fast.xml/fast.log.
+  Most inspected failures involve Windows POSIX/security/lifecycle assumptions;
+  others are dirty-tree/certificate/provenance gates and temp-path collection.
+  No inference that all disappear on Linux; no gate waivers or skip additions.
+- Diagnostic certificate verify --allow-dirty passed BEFORE scientific source
+  change only. Normal verify refused dirty tree. Current patch NOT certified.
+- Wheel built and installed in clean buyer-env; external-cwd isolated import
+  and mA->A smoke PASS. Wheel predates isolation/v3 changes, not final delivery.
+- AI docs checker PASS (syntax/link metadata only); git diff --check PASS.
+- Final combined targeted replay after all added controls:120passed14.53s,
+  complete-targeted.log. Command: `python -m pytest
+  tests/genesis_lite/test_genesis_lite_scoring_v3.py
+  tests/genesis_lite/test_genesis_lite_benchmark.py
+  tests/genesis_lite/test_genesis_lite_analysis.py
+  tests/genesis_lite/test_genesis_lite_final_review.py
+  tests/foundations/test_isolation_support_portability.py
+  tests/foundations/test_escrow_isolation.py
+  tests/scientific/test_sparse_discovery_ordering.py -q`.
+
+SCIENTIFIC, full assurance, formal isolation, campaigns and final evaluation:
+NOT RUN. Current FAST remains RED. Technical Stabilization/Scientific MVP OPEN.
+Cost estimate separates measured local FAST/regression from unmeasured supported
+Linux assurance and corrected isolated campaigns; proposed30min development
+pilot cap is NOT authorization. Data rights inspection used public metadata only,
+no new final data or hidden roots read. Source/protocol binding, baseline and
+statistical amendments, measured application and independent delivery remain open.
+
+
+## 2026-10-28 — Windows-only timing fixture repair
+
+Owner confirmed concurrent discovery/analysis work in another session; those
+files were left untouched in this continuation. Bounded WP-02 repair in
+`tests/test_test_timing.py`: constrain generated child pytest to its own root
+and conftest scope. Red1failed (child exit4), green9passed0.87s; all assertions
+retained, no skips or tolerance changes. Full gate reruns NOT RUN. Evidence:
+[evidence/WINDOWS_TIMING_FIX_2026_10_28.md](evidence/WINDOWS_TIMING_FIX_2026_10_28.md).
+
+
+## 2026-10-28 — S-01 through S-05 scientific audit repairs on local main
+
+Owner explicitly requested all five local audit findings repaired on main.
+Generated discovery identities now bind evaluated feature expressions, datasets,
+selection roles, policy and implementation; a separate frozen final-test path
+refuses overlapping physical lineage and selection-only campaigns stay open.
+Development scorer v3 fixes bracketing-only recovery and exact-zero matching.
+Development analysis v3 uses conservative bounded independent-unit inference,
+aggregates repeats and tests all declared baselines. Frozen v2 files stay exact.
+An attempted in-place legacy-analysis edit failed 8 pinned-benchmark tests; it
+was reverted and the new boundary moved outside the frozen source.
+
+Integration153pass; official regression279pass; final directly affected85pass.
+Changed gate:2799pass/29fail/54skip, native Windows, still RED; failures include
+POSIX/privilege assumptions, certificate drift and unknown data provenance.
+No skips, source certificate hashes or historical identities were weakened.
+No formal campaign, full assurance, commit, push or merge. Concurrent MVP,
+isolation and timing changes were preserved. Details and local evidence paths:
+[evidence/SCIENTIFIC_AUDIT_REPAIRS_2026_10_28.md](evidence/SCIENTIFIC_AUDIT_REPAIRS_2026_10_28.md).
+
+
+## 2026-10-28 — Remaining Windows infrastructure fixture repairs
+
+Owner authorized Windows-compatible fixes excluding concurrent discovery/analysis
+work. Only tests/test_local_assurance.py and tests/test_mutation_startup.py changed:
+.exe fixture spelling, raw LF clean-tree precondition, canonical opt-in scratch
+root, and a portable forbidden killpg trap. Production guards untouched.
+Targeted red9failed2.14s; intermediate6failed3passed8.97s exposed TEMP alias; final
+`python -m pytest tests/test_local_assurance.py tests/test_mutation_startup.py -q --tb=short`:
+56passed1failed4existing-skips27.99s. Remaining real symlink WinError1314 retained.
+Independent static scientific review PASS; no assertion weakening or added skip.
+Evidence and exact red command: [evidence/WINDOWS_INFRA_FIXTURES_2026_10_28.md](evidence/WINDOWS_INFRA_FIXTURES_2026_10_28.md).
+Full FAST/SCIENTIFIC/assurance NOT RUN. Further infrastructure closure needs the
+supported Linux runtime and source freeze; no implied gate waiver or budget approval.
+
+
+## 2026-10-28 — Broad read-only repository re-review
+
+HEAD dd567d53d2444950f57ffaeb9903c74d7c38f04d, dirty main; another session owns
+discovery/analysis edits. No implementation/test edits in this review.
+Full repository FAST: `python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+--junitxml=.forge/review-2026-10-28/fast.xml`:123failed13040passed266skipped22errors
+648.22s, exit1. Tracked/nonignored source/config snapshot2539files unchanged
+across run; this excludes ignored scratch and is not immutable assurance.
+AST1615files no syntax errors; pip check, docs metadata checker, capability
+ledger and diff check PASS. Certificate verify --allow-dirty FAILED with current
+source differences; no pin updates. Compared prior FAST:20failure/error IDs absent,
+2appeared. New ownership diagnostic-file failure reproduced alone; package alias
+failure passed alone and all9package-identity tests passed, root cause UNKNOWN.
+Synthetic controls reproduced shared-symbol contradictions, repsem raw-unit and
+implementation-identity gaps, role-relabel promotion and pair-order score change.
+Independent static scientific review:CHANGES REQUIRED. Report with file lines,
+smallest repairs, acceptance tests, exact results and limitations:
+[evidence/REPO_REVIEW_2026_10_28.md](evidence/REPO_REVIEW_2026_10_28.md).
+Evidence .forge/review-2026-10-28/; artifact-manifest.json hashes the logs/results.
+SCIENTIFIC, full assurance, final campaign, current-wheel install NOT RUN.
+No commit/push/merge or modification of the other session implementation.
+
+## 2026-10-28 — Owner-authorized R1–R7 follow-up repairs
+
+Checked other scientific-repair thread idle/completed before edits. Kept its work.
+Shared-symbol row consistency enforced; final promotion requires frozen-selection
+replay; owner-approved symmetric v3 pair distance (thresholds unchanged).
+New repsem.v2 explicit unit/executable contract reuses the historical assessment
+engine; historical v1 unchanged, new use must opt into v2. Restricted trusted
+Python only, not a sandbox or full arbitrary-dependency authentication.
+Moved diagnostic probe to existing ignored scratch subtree with identical SHA;
+renamed unpublished discovery final_test.py to final_evaluation.py to stop pytest
+collecting production code under the duplicate src.engcore package namespace.
+
+Red controls: R1 5failed1passed; R2/R3 2failed; R4 4failed; R5 2failed3passed;
+R6 and R7 each1failed. Follow-up targeted green controls and exact commands:
+[evidence/REPO_REVIEW_REPAIRS_2026_10_28.md](evidence/REPO_REVIEW_REPAIRS_2026_10_28.md).
+Combined changed-area/ownership run99passed1failed1existing-skip18.18s; remaining
+symlink WinError1314 preserved. Broader regression `.venv/Scripts/python.exe -m
+pytest tests/mind tests/genesis_lite/test_genesis_lite_scoring_v3.py
+tests/genesis_lite/test_scoring_zero_v3.py tests/genesis_lite/test_pair_order_v3.py
+tests/scientific/test_discovery_review_proof.py -q --tb=short
+--junitxml=.forge/review-2026-10-28/repairs-regression.xml`:944passed60.58s.
+Independent static scientific review PASS, reviewer tests NOT RUN. AI docs checker
+PASS; git diff --check PASS. Full FAST after repairs, full SCIENTIFIC, full
+assurance, final campaign, measured-data application, wheel install NOT RUN.
+No historical evidence rewrite, thresholds weakened, new skips, commit/push/merge.
+
+## 2026-10-28 — Public L1 development integration
+
+Owner authorized starting the smallest synthetic integration before WSL. Other
+local repair thread checked idle. Source HEAD dd567d53d2444950f57ffaeb9903c74d7c38f04d,
+dirty main; no production engine changes in this work package.
+Added benchmarks/rediscovery_development with known Ohmic family through repsem.v2,
+five public cases (informative, equivalent mA, zero excitation, misspecified offset,
+unknown noise), equal-scored-row analytic reference, full-record replay and CLI.
+This is L1 parameter estimation only: no L2/L3, hidden truth, final evaluation,
+model ranking, uncertainty calibration or physical validation claim.
+
+Red-first integration tests:4failed0.95s (missing package). Final new tests:
+5passed6.64s. Regression command `.venv/Scripts/python.exe -m pytest
+tests/mind/test_repsem_strict.py tests/mind/test_repsem_replay.py
+tests/mind/test_rediscovery_development.py tests/test_trust_boundary_package_identity.py
+-q --tb=short --junitxml=.forge/review-2026-10-28/l1-integration.xml`:
+44passed11.82s. AI docs checker PASS; git diff --check PASS.
+Standalone `.venv/Scripts/python.exe -m benchmarks.rediscovery_development.run
+--output .forge/l1-development-stage1.json` and same module with
+`--replay .forge/l1-development-stage1.json`: exit0, EXACT.
+Record SHA256:0415a079cbcb1932ca72d7221659ee75d20a8acd9061e9977be699db216982f8.
+Command-internal elapsed times0.228s and0.225s respectively, local bookkeeping
+included, not per-method performance evidence or campaign budget estimate.
+Independent static scientific review initially CHANGES REQUIRED (direct coefficient
+assertion and exported uncertainty qualification), corrected and final PASS;
+reviewer tests NOT RUN. README has scope, assumptions, commands and next gates.
+Full FAST/SCIENTIFIC, full assurance, final campaign and measured-data validation
+NOT RUN. Previous Windows symlink/gate blockers remain open. No install/commit/push.
+
+## 2026-10-28 — Public L2 model-selection integration
+
+Owner requested continuation to L2; other local scientific-review thread idle.
+Added separate benchmarks/rediscovery_l2 package; no production engine or L1 file
+changes. Two declared positive one-parameter families (linear/quadratic), calibration
+only fitting through repsem.v2, separate in-domain selection, lineage overlap
+rejection, explicit illustrative RMSE resolution. Outcomes preserve ambiguity,
+neither-compatible and unknown-resolution/zero-excitation UNASSESSED. These are
+public software controls, not statistical significance or independent final evidence.
+Same-observation bounded analytic reference, per-method local telemetry with record
+digest, exact bundle replay and public source hashes. No hidden truth or final seeds.
+
+Initial red7failed0.18s (missing package). Intermediate4failed3passed1.46s caught
+a development fixture selection point below the scored calibration domain; corrected
+fixture to an interior grid rather than relaxing domain refusal. Targeted14passed7.28s.
+Final `.venv/Scripts/python.exe -m pytest tests/mind/test_l2_development.py
+tests/mind/test_rediscovery_development.py tests/mind/test_repsem_strict.py
+tests/mind/test_repsem_replay.py tests/test_trust_boundary_package_identity.py
+-q --tb=short --junitxml=.forge/review-2026-10-28/l2-integration.xml`:
+58passed16.90s. Includes coefficient/RMSE analytic agreement, changed selection
+cannot affect fit, overlap, A/mA and V/mV, ambiguity order, bad resolution, zero
+excitation, CLI replay and tamper controls. Independent static scientific review
+PASS (reviewer tests NOT RUN); AI docs checker and git diff --check PASS.
+
+Standalone module `benchmarks.rediscovery_l2.run --output
+.forge/l2-development-stage1.json` then `--replay` same path: exit0 EXACT.
+Record SHA256642df4236541d7a46467fc9323e2162521ffd540780508989ba37d7d264de534.
+Stderr timing saved separately in .forge/l2-development-stage1-timing.json and
+.forge/l2-development-stage1-replay-timing.json; not controlled performance evidence.
+Old L1 record replay remains EXACT. Commands used .venv/Scripts/python.exe.
+Full FAST/SCIENTIFIC, full assurance, final evaluation and real-measurement validation
+NOT RUN; mandatory gates remain open. No dependency install/commit/push/merge.
+
+## 2026-10-28 — Public bounded L3 dictionary-support integration
+
+Owner continuation; other local scientific-repair thread checked idle. New separate
+benchmarks/rediscovery_l3 uses existing sparse discovery unchanged over x,x²,x³
+plus intercept, with explicit x=I/(1A), y=V/(1V) normalization. Seven nonempty
+supports; calibration-only fits; separate same-domain selection. Wrapper reports
+smallest surviving compatible supports, preserving ambiguity and engine refusal.
+This is bounded dictionary support recovery, not unrestricted symbolic discovery.
+Dense cubic reference uses same observations and NumPy solver, one fit versus
+seven sparse attempts; timing disclosed separately without efficiency claim.
+
+Initial integration red9failed0.24s (missing package). Independent static review
+found a wrapper bypass of engine FAILED_HOLDOUT baseline-improvement refusal.
+Concrete two-row counterexample reproduced1failed1.48s; compatibility now requires
+SURVIVED_HOLDOUT. Targeted14passed5.40s; final static review PASS (reviewer tests
+NOT RUN). No engine threshold or historical artifact changed.
+Final command `.venv/Scripts/python.exe -m pytest tests/mind/test_l3_development.py
+tests/mind/test_l2_development.py tests/mind/test_rediscovery_development.py
+tests/scientific/test_discovery_audit_repairs.py tests/scientific/test_discovery_shared_symbols.py
+tests/scientific/test_sparse_discovery_ordering.py tests/scientific/test_discovery_review_proof.py
+-q --tb=short --junitxml=.forge/review-2026-10-28/l3-integration.xml`:
+74passed16.92s. Coefficients/intercept, ambiguity, outside grammar, constant target,
+selection-no-refit, sample/group overlap, units, domain, unknown resolution,
+CLI replay and tamper controls passed. AI docs checker and git diff --check PASS.
+
+Standalone `.venv/Scripts/python.exe -m benchmarks.rediscovery_l3.run --output
+.forge/l3-development-stage1.json`, then `--replay` same path:exit0 EXACT.
+Record SHA2568ff4ac40463ad8edefced6a2e6abab66dbaaa9a72062ac1dd88404a4231e9834.
+Stderr timing saved in .forge/l3-development-stage1-timing.json and replay-timing
+counterpart. Existing L1 and L2 records re-executed EXACT without edits.
+Full FAST/SCIENTIFIC, assurance, formal blindfold and physical validation NOT RUN;
+mandatory gates remain open. No install/commit/push/merge or hidden data access.
+
+## 2026-10-28 — WSL recovery and first Linux gate measurements (WP-02)
+
+Owner-approved in chat: copy HEAD + local changes into Linux, Python 3.12 venv,
+install `.[dev,mcp,oracles]` from PyPI, run regression and isolation/escrow tests
+as root, record here. No commit/push/merge, no source or test change.
+
+WSL root cause (read-only diagnosis): MSI WSL 2.6.3 registered
+`{B637A6A6-5591-4503-AFD8-776164EB837A}` but `C:\Program Files\WSL` absent, so
+every `wsl` call failed `Wsl/CallMsi/ERROR_FILE_NOT_FOUND`; no distro registered,
+no distro ext4.vhdx on C:/D:/K:. Owner reinstalled WSL 2.7.14.0 (winget) and
+imported `D:\WSL\ubuntu-forge.tar` (35,515,709,440 B, mtime 2026-10-20 17:36)
+as `Ubuntu-24.04`. Networking fell back NAT -> VirtioProxy; PyPI reachable.
+Distro content stops at the export: `~/br11-r22`, `~/br11-review`,
+`~/forge-gen2-authority-v1`, `~/forge-r16-review`, `~/forge-r17-review` and the
+`D:/forge-redisc-v3` worktree are absent. Evidence paths cited above under those
+roots are UNVERIFIED locally; recover from pushed branches if they exist.
+
+Environment: Ubuntu 24.04.3, kernel 6.18.33.2-microsoft-standard-WSL2, Python
+3.12.3, 20 CPUs, 23 GB RAM. Namespace probe as root (`unshare --mount --pid
+--fork --net --mount-proc`) succeeded; `unshare`, `setpriv`, `mount` present;
+YAMA ptrace_scope 1.
+
+Source identity: Windows temp-index snapshot (`git read-tree HEAD; git add -A`,
+real index untouched) gave tree `e518dd362aed00b887875a3ee7db1675aabd2500` =
+`dd567d53` + 12 modified + 39 untracked files (51). Patch SHA-256
+`4b065a62ecec9eb48d468df3ab12757f550c56dd0804e09fc984ee9e7866f6d2`. Linux clone
+`~/forge-mvp-20261028` (branch `mvp-linux-20261028` at `dd567d53`, `git apply
+--index`) reproduces the same tree hash. Concurrent local work after that
+snapshot is not covered. Evidence: `~/forge-mvp-20261028-evidence/` (patch, file
+list, `pip-install.log`, `pip check` clean, `environment.txt` 50 pins — latest
+PyPI versions, unpinned, not CI's resolved set).
+
+1. `.venv/bin/python tools/forge_check.py --regression --workers 4` (dev_kaeem):
+   **279 passed in 5.19s**; `regression.log`.
+2. As root: `PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -m pytest -p no:cacheprovider
+   --basetemp=/root/forge-mvp-20261028-pt -q -rs tests/foundations/test_isolation_support_portability.py
+   tests/foundations/test_escrow_isolation.py tests/foundations/test_escrow_boundary.py
+   tests/foundations/test_discovery_deadline.py tests/genesis_lite/test_genesis_lite_isolation.py`:
+   **3 failed, 44 passed in 4.55s**; `isolation-root.log`. Failures:
+   - `test_escrow_isolation.py::test_the_isolated_deployment_reports_exactly_what_it_established`
+     and `::test_the_leak_detector_catches_a_planted_partial_copy`: `RuntimeError:
+     discovery exited before the readiness handshake`. Diagnosis (environment
+     layout, not a code change): `/home/dev_kaeem` is 0750, so uid 65534 cannot
+     read the venv's pyvenv.cfg (`sys.prefix` = `/usr`) and `import engcore` fails
+     with ModuleNotFoundError (direct `setpriv --reuid=65534` reproduction).
+     OS_ISOLATION_BOUNDARY_VERIFIED is therefore NOT established on this host yet.
+   - `test_genesis_lite_isolation.py::test_the_proposer_process_cannot_read_the_operators_memory_where_the_kernel_forbids_it`:
+     `{'readable'}` under root (root's CAP_SYS_PTRACE bypasses YAMA scope 1).
+     Same file as dev_kaeem: **10 passed in 1.16s** (`genesis-isolation-user.log`).
+     The test assumes a non-root operator; that operator-identity assumption is
+     a finding to review, not repaired here.
+FAST/SCIENTIFIC tiers, full assurance, certification and formal Blindfold NOT RUN
+on Linux. Next bounded step pending owner choice: place the checkout where uid
+65534 can read code but not the home (e.g. `/opt`), or grant traverse on home.
+
+### 2026-10-28 — /opt relocation and isolation rerun (owner-approved)
+
+`/opt/forge-mvp-20261028` created by root (0755, owner dev_kaeem), cloned at
+`dd567d53` + same patch: tree `e518dd362aed00b887875a3ee7db1675aabd2500`
+(identical). New Python 3.12.3 venv installed `.[dev,mcp,oracles]` with
+`-c constraints-opt.txt` (home venv freeze); `pip check` clean; freeze identical.
+`/home/dev_kaeem` stays 0750. As uid 65534 (`setpriv --reuid=65534 --regid=65534
+--clear-groups`): venv prefix and `import engcore.blindfold.isolation` from /opt
+OK; writes to the checkout root and `src/engcore` refused; `ls /home/dev_kaeem`
+refused; no world-writable non-symlink entries under the checkout.
+
+As root, same 5 files from `/opt/forge-mvp-20261028`, `--basetemp=/root/forge-mvp-20261028-opt-pt -rfEs`:
+**3 failed, 44 passed in 604.59s**; `isolation-root-opt.log`.
+- Both `test_escrow_isolation.py` failures changed cause: the readiness handshake
+  now succeeds; each `run_isolation_demo` hits `subprocess.TimeoutExpired ... 300
+  seconds` while `isolation_probe.scan_for_leaks` stats all of `/`. Process
+  listing showed the uid-65534 probe in `D` state on `p9_client_rpc`: WSL
+  automounts C:, D:, K: as 9P drvfs under `/mnt` (`uid=1000`, no umask), and
+  the probe walks them.
+- Security observation (direct reproduction, not a test): uid 65534 CAN read
+  `/mnt/c/Windows/win.ini` (555), the Windows repo checkout (`README.md`, 777)
+  and list `/mnt/d/WSL`. With default WSL automount the Discovery uid sees all
+  Windows-drive data, including any truth/vault files kept there.
+  OS_ISOLATION_BOUNDARY_VERIFIED remains NOT established; this WSL configuration
+  is not an acceptable evaluation host until drvfs is hidden from that uid.
+- `test_genesis_lite_isolation.py` root-only failure unchanged (`{'readable'}`).
+No code, test, tolerance or timeout changed. Proposed environment fix for owner:
+`/etc/wsl.conf` `[automount] options = "metadata,umask=077"` (or `enabled=false`),
+then `wsl --shutdown`; launcher-side hiding of `/mnt` is a separate security-design
+decision.
+
+### 2026-10-28 — drvfs umask fix and isolation rerun (owner applied config)
+
+Owner set `/etc/wsl.conf` `[automount] options = "metadata,umask=077"` and ran
+`wsl --shutdown`. Verified: C:, D:, K: drvfs mounted with `metadata;umask=077`,
+mount roots 700 dev_kaeem. As uid 65534: listing `/mnt/c`, `/mnt/d`, `/mnt/k`,
+`/mnt/d/WSL` and reading `win.ini` / the Windows repo `README.md` all refused;
+import of engcore from `/opt` still OK; dev_kaeem still reads `/mnt/c`. The
+read-only `/usr/lib/wsl/drivers` 9p mount (fmask/dmask 222) stays world-readable.
+
+As root, same 5 files from `/opt/forge-mvp-20261028`,
+`--basetemp=/root/forge-mvp-20261028-opt-umask-pt -rfEs`: **1 failed, 46 passed
+in 42.58s**; `isolation-root-opt-umask.log`.
+- Both `test_escrow_isolation.py` tests PASS on this host: the demo report's
+  `security_boundary_status == "OS_ISOLATION_BOUNDARY_VERIFIED"` with all checks
+  true, no attack succeeded, no secret readable, both launcher domain checks
+  true; the planted-copy leak control is caught (`SECURITY_BOUNDARY_NOT_PROVEN`).
+- Remaining failure: root-only YAMA test (`{'readable'}`), unchanged; passes as
+  dev_kaeem (10 passed, earlier entry). Open finding: test/harness assumes a
+  non-root operator.
+Scope: one host, one config, one run of the repository's own isolation demo.
+Not a container/host boundary, certification or formal Blindfold result. The
+demo's leak check looks for the escrow canary only; the earlier drvfs exposure
+of other host data was found by manual reproduction, not by the probe, so that
+config dependency is not covered by an automated test. FAST/SCIENTIFIC on
+Linux, full assurance and formal Blindfold remain NOT RUN.
+
+### 2026-10-28 — FAST tier on Linux (owner-approved)
+
+Command (dev_kaeem, cwd `/opt/forge-mvp-20261028`, tree `e518dd36…` = `dd567d53`
++ uncommitted local patch, Python 3.12.3, WSL2 Ubuntu 24.04, umask=077 drvfs):
+`.venv/bin/python -m pytest -m "not expensive" -q -n 4 --dist loadfile
+--junitxml=~/forge-mvp-20261028-evidence/fast-linux.xml`. Result: **10 failed,
+13321 passed, 176 skipped, 2 warnings in 328.84s**, exit 1 (FAST RED).
+JUnit sha256 `f4f9888dff3d2dee22fb231fe424945d5944f68b43ed1fff014fc75bf107e86b`;
+log sha256 `b746fe69b56eeffc1cbae68b070b2259eab892890a2ebd01c2f70ac334c2b8b4`.
+Comparison script output: `fast-linux-comparison.json` (same evidence dir).
+
+Failures:
+- `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`
+- `tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully`
+- `tests/test_core_freeze_manifest.py::test_the_tree_is_core_freeze_v1`
+- `tests/test_core_freeze_manifest.py::test_a_descendant_that_keeps_the_contract_still_verifies`
+- `tests/test_core_freeze_v3_manifest.py::test_the_v3_contract_is_superseded_and_its_verifier_says_which_checks`
+- `tests/test_core_freeze_v3_manifest.py::test_core_freeze_v4_is_the_contract_that_binds_on_this_tree`
+- `tests/test_core_freeze_v4_manifest.py::test_the_tree_keeps_the_core_freeze_v4_contract`
+- `tests/test_core_freeze_v4_manifest.py::test_once_assured_the_full_verification_holds`
+- `benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured`
+- `benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance`
+
+Against references:
+- FAILURE_BASELINE_2026-10-20 Linux 64: 6 current nodes listed (all OD3_DRIFT);
+  58 of the 64 did not fail here (incl. all 49 BEHAVIOUR_VS_TEST, 3 GUARD_VS_CODE,
+  2 STALE_CERTIFIED_MUTANT, 2 UNRESOLVED offline-revalidation). Not re-run
+  individually; "did not fail in this run" is not a fix claim.
+- R21 Linux 59 (2026-10-24, `d05abfdf`): 1 current node listed; 58 did not fail.
+- Baseline `domain_real_data` note: both nodes match (`assert 2 == 0` unreviewed
+  rows here; baseline recorded 6).
+- New vs both Linux references: 2 nodes, both freeze tests
+  (`test_the_tree_is_core_freeze_v1`, `test_the_v3_contract_is_superseded…`).
+- Windows 2026-10-28 FAST (163 failed+error): all 10 Linux nodes also fail there;
+  153 nodes fail on Windows only (mutation_workspace 75, formal_xdist 24,
+  local_assurance 15, escrow_boundary 15, authority_durable_campaign 10,
+  authority_integrity 4, mutation_startup 3, escrow_isolation 2,
+  battery_blind_readiness 2, change_impact 1, repository_ownership 1, test_timing 1).
+
+Pristine control (dev_kaeem; clean clone `~/forge-pristine-dd567d53` detached at
+`dd567d53`, 0 status lines; `PYTHONPATH=$P/src:$P` with the /opt venv, engcore
+imported from the pristine src): the 4 certificate/freeze modules plus
+domain_real_data, `-n 4 --dist loadfile`: **2 failed, 89 passed, 1 skipped in
+101.49s**; only the 2 domain_real_data nodes fail (`pristine-freeze-control.log`).
+So the 8 certificate/freeze failures are caused by the uncommitted local patch:
+`tree.clean` FAIL (uncommitted files), certified-area digests changed
+(including `certification_control`), and `contract.api` frozen_digest
+`c80e6418…` -> `f18aa806…`. The frozen API surface change is a
+CORE_FREEZE_POLICY / OD-3 decision (version or recertification), not something
+to silence. The domain_real_data pair needs provenance review of the listed rows.
+SCIENTIFIC tier, full assurance, certification and formal Blindfold NOT RUN.
+
+### 2026-10-28 — Certified-scope attribution of the local patch (read-only)
+
+**Correction to the entry above:** `contract.api` frozen_digest `c80e6418…` ->
+`f18aa806…` is NOT caused by the local patch. `python -m tools.certification.core_freeze
+--verify` on the pristine clone also FAILs `contract.api`, `contract.serialization`
+and `bytes.pinned_contract_files` (the V1 record superseded by Core Freeze V4;
+`test_the_tree_is_core_freeze_v1` tolerates exactly these via SUPERSEDED_BY_V4 +
+`additive_only_problems`). `core_freeze_v3 --verify` fails the same V1/V2/V3
+checks on both trees. `core_freeze_v4 --verify` and `core_certificate --verify`
+PASS on pristine; on the patched tree they FAIL only `tree.clean` and
+`certificate.verifies`. Logs: `~/forge-mvp-20261028-evidence/verify-*.log`.
+
+Frozen API (scratch `surface_dump.py` using `api_snapshot.build()` per tree,
+`surface-{pristine,patched}.json`, `surface-diff.txt`): pristine and patched both
+`f18aa806…` = FROZEN-STATE, 194 frozen / 205 total, zero symbol differences.
+`engcore.scientific.__all__` exports no discovery name; the discovery package is
+reachable only as a submodule (internal per CORE_FREEZE_POLICY §2).
+
+Certified-area drift (same tool's `enumerate_area`/`file_digest`/`area_digest`;
+`core_certificate --verify --allow-dirty` diagnostic agrees; certified commit
+`0d1d6823a6ae`): 3 of 18 areas changed, 15 identical.
+- `core` `0aa0b8c3…` -> `5c679572…`: modified `discovery/campaign.py`
+  (`review_discovery_candidate`: new keyword args `final_selection`, `final_data`;
+  selection-role -> CANDIDATE; SURVIVED_HOLDOUT without frozen selection + final
+  data -> CANDIDATE; replay fingerprint mismatch -> REJECTED), `candidate.py`
+  (`DiscoveredEquationCandidate` trailing fields `discovery_binding_digest=""`,
+  `evaluation_role="holdout"`; validation; `fingerprint` adds both only when the
+  binding is non-empty, so legacy identity is preserved), `closed_loop.py`
+  (`stage` stays HOLDOUT_REVIEW while any surviving review is CANDIDATE),
+  `dataset.py` (`DiscoveryFeature.sample_bindings`, value==expression check,
+  `to_dict`; `DiscoveryDataset.sample_ids`/`group_ids`, shared-symbol conflict
+  refusal, new `fingerprint` schema `discovery_dataset/2`),
+  `symbolic_regression.py` (`discover_sparse_equations` binds
+  `sparse_discovery_binding/2` = dataset fingerprint + policy + implementation
+  file sha256 + numpy version; candidates role `selection`; RMSE-zero ordering
+  fix); added `discovery/final_evaluation.py` (`FrozenDiscoverySelection`,
+  `evaluate_final_test`).
+- `verdict_authority` `9acfc725…` -> `fa7191a7…`: `blindfold/isolation.py`
+  `isolation_support` non-Linux early refusal.
+- `certification_control` `7655b56f…` -> `ac6e2638…`: `tests/test_local_assurance.py`
+  (added `canonical_scratch_root`; 3 tests changed).
+Compatibility probe: a symbolic `DiscoveryFeature` without bindings is refused on
+BOTH trees (`EquationDimensionError`: no declared unit); `git grep` finds no
+`DiscoveryFeature(` construction at HEAD outside its own module. `eol=lf` is
+enforced for `symbolic_regression.py`, so the implementation hash is not CRLF/LF
+dependent. Decisions required are listed in chat; none taken here.
+
+### 2026-10-28 — forge-scientific-review of the `core` discovery patch
+
+Owner requested the review before any commit. `forge-scientific-review` (forked,
+read-only, no Bash: read the six discovery files at working-tree state, the five
+discovery test files, the modified hardening test and
+SCIENTIFIC_AUDIT_REPAIRS_2026_10_28.md; reviewer ran no tests). Verdict:
+**CHANGES REQUIRED**. AI-agent review, not an independent human evaluator.
+- I-1 HIGH: `FrozenDiscoverySelection.final_rmse_limit` is any finite >=0 value,
+  unrelated to `policy.holdout_rmse_limit`, with no baseline-improvement check;
+  "frozen before final data" is not enforced.
+- I-2 HIGH: `evaluate_final_test` compares declared sample/group IDs only; shared
+  `evidence_digests` and duplicated rows pass. Positive fixtures in
+  test_discovery_audit_repairs.py, test_discovery_review_proof.py and
+  test_scientific_correctness_hardening_big1.py use relabelled development data.
+- I-3 HIGH: `ClosedLoopDiscoveryCampaign` accepts any hand-built `DiscoveryReview`
+  (no role/replay check); a selection-role candidate reaches COMPLETE as
+  INDEPENDENTLY_REPRODUCED with an empty verification digest. Structure predates
+  the patch; it defeats the patch's selection-is-not-confirmation intent.
+- I-4 MED: replay fingerprint mismatch records REJECTED (contradiction without
+  admissible evidence); should stay unresolved. I-5 MED: no minimum independent
+  final groups/rows, no uncertainty. I-6 MED (pre-existing): duck-typed
+  `verification` can grant INDEPENDENTLY_REPRODUCED. I-7 LOW: calibration/selection
+  group overlap not refused. I-8 LOW: final evidence not explicit; implementation
+  hash omits dataset/candidate/evaluator modules. I-9 LOW: evidence doc cites a
+  non-existent `final_test` module; no pinned legacy-fingerprint literal test;
+  exact `==` value check may refuse last-bit differences.
+- Out of scope, flagged: `benchmarks/rediscovery_l3/run.py:53-58` maps
+  selection-role SURVIVED_HOLDOUT to ONE_MINIMAL_SUPPORT; closed_loop counts a
+  candidate as falsification-survived if any one challenge passed.
+
+Builder verification (static: read final_evaluation.py, closed_loop.py,
+campaign.py; matches I-1..I-3). Executed counterexamples (scratch
+`review_counterexamples.py`, no repository writes; `cd /tmp &&
+PYTHONDONTWRITEBYTECODE=1 /opt/forge-mvp-20261028/.venv/bin/python -I …`, engcore
+from /opt src; log `~/forge-mvp-20261028-evidence/review-counterexamples.log`):
+- I-1 REPRODUCED: anti-correlated final target, limit 0.05 -> failed_holdout
+  (rmse 93.063); same data with limit := observed rmse -> survived_holdout,
+  review `holdout_survivor`.
+- I-2 REPRODUCED: development data relabelled `relabel-*` (same values, target,
+  evidence) -> survived_holdout, review `holdout_survivor`.
+- I-3 REPRODUCED: selection-role winner + hand-built
+  `DiscoveryReview(..., INDEPENDENTLY_REPRODUCED, ("asserted",))` -> campaign
+  stage `complete`.
+Status: patch NOT ready to commit or recertify. Fixes need owner decisions
+(final-limit rule, baseline bar, minimum independent final units, REJECTED vs
+unresolved on replay mismatch); no code changed in this step.
+
+### 2026-10-28 — I-1..I-4 repairs (owner-approved), red-first, and review round 2
+
+Owner approved the proposed decisions for I-1, I-2, I-3, I-4 only (no other
+threshold). No concurrent source change since the e518dd36 snapshot (only this
+file differed). Edited in the Windows tree, copied to /opt with `install -m 0644`
+(sha256 identical both sides):
+- `final_evaluation.py` `3a6cca66…`: limit > `policy.holdout_rmse_limit` refused;
+  final survives only if RMSE <= limit AND (RMSE of the development-calibration
+  mean on final targets) - RMSE >= `policy.minimum_holdout_improvement` (same rule
+  as selection); shared evidence digests and exact duplicate (candidate-feature
+  values, target) rows refused; docstring notes custody limit.
+- `campaign.py` `82f258fa…`: replay fingerprint mismatch -> CANDIDATE
+  ("not bound to the supplied replay inputs; unresolved").
+- `closed_loop.py` `07383511…`: HOLDOUT_SURVIVOR / INDEPENDENTLY_REPRODUCED reviews
+  refused unless `evaluation_role == "final_test"`; INDEPENDENTLY_REPRODUCED needs a
+  verification digest.
+- Tests: new `tests/scientific/test_discovery_final_test_hardening.py` `fff5bed5…`
+  (14). Positive fixtures in `test_discovery_audit_repairs.py` `09ca1fa8…`,
+  `test_discovery_review_proof.py` `1d0bd3f7…`,
+  `test_scientific_correctness_hardening_big1.py` `b4f67512…` now use separate rows
+  and evidence; review-proof mismatch expectation REJECTED -> CANDIDATE + "not
+  bound" (approved I-4); no other assertion changed.
+
+Red first (/opt, before source edits): `.venv/bin/python -m pytest -p no:cacheprovider
+-q tests/scientific/test_discovery_final_test_hardening.py`: **10 failed, 4 passed
+in 0.75s** (the 10 intended counterexamples; `r2-red.log`).
+Green: same runner over the new file + audit_repairs, review_proof, shared_symbols,
+sparse_ordering, module_collection, hardening_big1, mind l3/l2/rediscovery
+development: **101 passed in 12.46s** Linux (`r2-green.log`); Windows
+`.venv/Scripts/python.exe` 3.11.15 same list: **101 passed in 16.08s**.
+Counterexamples re-run individually (`review-counterexamples-after.log`): I-1
+limit := observed RMSE refused; I-2 relabel refused (evidence) and same-rows/new-
+evidence refused (duplicate); I-3 hand review on selection candidate refused;
+I-4 other final data -> candidate; control genuine -> holdout_survivor.
+`tools/forge_check.py --regression --workers 4`: **279 passed in 5.15s**.
+FAST (`-m "not expensive" -q -n 4 --dist loadfile`, /opt, dev_kaeem):
+**10 failed, 13335 passed, 176 skipped in 330.58s**; failure set identical to the
+earlier Linux FAST (same 10 freeze/certificate + domain_real_data nodes); JUnit
+sha256 `51a0d56a64c8b240431f2a9b255ff72b26286276408a618ff1e5cd8031926160`. The
+meta file's `git write-tree` shows the index tree, not these unstaged edits.
+
+`forge-scientific-review` round 2 (static, reviewer ran nothing): **CHANGES
+REQUIRED**. I-1, I-2 and I-4 success path implemented as approved; positive
+tests not weakened.
+- H-1 HIGH: the I-3 gate checks caller-controlled `evaluation_role` and a non-empty
+  digest only; the campaign never replays or checks status. REPRODUCED
+  (`review-r2-counterexamples.log`): a genuinely FAILED final_test candidate +
+  hand `INDEPENDENTLY_REPRODUCED` review ("d"*64) -> stage `complete`; selection
+  winner `replace(evaluation_role="final_test")` + hand HOLDOUT_SURVIVOR ->
+  `independent_reproduction`. Fix needs an owner decision on the campaign API
+  (promoting reviews only via `review_discovery_candidate` with replay inputs;
+  minimum: require SURVIVED_HOLDOUT status). Error text "replayed" is inaccurate.
+- M-1 MED: stored FAILED_HOLDOUT is REJECTED before replay. REPRODUCED: genuine
+  survivor with status forged to FAILED + matching replay inputs -> `rejected`.
+- L-1 LOW: baseline test cannot distinguish development-fixed from final-mean
+  baseline; non-zero improvement unexercised. L-2 LOW: a CANDIDATE review pins the
+  campaign at HOLDOUT_REVIEW permanently (fail-closed). L-3 LOW: exact-match
+  duplicates only (ties to deferred I-5).
+- Pre-existing, open: NO_VERIFICATION/INSUFFICIENT_INDEPENDENCE -> REJECTED;
+  one passing challenge suffices; evidence doc cites `discovery.final_test`.
+Status: still NOT ready to commit or recertify; H-1 and M-1 await owner decision.
+
+### 2026-10-28 — H-1/M-1 repairs (owner-approved), red-first, and review round 3
+
+Owner approved: H-1 the campaign admits HOLDOUT_SURVIVOR / INDEPENDENTLY_REPRODUCED
+only as `review_discovery_candidate`'s result re-run with frozen selection, final
+data and verification, with a corrected error message; M-1 replay before acting
+on any stored status of a `final_test` candidate. Windows tree edited, copied to
+/opt (identical sha256):
+- `campaign.py` `bfd9cac3…`: `DiscoveryReview` carries `final_selection`,
+  `final_data`, `verification` (`compare=False`, `repr=False`);
+  `review_discovery_candidate` attaches them to every review. final_test role:
+  no replay inputs -> CANDIDATE; fingerprint mismatch -> CANDIDATE ("not bound");
+  replayed FAILED -> REJECTED; replay precedes any stored status. Other roles
+  unchanged except a survived non-final record with replay inputs now says "not
+  bound" (still CANDIDATE).
+- `closed_loop.py` `e42ca275…`: for promoting decisions the campaign re-runs
+  `review_discovery_candidate` from the carried inputs and requires an equal
+  review; replaces the round-2 role/digest label checks.
+- `tests/scientific/test_discovery_final_test_hardening.py` `65181ce4…`: +8 H-1/M-1
+  tests, +2 L-1 guards (development-fixed baseline; non-zero improvement). Two
+  round-2 tests changed `match` to the new message ("review_discovery_candidate");
+  one renamed (`…needs_a_verification_digest` -> `…cannot_be_asserted_without_a_replay`).
+Red first (/opt, `-q -rfE` the file): first run 11 failed / 12 passed; one was
+my fixture error (L-1 row (3,3) duplicated a development row and was correctly
+refused by I-2), fixed by moving the near values off 3.0. Re-run: **10 failed,
+13 passed in 0.63s** (8 H-1, 2 M-1; `r3-red.log`).
+Green: targeted discovery set (as round 2) **110 passed in 12.11s** Linux
+(`r3-green.log`), **110 passed in 15.87s** Windows 3.11.15. Round-2
+counterexamples (`review-r2-counterexamples-after.log`): failed-final + hand
+review refused; relabelled winner refused; forged FAILED + matching inputs ->
+`candidate`. `forge_check --regression --workers 4`: **279 passed in 5.01s**.
+FAST /opt: **10 failed, 13344 passed, 176 skipped in 319.80s**, same 10 nodes as
+before; JUnit sha256 `64863985b2889b962743f9419eea6ef6c5c256c56fdfb0e909baed052289db91`.
+
+`forge-scientific-review` round 3 (static; reviewer ran nothing): **CHANGES
+REQUIRED**. H-1 and M-1 judged correct for the paths they cover; no new
+false-support path through normal constructors; test changes not weakened.
+- M-A MED: only promoting reviews are replayed; a hand REJECTED or CANDIDATE review
+  is admitted. REPRODUCED (`review-r3-counterexamples.log`): hand
+  `DiscoveryReview(good, REJECTED, ("asserted",))` on a genuine survivor -> stage
+  `complete`; the genuine review is then refused ("candidate already has a
+  discovery review"). False refusal / contradiction without admissible evidence,
+  not false support. Proposed: replay every review regardless of decision.
+- M-B MED: `evaluate_final_test` uses `isinstance` and the selection fingerprint
+  omits development/policy; a `FrozenDiscoverySelection` subclass with a no-op
+  `__post_init__` or `object.__setattr__` after construction skips the winner and
+  limit checks, and the replay then matches. Same in-process forgery class as the
+  deferred I-6 (static finding, not executed here).
+- L-1 LOW: no test admits a genuine INDEPENDENTLY_REPRODUCED through the gate or
+  refuses a swapped verification/inputs after creation. L-2 LOW: exceptions during
+  replay are not normalized (fail closed). L-3 LOW: replay cost O(R^2) per campaign
+  build; legacy/selection stored FAILED still REJECTED without replay (outside M-1).
+Status: not committed; M-A and M-B await owner decision.
+
+### 2026-10-28 — M-A/M-B/I-6 repairs (owner-approved), red-first, and review round 4
+
+Owner approved: M-A replay every review whatever its decision; M-B exact-type
+checks and a selection fingerprint covering development and policy; I-6 exact
+`VerificationRunRecord`. Windows tree edited, copied to /opt (identical sha256):
+- `final_evaluation.py` `29dfd245…`: exact types for development/policy/candidate
+  in `FrozenDiscoverySelection`; fingerprint schema `frozen_discovery_selection/2`
+  adds `development.fingerprint` and `asdict(policy)`; `evaluate_final_test`
+  requires exact `FrozenDiscoverySelection`/`DiscoveryDataset` and re-runs the
+  selection constructor on its current fields.
+- `campaign.py` `8f36aa2f…`: `review_discovery_candidate` refuses any verification
+  that is not exactly `VerificationRunRecord`.
+- `closed_loop.py` `1e2d783b…`: every review is replayed and must be equal.
+- Tests: hardening file `9c0d9727…` (+2 M-A, +6 M-B, +1 I-6 refusal, +2 positive
+  real-verification/swap guards, +1 genuine-rejection guard).
+  `test_discovery_audit_repairs.py` `2df5cb88…` and
+  `test_scientific_correctness_hardening_big1.py` `83f28c2c…`: fake verification
+  objects replaced by real `VerificationRunRecord`s (same intent; big1 now also
+  asserts the unrelated record is complete and VERIFIED); new look-alike refusal.
+Red first (/opt, hardening file `-rfE`): **9 failed, 26 passed in 0.75s**, all
+"DID NOT RAISE"/unchanged-fingerprint (`r4-red.log`). Green: targeted discovery
+set **123 passed in 12.94s** Linux (`r4-green.log`), **123 passed in 15.71s**
+Windows 3.11.15. M-A counterexample now refused
+(`review-r3-counterexamples-after.log`). `forge_check --regression --workers 4`:
+**279 passed in 4.56s**. FAST /opt: **10 failed, 13357 passed, 176 skipped in
+316.50s**, same 10 nodes; JUnit sha256
+`30bb35acde323465948686cc2ffc16c72a71d01f62c3448d078a614faa6a72bd`.
+
+`forge-scientific-review` round 4 (static; reviewer ran nothing): **CHANGES
+REQUIRED**. M-A, M-B and I-6 implemented as approved; changed tests keep intent.
+Executed reproductions (`review-r4-counterexamples.log`):
+- H-1 HIGH REPRODUCED: `DiscoveryReview` subclass overriding `__eq__` passes
+  `replayed != review` (reflected subclass eq) -> stage `complete`, 1 reproduced,
+  for a never-final-tested selection winner. Campaign uses `isinstance`.
+- M-1 MED REPRODUCED: `DiscoveredEquationCandidate` subclass with forged
+  `fingerprint` property and coefficients (42.,) + real verification ->
+  `independently_reproduced`. Review compares fingerprints only, no candidate type
+  check.
+- M-2 MED REPRODUCED: `object.__setattr__(sel.policy, "minimum_holdout_improvement",
+  -1.0)` + matching winner -> `survived_holdout` where the unmutated selection
+  fails; nested policy/dataset constructors are not re-run.
+- M-3 MED (pre-existing, OWNER_DECISION_REQUIRED, not decided here): verification
+  observations, evidence and independence are caller-declared and need not
+  concern the candidate's prediction; the positive test reaches
+  INDEPENDENTLY_REPRODUCED for dimensionless y = x from a 300 K vs 300.2 K record.
+- L-1 cost: each review now costs ~4 full `discover_sparse_equations` runs and the
+  campaign replays all reviews per rebuild (~R(R+1)/2). L-2 campaign read paths
+  are not re-checked after construction. L-3 missing tests (VerificationRunRecord
+  subclass, subclassed policy/candidate/dev data, `match=` on the mutation test,
+  mutated dev/policy refused at use, swapped final inputs).
+Builder note: rounds 2-4 are successive in-process forgery variants (subclass,
+`object.__setattr__`, nested mutation). In-process Python objects cannot be made
+tamper-proof against code in the same process; an explicit threat-model decision
+(trusted in-process callers vs re-derivation at a serialization/process boundary)
+would bound further rounds. Not committed.
+
+### 2026-10-28 — H-1/M-1/M-2 (round-4) repairs, threat model, review round 5
+
+Owner approved: H-1 exact types + full candidate equality; M-1 likewise in the
+review; M-2 rebuild nested policy and datasets. Owner decided the threat model
+(recorded in ACTIVE_PLAN.md): same-process code is trusted; untrusted input must
+cross a serialization (from_dict re-derivation) or process-isolation boundary.
+M-3 recorded there as OWNER_DECISION_REQUIRED. Windows tree edited, copied to /opt
+(identical sha256):
+- `final_evaluation.py` `34358341…`: `_checked_policy` (rebuild via constructor,
+  ValueError -> InvalidScientificProblem, must equal) and `_checked_dataset`
+  (exact DiscoveryDataset/DiscoveryFeature, rebuild every feature and the dataset,
+  must equal) in `FrozenDiscoverySelection.__post_init__`; final data rebuilt in
+  `evaluate_final_test`; threat-model comment.
+- `campaign.py` `e575db5d…`: exact `DiscoveredEquationCandidate` required;
+  replay comparison `candidate != replayed` (full record).
+- `closed_loop.py` `3491e357…`: exact candidate types; exact `DiscoveryReview` of
+  exact candidate checked before any field read and before the replay equality.
+- Hardening tests `faeba4fa…`: +7 (2 review-subclass, 2 candidate-subclass,
+  3 nested-mutation).
+Red first: **7 failed, 35 passed in 0.74s**, all "DID NOT RAISE" (`r5-red.log`).
+Green: targeted discovery set **130 passed in 12.07s** Linux (`r5-green.log`),
+**130 passed in 15.60s** Windows 3.11.15. Round-4 counterexamples all refused
+(`review-r4-counterexamples-after.log`). `forge_check --regression --workers 4`:
+**279 passed in 4.95s**. FAST /opt: **10 failed, 13364 passed, 176 skipped in
+325.74s**, same 10 nodes; JUnit sha256
+`c004fe8b9755bcc9875a0b20abad0faa3d02bf34eee943dd12acae38155f09f7`.
+
+`forge-scientific-review` round 5 (static, reviewer ran nothing; scoped by the
+owner threat model): **PASS** for H-1/M-1/M-2; no BLOCKER/HIGH/MEDIUM. LOW, deferred
+(listed in ACTIVE_PLAN.md): L-1 full-record equality accepts `True`/`1`/`-0.0`
+aliases whose fingerprints differ (identity only; fix: also compare fingerprints);
+L-2 `with_review` reads `review.candidate` before the type check (wrong exception
+type); L-3 untested `rebuilt != original` branches, DiscoveryFeature subclass in
+final data, legacy no-binding feature path; L-4 replay cost
+O(steps x reviews x search). Pre-existing, now OWNER_DECISION_REQUIRED: a
+`survived=False` falsification record never blocks promotion. Residuals under the
+threat model: FalsificationRecord uses isinstance; VerificationRunRecord/Expression/
+Quantity internals are not rebuilt. AI-agent static review is not an independent
+human evaluation, test execution or certification. Not committed; certified
+`core`/`verdict_authority`/`certification_control` drift still requires commit and
+recertification under separate approval.
+
+### 2026-10-28 — r5 LOW L-1/L-2/L-3 repairs (owner-approved) and review round 6
+
+Owner approved fixing L-1 (also compare fingerprints), L-2 and the L-3 test gaps
+before any commit. Windows tree edited, copied to /opt (identical sha256):
+- `campaign.py` `8ee148ef…`: replay mismatch if `candidate != replayed` OR
+  fingerprints differ (equality alone accepts True/1, 1/1.0, -0.0/0.0 aliases);
+  constructor not normalized, so legacy fingerprints are unchanged.
+- `final_evaluation.py` `c0037bc8…`: frozen winner must equal `ranked[0]` AND share
+  its fingerprint.
+- `closed_loop.py` `4c82b816…`: `with_review` refuses anything but an exact
+  `DiscoveryReview` of an exact `DiscoveredEquationCandidate` before reading a field.
+- Hardening tests `dd516fc0…`: +2 L-1, L-2 parametrized x4, +5 L-3.
+Red/green: L-1 and L-2 failed on the prior code for the intended reasons (alias ->
+`holdout_survivor`; alias winner frozen "DID NOT RAISE"; `AttributeError` from
+`with_review`): **4 failed, 47 passed in 0.79s** (`r6-red.log`). L-3 tests passed on
+current code and were checked against guard-removing mutants (scratch
+`mutants_l3.sh`, copies under /tmp/forge-l3-mutants with their own src; logs
+`~/forge-mvp-20261028-evidence/l3-mutants/`): unmutated control 5/5 PASS; each of
+5 mutants FAILED its pinned test. Only `no_dataset_equality` was an admitted-input
+bypass ("DID NOT RAISE": upper-case evidence digest slips past the overlap check);
+`no_policy_equality`, `no_feature_type`, `no_review_candidate_type` were still
+refused by a later guard ("Regex pattern did not match"), so those tests pin which
+guard fires; `legacy_rebuild_requires_bindings` failed the legacy positive test.
+Review round 6 (static, reviewer ran nothing): **PASS**; one LOW-1: the L-2 guard
+did not check `review.candidate` (`DiscoveryReview(None, …)` -> AttributeError).
+Completed within L-2: two cases added, red **2 failed, 2 passed** (`r6b-red.log`),
+guard extended to the candidate type.
+Final state: targeted discovery set **141 passed in 12.76s** Linux (`r6b-green.log`),
+**141 passed in 20.30s** Windows 3.11.15; `forge_check --regression --workers 4`
+**279 passed in 5.48s**. FAST on the final state (run after the last edit; the
+earlier r6 FAST, 10 failed/13373 passed, started before it): **10 failed, 13375
+passed, 176 skipped in 316.83s**, same 10 nodes; JUnit sha256
+`2531bc242a1700626e3fe2a6221a65f25ee07dc8ee306a2bfd8f1365d7c08f53`.
+Residual (threat model): use-time rebuilds compare with `==`, so a later-set numeric
+alias in dataset values passes with no numerical effect. Deferred: I-5, I-7..I-9,
+L-4 cost; OWNER_DECISION_REQUIRED: M-3, failed-challenge question. Not committed.
+
+### 2026-10-28 — Local branch and SCIENTIFIC tier on Linux (owner-approved)
+
+Local branch `local/scientific-mvp-2026-10-28` from `main` `dd567d53`, four
+commits by certified area: `c134183d` core discovery (13 files), `f98d1528`
+verdict_authority (`blindfold/isolation.py` + portability test), `f13a4591`
+certification_control (`tests/test_local_assurance.py` fixtures), `6538eed1`
+the rest (36 files). Branch tree `7f1a25f5…` equals the pre-commit working-tree
+snapshot except an untracked empty file named `" | head -20"` (0 bytes, created
+17:48, left uncommitted and undeleted). `main` unchanged; no upstream, no push.
+/opt fetched the branch; its working tree was verified identical (tree
+`7f1a25f5…`, after copying the two newer docs) before HEAD was pointed at
+`6538eed1` with `reset --mixed` (no file touched); status clean.
+
+SCIENTIFIC (owner: CI command with the six docs/TESTING.md §3 deselects, 1 h cap),
+dev_kaeem, /opt at `6538eed1`, clean before and after: `timeout 3600 .venv/bin/python
+-m pytest -m "not campaign" -q -n 4 --dist loadfile` + the six `--deselect`s +
+`--junitxml=~/forge-mvp-20261028-evidence/scientific-linux.xml`.
+Result: **4 failed, 13961 passed, 177 skipped, 2 warnings in 411.08s** (exit 1,
+well inside the cap). JUnit sha256
+`243936ef6aebb0d8c80c45554b2a6e834a745bc9b46ac41babaa54eda4a7185b`; log sha256
+`bfc2daa9faebf94ff02bf6ac1522e4aff27e7f3b81674d946bfaa05297d4ca3b`.
+Failures:
+- `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` and
+  `::test_the_certificate_records_the_v1_relationship_truthfully`: certified commit
+  `0d1d6823`; area drift exactly `certification_control` (test_local_assurance.py),
+  `core` (6 discovery files incl. added final_evaluation.py), `verdict_authority`
+  (isolation.py) — the three committed areas; no uncommitted-tree problem now.
+- `benchmarks/domain_real_data/tests/test_domain_real_data.py::test_synthetic_data_is_never_called_measured`
+  and `::test_current_repository_inventory_has_no_unreviewed_provenance`
+  (`assert 2 == 0` unreviewed provenance rows).
+Comparison (`scientific-linux-comparison.json`): 0 SCIENTIFIC-only failures; 0 new
+vs FAILURE_BASELINE_2026-10-20 Linux/Windows-only/domain_real_data, R21 and the last
+CI SCIENTIFIC run (`e193e573`: `test_the_certificate_describes_this_tree`). All 4 also
+fail in today's FAST. The 6 freeze-manifest nodes that failed in FAST (uncommitted
+tree) pass on the committed clean tree. Remaining reds need OD-3 recertification of
+the three areas and a provenance review of two rows. Full assurance, formal
+Blindfold and recertification NOT RUN.
+
+### 2026-10-28 — domain_real_data provenance: DOCSET.txt re-reviewed (owner-approved)
+
+Read-only first: the round's own scanner (`inventory_scan.scan()`, scratch
+`provenance_scan.py`) at `6538eed1` named the two UNKNOWN_PROVENANCE files; both
+predate this session's work (pristine `dd567d53` fails the same way) and neither is
+in a certified area. Both have records whose sha256 is stale:
+- `docs/ai/DOCSET.txt`: recorded `29caf10d…` = bytes at `d40aff44`; changed in
+  `60094e5f` (Run Observatory v1) by one line `docs/performance/run-observatory.md`
+  (front matter `authority_scope: NONE`, `evidence_level: NOT_EVIDENCE`); evidence
+  records (commit-bound `check_docs.py`, `DOCUMENT_SCHEMA.md`) still match.
+- `certification/current_core_v2.json`: recorded `eec62a56…` = bytes at
+  `b1eea81b`; changed by certificate child `68ebe4d7` (recertifies `0d1d6823`,
+  generator 2.6.0, pint 0.26.2). Evidence still matches. Structural: the provenance
+  manifest is last updated in the certified source (`0d1d6823`) and the certificate
+  child is written after it, so every recertification re-stales this record.
+Owner decision: update DOCSET.txt now; defer the certificate record until after OD-3.
+Change (commit `07b305d9`, CURRENT_PROVENANCE.json only, 2 lines): sha256
+`29caf10d…` -> `ac10c80f79c9ab0d51812ad34fe312307e7651630835a95addfe712466a70ccc`;
+rationale names the added line; class, role, evidence unchanged.
+Checks: Windows, staged before commit: `.venv/Scripts/python.exe docs/ai/check_docs.py`
+-> `AI_DOCS: PASS (9 documents …)`; `-m pytest -p no:cacheprovider -q
+benchmarks/domain_real_data/tests` -> **2 failed, 31 passed in 422.92s**; scanner ->
+`unknown_provenance_files = 1` (`certification/current_core_v2.json`).
+Linux /opt aligned to `07b305d9` (tree `50be1a92…`, clean): check_docs PASS;
+`.venv/bin/python -m pytest -p no:cacheprovider -q -n 4 --dist loadfile
+benchmarks/domain_real_data/tests` -> **2 failed, 31 passed in 25.49s**
+(`domain-real-data-07b305d9.log`); scanner -> 1 unknown file (the certificate).
+A first Linux attempt was discarded: `git branch -f` refused the checked-out branch,
+HEAD stayed at `6538eed1` with the manifest unstaged and the scanner rejected it
+(1644 unknown); fixed with `update-ref` and re-run as above.
+Still failing by owner decision until OD-3: `test_synthetic_data_is_never_called_measured`,
+`test_current_repository_inventory_has_no_unreviewed_provenance` (one file).
+
+### 2026-10-28 — Genesis-lite v0.3 development path, strong baselines and dev pilot (owner-approved)
+
+Owner (chat): merge to local main and work there; approved (1) a v0.3 escrow/evaluator
+path keeping v0.2 as is, (2) PySINDy, BoTorch (CPU) and PySR with Julia in the /opt
+venv, (3) a development pilot with a 30-minute cap and 4 workers; red-first, review,
+record. Local `main` fast-forwarded to `d1fe7b0f` (no push).
+
+Design constraint found: the v0.2 preregistration byte-pins harness, evaluator and
+blindfold substrate (`escrow.py`, `roles.py`, `universe.py`, `baselines.py`,
+`expression.py`); any edit invalidates v0.2. v0.3 therefore lives in new files and
+applies FDA-05 to the escrow's signed pair facts (`contains_truth`/`brackets_truth`).
+`code_identity()` changed == [] throughout; v0.2 CONFIG digest `c545d486…` unchanged.
+
+Installs (/opt venv, `install_baselines.sh`, logs `~/forge-mvp-20261028-evidence/baselines/`):
+torch 2.15.0+cpu (CUDA False), botorch 0.18.1, gpytorch 1.15.2, pysindy 2.1.0,
+pysr 2.7.2 with Julia (`import pysr; PySRRegressor` ok), sympy 1.14.0; `pip check` clean.
+
+Commits (local main): `69597fbe` adjudication_v3 + score_v3.evaluate_campaign +
+harness_v3 (red 15 failed/1 passed; green 17; genesis_lite 178 passed; 600-campaign
+probe VALID with full agreement, 35 real unresolved pairs); `7c2e120f` arms_v3
+(red 9 failed; Linux 9 passed; genesis_lite Linux 187, Windows 180+7 skipped);
+`ef9eeeb0` review round 1 (F1 BoTorch box-edge ulp silently became LHS; F2 library
+failures earned refusal credit -> now propagate to inadmissible; F4 identity; red 3
+failed; Linux 191 passed); `1e913d92` pilot runner (red 5; green 5); `5daaba81` thread
+pinning (smoke: BoTorch 318 s -> 17 s per campaign with 4 unpinned workers); `ea894e61`
+pilot review round 2 (I-1 lost futures at deadline, I-2 unpaired credit, I-3 biased
+estimate, I-5 None->0 memory, I-6..I-9; red 7 failed/6 passed; green 13; Windows
+genesis_lite 197 passed, 7 skipped). Regression `forge_check --regression` 279 passed
+(Windows). Reviews: round 1 CHANGES REQUIRED (2 HIGH), round 2 no BLOCKER/HIGH
+(4 MEDIUM, fixed). Round 3 review of `ea894e61` NOT RUN.
+
+Pilot (`/opt` at `5daaba81`, clean; `timeout 1800 .venv/bin/python -m
+benchmarks.genesis_lite.pilot_v3 --out ~/forge-mvp-20261028-evidence/pilot-v3-dev-2026-10-28
+--arms all --workers 4`): **1920 planned, 1920 completed, 0 not_run, 0 interrupted
+in 675.68 s**; 16 arms x 120 paired world sets (10 campaigns x 4 presentations x 3
+seeds), all 120 world sets VALID for every arm; one development identity `3f385361…`
+for all runs; v0.2 pin unchanged. Re-summarized with the round-2 summarizer
+(`--resummarize`, `ea894e61`): 0 evaluator disagreements, 0 library failures, 0 design
+fallbacks, 0 inadmissible, 7 unresolved (extrapolation_pair). Mean clean wall per
+campaign: PySR 4.35 s, BoTorch 16.60 s, others <= 0.11 s; worker max RSS ~1.19 GB.
+Formal-tier ESTIMATE (2400 campaigns per arm, single-worker seconds 52781.9):
+**3.67 h at 4 workers**. Descriptive paired mean credit per campaign (development
+only, not a rate or lift): careful 3.275, space_filling 3.183, random_structures
+2.496, bo_botorch_variance 2.467, ..., pysindy_stlsq 1.925, pysr_symbolic 1.508,
+always_insufficient 1.500, always_law -4.600. The Minimal Mind was not an arm.
+Repo copies: `benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/`
+(summary.json sha256 `4ab18824…`, summary_resummarized.json `437eae33…`,
+environment.json `70b0f937…`, runs.jsonl sha256 `d594e9b9…`, 7.7 MB kept in the
+evidence dir). Root secret never written; only its commitment.
+Open: v0.3 pair-rule OWNER_DECISION_REQUIRED (ACTIVE_PLAN); v0.3 preregistration,
+custodian, Mind arm and formal budget not authorized.
+
+### 2026-10-29 — Genesis-lite v0.3 pilot: forge-scientific-review round 3 and corrections
+
+Owner chose the round-3 review. `forge-scientific-review` (static; reviewer ran
+nothing) on `ea894e61`/`b3289e20`: CHANGES REQUIRED, no BLOCKER/HIGH; MEDIUM I-1..I-4,
+LOW I-5..I-9.
+- I-1 CONFIRMED by execution (scratch `thread_check.py`, /opt venv): limits set only
+  in the spawn initializer (as at `5daaba81`, where the recorded pilot ran) -> BLAS
+  threads [20] per worker, torch 1; limits set in the parent before the pool -> BLAS
+  [1], torch 1. **Correction to the 2026-10-28 entry:** its per-campaign walls and the
+  3.67 h ESTIMATE were measured with 20 BLAS threads in each of 4 workers; the
+  estimate covers the baseline arms only, in-process (Mind arm and isolation overhead
+  UNMEASURED), walls measured under 4-worker concurrency. "~1.19 GB" is 1191 MiB
+  (worker whole-life high-water mark, not per arm). That entry listed arms in credit
+  order; descriptive paired means alphabetically: always_insufficient 1.500,
+  always_law -4.600, always_refuse 1.000, bo_botorch_variance 2.467, careful 3.275,
+  extrapolating_fit 1.783, extrapolation_pair 2.442, fit_all_gated -0.483,
+  greedy_forward 2.396, historical_answer -0.375, monomial_enumeration 2.408,
+  pysindy_stlsq 1.925, pysr_symbolic 1.508, random_structures 2.496, single_setting
+  2.454, space_filling 3.183 (development only; not a rate, ranking or lift).
+- Fixed in `ef0cc2f0` (red first: 8 failed / 11 passed; green Windows test_v03_pilot
+  19 passed, genesis_lite 203 passed / 7 skipped; Linux /opt genesis_lite **210
+  passed in 40.10s**): thread limits only while workers spawn, parent env restored
+  (I-7); estimate scope/label (I-2); resummarize from the run's own design/arms/
+  availability with missing_records -> LOWER_BOUND and run/summarizer identities (I-3,
+  I-8); worker failures not counted completed, LOWER_BOUND, no fabricated zeros
+  (I-4, I-5); per-arm memory renamed worker_rss_high_water_kib plus a pool field (I-6).
+  The previous test asserting completed == 2 including a worker failure encoded the
+  mislabel and now expects completed == 1.
+- Re-summarized the recorded pilot at `ef0cc2f0`: tasks 1920 planned / 1920 completed /
+  0 worker_failed / 0 missing_records; estimate status ESTIMATE, 3.67 h, scope stated;
+  `resummarized_from` binds runs.jsonl `d594e9b9…`, original summary `4ab18824…`, run
+  head `5daaba81…`, summarizer head `ef0cc2f0…` and sha256 `b5176082…`. Repo copy
+  `summary_resummarized.json` sha256 `eeb5dd1c…`; caveats in
+  `benchmarks/genesis_lite/pilot_results/v0_3-dev-2026-10-28/README.md`.
+Not done: corrected re-measurement of pilot cost (needs approval); round-4 review of
+`ef0cc2f0` NOT RUN.
+
+### 2026-10-29 — v0.3 pair rule decided (owner option B) and implemented in escrow_v3
+
+Owner chose option B after a five-point comparison: adopt the v0.3 rules in a new
+escrow file, keep the v0.2-pinned `escrow.py` byte-identical. Point 4 (outside
+divergence over every outside point, independent of truth) was the one rule not
+decided earlier; approved with option B.
+- `cb1dfe44`: `src/engcore/blindfold/escrow_v3.py` — `EscrowServiceV3` overrides only
+  `_score`; `value_v3` maps evaluation errors to NaN as the evaluator does;
+  `fraction_v3`, `pair_distance_v3`, `assess_v3`, `assess_pair_v3` implement the five
+  rules; score bodies keep v0.2 keys plus `"rule": "v0_3"`. `harness_v3` scores on it
+  and binds the file into the development identity. Red first 7 failed / 1 passed;
+  green `tests/genesis_lite/test_v03_escrow_rule.py` 8 passed, including a 1500-case
+  randomized differential test (all three outcomes reached, zero disagreement with
+  `score_v3`) and order/negative/zero/non-finite cases. Windows genesis_lite 211
+  passed / 7 skipped; `forge_check --regression --workers 4` 279 passed;
+  architecture/layering 17 passed. Linux /opt genesis_lite 218 passed; 600-campaign
+  extrapolation_pair probe VALID with full agreement, outcome counts identical to the
+  2026-10-28 v0.2-escrow probe (the rule differences changed no verdict there).
+- `forge-scientific-review` of `cb1dfe44` (static, reviewer ran nothing): **PASS**,
+  no BLOCKER/HIGH/MEDIUM; term-by-term equivalence confirmed and the `_score` override
+  judged a faithful copy; `_restore` never rescores. LOW: I-1 agreement now checks the
+  interpreter and plumbing, not the shared rule text; I-2 random forms too narrow
+  (k*x^e only); I-3 rule label asserted not observed; I-4 refusals after sealing
+  (inherited from v0.2).
+- `d398c800` (I-1, I-3): `RunRecordV3.agreement_scope` states what agreement checks;
+  stale score_v3 docstring fixed; `adjudicate_v3` refuses bodies not scored under
+  `v0_3`; `escrow_rule` observed from the run's score bodies (`NO_SCORED_LAWS` when a
+  campaign scored no law); `EscrowServiceV3` refuses persistent storage until the
+  rule is journaled. Red first 5 failed / 17 passed (one new test first used a
+  refusal-only campaign id, correctly NO_SCORED_LAWS; now `gl-v03-probe-3`); green
+  Windows genesis_lite 216 passed / 7 skipped; Linux 223 passed in 36.46s; probe
+  600/600 VALID, escrow_rule `v0_3` in 476 runs and `NO_SCORED_LAWS` in 124.
+Deferred LOW: I-2, I-4. Not done: v0.3 preregistration, custodian, Mind arm, formal
+campaign, corrected pilot re-measurement, OD-3 (now also covering `escrow_v3.py`).
+
+### 2026-10-29 — EXC-2: Minimal Mind as a v0.3 development arm (adapter, two reviews, pilot)
+
+Owner approved EXC-2 in chat ("موافق على الاستثناء"); recorded in ACTIVE_PLAN (`0d638338`).
+`src/engcore/mind/**` unchanged throughout (`git diff 896efd72~1 992deeba -- src/engcore/mind` empty).
+- `896efd72`: `benchmarks/genesis_lite/mind_arm_v3.py` (card -> `ExperimentalProblem`,
+  escrow observer, frozen `TRANSLATION`, exact law translation), four arms registered in
+  `pilot_v3`, Mind files bound into the development identity. Red first, then
+  `tests/genesis_lite/test_v03_mind_arm.py` 9 passed; Windows genesis_lite 225 passed /
+  7 skipped; Linux /opt 232 passed in 40.70 s.
+- `forge-scientific-review` of `896efd72` (static): **CHANGES REQUIRED**. I-1 HIGH: a
+  non-budget escrow refusal reached the Mind as `ObservationRefused(budget=False)` and could
+  end as a credited insufficient_evidence, while baselines are scored inadmissible. I-2/I-3
+  MEDIUM: ablation labels inexact; Mind imports (claims, sria/decision, mind/transition)
+  unbound. I-4..I-7 LOW: fallbacks earning refusal credit, silent region/settable filtering,
+  proposer kind "baseline", query_cost != 1.
+- `7a75e916`: all seven fixed red first (13 new tests failed first). The identity binds a
+  static engcore import closure (statements plus literal `import_module("engcore...")`
+  shims). The first runtime test found 5 shim-loaded modules missing from the closure; the
+  closure was fixed, and a test now runs the Mind once in a subprocess and requires every
+  engcore module loaded to be bound. Windows genesis_lite 240 passed / 7 skipped; Linux
+  247 passed in 39.08 s.
+- Re-review of `7a75e916` (static, reviewer ran nothing): **APPROVE WITH NOTES**; all seven
+  closed, no reachable false-support path. Notes N-1 (malformed observation could become a
+  Mind model refusal), N-5 (unvalidated proposer kind; in-process engcore location
+  unchecked), N-3/N-4 (failure counters and wiring tests), N-2 (refusal credit reported
+  apart). Scope note: the `proposer_kind` parameter of `harness_v3.run_one_v3` is a review
+  fix slightly beyond EXC-2 field 1 (identity binding); recorded here.
+- `992deeba`: notes closed red first (8 failed / 46 passed, plus 1 wiring test already
+  green). Windows genesis_lite 251 passed / 7 skipped; Linux /opt 258 passed in 40.41 s.
+- Pilot (owner-approved, 30-minute cap, 4 workers): `timeout 1800 .venv/bin/python -m
+  benchmarks.genesis_lite.pilot_v3 --out .../pilot-v3-dev-mind-2026-10-29 --arms all
+  --workers 4` at `992deeba` on /opt. Exit 0, 990.6 s, 2400/2400 VALID, 120 paired
+  world sets, 0 evaluator disagreements, 0 inadmissible universes, 0 Mind model refusals.
+  Report: `benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/README.md`
+  (summary.json sha256 `3c57d475…`, runs.jsonl sha256 `96681496…`, identity `86893cff…`).
+  DEVELOPMENT_DESCRIPTIVE paired mean credit: mind_no_falsifier 3.600,
+  mind_no_belief_update 3.575, mind_no_adaptive_selection 3.5625, mind_full 3.550,
+  careful 3.2875, space_filling 3.2333, bo 2.2917, pysindy 1.9167, pysr 1.5125.
+  **No ablation is worse than the full Mind.** The pilot shows no contribution from
+  adaptive selection, belief update or the falsifier. Every observing arm used its whole
+  budget (identical per-universe query counts), so the selection saved no queries.
+  mind_full recovered the law in 26/120 discoverable universes and named no correct
+  indistinguishable pair. Caveat: 43/2400 runs had 20 BLAS threads (2 workers, early;
+  cause unestablished).
+EXC-2 exit condition (pilot report plus review) met; closing EXC-2 is the owner's call.
+No A2, lift or superiority claim. Not done: anything that changes the Mind (needs a new
+decision); v0.3 preregistration; custodian; formal campaign; OD-3.
+
+### 2026-10-29 — EXC-2 closed; read-only analysis of the flat ablations
+
+Owner, in chat: "Close EXC-2, analyze". EXC-2 marked CLOSED in ACTIVE_PLAN; field 8's
+prohibitions stand (any Mind change, re-run or new arm needs a new decision). Analysis is
+read-only over the pilot's `runs.jsonl` (sha256 `96681496…`) and the Mind source. Scratch
+scripts (`ablation_analysis.py`, `ablation_infamily.py`) ran on /opt with `python -I`.
+Nothing was re-run and no statistics were computed. Report:
+`benchmarks/genesis_lite/pilot_results/v0_3-dev-mind-2026-10-29/ANALYSIS.md`.
+- Ablations rarely change the answer (720 paired universes): no_falsifier differs in 10,
+  no_belief_update 46, no_adaptive_selection 90 (careful: 111). The differences go both
+  ways (boundary flips).
+- On in-family law worlds (95): Mind variants 43-46 law_pass vs careful 31 and
+  space_filling 30. The lead comes from the shared hypothesis competition, fit and
+  `conclude` rules, which no ablation removes.
+- Selection cannot show here (explanations, not established causes):
+  - Every observing arm spent the full budget; the early stop never fired.
+  - A space-filling design suffices in 3-4 input boxes at 12-60 queries.
+  - 69 of 92 discoverable refusals have the truth outside the family.
+  - In 196 mind_full universes the region leaves the box.
+  - The falsifier is redundant with the misfit check (127 refuted-path cases, only
+    10 answer changes).
+  - no_belief_update only affects selection by construction.
+Conditions under which selection could matter are proposals only, each needing an owner
+decision: scarcer budget, more inputs or narrow features, credit for queries saved, and a
+richer hypothesis family.
+
+### 2026-10-29 — EXC-3: experiment selection under a scarce budget (build, reviews, pilot)
+
+Owner approved EXC-3 in chat, with defaults: fractions 1.0/0.5/0.25, d+2 floor, a 45-minute
+cap, 4 workers and Mind 1.0.0 unchanged. Recorded in ACTIVE_PLAN before any code.
+- `a9734570`: `query_cap`/`QueryCap` in harness_v3 and per-level summary with the
+  pre-declared contrasts in pilot_v3. Red first: 30 failed, then 30 passed. Windows
+  genesis_lite 281 passed / 7 skipped; Linux 288 passed. Smoke at 0.25 on Linux: PySINDy,
+  BoTorch, PySR, mind_full and careful were all VALID and kept to the cap.
+- Review of `a9734570` (static): **CHANGES REQUIRED**, a measurement-design finding with no
+  authority defect.
+  - HIGH-1: at the scarce levels most universes leave no selection query.
+  - MEDIUM-1: the BO contrast is confounded with analysis.
+  - MEDIUM-2: the cap was enforced only by state the arm could write.
+  - MEDIUM-3: levels were not held to common worlds.
+  - LOW-1..6: smaller issues.
+- `1648ce7b` fixes, red first: 12 failed / 34 passed / 1 skipped.
+  - Per-universe opportunity fields.
+  - Stratified per-universe contrasts.
+  - Notes on each contrast.
+  - Read-only cap, and an escrow-count check against the caps.
+  - Common-world contrasts.
+  - Realised fraction per level.
+  - Cap data recorded before the arm runs.
+  - Malformed queries refused before the cap.
+
+  Windows 297 passed / 8 skipped; Linux 305 passed.
+- Re-review of `1648ce7b`: **APPROVE WITH NOTES**. `6f0bc58d` closed notes 3 and 4 red
+  first: a cap-bookkeeping failure now makes the run INVALID, and an inadmissible universe
+  keeps its cap data. Windows 299 passed / 8 skipped; Linux 307 passed.
+- Pilot command: `timeout 2700 .venv/bin/python -m benchmarks.genesis_lite.pilot_v3 --out
+  .../pilot-v3-dev-scarce-2026-10-29 --arms all --workers 4 --deadline-seconds 2400
+  --budget-fractions 1.0,0.5,0.25`, started at `6f0bc58d`.
+  - Result: exit 0, 1741.39 s, 7200/7200 VALID, 120 paired world sets per level.
+  - **Provenance MIXED.** At 14:22:54 a fork of this session committed `56b33d42` to main
+    and fast-forwarded /opt mid-run. The executed code is inferred to be `6f0bc58d`: the
+    same 4 workers ran every campaign, with modules imported before the change. But 3261
+    runs record the post-change identity `bc8c5eea…`, and environment.json's git_head is
+    `56b33d42`.
+  - Report: `benchmarks/genesis_lite/pilot_results/v0_3-dev-scarce-2026-10-29/README.md`
+    (summary sha256 `3607e87b…`, runs.jsonl sha256 `03661c13…`).
+- DEVELOPMENT_DESCRIPTIVE results, per universe where selection was possible:
+  - mind_full vs mind_no_adaptive_selection: 24 vs 22 ahead (0.25), 22 vs 39 (0.5),
+    28 vs 40 (1.0).
+  - bo vs space_filling (confounded): 10 vs 54, 25 vs 80, 17 vs 84.
+  - **Neither adaptive design was ahead of a space-filling design at any budget level.**
+  - Mind variants remain top at every level.
+  - mind_full answered no_law on 51 not-no_solution worlds at 0.25 (12 at 0.5, 5 at 1.0).
+- Current main `56b33d42` (the fork's commit, not made by this session): Windows
+  genesis_lite 303 passed / 8 skipped. This session did not review it.
+EXC-3 exit condition (report plus review) met, with mixed provenance.
+OWNER_DECISION_REQUIRED:
+1. Accept this run with its provenance correction, or re-run on a frozen tree.
+2. Close EXC-3.
+3. Coordinate the fork session, which writes to the same main and /opt.
+No A2, lift or superiority claim.
+
+### 2026-10-29 — EXC-3 closed; scarce-budget pilot accepted with its provenance correction
+
+Owner, in chat: "Accept with note". The run `pilot-v3-dev-scarce-2026-10-29` is accepted as
+DEVELOPMENT_DESCRIPTIVE evidence. Its results are bound to `6f0bc58d` as the inferred
+executed code. The 3261 post-change identity labels and environment.json's git_head stay
+as written and are corrected only in the README. It was not re-run. EXC-3 is marked CLOSED
+in ACTIVE_PLAN, and its field-8 prohibitions stand. Still open: coordination with the fork
+session that writes to the same main and /opt.
+
+### 2026-10-29 — Fork session report: a second EXC-3 pilot overlapped the accepted run
+
+The fork session ("محرك استدلال علمي محايد (fork)") acknowledged the owner's
+single-writer decision. It now makes no commits on main, does not touch /opt and starts no
+runs. Its report:
+- It started a second EXC-3 pilot in /opt at 14:23:49 at `56b33d42`
+  (`pilot-v3-dev-exc3-2026-10-29`, same fractions) and stopped it with SIGTERM at about
+  28 minutes. No process remains.
+- The partial output (no summary.json, runs.jsonl possibly partial) is left undeleted
+  outside the repository. It is NOT EXC-3 evidence.
+- Its commit `56b33d42` covers four changes:
+  - a per-universe cap check from the escrow's own accepted observations;
+  - per-fraction pseudonym keys below 1.0;
+  - a note that kind and credit are defined at the full budget;
+  - a formal estimate from level 1.0 only.
+- That session wrote no PROGRESS entry for its reviews of `1648ce7b`/`6f0bc58d` or for
+  `56b33d42`. The content above is as it reported it, not verified here. This session has
+  not reviewed `56b33d42`.
+
+Effect on the accepted scarce-budget run (14:08:13–14:37:17): 8 extra CPU-bound
+processes ran beside it from 14:23:49. Wall-time and cost figures from that window are
+contaminated.
+
+Outcomes and credit are not expected to change. This was checked statically, not by
+re-running:
+- every arm is iteration-bounded;
+- PySR runs `deterministic=True`, `parallelism="serial"`, `niterations=40` with no time
+  limit;
+- no arm or Mind module reads a clock for a decision;
+- the 2400 s deadline was not reached (1741 s).
+
+The README provenance section now records this. The owner's "Accept with note" was
+given before this report.
+
+### 2026-10-29 — OD-3 scope, D1 provenance record, D2 preflight (owner-approved)
+
+Read-only scope:
+- `core_certificate --verify --allow-dirty`: the certificate binds `0d1d6823` (child
+  `68ebe4d7`). The ACTIVE_PLAN OD-3 row still says `39d43456`, which is stale. Drift is
+  exactly three areas:
+
+  | Area | Files | Digest |
+  |---|---|---|
+  | `core` | 6 discovery files | `0aa0b8c3…` -> `541ff8dd…` |
+  | `verdict_authority` | `isolation.py`, `escrow_v3.py` | `9acfc725…` -> `5ec30a1e…` |
+  | `certification_control` | `test_local_assurance.py` | `7655b56f…` -> `ac6e2638…` |
+
+  Aggregate `73ae733e…` -> `a6b28105…`.
+- `recertification_scope classify --base 0d1d6823 --head HEAD`: recertify_source (the
+  stored certificate, 9 certified source files, 34 harness/assurance test files).
+- The local authoritative path is `tools.certification.local_assurance`. It needs
+  Linux, a clean tree, and Python 3.11 + 3.12. The last full run took about 3.5 h.
+
+D1, `285b1ee1`: the CURRENT_PROVENANCE.json record for
+`certification/current_core_v2.json` was re-reviewed. Its sha256 changed from
+`eec62a56…` to `dfbc8293…`, the bytes of child `68ebe4d7`; class, role and evidence are
+unchanged. `check_docs.py` AI_DOCS: PASS. This reverses the earlier "defer until after
+OD-3", because the stale record would make local_assurance's FAST gate refuse.
+
+D2 preflight: /opt fast-forwarded to `285b1ee1`, clean before and after each tier,
+`PYTHONDONTWRITEBYTECODE=1`, `-p no:cacheprovider`.
+
+| Tier | Command | Result | Evidence |
+|---|---|---|---|
+| FAST | `pytest -m "not expensive" -q -n 4 --dist loadfile` | **6 failed, 13528 passed, 174 skipped in 336.15s** | log sha256 `a6e7139d…`, JUnit `50e84b5c…` |
+| SCIENTIFIC | CI command with the six TESTING.md §3 deselects | **5 failed, 14112 passed, 175 skipped in 435.47s** | log `8f0331ba…`, JUnit `b23e60f1…` |
+
+Failure classification (`od3-preflight-comparison.json`):
+- **Deferred certificate self-checks (2 per tier).** These are
+  `test_core_certificate.py::test_the_certificate_describes_this_tree` and
+  `::test_the_certificate_records_the_v1_relationship_truthfully`. Recertification
+  deselects them by design.
+- **Blockers.**
+  - `domain_real_data` × 2: 7 UNKNOWN_PROVENANCE files, all this session's pilot results
+    (`pilot_results/v0_3-dev-2026-10-28/{environment,summary,summary_resummarized}.json`,
+    `v0_3-dev-mind-2026-10-29/{environment,summary}.json`,
+    `v0_3-dev-scarce-2026-10-29/{environment,summary}.json`).
+  - Dependency guards: `test_core_api_contracts::test_every_third_party_import_is_declared_somewhere`
+    and `test_core_guards::test_every_dependency_the_tree_reaches_for_is_declared` (the
+    latter in FAST; SCIENTIFIC deselects it). botorch, gpytorch, pysindy, pysr,
+    threadpoolctl and torch are imported by the v0.3 baseline arms, the pilot and
+    their tests, but declared in no pyproject group.
+- **Fixed since 2026-10-28.** The 6 freeze-manifest nodes; they failed then only because
+  of the uncommitted patch.
+- Both blockers were introduced by this session's v0.3 work.
+OD-3 cannot pass until they are fixed. The fixes need owner decisions: provenance rows
+for the 7 files, and an optional dependency group, which changes the dependency
+manifest. Not run: D3 (prepare), D4 (local_assurance run).
+
+### 2026-10-29 — OD-3 preflight blockers fixed (owner-approved); preflight clean
+
+Owner approved both fixes ("Approve both fixes").
+- `13a0892d`, pyproject.toml: new optional group `genesis-baselines` (torch>=2.15,
+  botorch>=0.18.1, gpytorch>=1.15.2, pysindy>=2.1.0, pysr>=2.7.2, threadpoolctl>=3.7; lower
+  bounds are the pilot versions). Nothing was installed. Windows, both dependency guards:
+  2 passed in 24.08s.
+- `13a0892d`, CURRENT_PROVENANCE.json: 7 records, DERIVED / RECORDED_COMPUTE_RESULT, for
+  the pilot_results JSON files. Each is bound to `pilot_v3.py` at its producing commit and
+  to its directory README. The change is a pure insertion.
+- Preflight run 2 at `13a0892d`: FAST 8 failed / 13526 passed / 174 skipped in 326.36s;
+  SCIENTIFIC 8 failed / 14109 passed / 175 skipped in 432.76s.
+  - The dependency guards now passed.
+  - 6 domain_real_data nodes failed with `ValueError: provenance source commit must be
+    immutable`: the new evidence used abbreviated commit SHAs. Failed approach, kept here:
+    evidence `commit` must be a full 40-hex SHA.
+  - Evidence was kept as `run2-od3-preflight-*`; run 1 as `run1-od3-preflight-*`.
+- `39ca5de4`: the seven evidence commits were expanded to full SHAs. Linux
+  `benchmarks/domain_real_data/tests`: 33 passed in 28.17s.
+- Preflight run 3 at `39ca5de4` (/opt, clean before and after each tier, same commands):
+
+  | Tier | Result | Log sha256 | JUnit sha256 |
+  |---|---|---|---|
+  | FAST | **2 failed, 13532 passed, 174 skipped in 340.10s** | `82eea7e9…` | `7d198ba0…` |
+  | SCIENTIFIC | **2 failed, 14115 passed, 175 skipped in 428.76s** | `4e1d33a3…` | `b30e9010…` |
+
+  The only failures in both tiers are the two certificate self-checks that recertification
+  defers (`test_core_certificate.py::test_the_certificate_describes_this_tree`,
+  `::test_the_certificate_records_the_v1_relationship_truthfully`). There are 0 blockers.
+- The OD-3 scope now has four certified areas: `core`, `verdict_authority`,
+  `certification_control`, and `runtime_dependencies` (pyproject.toml).
+
+Not covered by this preflight: FAST on Python 3.11, the campaign and regression gates
+inside local_assurance, and the formal, v4 and trust mutation shards.
+Not run: D3 (`local_assurance prepare`), D4 (`local_assurance run`, about 3.5 h).
+
+## 2026-10-30 — Mind roadmap session: duplicate Stage-1 attempt discarded (failed approach)
+
+A session planned from a 2026-10-28 snapshot built a Gen1-Mind adapter for the Genesis-lite v0.2 pilot worlds
+(`benchmarks/genesis_lite_mind/`, outside the pinned files), unaware that EXC-2 (`mind_arm_v3.py`) and EXC-3 had
+already measured the same thing. Executed before discarding: `python -m pytest tests/genesis_lite -q -n 4 --dist loadfile`
+-> 315 passed, 8 skipped (Windows, .venv Python 3.11.15, HEAD `b622af5e` + the untracked adapter); a one-campaign
+isolated smoke run was VALID. The full dev run was stopped early; no results kept; files deleted. Lesson: check
+`git log` and ACTIVE_PLAN exceptions before resuming from a dated plan. The existing EXC-2 analysis (§4 d) already points at
+a richer hypothesis family as the next lever, which needs its own owner decision.
+
+## 2026-10-30 — EXC-4 Stage 2a: grammar enumeration baseline built; review CHANGES REQUIRED, fixes applied; H2 open
+
+Owner approved EXC-4 in chat ("Approve as drafted"); recorded in ACTIVE_PLAN before any code. Uncommitted, on HEAD
+`b622af5e6f86324ccc15bc26dc124c3556b7f2de`, Windows, `.venv` Python 3.11.15. New: `src/engcore/mind/grammar/`
+(dimensions, grammar, fit, evidence), `benchmarks/genesis_lite/arms_grammar_v3.py`; registered in `pilot_v3.py`, bound in
+`harness_v3.py` (`V3_FILES`, `SUBSTRATE_V3_FILES` closure, `LIBRARIES` + scipy). Gen1 `mind/minimal` and v0.2-pinned
+files untouched (`harness.code_identity()[1] == []` asserted by test).
+
+Tests executed (exit codes checked, no pipe; `--basetemp` outside the tree):
+- `python -m pytest tests/mind/test_grammar.py tests/genesis_lite/test_v03_grammar_arm.py -q` -> 55 passed.
+- `python -m pytest tests/genesis_lite tests/mind -q -n 4 --dist loadfile` -> 1261 passed, 8 skipped (before the review
+  fixes; re-run pending).
+- Mutation: making the arm pass all rows (hold-out included) to selection turned
+  `test_selection_sees_the_training_split_only` red; restored. Disabling the precision bar removes the H1 refusal (test).
+- FAST tier: started, then STOPPED (the tree was edited mid-run; result void). NOT RUN on the final tree yet.
+- `forge_check --changed --base HEAD --dry-run --list`: NARROWING REFUSED (new src package) -> whole FAST; new tests are
+  `certification_pinned` -> owner-run recertification needed (as for EXC-2's tests).
+
+forge-scientific-review (static, 2026-10-30): CHANGES REQUIRED. Fixed: H1 precision bar missing from the free-form gate
+(arm now applies `arms._gate`'s se bar with the covariate check); M1 score now uses the replicate-noise likelihood and
+refuses without it; M2 a fit reaching the exp clip is refused; M3 scipy recorded; L1 ledger counts eliminated/uncapped
+and a data-bound deterministic id; L2 iteration-capped fits counted; L3 duplicate names refuse. Recorded, not fixed: L4
+regime threshold df under-counted by BIC. OPEN (owner decision): H2 the grammar is five declared shapes, a strict
+subset of the operator/limit closure EXC-4 field 2 approved; docstring corrected. No pilot run.
+
+Failed approach: a fixed quantile grid for the regime threshold missed the switch (RSS 1.1 on noiseless data); replaced
+by an exact midpoint change-point search. Failed approach: finite-difference Jacobians made the nonlinear fits ~0.25 s
+each (pilot over the 45-min cap); analytic Jacobian (checked vs finite differences) + `max_nfev` 60 gave identical best
+RSS on two synthetic checks at ~3x speed.
+
+Later 2026-10-30: owner decided H2 in chat ("Five shapes, disclosed"); recorded in ACTIVE_PLAN EXC-4 field 7. Added
+`benchmarks/genesis_lite/expressibility_v3.py` (post-reveal expressibility by fit + the three contrasts; descriptive) and a
+consistency test (monomial-family laws must be EXPRESSIBLE_BY_FIT): `pytest tests/genesis_lite/test_v03_grammar_arm.py -k
+expressibility` -> 1 passed. One-campaign smoke of `pilot_v3.run_pilot` (grammar, monomial, careful; fixed test root,
+workers 1, Windows) -> 3/3 VALID, grammar ~1.9 s/campaign; the report ran end to end. Second FAST run STOPPED at ~37%
+(void) because WSL was running the owner's OD-3 `local_assurance` (mutation shards, load-sensitive); not interfered with.
+The Windows `.venv` lacks pysr/pysindy/botorch, so the pilot must run in WSL (`/opt/forge-mvp-20261028/.venv` has pysr
+2.7.2, pysindy 2.1.0, botorch 0.18.1) from a separate copy of this tree, after local_assurance ends. Pilot: NOT RUN.
+FAST on the final tree: NOT RUN.
+
+Re-review (forge-scientific-reviewer, static, 2026-10-30): CHANGES REQUIRED, one HIGH introduced by the H1 fix itself --
+the precision bar ran BEFORE the held-out beat-a-constant check, so on no_solution worlds (sigma 0.6-0.9) the arm could
+never answer `no_law` (careful/`_gate` do). Fixed: new `arms_grammar_v3.gate` follows `arms._gate`'s order (beat a
+constant -> precision AND lack-of-fit, covariate check on failure -> extrapolation). Also fixed LOW 1 (report refuses
+when run universes are not re-derived from the root), 2 (counts renamed), 4 (ledger docstring), 5 (non-converged chosen fit
+named in the rationale), 6 (CV test folds refuse a clipped exp argument), 7 (stale message), 8 (exp overlap disclosed).
+Recorded, not fixed: LOW 3 (tied boxes fall back to presentation order), 9 (sigma from <= 4 replicate pairs is noisy).
+`pytest tests/mind/test_grammar.py tests/genesis_lite/test_v03_grammar_arm.py -q` -> 61 passed. Mutation: disabling
+the beat-a-constant branch turned the new parity test (constant law, noise 0.7, budget 60, 3 seeds; careful answers
+no_law) red (3 failed); restored. Failed approach: placing a new refusal bar ahead of an existing gate instead of inside
+it in the same order changed the answers on control kinds; reproduce the reference gate's order and test parity.
+
+## 2026-10-30 — owner "apply the time-saving review": backup branch, plan records, drafts (EXC-4 pilot deferred)
+
+Executed, Windows `.venv` Python 3.11.15, tree = HEAD `a9ddbf274cc5d24a8f14236586d8bd94a2760fcb` + uncommitted EXC-4:
+- `python -m pytest tests/mind/test_grammar.py tests/genesis_lite/test_v03_grammar_arm.py -q -p no:cacheprovider
+  --basetemp <scratchpad>` -> 61 passed (exit 0).
+- `git push origin a9ddbf27...:refs/heads/backup/local-main-2026-10-30` -> new branch, verified by `git ls-remote`.
+  `main` not pushed; no PR.
+- `python docs/ai/check_docs.py` -> AI_DOCS: PASS (9 documents; syntax only).
+Not run: FAST, the EXC-4 pilot, commit of EXC-4. Reason: the owner's OD-3 `local_assurance run` (WSL, started by another
+session, on `a9ddbf27`) was running with load-sensitive mutation shards; EXC-4 is to be committed after the OD-3
+certificate child so `main` does not diverge from it.
+Added: ACTIVE_PLAN owner-direction section (§5.3 control-plane warning, about 49 % docs/control-plane by commit subject,
+ESTIMATE), `docs/work/templates/STEP_RECORD_TEMPLATE.md`, drafts `proposals/EXC5_PYSR_UNITS_BASELINE_DRAFT.md`,
+`proposals/EXC6_PUBLIC_BENCHMARK_COMPARISON_DRAFT.md` (PROPOSED, no code).
+
+OD-3 D4 outcome (observed 2026-10-30, read-only; run by another session in WSL `/home/dev_kaeem/forge-od3-b622af5e`):
+`local_assurance run --workers 4 --mutation-workers 2 --reuse` on `a9ddbf274cc5d24a8f14236586d8bd94a2760fcb` ->
+LOCAL_ASSURANCE: REFUSED, failed_gate `assurance_build`, SAFE_TO_PUSH: NO, failure record SHA-256
+`8c9f5ceb6e75fa551e52300b5332b0c133340b2b59e3e845379335d5df2547d3`. All 18 gates completed (fast311, fast312,
+scientific312, regression312, campaign312, formal/v4/trust mutation shards). Refusal: 19 distinct UNEXPECTED_SKIP node ids
+with no committed skip rule: the v0.3 baseline-arm tests (pysr/pysindy/botorch absent from the `.forge` 3.11/3.12 venvs)
+and `benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_bundle_rebuilds_byte_identically_and_static_audit_passes`.
+No certificate. Repair options (install the optional libraries into the assurance venvs, or a reviewed skip rule) are an
+owner decision; not attempted here.
+
+EXC-4 FAST (2026-10-30, WSL2 Ubuntu 24.04, `/opt/forge-mvp-20261028/.venv` Python 3.12.3, clean clone
+`/home/dev_kaeem/forge-exc4-e5af5f55` at `e5af5f55eafc1373d1bf934f8e4ca3e758f49e6b`, `PYTHONPATH=<clone>/src:<clone>`,
+engcore import verified from the clone, BLAS threads 1):
+`python tools/forge_check.py --changed --base a9ddbf274cc5d24a8f14236586d8bd94a2760fcb --workers 4` -> exit 1:
+3131 passed, 2 failed, 2 skipped (92 s). Failed: `tests/test_core_certificate.py::test_the_certificate_describes_this_tree`,
+`::test_the_certificate_records_the_v1_relationship_truthfully` (stale certificate; OD-3 refused above, so no new
+certificate exists). No other failure. Then the EXC-4 pilot started:
+`python -m benchmarks.genesis_lite.pilot_v3 --out /home/dev_kaeem/exc4-pilot-v0_3-dev-grammar-2026-10-30 --arms all
+--workers 4 --deadline-seconds 2700 --budget-fractions 1.0` (fresh root from `secrets`, generated after the code commit).
+
+EXC-4 pilot (2026-10-30, same environment as the FAST run above): exit 0, 2520/2520 campaigns, 0 worker failures, all 21
+arms 120/120 VALID, 1085.5 s. Report: `benchmarks/genesis_lite/pilot_results/v0_3-dev-grammar-2026-10-30/README.md`
+(DEVELOPMENT_DESCRIPTIVE). Discoverable mean credit: grammar_enumeration 0.275, mind_full 0.200, careful 0.150,
+monomial 0.092, pysr 0.008; grammar - monomial outside the monomial family +0.304 (n 69, 18 better / 0 worse); 0 false
+laws on controls for grammar, careful, mind_full. Failed approach: `pilot_v3` CLI keeps only the root commitment, so the
+post-reveal per-world expressibility (`expressibility_v3`, an EXC-4 exit item) cannot be computed for this run;
+contrasts (i)-(iii) were computed from the records alone. A pilot that reveals its root after sealing must be decided
+first (owner), and the reveal file has to be written before the run, not reconstructed.
+
+EXC-4 second pilot (owner "Second pilot", 2026-10-30; code `a5c343f01f7829a030ca87ab146ce273b6ac4017`, same environment):
+sealed root file (0600, outside the tree) passed to `run_pilot(root=...)` by an out-of-tree driver. Failed approach: the
+first attempt's driver had no `if __name__ == "__main__"` guard, so every spawn-started worker died at bootstrap
+(2520 WORKER_FAILED in 1.8 s, BrokenProcessPool); no campaign ran, so the same root was reused. Rerun: exit 0,
+2520/2520, all 21 arms 120/120 VALID, 1079.0 s. `python -m benchmarks.genesis_lite.expressibility_v3 --runs ... --root-file
+... --out ...` -> exit 0, every universe re-derived. Discoverable: 89 EXPRESSIBLE_BY_FIT / 31 NOT_FOUND_BY_FIT. Mean
+discoverable credit grammar 0.350, mind_full 0.292, pysindy 0.217, careful 0.183, monomial 0.175, pysr 0.000;
+0 false laws on controls (grammar, careful, mind_full). Report: `benchmarks/genesis_lite/pilot_results/
+v0_3-dev-grammar-2026-10-30b/README.md`. EXC-4 exit condition: pilot report, contrasts and expressibility recorded;
+closure is the owner's.
+
+EXC-4 CLOSED 2026-10-30 by the owner ("Close EXC-4"); recorded in ACTIVE_PLAN. No code change.
+
+## 2026-10-30 — owner "Install the libraries" (OD-3 skips): findings, OD-3 not rerun
+
+- pysr 2.7.2, pysindy 2.1.0, botorch 0.18.1 (juliacall 0.9.36, torch 2.15.0+cpu) were already installed in
+  `/home/dev_kaeem/forge-od3-b622af5e/.forge/venvs/3.11` (17:03) and `/3.12` (17:14), after the refusal, by the other
+  OD-3 session. Not reinstalled.
+- Executed (clean clone of `ea3cc473db0dff7f28382a43c25bec955d6cdb12`, those venvs, `-p no:cacheprovider -rs`):
+  `pytest tests/genesis_lite/test_v03_baseline_arms.py tests/genesis_lite/test_v03_baseline_arms_e2e.py
+  tests/genesis_lite/test_v03_budget_cap.py::test_the_contrasted_arms_keep_to_the_cap` -> 3.11: 16 passed; 3.12: 16 passed;
+  no skips. These cover the 18 v0.3 UNEXPECTED_SKIP entries of the refused run.
+- Root cause: `tools/certification/local_assurance.py` INSTALL is `.[dev,mcp,oracles]` (also every job in
+  `.github/workflows/recertify-hardened-core.yml`); the `genesis-baselines` extra is never installed, while pyproject
+  states those tests skip on a bare install by design, and skip admission has no rule for them. A fresh `prepare` would
+  reproduce the skips. Not changed: choosing between installing the extra in local + CI assurance (Julia download per
+  job) and a declared conditional skip rule is an owner decision.
+- Remaining blocker: `benchmarks/battery_rediscovery_v3/tests/test_v3_pipeline.py::test_bundle_rebuilds_byte_identically_and_static_audit_passes`
+  skips because the raw archives (FORGE_DATA_ROOT, D:/forge-data) are absent on this host; no library fixes it. The other
+  session drafted a skip rule for it and reverted it (its scratch `battery_undo.sh`); no reason is recorded. With this skip
+  open, an OD-3 rerun (about 3.5 h) would refuse again at `assurance_build`, so it was not started.
+
+## 2026-10-30 — owner: declared skip rule for the battery v3 raw-archive rebuild only
+
+Owner chose a declared conditional skip over downloading 21.8 GB (of which 24 CSVs, about 265 MB, are used).
+`tools/certification/skip_admission.py`: rule `battery-v3-raw-archive-rebuild` (exact node id, exact reason
+"needs the local raw archives", `why` stated), and `benchmarks/` added to the rule path prefixes (tests/, providers/,
+flagships/ since `dafa87c4` 2026-10-08, before benchmark tests skipped in the gates; one exact `.py` file still required).
+Probably why the other session's earlier draft was reverted: its rule path failed that prefix check (inferred, not
+recorded there). `INSTALLED_EXTRAS` unchanged (pinned by test).
+Red first (Windows `.venv` 3.11.15): `pytest tests/test_skip_admission.py -k "battery_v3 or outside_the_collected"` ->
+2 failed, 3 passed. Green: `pytest -n 4 --dist loadfile tests/test_skip_admission.py tests/test_recertification_scope.py
+tests/test_certification_control_plane.py` -> 230 passed.
+
+OD-3 rerun 1 on `5e4cfdcd207487c3cd4ce46a70efef54dac1d33e` (WSL, owner's OD-3 checkout, 18:28-18:33): REFUSED at fast311,
+13576 passed / 2 failed / 174 skipped. Failed: `benchmarks/domain_real_data/tests/test_domain_real_data.py::
+test_synthetic_data_is_never_called_measured` and `::test_current_repository_inventory_has_no_unreviewed_provenance`:
+the seven EXC-4 pilot result JSON files had no provenance record. Failure record SHA-256
+`10a437457ea4ce4ed403d7949050bf1ccd88e666351cd4178de9d2d3d7932f58`. Failed approach: the EXC-4 FAST ran at `e5af5f55`,
+before the pilot result files existed, so it could not catch this; new committed result files need their provenance
+record in the same commit. Fix: seven DERIVED/RECORDED_COMPUTE_RESULT records in
+`benchmarks/domain_real_data/CURRENT_PROVENANCE.json` (format of the earlier pilot records, producing commits
+`e5af5f55` / `a5c343f0`). `pytest benchmarks/domain_real_data/tests/test_domain_real_data.py` (Windows `.venv`) -> 14 passed.
+
+## 2026-10-30 — Blindfold Step 1 gap closure, Session A: A0, A3, A4 and the owner checkpoint
+
+Start `7d24c9485043ab31e49601c33a9334c1e6a44368` (another session had committed the SELF_ADMINISTERED custodian
+decision). An OD-3 `local_assurance run` on `921f8d26` was running in WSL (started 18:43), so no tier, pilot or
+measurement ran. Scope recorded in ACTIVE_PLAN, with EXC-5 copied in (D2).
+
+Executed (WSL Ubuntu 24.04, system `python3`, `nice -n 19`):
+- `python3 docs/work/proposals/power_from_pilot.py /home/dev_kaeem/exc4-evidence/runs-b.jsonl` -> exit 0. The input
+  SHA-256 `8f72b352...9288588` equals the recorded `runs.jsonl.sha256`. Unit = one campaign (6 universes). All 720
+  universe ids per arm were distinct, so n = 120 independent units. Formal plan in code: 2400 units per arm. Median
+  paired sd 1.066. mind_full - grammar = +0.096 per unit. The three Mind ablations stay within 0.07 of mind_full.
+- `python3 -I docs/work/proposals/power_typeI_check.py 400` -> exit 0, 7.4 s. Hoeffding and empirical-Bernstein reject
+  at 0.0000 under every null law. Sign-flip rejects at 0.105 under a skewed mean-zero null (n = 120).
+- Results: `docs/work/proposals/BLINDFOLD_V04_POWER_AND_INFERENCE_DRAFT.md`. Static design options:
+  `BLINDFOLD_V04_DESIGN_OPTIONS_DRAFT.md`. Read-only inventories (two Explore subagents) of the v0.3 roster and of the
+  isolation path; their facts are quoted there.
+
+Owner decisions (chat): D9 empirical-Bernstein; D10 FDA-06 A+B; D11 one isolated process per universe; D12 Codex;
+D14 roster and scope. D13: A was chosen first, then withdrawn, and C chosen.
+
+Failed approach: the revision-2 session prompt assumed 30 formal units. The code's formal plan has 2400. Read
+`FORMAL_CAMPAIGNS` and `master_seed` before sizing power. Failed approach: recommending FDA-22 option A (extended
+region for every kind) without reading the gated arms. Every gated arm refuses on an extended region, so A would have
+made all of them refuse every world. Read the consumers of a card field before changing its distribution.
+
+Isolation facts that set A2's scope (read-only):
+- every v0.3 arm runs in-process (`pilot_v3._work` passes no `isolation`);
+- `run_isolation_demo` needs root and serves only the v0.2 `EscrowService` with storage, which `EscrowServiceV3`
+  refuses;
+- no v0.3 arm has ever run through `isolation.py`;
+- `scan_for_leaks` does not cover the root file, master seeds, presentation keys, other campaigns' outputs or
+  `pilot_results`;
+- the YAMA test assumes a non-root operator, while the isolated launcher requires root.
+
+### 2026-10-30 — Session A: `analysis_v4` decision contract (D9, D10, D13, D14)
+
+New `benchmarks/genesis_lite/analysis_v4.py` and `tests/genesis_lite/test_analysis_v4.py`. v0.2 rule structure, with
+the following changes:
+- empirical-Bernstein bounds and p-values (bisection, conservative side);
+- the FDA-06 cap on every law kind, from a per-universe representation verdict (refuses when one is missing);
+- Clopper-Pearson representation-limited cells;
+- per-kind and per-presentation non-inferiority;
+- no screening (a hole blocks the claim);
+- v0.3 credit validation (`indistinguishable_unresolved` keeps only its penalty);
+- descriptive strata by kind, region tell and representation;
+- `multiplicity="holm_family"` (D9) and `"iut_all"`. The intersection-union test is valid at alpha for "beats every
+  comparator" without correction; it is an alternative to put to the owner, not adopted.
+
+Executed, Windows `.venv` 3.11:
+- `python -m pytest tests/genesis_lite/test_analysis_v4.py -q -p no:randomly -p no:cacheprovider` -> 34 passed.
+- Guard mutations (scratch `mutate_analysis_v4.py`, file restored and verified) -> 6/6 KILLED: cap on discoverable only
+  (the FDA-06 regression), no kind non-inferiority, no small-sample term, no presentation check, no coverage block,
+  credit/outcome unchecked.
+
+Not red-first: the module was written before its tests. The mutations stand in as the fail-first evidence. Failed
+approach: the first control-loss and presentation tests could not fail, because superiority already failed in them;
+each guard needs a fixture where every other component holds.
+
+Smoke on the real EXC-4b records (`/opt` venv, WSL, nice): `world_credits` accepts all 21 arms × 120 world sets
+(outcomes include `indistinguishable_unresolved`). DEVELOPMENT finding: on `ordinary_extension` regions, discoverable
+and spurious_correlate credit is 0.000 for grammar_enumeration, mind_full and careful (they refuse to extrapolate),
+so about half of the law worlds carry no discriminating information for those arms. It is disclosed in the strata,
+and it is a Step 2 / Stage 2b design input (correct extrapolation is where discovery shows).
+
+### 2026-10-30 — Session A: v0.4 arms and the per-universe OS-isolated proposer path (A1, A2)
+
+- `arms_v4.py`: `random_grammar` (10 structures drawn from the five-shape grammar, same selection and gate) and
+  `pysr_units` (EXC-5: ln y on settable inputs, card units renamed to SI symbols as `X_units`, Pareto choice on a
+  training-validation part, grammar gate with the precision bar; method failures raise, so they score inadmissible).
+  - Windows `.venv`: `pytest tests/genesis_lite/test_v04_arms.py` -> 7 passed, 3 skipped (no sympy).
+  - WSL `/opt` venv: 9 passed, 1 deselected (the missing-PySR test needs PySR absent).
+  - No PySR run yet.
+  - Failed approach: a "same seed, same result" determinism test reran one universe. The multiplicity ledger
+    correctly refuses a second ledger for the same campaign id, so the test now asserts that refusal.
+- `isolated_host.py` + `harness_v4.py`: one fresh proposer process per universe (D11). It speaks the
+  `proposer_host` protocol, runs under unshare (mnt/pid/net/ipc/uts) and setpriv (uid 65534, no capabilities,
+  no_new_privs), and sees /opt only as a whitelist: a tmpfs, with the code tree and the venv bound back read-only.
+  /home, /root, /mnt, /var/tmp, /srv and the tree's `pilot_results` are covered by tmpfs, and /tmp is private. Each
+  process is verified from outside through /proc before any card. The v0.3 campaign flow is reused unchanged.
+- Executed as root in WSL, from the clean clone `/opt/forge-v4-fa0ae0773448` at
+  `99bea4fe7b10cf24e7f11e390c5bd0ca8455bbe3`, `/opt/forge-mvp-20261028/.venv` (3.12.3), nice:
+  `python -m pytest tests/genesis_lite/test_v04_isolation.py -q -p no:randomly -p no:cacheprovider` -> 14 passed,
+  2 skipped (the off-Linux test and the not-under-/opt test), three consecutive runs. Covered:
+  - outside verification;
+  - a world-readable secret beside the tree under /opt neither listed nor read, and no other checkout visible;
+  - the positive control: exposing that directory makes the secret readable;
+  - no outbound network, no visible or readable operator process;
+  - the observe relay works;
+  - a full `careful` campaign through `run_one_v4` is VALID with 6 verified processes.
+- Failed approaches, each found by the first root run:
+  1. A hide nested under an already hidden path (/root/x under /root) aborts the launch, because the mount point no
+     longer exists. Hides are now collapsed to a minimal set.
+  2. A blacklist of hidden paths left another checkout's `pilot_results` under /opt readable, so /opt became a
+     whitelist.
+  3. A heredoc Python patch failed in Git Bash on Windows (quote parsing). Patches are now files (lessons, trap 8).
+- Boundary level: these tests exercise the mechanism on one host and one config (WSL2, umask=077 drvfs). Nothing here
+  sets or claims a security level. The formal run's record must carry its own per-process verifications.
+- An OD-3 run was active throughout; every run above was single-file and niced.
+
+### 2026-10-30 — Session A: forge-scientific-review of the v0.4 path and its fixes
+
+- Review (forked, read-only, static) of `analysis_v4`, `arms_v4`, `isolated_host`, `harness_v4`, `pilot_v4`,
+  `reveal_v4` and their tests: **CHANGES REQUIRED**, 2 HIGH, 5 MEDIUM, 5 LOW. All addressed in
+  `8fbcb710dd583b37d7d6fc52556abf0fd0f50005`:
+  - (1 HIGH) private /dev/shm, /dev/mqueue and /tmp per process, /run and /var/crash covered, all checked from
+    outside;
+  - (2 HIGH) per-kind and per-presentation non-inferiority as an IUT against every non-adversarial arm;
+  - (3, 4, 10) new `decide_v4.py`: roles from the frozen roster, grid from the committed task list, runs digest,
+    reveal root, and per-record isolation/identity/tier provenance;
+  - (5) infrastructure failures make the run INVALID_BENCHMARK;
+  - (6) the identity covers reveal_v4, expressibility_v3, decide_v4 and isolation.py;
+  - (7) `y_units="1"` and a structured `dimensionally_consistent` flag;
+  - (8) reveal recomputes the monomial flag and refuses disagreement;
+  - (9) no finite equation raises;
+  - (11) unknown or missing presentations refuse;
+  - (12) random_grammar draws from the capped set.
+  - Open for the owner (12b): the control-kind non-inferiority margin 0.10 against "no loss allowed" (P-1).
+- Finding 1 REPRODUCED. A root integration mutation removed the private /dev/shm and the /run cover, and the
+  persistence test found marks in `/dev/shm`, `/run/lock`, `/run/shm` and `/var/crash`. Without the fix, a later
+  proposer could read state left by an earlier one. The marks the mutant left on the host were removed.
+- Executed:
+  - Windows `.venv`: v0.4 test files -> 66 passed, 13 skipped; `test_v04_decide.py` -> 8 passed.
+  - Fix-reverting mutations (scratch `mutate_review.py`) -> 9/9 KILLED: F1, F2, F3, F4, F5, F6, F8, F10, F11.
+  - WSL root, `/opt/forge-v4-fa0ae0773448` at `8fbcb710`, `/opt` venv, nice: all five v0.4 test files -> 84 passed,
+    3 skipped (off-Linux, not-under-/opt, PySR-absent). The F1 integration mutant was KILLED.
+- Static review is not test execution. These tests do not validate the security boundary on any other host.
+
+### 2026-10-30 — OD-3 rerun 2: LOCAL_ASSURANCE PASS on 921f8d26 (certificate child 44ff750f, not on main)
+
+- Source: `921f8d26df920d209ee07faf11f435d88f4a1023` in the isolated WSL clone `/home/dev_kaeem/forge-od3-b622af5e`
+  (clean before the run). Command: `.forge/venvs/3.12/bin/python -m tools.certification.local_assurance run --repository
+  sharq-labs/forge --python311 .forge/venvs/3.11/bin/python --python312 .forge/venvs/3.12/bin/python --workers 4
+  --mutation-workers 2 --reuse` (18:39:42 to 22:55:57 +02:00). Result: `LOCAL_ASSURANCE: SOURCE_PASS`;
+  SKIP_ADMISSION skipped 523, accepted 523, unexpected 0; CLAIM "CORE ASSURANCE PASSED WITH DECLARED OPTIONAL PROVIDERS
+  UNAVAILABLE AND DECLARED CONDITIONAL SKIPS"; trust mutations survived 0; receipt `e9cb325f…c00c5a`.
+- Certificate child commit `44ff750fc503ac062b2b4e309446e58d48cf9335` ("certification: recertify hardened core",
+  `certification/current_core_v2.json` only) made in that clone. Then `local_assurance verify --python312
+  .forge/venvs/3.12/bin/python`: 22 certificate self-checks passed; `LOCAL_ASSURANCE: PASS`, receipt `9574754b…1765c`,
+  `SAFE_TO_PUSH: YES`. Logs: `/home/dev_kaeem/forge-od3-evidence/run.log`, `verify.log`; evidence under
+  `.forge/assurance/921f8d26…/`.
+- Scope limit: the certificate binds `921f8d26`. Local `main` has since moved 19 commits on (`7d24c948`..`5d9c362c`,
+  including v0.4 Genesis-lite source changes from another session), so it does **not** certify current main. `44ff750f`
+  is not pushed, not merged and not in this checkout. Integrating it (or recertifying the new HEAD) is an owner decision.
+
+### 2026-10-30/31 — OD-3 on the new HEAD: pre-checks, three blockers fixed, run 3 started
+
+- Owner, in chat: "Recertify new HEAD", then "Add the 9 rules".
+- Pre-check before the 4 h run, in the WSL OD-3 clone at `3ae12282`: `.forge/venvs/3.12/bin/python -m pytest -q
+  -p no:cacheprovider -n 4 --dist loadfile benchmarks/domain_real_data/tests tests/test_skip_admission.py` -> 2 failed
+  (`test_synthetic_data_is_never_called_measured`, `test_current_repository_inventory_has_no_unreviewed_provenance`).
+  - Cause: `docs/work/proposals/genesis_lite_v0_4.CANDIDATE.json` had no provenance record.
+  - Fix: a `DERIVED / PREREGISTRATION_DOCUMENT` record, NOT FROZEN (`5f03c7b7`).
+- Pre-check with `tests/genesis_lite` added, at `5f03c7b7`: 1 failed
+  (`test_every_pilot_results_directory_of_the_tree_is_hidden`).
+  - Cause: on any Linux checkout under `/home` (including a GitHub runner), `hidden_paths` correctly refuses, because
+    `/home` is a default hide that contains the code tree. The test sits in the "every platform" section.
+  - Fix: test-only. Monkeypatch away the one default hide that holds the tree, so the per-directory hides are still
+    checked (`ff12119e`); 11 passed under `/home`.
+  - Failed approach: a `pytest.skip` for that case. It would have been an unadmitted skip in OD-3. Replaced by the
+    monkeypatch.
+- 9 v0.4 environment skips had no admission rule. Declared rules (owner "Add the 9 rules"), each exact test plus exact
+  reason, plus adversarial tests (`1979907f`):
+  - 7 isolation integration tests and 1 pilot test: needs Linux, root and a tree readable by uid 65534;
+  - the PySR-absent path.
+  - Each `why` states the skip is never evidence of isolation.
+  - Pre-check: `pytest -q -n 4 --dist loadfile tests/test_skip_admission.py tests/genesis_lite
+    benchmarks/domain_real_data/tests` -> 550 passed, 9 skipped.
+- OD-3 run 3 started 2026-10-30 23:54:36 on `1979907f789a50987a14bdf9d1cfcc17eeede06c` (same command as run 2). The
+  921f8d26 logs were kept as `run-921f8d26-pass.log` / `verify-921f8d26-pass.log`; the certificate child is kept on
+  branch `od3-cert-921f8d26` in that clone. Result pending.
+
+### 2026-10-31 — v0.4 re-review (forge-scientific-review, static) and fixes H1, H2, M1-M3, L1-L4
+
+- Re-review of Session A's fixes (forked, read-only, static, at `1979907f`): **CHANGES REQUIRED**. Findings 1-12 fixed
+  or partially fixed. New findings:
+  - **H1:** `decide_v4` trusted a supplied reveal; a hand-written all-represented reveal removes the D10 cap.
+  - **H2:** no identity, tier or freeze check at decision time.
+  - **M1:** incomplete runs and non-VALID records were not blocked, against the candidate's run rules.
+  - **M2:** an unknown outcome string scored 0, which beats inadmissible's -1.
+  - **M3:** the kernel user keyring is shared by every uid-65534 process.
+  - **L1-L4:** smaller binding gaps, and no tests for fixes 7, 8, 9.
+- Fixed in `0fd4376a` and `0af67b4b`:
+  - `decide(out_dir, root_file, candidate)` checks the root against the commitment, recomputes `reveal_v4.represented`
+    and uses only that; a supplied reveal must equal it.
+  - It refuses when the current `development_identity_v4` differs from the committed one, when the v0.2 pin changed,
+    or for a formal run without a matching frozen preregistration. A development run is DEVELOPMENT_ONLY with
+    `lift_claimed=False`.
+  - It refuses deadline misses, incomplete runs, any non-VALID record (any arm), missing bound summary keys, and records
+    not bound to exactly one committed task.
+  - `analysis_v4.OUTCOMES` is the closed evaluator vocabulary. An evaluator outcome the kind's table does not list
+    keeps the frozen 0 (`EvaluatorConfig`: unlisted outcomes score 0); any other string refuses.
+  - The proposer runs in a fresh user namespace after the uid switch
+    (`unshare --user --map-root-user -- setpriv --inh-caps=-all --bounding-set=-all`), and the outside verification
+    requires `user` among the private namespaces. The process is uid 0 only of its own empty namespace; outside it is
+    65534 with every capability 0 (CapBnd too) and NoNewPrivs.
+  - A dead pipe or other OSError during relay is an infrastructure failure (L2).
+- M3 REPRODUCED before the fix, as root in WSL (`6.18.33.2-microsoft-standard-WSL2`), with a ctypes `add_key` /
+  `keyctl` probe: a key written by one uid-65534 process (unshare mnt/pid/ipc + setpriv) was read by a later,
+  sequential process (`b'universe-secret'`). With a per-process user namespace, the later process read None.
+  Persistent keyrings: EOPNOTSUPP on this kernel. The probe keys were cleared (`keyctl clear @u`).
+- Failed approach: `unshare --user --map-user=65534` run by uid 65534 isolates the keyring but leaves CapBnd full,
+  which `verified()` rightly refuses, and setpriv cannot drop it there.
+- Failed approach: root-created `--map-users=65534:65534:1` needs `newuidmap` (package uidmap, not installed;
+  installs are out of scope).
+- Found while testing fix 9: a front equation that sympifies to `zoo` crashed `lambdify` with a `KeyError` before the
+  finiteness check, so one bad equation crashed the universe. Now dropped like a nan equation (`arms_v4`).
+- Executed:
+  - Windows `.venv`: `python -m pytest -q -p no:cacheprovider tests/genesis_lite/` -> 432 passed, 24 skipped
+    (platform and sympy skips).
+  - Fix-reverting mutations (scratch `mutate_rereview.py`, 15 mutants over decide_v4, analysis_v4 and isolated_host)
+    -> 15/15 KILLED.
+    - Failed approach: the first L3 mutant, `False and A or B`, disabled only A and SURVIVED; replaced by removing the
+      raise.
+  - Fix 8 reverted (`reveal_v4` line 52 -> `if False:`) -> the new reveal test FAILED; restored.
+  - WSL `/opt` venv (non-root, niced): `python -m pytest -q -p no:cacheprovider -p no:randomly
+    tests/genesis_lite/test_v04_arms.py` -> 15 passed, 1 skipped (PySR installed).
+  - WSL root, clean clone `/opt/forge-v4-fa0ae0773448` at `0af67b4bd9f7846bca59c66719a793f4a7a3a044`, niced, three
+    consecutive runs: `python -m pytest tests/genesis_lite/test_v04_isolation.py tests/genesis_lite/test_v04_pilot.py
+    -q -p no:randomly -p no:cacheprovider` -> 31 passed, 2 skipped each time.
+  - M3 integration mutant (no user namespace, outside check blinded) -> the persistence test FAILED with
+    `{'found': ['keyring:@u']}`; the clone was restored clean and the keyring cleared.
+- Boundary: one host and one config; no security level is claimed. Static review is not execution. The v0.4 candidate
+  preregistration is now stale (its identity moved) and must be rebuilt.
+- Not done: a fresh review of these fixes.
+- OD-3 run 3 was active throughout; every run above was single-file or single-directory and niced.
+
+### 2026-10-31 — second v0.4 review of the fixes and its fixes (H-a, M-a, M-b, M-c, M-d test, LOW)
+
+- Review (forked, read-only, static) of `1979907f..0af67b4b`: **CHANGES REQUIRED**, 0 BLOCKER. Findings:
+  - **H-a:** `decide` let the caller pick `iut_all`, against D9.
+  - **M-a:** the session keyring (`@s`) is inherited across the userns.
+  - **M-b:** a proposer can create a nested user namespace with full capabilities in it.
+  - **M-c:** `verified()` accepted missing namespace and capability keys.
+  - **M-d:** decide tests stub the real reveal; the candidate registration path is missing.
+  - **M-e:** crash classification vs rerun loophole.
+  - **LOW:** `_BOUND` gaps, a TypeError on a malformed task.
+- Probes as root in WSL before the fix:
+  - nested `unshare(CLONE_NEWUSER)` inside the proposer's namespace SUCCEEDED (`max_user_namespaces` 2147483647
+    there);
+  - `@s` was not shared under `wsl -u root`, because there is no PAM session. It would be under a launcher that holds
+    a session keyring, and the integration test now creates exactly that condition.
+- Fixed in `5d4e4760` and `027e0088`:
+  - `decide` has no multiplicity parameter; Holm is fixed (`decide_v4.MULTIPLICITY`).
+  - Each launched child joins a fresh anonymous session keyring (`preexec_fn`).
+  - Root of the proposer's own namespace writes `max_user_namespaces=0` before the second capability drop, so a nested
+    namespace fails (ENOSPC).
+  - `verified()` requires exactly the six namespaces and the five capability sets; provenance requires each check's
+    hides to equal the committed hides.
+  - `_BOUND` adds `tree_dirty`, `v0_2_pin_changed`, `proposer_env`, `exposed` and `hidden`; a formal run from a dirty
+    tree or with a moved pin refuses; a malformed task refuses.
+  - New decide test through the real `reveal_v4.represented` on worlds the root derives.
+  - New attack arm `nested_namespace`; the persistence attack also probes `@s` while the launcher holds a session
+    keyring.
+  - The new root-only test is added to the declared skip rule `genesis-v04-isolation-needs-root` (same reason).
+- M-e and the candidate registration path are recorded in ACTIVE_PLAN as OWNER_DECISION_REQUIRED (D15, M-d), not
+  implemented.
+- Executed:
+  - Windows `.venv`: `pytest -q tests/genesis_lite/` -> 440 passed, 25 skipped; `pytest -q tests/test_skip_admission.py
+    tests/genesis_lite/test_v04_isolation.py` -> 117 passed, 8 skipped.
+  - WSL root, clean clone `/opt/forge-v4-fa0ae0773448` at `5d4e47608ff1d12916a0829a49d94eac67960adf`, niced, three
+    consecutive runs: `pytest tests/genesis_lite/test_v04_isolation.py test_v04_pilot.py test_v04_decide.py -q
+    -p no:randomly -p no:cacheprovider` -> 67 passed, 2 skipped each time.
+  - At `027e008822e38d3f7b3c16aa6e383c19bc00c6b4` (scratch `mab_mutants.sh`, as root): baseline 2 passed.
+    - M-b mutant (no `max_user_namespaces=0`): the nested-namespace test FAILED (`nested_user_namespace: True`;
+      `/home` still could not be unmounted, because the mounts are locked).
+    - M-a mutant (no fresh session keyring): the persistence test FAILED (`found: ['keyring:@s']`).
+    - The file was restored byte-identical to HEAD.
+- Boundary: one host and one config; no security level is claimed. The candidate preregistration stays stale until it
+  is rebuilt.
+
+### 2026-10-31 — OD-3 run 3 on 1979907f: PASS
+
+- Clone `/home/dev_kaeem/forge-od3-b622af5e` (WSL) at `1979907f789a50987a14bdf9d1cfcc17eeede06c`.
+  `scratchpad/od3_rerun.sh` ran `local_assurance run --repository sharq-labs/forge --python311 .forge/venvs/3.11/bin/python
+  --python312 .forge/venvs/3.12/bin/python --workers 4 --mutation-workers 2 --reuse` from 2026-10-30T23:54 to
+  2026-10-31T04:03 (+02:00).
+  - Result: `LOCAL_ASSURANCE: SOURCE_PASS`. `SKIP_ADMISSION: skipped 550, accepted 550, unexpected 0`.
+  - Receipt `bd6e26d068004a9e9bc4d3b59986e8d2d67d03f7d3ccaa12a799defd0cebea6a`.
+  - Claim: "CORE ASSURANCE PASSED WITH DECLARED OPTIONAL PROVIDERS UNAVAILABLE AND DECLARED CONDITIONAL SKIPS".
+- Certificate child commit `1c45f51b29c4677b587f2193a4779fd207d1f458` ("certification: recertify hardened core"), in
+  the clone only.
+  - `local_assurance verify --python312 .forge/venvs/3.12/bin/python`: 22 certificate self-checks passed.
+  - Result: `LOCAL_ASSURANCE: PASS`. Receipt `e4ec3eb76bbab65bc0910489d22c4963a0272a243c5514ef5bf096aee6375e55`.
+- Scope: this certificate binds `1979907f`, not the later fixes (`5d4e4760`, `027e0088`, `f2e49bd2`). The final OD-3
+  must run on the candidate SHA (Session B). Not pushed; not merged.
+- Failed approach: `git commit` in the WSL clone failed with "empty ident name" (no git identity in WSL). Pass the
+  identity per command with `git -c user.name=... -c user.email=...`, taken from the Windows checkout's config, rather
+  than writing a global config.
+
+### 2026-10-31 — G7 / EXC-5 exit: isolated PySR development pilot (descriptive)
+
+- Staging, as root:
+  - copied the Julia depot to `/opt/julia-depot-20261031` (675 MB, root-owned, `a+rX,go-w`, `logs/` dropped);
+  - updated the clean clone `/opt/forge-v4-fa0ae0773448` to `85fe073f6b3355977983cd1285a6ebec3dc8c6d4` (clean tree).
+- Smoke runs (one `pysr_units` campaign, root `/root/gl-g7-20261031040859`, development only):
+  - Failed approach: the driver imported the venv's old `engcore` (`No module named 'engcore.mind.grammar'`). Fix:
+    put the tree's `src` on `PYTHONPATH` for the driver (the proposer runs `python -I`).
+  - Failed approach: inside isolation every PySR universe was `inadmissible`, because juliapkg wrote
+    `/opt/forge-mvp-20261028/.venv/julia_env/lock.pid` and the venv is read-only there (`PermissionError`). Fix: pass
+    `PYTHON_JULIACALL_PROJECT=<venv>/julia_env` and `PYTHON_JULIACALL_EXE=<venv>/julia_env/pyjuliapkg/install/bin/julia`.
+    With both set, juliacall skips juliapkg. Also pass `JULIA_DEPOT_PATH=/tmp/jdepot:/opt/julia-depot-20261031`
+    (private writable first entry, read-only copy second), `PYTHON_JULIAPKG_OFFLINE=yes`, `JULIA_NUM_THREADS=1`, and
+    `--expose /opt/julia-depot-20261031`. After this the campaign was VALID, at about 136 s per PySR universe.
+- Pilot (scratch `g7_pilot.sh`):
+  - Command, as root: `PYTHONPATH=/opt/forge-v4-fa0ae0773448/src nice -n 10 python -m benchmarks.genesis_lite.pilot_v4
+    --root-file <fresh 0600 dev root> --out /root/gl-g7pilot-20261031042032/out --arms pysr_units pysr_symbolic
+    grammar_enumeration --campaigns 2 --seeds 0 --workers 4 --deadline-seconds 6600 --env <the variables above>
+    --expose /opt/julia-depot-20261031`.
+  - Result: 24/24 completed, 0 not run, 3733 s. `runs.jsonl` sha256
+    `420f6da37dd7111da17b4e1ff7ce7e81d034ba75c9446da9d7b58095a1779004`.
+- Descriptive per arm (8 campaigns each, 2 campaigns x 4 presentations):
+
+  | arm | total credit | discoverable law_pass | median campaign wall |
+  |---|---|---|---|
+  | `grammar_enumeration` | 29.0 | 4/8 | 11 s |
+  | `pysr_units` | 23.0 | 2/8 | 845 s |
+  | `pysr_symbolic` | 16.5 | 0/8 | 815 s |
+
+  - The units check passed in all 37 universes where `pysr_units` fitted.
+  - `pysr_symbolic` reported `confounded` on 4/8 spurious-correlate worlds.
+- EXC-5 exit rule: discoverable credit is above 0 after one bounded attempt, so `pysr_units` is **not**
+  `NOT_QUALIFIED`. No tuning was done. This is development and descriptive only: no lift or superiority claim, no
+  formal tier.
+- Cost signal (not yet the G10 measurement): a PySR campaign took about 14 min at 4 workers. Extrapolating to the
+  formal grid (2,400 campaigns per arm) gives about 140 h per PySR arm at 4 workers. This is an extrapolation, not a
+  measurement.
+- Open for the preregistration: the PySR proposer environment (the variables and exposure above) must be fixed by the
+  preregistration, not left to the operator.
+
+### 2026-10-31 — G10 isolated cost rung, the formal-grid estimate, and the v0.4 candidate rebuild
+
+- G10 (scratch `g10_cost.sh`), as root in the clean clone `/opt/forge-v4-fa0ae0773448` at
+  `85fe073f6b3355977983cd1285a6ebec3dc8c6d4`, on a fresh development root:
+  - Command: `PYTHONPATH=/opt/forge-v4-fa0ae0773448/src nice -n 10 python -m benchmarks.genesis_lite.pilot_v4
+    --root-file <fresh 0600 dev root> --out /root/gl-g10cost-20261031052451/out --campaigns 3 --seeds 0 --workers 4
+    --deadline-seconds 13800`, with the G7 PySR environment and exposure. All 19 roster arms, 3 campaigns x
+    4 presentations.
+  - Result: 228/228 VALID, 0 not run, elapsed 4608 s. Summed campaign wall 18261 s, so packing efficiency 0.991.
+    `runs.jsonl` sha256 `1312ac47ff2f5fabd926658727101b4eef2ded6141d3719f3780c75f590cd9cf`.
+- Per-arm mean campaign wall (MEASURED, n = 12 each, scratch `g10_cost.py`):
+
+  | arm | mean campaign wall |
+  |---|---|
+  | `pysr_units` | 741.8 s |
+  | `pysr_symbolic` | 713.4 s |
+  | `bo_botorch_variance` | 29.5 s |
+  | `grammar_enumeration` | 10.7 s |
+  | `random_grammar` | 8.8 s |
+  | `pysindy_stlsq` | 6.1 s |
+  | each of the other 13 arms | 1.1 s or less |
+
+- Formal grid ESTIMATE (2400 campaigns per arm, 4 workers, perfect packing assumed): **253.6 h**, percentile bootstrap
+  95% of the per-arm means **[227.8, 280.5] h** (10,000 draws, seed 20261031). The two PySR arms make up about 95% of
+  it.
+  - The interval covers rung sampling only, not host load, thermal drift or scaling beyond 4 workers.
+  - The cap and budget are the owner's (OD-18 / D5).
+  - Levers for the owner: more workers (20 cores, 22 GB here; untested beyond 4), or a smaller grid for the PySR arms.
+    A warm persistent Julia process would conflict with D11 (one isolated process per universe).
+- v0.4 preregistration, commit `761a7d71`:
+  - New blocking open items: `D15-crash-classification` and `A1b-proposer-env` (the formal proposer environment and
+    exposures fixed in the document and checked by the formal driver).
+  - New non-blocking item `M-d-candidate-registration`.
+  - New test `test_the_crash_classification_and_the_proposer_environment_block_the_freeze`. Windows `.venv`:
+    `pytest -q -p no:randomly tests/genesis_lite/test_v04_preregistration.py` -> 5 passed.
+- Candidate rebuilt in a fresh clean clone `/home/dev_kaeem/forge-prereg-761a7d71` at `761a7d71`:
+  - Command: `PYTHONPATH=src python -c "...write_candidate()"` -> sha256
+    `ef201b62de66c0c1f65621bc4757c02e3c9829f4ef4680f67a04b975a724d3b6`.
+  - Its `development_identity_v4` equals the G7 and G10 commitments' identity (`fd779c3b…`).
+  - Status `CANDIDATE_NOT_FROZEN`. Freezing remains the owner's.
+- Provenance check of the rebound record: in a clean WSL clone at `1906367715e73436aaee13fc7d4aa46a1013643b`,
+  `pytest -q -p no:randomly benchmarks/domain_real_data/tests/test_domain_real_data.py::test_current_repository_inventory_has_no_unreviewed_provenance
+  tests/genesis_lite/test_v04_preregistration.py` -> 6 passed.
+  - Failed approach: the same provenance test on the Windows checkout reports 1659 UNKNOWN_PROVENANCE files, because
+    `core.autocrlf=true` changes the bytes it hashes. Run byte-hashing provenance checks in an LF clone.

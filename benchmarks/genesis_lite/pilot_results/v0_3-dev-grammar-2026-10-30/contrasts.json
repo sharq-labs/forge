@@ -1,0 +1,308 @@
+{
+ "discoverable_in_monomial_family": 51,
+ "grammar_answers_on_discoverable": {
+  "insufficient_evidence": 86,
+  "law": 33,
+  "no_law": 1
+ },
+ "grammar_answers_out_of_family": {
+  "insufficient_evidence": 48,
+  "law": 20,
+  "no_law": 1
+ },
+ "i_grammar_minus_monomial": {
+  "all_discoverable": {
+   "a_better": 22,
+   "b_better": 3,
+   "mean_a": 0.275,
+   "mean_b": 0.0917,
+   "mean_diff": 0.1833,
+   "n": 120,
+   "ties": 95
+  },
+  "in_monomial_family": {
+   "a_better": 4,
+   "b_better": 3,
+   "mean_a": 0.2549,
+   "mean_b": 0.2353,
+   "mean_diff": 0.0196,
+   "n": 51,
+   "ties": 44
+  },
+  "out_of_monomial_family": {
+   "a_better": 18,
+   "b_better": 0,
+   "mean_a": 0.2899,
+   "mean_b": -0.0145,
+   "mean_diff": 0.3043,
+   "n": 69,
+   "ties": 51
+  }
+ },
+ "ii_grammar_minus_pysr": {
+  "all_kinds": {
+   "a_better": 220,
+   "b_better": 10,
+   "mean_a": 0.5625,
+   "mean_b": 0.2507,
+   "mean_diff": 0.3118,
+   "n": 720,
+   "ties": 490
+  },
+  "discoverable": {
+   "a_better": 32,
+   "b_better": 0,
+   "mean_a": 0.275,
+   "mean_b": 0.0083,
+   "mean_diff": 0.2667,
+   "n": 120,
+   "ties": 88
+  }
+ },
+ "iii_false_law_on_controls": {
+  "confounded": {
+   "careful": {
+    "false_law": 0,
+    "n": 120
+   },
+   "grammar_enumeration": {
+    "false_law": 0,
+    "n": 120
+   },
+   "mind_full": {
+    "false_law": 0,
+    "n": 120
+   }
+  },
+  "insufficient_evidence": {
+   "careful": {
+    "false_law": 0,
+    "n": 120
+   },
+   "grammar_enumeration": {
+    "false_law": 0,
+    "n": 120
+   },
+   "mind_full": {
+    "false_law": 0,
+    "n": 120
+   }
+  },
+  "no_solution": {
+   "careful": {
+    "false_law": 0,
+    "n": 120
+   },
+   "grammar_enumeration": {
+    "false_law": 0,
+    "n": 120
+   },
+   "mind_full": {
+    "false_law": 0,
+    "n": 120
+   }
+  }
+ },
+ "label": "DEVELOPMENT_DESCRIPTIVE; expressibility split NOT AVAILABLE (root not persisted)",
+ "mean_credit_by_kind": {
+  "always_insufficient": {
+   "confounded": 0.0,
+   "discoverable": 0.0,
+   "indistinguishable": 0.5,
+   "insufficient_evidence": 1.0,
+   "no_solution": 0.0,
+   "spurious_correlate": 0.0
+  },
+  "always_law": {
+   "confounded": -1.0,
+   "discoverable": 0.0,
+   "indistinguishable": -0.7917,
+   "insufficient_evidence": -1.0,
+   "no_solution": -1.0,
+   "spurious_correlate": -0.8833
+  },
+  "always_refuse": {
+   "confounded": 0.0,
+   "discoverable": 0.0,
+   "indistinguishable": 0.0,
+   "insufficient_evidence": 0.0,
+   "no_solution": 1.0,
+   "spurious_correlate": 0.0
+  },
+  "bo_botorch_variance": {
+   "confounded": -0.0833,
+   "discoverable": 0.0917,
+   "indistinguishable": 0.4458,
+   "insufficient_evidence": 0.8417,
+   "no_solution": 0.9083,
+   "spurious_correlate": 0.1583
+  },
+  "careful": {
+   "confounded": 0.6333,
+   "discoverable": 0.15,
+   "indistinguishable": 0.4917,
+   "insufficient_evidence": 0.9,
+   "no_solution": 0.75,
+   "spurious_correlate": 0.1833
+  },
+  "extrapolating_fit": {
+   "confounded": -0.3,
+   "discoverable": 0.2083,
+   "indistinguishable": -0.1417,
+   "insufficient_evidence": 0.8167,
+   "no_solution": 0.925,
+   "spurious_correlate": 0.1917
+  },
+  "extrapolation_pair": {
+   "confounded": 0.5833,
+   "discoverable": -0.0292,
+   "indistinguishable": 0.0667,
+   "insufficient_evidence": 0.9083,
+   "no_solution": 0.7333,
+   "spurious_correlate": 0.0542
+  },
+  "fit_all_gated": {
+   "confounded": -0.6,
+   "discoverable": 0.225,
+   "indistinguishable": 0.0083,
+   "insufficient_evidence": -0.2417,
+   "no_solution": 0.6667,
+   "spurious_correlate": -0.225
+  },
+  "grammar_enumeration": {
+   "confounded": 0.6667,
+   "discoverable": 0.275,
+   "indistinguishable": 0.4917,
+   "insufficient_evidence": 0.9333,
+   "no_solution": 0.75,
+   "spurious_correlate": 0.2583
+  },
+  "greedy_forward": {
+   "confounded": -0.175,
+   "discoverable": 0.0917,
+   "indistinguishable": 0.4417,
+   "insufficient_evidence": 0.8167,
+   "no_solution": 0.9333,
+   "spurious_correlate": 0.0833
+  },
+  "historical_answer": {
+   "confounded": -0.25,
+   "discoverable": -0.25,
+   "indistinguishable": 0.125,
+   "insufficient_evidence": 0.5,
+   "no_solution": -0.25,
+   "spurious_correlate": -0.25
+  },
+  "mind_full": {
+   "confounded": 0.7917,
+   "discoverable": 0.2,
+   "indistinguishable": 0.475,
+   "insufficient_evidence": 0.9917,
+   "no_solution": 0.75,
+   "spurious_correlate": 0.2417
+  },
+  "mind_no_adaptive_selection": {
+   "confounded": 0.85,
+   "discoverable": 0.2083,
+   "indistinguishable": 0.4792,
+   "insufficient_evidence": 0.9917,
+   "no_solution": 0.6583,
+   "spurious_correlate": 0.25
+  },
+  "mind_no_belief_update": {
+   "confounded": 0.7833,
+   "discoverable": 0.1833,
+   "indistinguishable": 0.4917,
+   "insufficient_evidence": 0.9917,
+   "no_solution": 0.8,
+   "spurious_correlate": 0.2333
+  },
+  "mind_no_falsifier": {
+   "confounded": 0.825,
+   "discoverable": 0.2,
+   "indistinguishable": 0.4875,
+   "insufficient_evidence": 0.9917,
+   "no_solution": 0.75,
+   "spurious_correlate": 0.2417
+  },
+  "monomial_enumeration": {
+   "confounded": -0.1333,
+   "discoverable": 0.0917,
+   "indistinguishable": 0.4375,
+   "insufficient_evidence": 0.7667,
+   "no_solution": 0.975,
+   "spurious_correlate": 0.1667
+  },
+  "pysindy_stlsq": {
+   "confounded": -0.2167,
+   "discoverable": 0.1417,
+   "indistinguishable": 0.5,
+   "insufficient_evidence": 0.9583,
+   "no_solution": 0.6417,
+   "spurious_correlate": -0.05
+  },
+  "pysr_symbolic": {
+   "confounded": -0.1083,
+   "discoverable": 0.0083,
+   "indistinguishable": 0.4125,
+   "insufficient_evidence": 0.6083,
+   "no_solution": 0.5917,
+   "spurious_correlate": -0.0083
+  },
+  "random_structures": {
+   "confounded": -0.0167,
+   "discoverable": 0.0917,
+   "indistinguishable": 0.4417,
+   "insufficient_evidence": 0.7833,
+   "no_solution": 0.9333,
+   "spurious_correlate": 0.0417
+  },
+  "single_setting": {
+   "confounded": 1.0,
+   "discoverable": 0.0,
+   "indistinguishable": 0.4583,
+   "insufficient_evidence": 0.9417,
+   "no_solution": 0.0,
+   "spurious_correlate": 0.0
+  },
+  "space_filling": {
+   "confounded": 0.6083,
+   "discoverable": 0.1583,
+   "indistinguishable": 0.4875,
+   "insufficient_evidence": 0.9,
+   "no_solution": 0.7417,
+   "spurious_correlate": 0.15
+  }
+ },
+ "status_counts": {
+  "always_insufficient|VALID": 120,
+  "always_law|VALID": 120,
+  "always_refuse|VALID": 120,
+  "bo_botorch_variance|VALID": 120,
+  "careful|VALID": 120,
+  "extrapolating_fit|VALID": 120,
+  "extrapolation_pair|VALID": 120,
+  "fit_all_gated|VALID": 120,
+  "grammar_enumeration|VALID": 120,
+  "greedy_forward|VALID": 120,
+  "historical_answer|VALID": 120,
+  "mind_full|VALID": 120,
+  "mind_no_adaptive_selection|VALID": 120,
+  "mind_no_belief_update|VALID": 120,
+  "mind_no_falsifier|VALID": 120,
+  "monomial_enumeration|VALID": 120,
+  "pysindy_stlsq|VALID": 120,
+  "pysr_symbolic|VALID": 120,
+  "random_structures|VALID": 120,
+  "single_setting|VALID": 120,
+  "space_filling|VALID": 120
+ },
+ "worlds_by_kind": {
+  "confounded": 120,
+  "discoverable": 120,
+  "indistinguishable": 120,
+  "insufficient_evidence": 120,
+  "no_solution": 120,
+  "spurious_correlate": 120
+ }
+}

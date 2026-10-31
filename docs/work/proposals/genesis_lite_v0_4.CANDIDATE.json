@@ -1,0 +1,334 @@
+{
+ "benchmark_id": "genesis_lite.blindfold_l5.v0_4",
+ "campaign_id": "gl-v04-formal-{seed}-{campaign}-{presentation}",
+ "campaign_mix": "one hidden world of each of the six kinds per campaign (v0.2 generator, unchanged)",
+ "custody": {
+  "external_evaluator": "none (Steps 1-5); Step 6 still needs one",
+  "label": "SELF_ADMINISTERED",
+  "root": "the owner writes 32 random bytes to a 0600 file outside the tree before the run; the driver writes its SHA-256 commitment before the first campaign; revealed only after every campaign is sealed"
+ },
+ "development_identity_v4": "fd779c3bf220e99182a67aac2ccbfbb04830799b8ee1845746f07c2089e11680",
+ "files": {
+  "analysis_v4.py": "f51088cfab28a5ddb0341ff0fceb90702b16d716fab17462a190ac3057fe70ab",
+  "arms_v4.py": "c413258bff85a5b2c2b81be1555d317b6d266dd7b984613556d6842872ba0280",
+  "decide_v4.py": "a5385c7408b67394877d7348911b7852f29c11568fd886e8d2b32e7cdc098d93",
+  "expressibility_v3.py": "44a0b309eb38512b09d13c1f96b17af4600d341877a7953371832b8324c4abc3",
+  "harness_v4.py": "7f4e5bfa1175c497b4613bb2609007f9525c45eced99763dadff0f89b8ae4a23",
+  "isolated_host.py": "28c433e441eec958d65f31511166181bf659ec32bc970417a919881b5b41de6b",
+  "pilot_v4.py": "fa6a4d70aad101bdb68ebd68709b5b31df7487c721a34dcced662051c779c4f4",
+  "proposer_host.py": "a4b9331780351232d3007596e6c9949eb9e6bdabcb88f7057c6c4e33b25c31a4",
+  "reveal_v4.py": "0047470f18489bcb1523397a5250c0035949d44845cff6dcbce861a02768a20e",
+  "src/engcore/blindfold/isolation.py": "92c2952c8ab1ad1bb1ffa6b82184f94be3a8f1259cac64439d60a0a7ac4e1f33"
+ },
+ "grid": {
+  "campaigns": 30,
+  "presentations": [
+   "anonymous",
+   "renamed",
+   "paraphrased",
+   "trap"
+  ],
+  "seeds": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19
+  ],
+  "world_sets_per_arm": 2400
+ },
+ "isolation": {
+  "boundary_claim": "at most OS_ISOLATION_BOUNDARY_VERIFIED for this host and configuration, through the per-process records; never container or host level",
+  "hidden_defaults": [
+   "/home",
+   "/root",
+   "/mnt",
+   "/var/tmp",
+   "/srv"
+  ],
+  "label": "os_isolated_per_universe",
+  "per_universe_process": true,
+  "private_writable": [
+   "/tmp",
+   "/dev/shm"
+  ],
+  "record_rule": "six passing outside verifications per VALID record",
+  "shared_state_covered": [
+   "/run",
+   "/var/crash"
+  ],
+  "whitelist_root": "/opt"
+ },
+ "master_seed_domain": "forge.genesis_lite.v0_4",
+ "open_items": {
+  "A1-pysr-units-dev-pilot": {
+   "blocking": true,
+   "what": "EXC-5 exit: pysr_units development pilot (fresh dev root, under isolation) and QUALIFIED / NOT_QUALIFIED record"
+  },
+  "A1b-proposer-env": {
+   "blocking": true,
+   "what": "the formal proposer environment and exposures fixed here and checked by the formal driver (G7 pilot: JULIA_DEPOT_PATH with a read-only depot under /opt, PYTHON_JULIACALL_PROJECT/EXE, PYTHON_JULIAPKG_OFFLINE, JULIA_NUM_THREADS)"
+  },
+  "A6-cost": {
+   "blocking": true,
+   "what": "isolated per-universe cost at the 10-campaign rung, BLAS 1, 4 workers; ESTIMATE with interval for the formal grid"
+  },
+  "D12-codex-review": {
+   "blocking": true,
+   "what": "independent (Codex) review of this preregistration, findings closed"
+  },
+  "D15-crash-classification": {
+   "blocking": true,
+   "what": "owner decision: a proposer crash or timeout after its outside verification is infrastructure (A), the arm's failure (B) or mixed (C), plus a per-root attempt ledger"
+  },
+  "M-d-candidate-registration": {
+   "blocking": false,
+   "what": "a registration path for a candidate arm with its own identity binding; Step 1 needs none, a Step 2 lift decision does"
+  },
+  "OD-18-budget": {
+   "blocking": true,
+   "what": "owner sets the wall-clock cap at launch (D5)"
+  },
+  "multiplicity-iut": {
+   "blocking": false,
+   "what": "proposal: replace holm_family by iut_all (valid at alpha without correction and compares every arm); D9 stands until the owner decides"
+  },
+  "review-12b-margin": {
+   "blocking": true,
+   "what": "owner reading: control-kind non-inferiority margin 0.10 vs P-1 'no loss allowed in control cells'"
+  }
+ },
+ "out_of_scope": {
+  "G1_G2_mechanism_enumeration": "no port grammar yet (Genesis Step 4)",
+  "G3_rival_falsification": "discriminating_design NOT_APPLICABLE",
+  "dynamics": "PySINDy runs over an algebraic log-monomial library",
+  "experiment_selection_by_information_gain": "not implemented; only credit is scored",
+  "llm_ablation": "Step 2 requirement; no LLM proposer exists",
+  "rule": "a class without a strong applicable baseline supports no lift claim"
+ },
+ "owner_decisions": {
+  "D1": "Step 1 baselines only",
+  "D10": "FDA-06 cap on every law kind + out-of-family secondary endpoint",
+  "D11": "one isolated process per universe",
+  "D12": "Codex reviews before freeze",
+  "D13": "region tell disclosed and stratified (option C)",
+  "D14": "roster and scope",
+  "D2": "EXC-5 pysr_units, NOT_QUALIFIED fallback",
+  "D3": "OS isolation, level stated",
+  "D4": "SELF_ADMINISTERED sealed root",
+  "D5": "cap at launch",
+  "D9": "empirical-Bernstein, Holm over the pre-declared family"
+ },
+ "roster": {
+  "always_insufficient": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "floor",
+   "spec": "always_insufficient"
+  },
+  "always_law": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "floor",
+   "spec": "always_law"
+  },
+  "always_refuse": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "floor",
+   "spec": "always_refuse"
+  },
+  "bo_botorch_variance": {
+   "file": "benchmarks/genesis_lite/arms_v3.py",
+   "file_sha256": "ef3de2298994dc1e98ebd0d37a765ae605e31a325847d5be5f4915c933285a63",
+   "role": "competence",
+   "spec": "benchmarks.genesis_lite.arms_v3:bo_botorch_variance"
+  },
+  "careful": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "careful"
+  },
+  "extrapolating_fit": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "extrapolating_fit"
+  },
+  "extrapolation_pair": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "extrapolation_pair"
+  },
+  "fit_all_gated": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "fit_all_gated"
+  },
+  "grammar_enumeration": {
+   "file": "benchmarks/genesis_lite/arms_grammar_v3.py",
+   "file_sha256": "56148cee535de9a317bb17d27d68accdcf29df69c7a16233b007f778726e4521",
+   "role": "competence",
+   "spec": "benchmarks.genesis_lite.arms_grammar_v3:grammar_enumeration"
+  },
+  "greedy_forward": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "greedy_forward"
+  },
+  "historical_answer": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "adversarial",
+   "spec": "historical_answer"
+  },
+  "monomial_enumeration": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "monomial_enumeration"
+  },
+  "pysindy_stlsq": {
+   "file": "benchmarks/genesis_lite/arms_v3.py",
+   "file_sha256": "ef3de2298994dc1e98ebd0d37a765ae605e31a325847d5be5f4915c933285a63",
+   "role": "competence",
+   "spec": "benchmarks.genesis_lite.arms_v3:pysindy_stlsq"
+  },
+  "pysr_symbolic": {
+   "configuration": {
+    "binary_operators": [
+     "+",
+     "-",
+     "*",
+     "/"
+    ],
+    "maxsize": 15,
+    "niterations": 40,
+    "population_size": 33,
+    "populations": 8,
+    "unary_operators": [
+     "exp",
+     "log"
+    ]
+   },
+   "file": "benchmarks/genesis_lite/arms_v3.py",
+   "file_sha256": "ef3de2298994dc1e98ebd0d37a765ae605e31a325847d5be5f4915c933285a63",
+   "role": "competence",
+   "spec": "benchmarks.genesis_lite.arms_v3:pysr_symbolic"
+  },
+  "pysr_units": {
+   "configuration": {
+    "binary_operators": [
+     "+",
+     "-",
+     "*",
+     "/"
+    ],
+    "maxsize": 20,
+    "niterations": 40,
+    "occam_slack": 0.05,
+    "population_size": 33,
+    "populations": 8,
+    "unary_operators": [
+     "exp",
+     "log"
+    ],
+    "validation_fraction": 0.25,
+    "y_units": "1"
+   },
+   "file": "benchmarks/genesis_lite/arms_v4.py",
+   "file_sha256": "c413258bff85a5b2c2b81be1555d317b6d266dd7b984613556d6842872ba0280",
+   "role": "competence",
+   "spec": "benchmarks.genesis_lite.arms_v4:pysr_units"
+  },
+  "random_grammar": {
+   "configuration": {
+    "random_draws": 10
+   },
+   "file": "benchmarks/genesis_lite/arms_v4.py",
+   "file_sha256": "c413258bff85a5b2c2b81be1555d317b6d266dd7b984613556d6842872ba0280",
+   "role": "competence",
+   "spec": "benchmarks.genesis_lite.arms_v4:random_grammar"
+  },
+  "random_structures": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "random_structures"
+  },
+  "single_setting": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "sanity",
+   "spec": "single_setting"
+  },
+  "space_filling": {
+   "file": "benchmarks/genesis_lite/arms.py",
+   "file_sha256": "5a8dc4beb8de0f194919d79e353326587a303d5fa572b6e8c62edaf680b3ad65",
+   "role": "competence",
+   "spec": "space_filling"
+  }
+ },
+ "run_rules": {
+  "deadline": "a run that misses its cap is incomplete: it supports no Step 1 gate decision; a rerun needs a fresh root",
+  "deviations": "any change after freezing is a new version, never an edit",
+  "invalid_world_sets": "any INVALID_BENCHMARK world set blocks the Step 2 decision on that grid",
+  "tier": "formal requires a clean tree and this document frozen with a matching digest"
+ },
+ "schema": "forge.genesis_lite.preregistration/4",
+ "scoring": {
+  "credit_table": "v0.2 DEFAULT_CREDIT, unchanged",
+  "escrow_rule": "engcore.blindfold.escrow_v3.RULE",
+  "evaluator": "benchmarks/genesis_lite/evaluator/score_v3.py",
+  "evaluator_sha256": "34bdbb536ac4d6f36f7ccf773127a7c1cf3426ec801e0974a0cb06e8534548ae"
+ },
+ "statistics": {
+  "cap": "FDA-06: every law kind capped at the comparator where no baseline family represents the truth",
+  "decision_entry": "benchmarks/genesis_lite/decide_v4.py (roles frozen in code, grid from the commitment)",
+  "endpoint": "six-kind credit sum in [-6, 6]; paired differences in [-12, 12]",
+  "inference": "empirical-Bernstein lower bound and its p-value (Maurer & Pontil 2009, Thm 4), alpha 0.05; the bootstrap tail and the sign-flip test are not used",
+  "noninferiority": {
+   "against": "every non-adversarial arm (IUT)",
+   "per_kind_margin": 0.1,
+   "per_presentation_margin": 0.6000000000000001
+  },
+  "power_note": "docs/work/proposals/BLINDFOLD_V04_POWER_AND_INFERENCE_DRAFT.md: at 2400 units the bound detects about 0.18 per unit with k = 3 (development estimate)",
+  "representation_limited": "Clopper-Pearson lower bound >= 0.5 for grammar_enumeration",
+  "step_1_reports": "baseline distributions per arm, per kind and per stratum; Step 1 tests no lift",
+  "superiority": {
+   "family": [
+    "careful",
+    "grammar_enumeration",
+    "space_filling"
+   ],
+   "multiplicity": "holm_family (D9)"
+  },
+  "unit": "one world set = one campaign (six worlds) under one (campaign, presentation, seed) master seed; units independent (fresh worlds, one stateless isolated proposer per universe)"
+ },
+ "status": "CANDIDATE_NOT_FROZEN",
+ "step": "Genesis §18 Step 1: frozen roster, baseline distributions over >= 20 seeds; no Mind arm (D1)",
+ "strata_disclosures": {
+  "extended_region_refusal": "development finding: on extended regions the gated arms score 0 on discoverable and spurious_correlate (they never extrapolate)",
+  "region_tell": "D13 option C: indistinguishable worlds always have an extended region, others half the time; reported by region and kind",
+  "representation_circularity": "EXC-4b: 89/120 discoverable laws expressible by the five-shape grammar; three shapes overlap the generator's families; reported by representation"
+ }
+}
