@@ -87,3 +87,19 @@ def test_immutable_cache_rejects_missing_private_depot_changed_and_added_files(t
     (cache / "code.so").write_bytes(b"tampered")
     with pytest.raises(ValueError, match="cache content mismatch"):
         assets.runtime_identity(env)
+
+
+def test_loaded_depot_is_bound_even_without_the_optional_cache_marker(tmp_path, monkeypatch):
+    monkeypatch.setattr(assets, "python_packages", lambda: {})
+    monkeypatch.setattr(assets, "check_read_only_asset", lambda p: pathlib.Path(p))
+    depot = tmp_path / "depot"
+    depot.mkdir()
+    native = depot / "package.so"
+    native.write_bytes(b"first")
+    env = {"JULIA_DEPOT_PATH": f"/tmp/jdepot:{depot}"}
+    before = assets.runtime_identity(env)
+    native.write_bytes(b"changed")
+    assert assets.runtime_identity(env)["sha256"] != before["sha256"]
+    for value in (str(depot), f"/tmp/jdepot:{depot}:", f"/tmp/jdepot::{depot}"):
+        with pytest.raises(ValueError, match="private first depot"):
+            assets.runtime_identity({"JULIA_DEPOT_PATH": value})

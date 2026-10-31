@@ -8,6 +8,35 @@ from __future__ import annotations
 
 import pathlib
 import threading
+import sys
+import time
+from contextlib import contextmanager
+
+
+@contextmanager
+def operator_phases(functions):
+    """Time named trusted-operator calls without replacing scientific functions.
+
+    Opt-in diagnostics only. Inclusive durations may overlap; they are not a
+    partition of wall time. Child processes cannot supply these phase labels.
+    """
+    codes = {function.__code__: name for name, function in functions.items()}
+    opened, measurements = {}, {name: [] for name in functions}
+    previous = sys.getprofile()
+
+    def profile(frame, event, arg):
+        name = codes.get(frame.f_code)
+        if name is not None:
+            if event == "call":
+                opened[id(frame)] = time.perf_counter()
+            elif event == "return" and id(frame) in opened:
+                measurements[name].append(time.perf_counter() - opened.pop(id(frame)))
+
+    try:
+        sys.setprofile(profile)
+        yield measurements
+    finally:
+        sys.setprofile(previous)
 
 PROC = pathlib.Path("/proc")
 

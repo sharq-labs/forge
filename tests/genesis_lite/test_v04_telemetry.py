@@ -2,6 +2,17 @@
 from benchmarks.genesis_lite import telemetry_v4 as telemetry
 
 
+def test_operator_phase_profiling_preserves_result_and_restores_profiler():
+    import sys
+    def score(value):
+        return value * 2
+    previous = sys.getprofile()
+    with telemetry.operator_phases({"score": score}) as phases:
+        assert score(7) == 14
+    assert sys.getprofile() is previous
+    assert len(phases["score"]) == 1 and phases["score"][0] >= 0
+
+
 def test_children_of_secondary_threads_are_walked(tmp_path, monkeypatch):
     for pid, tids in ((10, (10, 11)), (20, (20,)), (30, (30,))):
         for tid in tids:

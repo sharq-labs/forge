@@ -11934,3 +11934,35 @@ d709b2eeb319b09eef946a82db134824aab936d5f1ecb0a0f4bbbd63e460ed5a.
 Failed first function-workload attempt: verbosity specified both in Options and equation_search; removed the duplicate
 runtime option. This failure occurred before any image was created. Build environment is now scrubbed to public paths
 and explicit settings so a PackageCompiler exception cannot print unrelated operator environment values.
+#### Native public runtime controls and second review (2026-10-31)
+
+Source `89ddd787db6b09b64063e9c60787a0c766a48d76`, clean LF WSL clone, Python 3.12.3:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_runtime_assets.py tests/genesis_lite/test_v04_isolation.py`
+-> 30 passed, 2 expected environment skips, 10.94 s (saved log and exit=0). An earlier identical invocation's
+completion output was lost across context compaction; no result is claimed for that invocation.
+
+Public n=1 symbolic controls, each command prefixed `FORGE_PERF_DIAGNOSTICS=1 bash tools/genesis_performance/run_control.sh`:
+- `sysimage-packages-native --mode fit --arms pysr_symbolic --repeats 1 --workers 1 --out /root/forge-perf-evidence-20261031/C-native-fit-1`
+  -> 11.043 s, exact baseline Pareto equations AND losses; parent mapped image confirmed; 1 Julia / 1 GC thread diagnostic.
+- `cache --mode fit --arms pysr_symbolic --repeats 1 --workers 1 --out /root/forge-perf-evidence-20261031/cache-fit-1`
+  -> 12.434 s, same exact Pareto output; root-owned import-only native cache, no fitted state.
+- `sysimage-functions-native --mode fit --arms pysr_symbolic --repeats 1 --workers 1 --out /root/forge-perf-evidence-20261031/D-native-fit-1`
+  -> 9.637 s, same exact Pareto output; parent mapped image confirmed; sampled PSS 861376 KiB.
+These are preliminary single-fixture controls, not accepted full-campaign speedups or scientific validation.
+The package/function images use CPU target native, preserving the ordinary compiler target. The generic image remains rejected.
+
+Function build command: `bash /opt/forge-sysimage-build-20261031/build.sh /opt/forge-sysimage-20261031/functions-native.so functions native`
+-> artifact produced; load/fit executed as above. Image SHA256 dddf152e429348eb8bcc519d377e7fc8151f3f10a9a5b0b0b0458d7e77090698.
+No experiment dependency changes. No formal roots, campaign, freeze, push or merge.
+
+Independent static review at 89ddd787...: CHANGES REQUIRED, HIGH optional-cache-marker bypass of loaded-depot identity;
+LOW missing build.sh digest. Both accepted. Runtime identity now derives inventories from actual shared JULIA_DEPOT_PATH
+entries regardless of marker, with explicit private first depot and refusal of implicit/relative entries. Build sealing
+adds the entrypoint digest and refuses replacing a manifest. Tests for this delta: NOT RUN yet; current baseline
+measurement is kept on its clean original source until completion. Its outputs are not rewritten.
+
+Additional diagnostic-only changes: trusted operator evaluator/adjudication timing; more Python import phase annotations;
+parent PID/start-tick records; public-run preflight now included in total elapsed time and worker errors retained explicitly.
+New analysis/mutation helpers do not produce Blindfold decisions or alter the certified mutation population.
+Generated PySR CSV scratch directories from this worktree were moved, with SHA256 inventory, to
+`C:/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/generated-pysr-csv`; no scratch output was deleted.

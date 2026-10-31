@@ -260,7 +260,10 @@ class IsolatedProposerHost(h2.ProposerHost):
             raise IsolationUnavailable(f"the isolated proposer did not import this tree's engcore: {hello}")
         inspected = time.perf_counter()
         try:
-            self.outside = inspect(_leaf(self._proc.pid), hidden, exposed)
+            leaf = _leaf(self._proc.pid)
+            self.outside = inspect(leaf, hidden, exposed)
+            from .telemetry_v4 import start_time
+            self.timing["operator_process_identity"] = {"pid": leaf, "start_ticks": start_time(leaf)}
         except BaseException:
             self.close()
             raise

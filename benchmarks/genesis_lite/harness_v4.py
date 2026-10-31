@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import pathlib
 import time
+from contextlib import nullcontext
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -45,12 +46,18 @@ def run_one_v4(arm_name: str, spec: str, *, master_seed: bytes, campaign_id: str
     from .runtime_assets_v4 import runtime_identity
     runtime = runtime_identity(env or {})
     arm = per_universe_arm(spec, hidden, checks, env=env, timeout=timeout, exposed=exposed, timings=timings)
-    rec = h3.run_one_v3(arm_name, arm, master_seed=master_seed, campaign_id=campaign_id, presentation=presentation,
-                        seed=seed, isolation="in_process", budget_fraction=budget_fraction)
+    from .telemetry_v4 import operator_phases
+    phases = operator_phases({"independent_evaluator": h3.score_v3.evaluate_campaign,
+                              "adjudication": h3.adjudicate_v3,
+                              "v3_identity": h3.development_identity}) if (env or {}).get("FORGE_PERF_DIAGNOSTICS") == "1" else nullcontext({})
+    with phases as parent_phases:
+        rec = h3.run_one_v3(arm_name, arm, master_seed=master_seed, campaign_id=campaign_id, presentation=presentation,
+                            seed=seed, isolation="in_process", budget_fraction=budget_fraction)
     out = rec.to_dict()
     identity, changed = development_identity_v4()
     out.update({"isolation": ISOLATION_LABEL, "isolation_checks": checks, "development_identity_v4": identity,
                 "arm_spec": spec, "operator_timings": timings, "proposer_runtime_identity_sha256": runtime["sha256"],
+                "operator_phase_seconds": parent_phases,
                 "campaign_total_seconds": time.perf_counter() - started,
                 "host_start_seconds": sum(t["launch_to_hello_seconds"] for t in timings)})
     problems = []

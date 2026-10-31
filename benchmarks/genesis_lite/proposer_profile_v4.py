@@ -32,6 +32,9 @@ def profile(frame, event, arg):
         label = "pysr_" + name
     elif path.endswith("/proposer_host.py") and name == "resolve":
         label = "python_arm_resolution"
+    elif name == "<module>" and any(path.endswith("/" + package + "/__init__.py")
+                                   for package in ("pysr", "numpy", "pandas", "sympy", "sklearn")):
+        label = "python_import_" + pathlib.Path(path).parent.name
     if label:
         send(label, event)
     if label == "julia_dependency_loading_inclusive" and event == "return":

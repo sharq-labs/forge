@@ -9,6 +9,7 @@ from __future__ import annotations
 import hashlib
 import importlib.metadata
 import json
+import os
 import pathlib
 import stat
 
@@ -45,6 +46,27 @@ def check_read_only_asset(path):
     return path
 
 
+def shared_depot_identity(depot):
+    """Bind every shared depot, regardless of an optional cache marker.
+
+    The private first depot is created inside each mount namespace. All other
+    entries are operator-controlled inputs, including package source and native
+    caches. File symlinks are bound by both link text and target bytes; directory
+    symlinks refuse rather than leave an unvisited subtree out of the inventory.
+    """
+    root = check_read_only_asset(depot)
+    inventory = {}
+    for path in sorted(root.rglob("*")):
+        check_read_only_asset(path)
+        if path.is_symlink() and path.is_dir():
+            raise ValueError("directory symlink in shared Julia depot")
+        if path.is_file():
+            inventory[str(path.relative_to(root))] = {
+                "sha256": sha(path), "link": os.readlink(path) if path.is_symlink() else None}
+    return {"path": str(root), "file_count": len(inventory),
+            "content_sha256": hashlib.sha256(json.dumps(inventory, sort_keys=True).encode()).hexdigest()}
+
+
 def runtime_identity(env):
     from .isolated_host import THREAD_ENV
     effective = {"PATH": "/usr/bin:/bin", "HOME": "/tmp", **THREAD_ENV, **dict(env)}
@@ -59,6 +81,12 @@ def runtime_identity(env):
         for name in ("Project.toml", "Manifest.toml"):
             path = pathlib.Path(project) / name
             files[name] = {"path": str(path.resolve()), "sha256": sha(path)}
+    depots = env.get("JULIA_DEPOT_PATH")
+    if depots is not None:
+        entries = depots.split(":")
+        if entries[0] != "/tmp/jdepot" or any(not pathlib.Path(entry).is_absolute() for entry in entries):
+            raise ValueError("Julia depots require an explicit private first depot and no implicit entries")
+        identity["shared_depots"] = [shared_depot_identity(entry) for entry in entries[1:]]
     image = env.get("PYTHON_JULIACALL_SYSIMAGE")
     if image:
         image = check_read_only_asset(image)

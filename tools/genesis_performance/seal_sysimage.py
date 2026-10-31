@@ -14,6 +14,9 @@ def main():
     ap.add_argument("--mode", choices=("packages", "functions"), required=True)
     ap.add_argument("--cpu-target", required=True)
     args = ap.parse_args()
+    output = pathlib.Path(args.image + ".manifest.json")
+    if output.exists():
+        raise FileExistsError("refusing to replace an immutable asset manifest")
     build = pathlib.Path(args.build)
     project = pathlib.Path("/opt/forge-mvp-20261028/.venv/julia_env")
     binary = project / "pyjuliapkg/install/bin/julia"
@@ -21,7 +24,7 @@ def main():
     # The experiment's environment is never resolved/modified by the build.
     for name in ("Project.toml", "Manifest.toml"):
         assert sha(project / name) == sha(build / "project" / name), f"build changed {name}"
-    scripts = ["setup_build.jl", "build_sysimage.jl", "precompile_workload.jl", "link_sysimage.py"]
+    scripts = ["setup_build.jl", "build_sysimage.jl", "precompile_workload.jl", "link_sysimage.py", "build.sh"]
     doc = {"schema": "forge.development.sysimage/1", "purpose": "public synthetic precompilation only",
            "sysimage_sha256": sha(args.image), "mode": args.mode, "cpu_target": args.cpu_target,
            "julia_version": subprocess.check_output([str(binary), "--version"], text=True).strip(),
@@ -38,7 +41,6 @@ def main():
            "runtime_project": (project / "Project.toml").read_text(),
            "runtime_manifest": (project / "Manifest.toml").read_text(),
            "state_policy": "workload executes in a trace subprocess; no fitted state is loaded into image builder"}
-    output = pathlib.Path(args.image + ".manifest.json")
     output.write_text(json.dumps(doc, indent=2, sort_keys=True), encoding="utf-8")
     pathlib.Path(args.image).chmod(0o444)
     output.chmod(0o444)

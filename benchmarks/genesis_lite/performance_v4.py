@@ -15,6 +15,7 @@ import multiprocessing as mp
 import os
 import pathlib
 import time
+from datetime import datetime, timezone
 
 from . import isolated_host as ih
 
@@ -83,26 +84,37 @@ def main():
     output.mkdir(parents=True, exist_ok=False)
     from .pilot_v4 import _git, environment_manifest
     from .telemetry_v4 import ProcessSampler, usage
+    start = time.perf_counter()
+    started_utc = datetime.now(timezone.utc).isoformat()
+    host_before = host_state()
+    cpu_before = usage()
+    sampler = ProcessSampler(os.getpid(), interval=0.5)
     env = dict(item.split("=", 1) for item in args.env)
     manifest = {"label": "PUBLIC_DEVELOPMENT_SOFTWARE_CONTROL_NOT_BLINDFOLD", "git_head": _git("rev-parse", "HEAD"),
                 "dirty": bool(_git("status", "--porcelain")), "arguments": vars(args),
                 "environment": environment_manifest(ih.hidden_paths(exposed=ih.exposures(args.expose)), ih.exposures(args.expose), env),
-                "parent_thread_env": {k: os.environ.get(k) for k in ih.THREAD_ENV}}
+                "parent_thread_env": {k: os.environ.get(k) for k in ih.THREAD_ENV},
+                "started_utc": started_utc,
+                "cpuinfo": pathlib.Path("/proc/cpuinfo").read_text(),
+                "boot_id": pathlib.Path("/proc/sys/kernel/random/boot_id").read_text().strip()}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2))
     items = [(a, i, args.mode, env, args.expose) for i in range(args.repeats) for a in args.arms]
-    host_before = host_state()
-    cpu_before = usage()
-    sampler = ProcessSampler(os.getpid(), interval=0.5)
-    start = time.perf_counter()
+    preflight_seconds = time.perf_counter() - start
     with cf.ProcessPoolExecutor(max_workers=args.workers, mp_context=mp.get_context("spawn")) as pool:
-        futures = [pool.submit(_work, item) for item in items]
+        futures = {pool.submit(_work, item): item for item in items}
         with (output / "runs.jsonl").open("w") as stream:
             for future in cf.as_completed(futures):
-                rec = future.result()
+                try:
+                    rec = future.result()
+                except Exception as exc:
+                    item = futures[future]
+                    rec = {"arm": item[0], "index": item[1], "status": "WORKER_FAILED",
+                           "reasons": [f"{type(exc).__name__}: {exc}"]}
                 stream.write(json.dumps(rec, sort_keys=True) + "\n")
                 stream.flush()
                 print(json.dumps({"arm": rec["arm"], "status": rec["status"], "elapsed": time.perf_counter() - start}), flush=True)
     summary = {"elapsed_seconds": time.perf_counter() - start, "completed": len(items), "workers": args.workers,
+               "preflight_seconds": preflight_seconds, "elapsed_includes_manifest_preflight": True,
                "runs_sha256": hashlib.sha256((output / "runs.jsonl").read_bytes()).hexdigest(),
                "resources": sampler.close(), "host_before": host_before, "host_after": host_state(),
                "cpu": {k: v - cpu_before[k] for k, v in usage().items()}}
