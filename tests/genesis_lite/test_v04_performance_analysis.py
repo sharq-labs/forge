@@ -8,11 +8,13 @@ from tools.genesis_performance.analyse import comparison
 
 def record():
     return {"arm": "pysr_units", "seed": 0, "campaign_id": "public-perf-0", "status": "VALID",
-            "reasons": [], "observe_calls": 6, "universes": [{"universe_id": f"u{i}"} for i in range(6)],
+            "reasons": [], "observe_calls": 6, "universes": [{"universe_id": f"bf-{i}"} for i in range(6)],
+            "isolation_checks": [{"universe_id": f"gl-{i}"} for i in range(6)],
             "key_digest": "key", "presented_card_digests": {}, "leakage_audit": "NO_LITERAL_LEAK_FOUND",
             "evaluator_status": "VALID", "v3_total_credit": 0, "config_digest": "config", "escrow_rule": "rule",
             "proposer_kind": "baseline", "budget_fraction": 1, "library_versions": {}, "campaign_total_seconds": 10,
-            "operator_timings": [{"universe_id": f"u{i}", "proposal_sha256": "a" * 64,
+            "presentation": "anonymous", "arm_spec": "module:arm", "development_identity": "v3", "prereg_sha256": "v2",
+            "operator_timings": [{"universe_id": f"gl-{i}", "proposal_sha256": "a" * 64,
                                   "query_trace_without_transport_nonce_sha256": "b" * 64} for i in range(6)]}
 
 
@@ -24,6 +26,16 @@ def test_complete_trace_comparison_detects_a_changed_query_or_proposal():
         changed["operator_timings"][0][field] = "c" * 64
         out = comparison([before], [changed])
         assert out["equivalence_status"] == "FAIL" and out["paired_service_speedup"]["n"] == 0
+
+
+def test_only_the_universe_clock_is_excluded_from_scientific_content():
+    before = record()
+    before["universes"][0].update(proposer_seconds=100, credit=0)
+    after = deepcopy(before)
+    after["universes"][0]["proposer_seconds"] = 10
+    assert comparison([before], [after])["equivalence_status"] == "PASS"
+    after["universes"][0]["credit"] = 1
+    assert comparison([before], [after])["equivalence_status"] == "FAIL"
 
 
 @pytest.mark.parametrize("missing", ["all", "one", "duplicate", "proposal", "query"])

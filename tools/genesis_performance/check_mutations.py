@@ -27,7 +27,8 @@ MUTANTS = (
     ("private_tmp_not_required", "isolated_host.py", 'and o["private_tmp"]', "and True",
      "test_v04_isolation.py::test_outside_verification_fails_closed_on_any_missing_property"),
     ("missing_traces_equal", "analyse.py",
-     "if len(expected) != 6 or len(set(expected)) != 6 or sorted(seen) != sorted(expected):", "if False:",
+     "if (len(scored) != 6 or len(set(scored)) != 6 or len(expected) != 6 or\n"
+     "            len(set(expected)) != 6 or sorted(seen) != sorted(expected)):", "if False:",
      "test_v04_performance_analysis.py::test_equal_missing_evidence_never_becomes_exact_equivalence[all]"),
     ("duplicate_tasks_collapse", "analyse.py", "if key(record) in indexed:", "if False:",
      "test_v04_performance_analysis.py::test_duplicate_and_missing_tasks_do_not_collapse_into_a_complete_comparison"),

@@ -12016,3 +12016,38 @@ as null/UNKNOWN, and fit controls do not report a campaign rate. A regression te
 Added an opt-in public `--executor bounded` mode using the pilot's actual deadline executor so outer-worker scaling
 can include fresh trusted-worker and ledger overhead. The default pool remains for the separate A/B/C/D controls.
 This measurement-helper delta does not alter the pilot, algorithms, budgets or scientific scoring. Execution pending.
+
+#### Full public A/B/C/D and comparison context correction
+
+At 0068bb367ce17083548402946d20601f2216722d:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_performance_analysis.py tests/genesis_lite/test_v04_deadline.py`
+-> 17 passed in 9.36 s, exit 0.
+`bash tools/genesis_performance/run_control.sh sysimage-functions-reviewed --mode campaign --arms careful --repeats 1 --workers 1 --executor bounded --out /root/forge-perf-evidence-20261031/bounded-smoke`
+-> one VALID public campaign, six fresh outside-verified proposers; one retained record/one completion, no deadline kills or
+unstarted work, total 5.548 s including 2.203 s manifest preflight. This exercises the actual bounded public adapter.
+
+The full A/B records exposed two conservative analyzer mistakes before accepting comparisons: escrow score IDs are bf-*,
+while proposer trace/outside-check IDs are gl-* presentation aliases; and universe records contain proposer_seconds.
+The initial helper returned UNKNOWN/FAIL for these cases. Corrected to require six distinct IDs in EACH namespace, with
+trace IDs matching the outside-check namespace; exclude only proposer_seconds from universe content. Preserve every
+scientific field and all exact query/proposal hashes. Also compare arm spec/presentation and underlying v3/v0.2 identities.
+New fixtures use distinct namespaces and check timing-only equality versus changed credit. Independent static review of
+this narrow correction: PASS. Windows original .venv interpreter, dedicated code worktree:
+`C:/Users/dev_kaeem/Downloads/Compressed/forge Lab/.venv/Scripts/python.exe -m pytest -q -p no:randomly tests/genesis_lite/test_v04_performance_analysis.py`
+-> 10 passed in 0.20 s before the additional timing-versus-credit test (that extra test still pending at this entry).
+
+B (source 97167b0453c2d8afb784b993086a6b1e0d543e2e):
+`bash tools/genesis_performance/run_control.sh threads --mode campaign --repeats 3 --workers 4 --out /root/forge-perf-evidence-20261031/B-campaign-w4`
+-> 6/6 VALID, 1099.466 s; units 692.591 s, symbolic 666.823 s means. Peak PSS 10169512 KiB, 179 threads,
+no OOM/swap changes. Only a small sequential A/B timing difference; not a robust standalone thread-speed claim.
+C (source 0068bb367ce17083548402946d20601f2216722d):
+`bash tools/genesis_performance/run_control.sh sysimage-packages-reviewed --mode campaign --repeats 3 --workers 4 --out /root/forge-perf-evidence-20261031/C-campaign-w4`
+-> 6/6 VALID, 72.300 s; units 50.390 s, symbolic 31.165 s means; peak PSS 2636160 KiB, no OOM/swap changes.
+D (same source):
+`bash tools/genesis_performance/run_control.sh sysimage-functions-reviewed --mode campaign --repeats 3 --workers 4 --out /root/forge-perf-evidence-20261031/D-campaign-w4`
+-> 6/6 VALID, 52.474 s; units 31.396 s, symbolic 26.102 s means; peak PSS 2321723 KiB, no OOM/swap changes.
+Actual source/asset digests and raw JSONL hashes are in each manifest/summary. The reviewed images have the same binary
+bytes as the preceding native images, copied to fresh immutable names with build.sh included in new manifests; old assets
+and manifests are preserved unchanged. All B/C/D controls match all six A campaigns exactly on queries/proposals, scores,
+refusals and failure classifications after the context correction. New preflight hashing is included in B/C/D totals.
+Outer-worker scaling is now measured separately with the bounded executor and 24 fixed public campaigns per batch.

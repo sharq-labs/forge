@@ -57,12 +57,19 @@ def semantics(run):
         raise ValueError("non-VALID campaign cannot establish complete equivalence")
     fields = ("status", "reasons", "observe_calls", "universes", "key_digest", "presented_card_digests",
               "leakage_audit", "evaluator_status", "v3_total_credit", "config_digest", "escrow_rule",
-              "proposer_kind", "budget_fraction", "library_versions")
+              "proposer_kind", "budget_fraction", "library_versions", "presentation", "arm_spec",
+              "development_identity", "prereg_sha256")
     result = {field: run[field] for field in fields}
-    expected = [u["universe_id"] for u in run["universes"]]
+    result["universes"] = [{k: v for k, v in universe.items() if k != "proposer_seconds"}
+                           for universe in run["universes"]]
+    # Scores use escrow IDs (bf-*); the proposer receives presentation aliases
+    # (gl-*). Outside checks and traces share that presented namespace.
+    scored = [u["universe_id"] for u in run["universes"]]
+    expected = [check["universe_id"] for check in run["isolation_checks"]]
     timings = run["operator_timings"]
     seen = [t["universe_id"] for t in timings]
-    if len(expected) != 6 or len(set(expected)) != 6 or sorted(seen) != sorted(expected):
+    if (len(scored) != 6 or len(set(scored)) != 6 or len(expected) != 6 or
+            len(set(expected)) != 6 or sorted(seen) != sorted(expected)):
         raise ValueError("missing or duplicate universe trace evidence")
     traces = []
     for timing in timings:
