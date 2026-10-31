@@ -12,13 +12,21 @@ Owner supplied the implementation request "Aggressive Performance Optimization (
 Base: PR #187, `83e13ae1a344c661f8ef9e71870bc70ad00beab3` (80 commits preserved), dedicated
 `codex/genesis-v04-performance` worktree. Local commits only; no push, merge or main edits.
 
-- [ ] Parent-observed development profiling; explicit Julia/GC/BLAS thread comparison on public synthetic fixtures.
-- [ ] Immutable Julia sysimage: package preload and representative first-fit precompilation, exact dependency and
+- [x] Parent-observed development profiling; explicit Julia/GC/BLAS thread comparison on public synthetic fixtures.
+- [x] Immutable Julia sysimage: package preload and representative first-fit precompilation, exact dependency and
   artifact identities; no fitted population or benchmark worlds in the asset. Owner explicitly approved installing
   pinned PackageCompiler in a separate build environment only (2026-10-31 chat); existing experiment environment unchanged.
-- [ ] Measured 4/8-worker throughput, 12 only if resources allow; retain only demonstrated improvements.
-- [ ] Separate hard-deadline repair, with adversarial cancellation/record-retention checks.
-- [ ] Targeted scientific/isolation regressions, independent scientific review and reproducible performance report.
+- [x] Measured 4/8-worker throughput, 12 only if resources allow; retain only demonstrated improvements.
+- [x] Separate hard-deadline repair, with adversarial cancellation/record-retention checks.
+- [x] Targeted scientific/isolation regressions, independent scientific review and reproducible performance report.
+
+Local outcome: [performance report](../performance/genesis-v04-performance-2026-10-31.md). Matched four-worker PySR
+throughput improved 21.43x; separate repeated bounded scaling supports 12 workers as the best observed tested count.
+Complete 19-arm public controls imply a conditional planning estimate of 15.26 h (not a formal run or full-grid CI).
+Targeted root pack: 174 passed / 3 expected skips; bounded mutations 9/9 killed. Ordinary FAST/SCIENTIFIC are NOT GREEN:
+same three failed nodes as pristine base; missing historical Git object was then restored and its test passed in both
+clones, leaving certificate/continuity failures unresolved. No new failed or skipped nodes. Code/evidence SHA and exact
+commands are in PROGRESS/report. Independent review PASS is static only; certification remains unclaimed.
 
 Preserve D11, six worlds, complete registered grid, all algorithms/operators/seeds/search budgets/scoring, serial
 deterministic PySR, private writable state and every namespace/keyring/mount protection. Public development data only.

@@ -5,6 +5,9 @@ measurement. No command accepts a root file. Campaign keys are published constan
 in `performance_v4.py`; these worlds cannot count as hidden evaluation. Registered
 algorithms, operators, seeds, six worlds and search budgets remain unchanged.
 
+Executed results, exact source/asset identities, scaling and estimate limitations
+are in the [2026-10-31 performance report](../../docs/performance/genesis-v04-performance-2026-10-31.md).
+
 The scripts describe the measured WSL2 environment, with the code in
 `/opt/forge-perf-20261031` and the existing interpreter in
 `/opt/forge-mvp-20261028/.venv`. They deliberately refuse incompatible pinned Julia

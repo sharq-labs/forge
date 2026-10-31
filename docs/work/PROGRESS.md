@@ -12051,3 +12051,164 @@ bytes as the preceding native images, copied to fresh immutable names with build
 and manifests are preserved unchanged. All B/C/D controls match all six A campaigns exactly on queries/proposals, scores,
 refusals and failure classifications after the context correction. New preflight hashing is included in B/C/D totals.
 Outer-worker scaling is now measured separately with the bounded executor and 24 fixed public campaigns per batch.
+
+#### Performance controls: final targeted pack and repeated scaling at 129388b3
+
+Clean native LF clone `/opt/forge-perf-20261031`, code
+`129388b32936386f95a75dd01a5044e0c97663c4`, existing Python 3.12.3, WSL root:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_deadline.py tests/genesis_lite/test_v04_performance.py tests/genesis_lite/test_v04_performance_analysis.py tests/genesis_lite/test_v04_runtime_assets.py tests/genesis_lite/test_v04_telemetry.py tests/genesis_lite/test_v04_isolation.py tests/genesis_lite/test_v04_pilot.py tests/genesis_lite/test_v04_decide.py tests/genesis_lite/test_v04_preregistration.py tests/genesis_lite/test_v04_arms.py tests/genesis_lite/test_analysis_v4.py`
+-> **174 passed, 3 expected environment skips in 35.68 s**, native exit 0; log `targeted-129388b3.log`.
+The skips are the off-Linux refusal, not-under-/opt refusal, and missing-PySR branch with PySR installed.
+Windows original .venv interpreter, dedicated worktree:
+`C:/Users/dev_kaeem/Downloads/Compressed/forge Lab/.venv/Scripts/python.exe -m pytest -q -p no:randomly tests/genesis_lite/test_v04_performance_analysis.py`
+-> **11 passed in 0.19 s**, exit 0 (includes the added timing-versus-credit case).
+
+Disposable native clone `/opt/forge-perf-mutations-20261031`, same code SHA/interpreter:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m tools.genesis_performance.check_mutations --out /root/forge-perf-evidence-20261031/mutations-129388b3`
+-> control 8 passed; **9/9 KILLED**, native named assertion failures/exit 1 for every mutant, overall exit 0;
+all source bytes restored and SHA-checked. This is the bounded development set, not OD-3.
+
+Public repeated scaling commands (one batch at a time; no tests/builds alongside):
+`bash tools/genesis_performance/run_control.sh sysimage-functions-reviewed --mode campaign --repeats 12 --workers W --executor bounded --out /root/forge-perf-evidence-20261031/SW-rR`
+where W/R are exactly 4/1, 8/1, 12/1, 12/2, 8/2, 4/2, 4/3, 12/3, 8/3. First S4/S8 use
+`0068bb367ce17083548402946d20601f2216722d`; later batches use `129388b32936386f95a75dd01a5044e0c97663c4`.
+The production harness/assets are unchanged between these; the latter corrects analysis context comparison.
+The final seven commands/native exit codes are in external `scaling-command-ledger.jsonl`, emitted by
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python /mnt/c/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/run_scaling.py`
+-> native exit 0. All nine batches: 24/24 VALID, exact 24-task scientific/trace equivalence PASS, zero OOM/swap deltas.
+Mean batch seconds +/- sample SD: 4 workers 209.518 +/- 1.182; 8 workers 137.011 +/- 2.520;
+12 workers 111.290 +/- 1.181. Pooled VALID/h: 412.375 / 630.607 / 776.350. Maximum sampled PSS:
+2.218 / 3.984 / 5.749 GiB. Sampled peaks are lower bounds. Higher-worker service latencies rise; throughput does not
+scale linearly. Twelve workers were allowed only after measured eight-worker memory left headroom.
+Boot IDs and pressure counters are compared within each batch; WSL restarted between some batches.
+
+Independent reporting review caught two additional reporting-helper defects before publication: incomplete or
+non-equivalent mixed batches could yield an estimate, and a single batch yielded a zero-width repeat range.
+External `consolidate.py` now requires the exact registered 57-task grid, all VALID, equivalence PASS, completed
+selection/planned repetitions and zero pressure deltas; ineligible estimates are null. Single-batch repeat variation
+is UNKNOWN. Static review PASS after both corrections; this does not claim execution or scientific validation.
+Full 19-arm public mixed controls and final ordinary gates are still in progress at this entry.
+
+#### Complete public mixture and whole-command resource check
+
+At clean native code `129388b32936386f95a75dd01a5044e0c97663c4`:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python /mnt/c/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/run_mixed.py`
+-> native exit 0. Exact seven expanded commands and return codes: external `mixed-command-ledger.jsonl`.
+All use `bash tools/genesis_performance/run_control.sh CONFIG --mode campaign --repeats 3 --workers W --executor EXEC --arms ARMS --out OUT`.
+The baseline for the 17 non-PySR arms used baseline/4/pool (51 VALID in 57.142 s). Together with the earlier A
+six PySR records, it is a 57-task semantic reference only, not a simultaneous throughput baseline.
+Complete registered 19-arm controls used bounded execution: packages-reviewed/4 (57 VALID, 166.493 s),
+functions-reviewed/4 (57, 136.639 s), functions-reviewed/8 (57, 84.786 s), functions-reviewed/12 three times
+(57 each, 68.470 / 69.225 / 68.375 s). All 342 optimized records exactly match their reference task's queries,
+proposals, scientific scores and failure classifications. Zero OOM/swap deltas and no lost/unstarted/deadline-killed tasks.
+
+The best observed full-mixture configuration is 12 workers, mean 68.690 +/- 0.466 s; pooled 2987.335 VALID/h.
+The planning ESTIMATE is 45600 / 2987.335 = 15.264 h. Repeat projections 15.194–15.383 h; conditional three-public-cluster
+bootstrap percentile band 13.118–17.425 h. This is NOT a formal-grid confidence interval. Future-world, representation,
+thermal/load and long-run scheduler uncertainty remains unquantified. Other full-mixture configurations have only one
+batch; their repeat variation is UNKNOWN. This is not a claim of globally optimal worker count or scientific validation.
+Corrected external `consolidate.py` executed successfully on the complete records (existing Windows .venv interpreter),
+all three worker groups ELIGIBLE_PUBLIC_CONTROL; independent read-only review PASS on the helper. Report details the
+measurement/executor distinctions and avoids multiplying unmatched speedups.
+
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python /mnt/c/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/run_resource.py`
+-> native exit 0, separate fourth mixed 12-worker control 57/57 VALID, exact equivalence PASS. External parent observed
+69.914 s command wall, 671.280 CPU s (604.570 user + 66.710 system), 9.601 mean whole-command CPU cores;
+Linux VM-wide /proc/stat busy fraction 47.017% of 20 logical CPUs. These figures include the trusted driver; earlier
+RUSAGE_CHILDREN summaries exclude its CPU. The extra run is not in selection/three-repeat estimate. Raw counters and
+command in `resource-accounting.json`. No formal root accessed/generated, formal campaign, push, merge or freeze.
+
+Live GitHub PR187 read through the GitHub connector remains open, 80 commits, head
+`83e13ae1a344c661f8ef9e71870bc70ad00beab3`, base `dd567d53d2444950f57ffaeb9903c74d7c38f04d`;
+metadata snapshot `pr187-final-read.json`. The local performance branch has not been pushed.
+
+#### Separate loading/phase diagnostic, source 129388b3
+
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python /mnt/c/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/run_profile.py`
+-> native exit 0. Expanded commands/return codes in `profile-command-ledger.jsonl`: public analytic baseline fit
+with JULIA_DEBUG=loading, then `FORGE_PERF_DIAGNOSTICS=1 bash tools/genesis_performance/run_control.sh sysimage-functions-reviewed --mode campaign --arms pysr_units pysr_symbolic --repeats 1 --workers 1 --out /root/forge-perf-evidence-20261031/PROFILE-functions-w1`.
+Both campaigns VALID and exact baseline task equivalence PASS; excluded from throughput selection. Twelve fresh
+outside-verified proposers, ten actual Julia loads with threads/GC 1/1 and the selected image; two early returns do
+not initialize Julia. Parent-arrival Julia initialization mean 1.627 +/- 0.056 s. Trusted independent evaluation
+mean 0.000294 s/campaign, v3 identity 0.01548 s; adjudicate_v3 had no calls on these refusal/no-law outcomes,
+so its duration remains UNKNOWN. Phase labels supplied by the proposer remain UNTRUSTED diagnostics.
+The original depot loader log explicitly rejects PythonCall's cache for a missing Printf build ID and StructUtils/
+JSON caches for different package source paths; it recompiles into each fresh private depot. This explains the
+repeated loading cost without changing the pinned project or sharing writable caches.
+
+Failed approach: the first external profile-summary assertion expected Julia loads for all twelve proposers and
+failed (exit 1). Six fresh proposer processes per campaign do not imply six Julia loads: existing arm early returns
+can precede the import. Corrected the diagnostic helper to preserve all twelve isolation records, report ten actual
+loads and explicitly list the two missing-probe universe IDs. Re-execution with the Windows .venv interpreter
+`profile_summary.py CODE EVIDENCE` exited 0 and wrote `profile-summary.json`; no runtime/algorithm change.
+
+#### Ordinary gates, pristine-base comparison and historical-object repair
+
+Sequential runs with the existing `/opt/forge-mvp-20261028/.venv/bin/python` (3.12.3), unprivileged `dev_kaeem`,
+clean LF clones `/home/dev_kaeem/forge-perf-gate-20261031` at `129388b32936386f95a75dd01a5044e0c97663c4` and
+`/home/dev_kaeem/forge-perf-base-20261031` at `83e13ae1a344c661f8ef9e71870bc70ad00beab3`. No installs.
+Explicit offline Julia project/executable, separate ordinary-test writable depot, threads/BLAS 1; no sysimage.
+Full environment overrides and literal command arrays are in external `run_gates.py` and `gates/commands.jsonl`.
+
+- `/opt/forge-mvp-20261028/.venv/bin/python -m pytest tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared -q --junitxml /home/dev_kaeem/forge-perf-gate-evidence-20261031/current-dependency.xml`
+  -> 1 passed, native exit 0. Baseline serial guard NOT RUN.
+- `/opt/forge-mvp-20261028/.venv/bin/python -m pytest -m "not expensive" -q -n 4 --dist loadfile --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared --junitxml /home/dev_kaeem/forge-perf-gate-evidence-20261031/current-fast.xml`
+  -> current **13772 passed, 3 failed, 184 skipped**, 342.19 s, native exit 1. Same command in pristine base with
+  `base-fast.xml` -> **13728 passed, 3 failed, 184 skipped**, 340.10 s, native exit 1.
+- `/opt/forge-mvp-20261028/.venv/bin/python -m pytest -m "not campaign" -q -n 4 --dist loadfile --deselect tests/test_core_guards.py::test_every_dependency_the_tree_reaches_for_is_declared --deselect tests/test_heterogeneous_ngspice.py::test_a_the_provider_is_a_real_external_process --deselect tests/test_heterogeneous_ngspice.py::test_g2_a_genuine_non_zero_exit_is_a_provider_failure --deselect tests/test_heterogeneous_ngspice.py::test_j_relocating_the_provider_leaves_the_result_byte_identical --deselect benchmarks/model_measurement_validation/tests/test_model_measurement_validation.py::test_rebuilding_everything_reproduces_the_published_gates --deselect benchmarks/empirical_validation/tests/test_empirical_validation.py::test_rebuilding_everything_reproduces_the_published_gates --junitxml /home/dev_kaeem/forge-perf-gate-evidence-20261031/current-scientific.xml`
+  -> current **14356 passed, 3 failed, 185 skipped**, 526.31 s, native exit 1. Same command in pristine base with
+  `base-scientific.xml` -> **14312 passed, 3 failed, 185 skipped**, 413.34 s, native exit 1.
+
+All four full-tier runs failed the exact same three nodes:
+`tests/test_core_certificate.py::test_the_certificate_describes_this_tree`,
+`tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully`, and
+`benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_source_is_byte_identical_to_its_source_commit`.
+Both failed-node and skipped-node sets match current versus base (FAST 184, SCIENTIFIC 185 skips), zero added or
+removed IDs. The Windows external `compare_gate_skips.py EVIDENCE/gates` executed successfully, exit 0, and wrote
+`skip-comparison.json`. All full-tier before/after git status snapshots are clean. These tiers are NOT GREEN;
+same-baseline failure is still failure, not a registry admission or certificate. The ordinary driver exit 0 means
+the sequential orchestration completed; individual pytest exits above remain 1.
+
+Failed approach: transferring only the performance branch preserved its entire ancestry but omitted a non-ancestor
+historical ref that the battery source-pin test reads. `e2b8037c881847a497c32f7ca56f82b95b493727` exists in the original
+repository under `refs/remotes/origin/feat/br-mind-01-minimal-mind`, but initially not in either test clone. After both
+tiers completed, bundled that existing ref and fetched it into both clones without changing HEAD or source. Exact
+fetch/recheck commands are in `gates/history-recheck-commands.jsonl`, emitted by external `recheck_history.py`.
+`/opt/forge-mvp-20261028/.venv/bin/python -m pytest benchmarks/battery_rediscovery_v0/tests/test_battery_rediscovery_v0.py::test_mind_source_is_byte_identical_to_its_source_commit -q --junitxml /home/dev_kaeem/forge-perf-gate-evidence-20261031/current-history-recheck.xml`
+and the same command in the base clone with `/home/dev_kaeem/forge-perf-gate-evidence-20261031/base-history-recheck.xml`
+-> **1 passed** in current (0.90 s) and base (0.66 s), native exit 0 each. Original full-tier logs remain unchanged;
+no retrospective green claim. The two certificate/continuity failures remain; no pins or certificates edited.
+Future gate clones need referenced historical objects, not merely complete ancestry of their working branch.
+
+Independent static review also PASSed the completed numerical report and separate diagnostic/resource sections;
+summarized in external `scientific-review-record.md`. It explicitly excludes ordinary-gate execution. Final OD-3,
+formal-root work, preregistration freeze, push and merge were NOT RUN. `docs/ai/check_docs.py` printed
+AI_DOCS PASS (9 opted-in documents; metadata/local paths only); `git diff --check` reported no whitespace defect.
+
+#### Final units-aware Pareto control
+
+At clean native source `129388b32936386f95a75dd01a5044e0c97663c4`, after all ordinary tiers/rechecks completed:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python /mnt/c/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/run_units_pareto.py`
+-> native exit 0. Three commands, recorded literally with exit 0 in `units-pareto-commands.jsonl`:
+`FORGE_PERF_DIAGNOSTICS=1 bash tools/genesis_performance/run_control.sh CONFIG --mode fit --arms pysr_units --repeats 1 --workers 1 --out OUT`,
+CONFIG baseline / sysimage-packages-reviewed / sysimage-functions-reviewed; OUT A-units-fit-1 / C-units-fit-1 /
+D-units-fit-1 under the external evidence root. Parent total seconds 132.732573 / 15.358233 / 10.506174.
+Both images exactly match the baseline's complete Pareto equations and losses. No campaign-rate claim or repeat
+variance from these one-fit controls. This complements the ordinary-symbolic Pareto check and campaign/query/score
+equivalence, whose final outputs can be refusals. No search settings or scientific inputs were tuned.
+
+Final documentation updates close only the owner-authorized bounded performance task. No original checkout changes:
+HEAD remains `83e13ae1a344c661f8ef9e71870bc70ad00beab3` on local main with the same two untracked entries. The preserved
+PR ancestry count is 80 and that SHA is an ancestor of the dedicated performance branch. Runtime Project/Manifest
+hashes still match the pre-build values; selected image and manifest remain root-owned mode 0444. No v0.2-pinned file,
+scientific algorithm, operator, seed, search budget, scoring rule or registered statistical method was changed.
+
+Final read-only scientific review of the added units control and gate reporting: PASS; it read completed artifacts
+without executing tests and retained the full tiers as NOT GREEN. The final documentation-only closeout is separate
+from tested code `129388b32936386f95a75dd01a5044e0c97663c4`.
+External evidence inventory: `C:/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/evidence-index.json`,
+873 files / 33,928,788 bytes, index SHA256 **67b0485f14600e241d0b9efc8010023d195e8b4ee2c733507d8a592513049818**.
+It includes public raw runs/manifests/summaries, asset manifests, failed controls, exact command ledgers, JUnit,
+comparisons and static-review summaries. The selected binaries remain under root-owned/read-only /opt in WSL.
+All 873 indexed file SHA256 values were recomputed with PowerShell Get-FileHash and matched (native exit 0).
+Final `docs/ai/check_docs.py` execution: AI_DOCS PASS, exit 0; staged `git diff --cached --check` clean.
