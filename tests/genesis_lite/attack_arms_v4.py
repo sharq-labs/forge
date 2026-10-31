@@ -53,7 +53,7 @@ def reach_network(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dic
 def see_operator(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:
     """Enumerate visible processes and try to read any other process's memory map (the operator's included)."""
     pids = sorted(int(p) for p in os.listdir("/proc") if p.isdigit())
-    readable = []
+    readable, readable_mem, readable_fds = [], [], []
     for pid in pids:
         if pid == os.getpid():
             continue
@@ -63,7 +63,18 @@ def see_operator(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict
             readable.append(pid)
         except OSError:
             pass
-    return _answer(card, {"visible_pids": pids, "readable_maps": readable})
+        try:
+            with open(f"/proc/{pid}/mem", "rb"):
+                readable_mem.append(pid)
+        except OSError:
+            pass
+        try:
+            os.listdir(f"/proc/{pid}/fd")
+            readable_fds.append(pid)
+        except OSError:
+            pass
+    return _answer(card, {"visible_pids": pids, "readable_maps": readable, "openable_mem": readable_mem,
+                          "listable_fds": readable_fds})
 
 
 def honest(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> dict[str, Any]:

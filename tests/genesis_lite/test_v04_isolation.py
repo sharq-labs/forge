@@ -221,6 +221,8 @@ def test_no_outbound_network_and_no_visible_operator():
     assert net["network"].startswith("refused")
     procs, _ = _attack("see_operator", ih.hidden_paths())
     assert procs["readable_maps"] == []
+    assert procs["openable_mem"] == []
+    assert procs["listable_fds"] == []
     assert os.getpid() not in procs["visible_pids"]
 
 

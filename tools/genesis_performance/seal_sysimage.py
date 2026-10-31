@@ -12,6 +12,7 @@ def main():
     ap.add_argument("image")
     ap.add_argument("--build", required=True)
     ap.add_argument("--mode", choices=("packages", "functions"), required=True)
+    ap.add_argument("--cpu-target", required=True)
     args = ap.parse_args()
     build = pathlib.Path(args.build)
     project = pathlib.Path("/opt/forge-mvp-20261028/.venv/julia_env")
@@ -22,7 +23,7 @@ def main():
         assert sha(project / name) == sha(build / "project" / name), f"build changed {name}"
     scripts = ["setup_build.jl", "build_sysimage.jl", "precompile_workload.jl", "link_sysimage.py"]
     doc = {"schema": "forge.development.sysimage/1", "purpose": "public synthetic precompilation only",
-           "sysimage_sha256": sha(args.image), "mode": args.mode, "cpu_target": "generic",
+           "sysimage_sha256": sha(args.image), "mode": args.mode, "cpu_target": args.cpu_target,
            "julia_version": subprocess.check_output([str(binary), "--version"], text=True).strip(),
            "base_sysimage_sha256": sha(project / "pyjuliapkg/install/lib/julia/sys.so"),
            "linker_sha256": sha(project / "pyjuliapkg/install/libexec/julia/lld"),

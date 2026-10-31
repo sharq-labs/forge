@@ -11914,3 +11914,23 @@ explicitly; `python /opt/forge-sysimage-build-20261031/link_sysimage.py --probe`
 Package-only image now built (451 MiB). Experiment Project.toml and Manifest.toml are byte-identical to the isolated
 build copy (SHA-256 82b5f5e3878bc2035aa96730adf82354a3bee1b1950299deb489b6f31310b732 and
 958661e2ee61f0c4a1c99e3799e4177d9db943722a96da26c3a201912525296e respectively). Runtime smoke is next.
+#### v0.4 targeted regression and rejected generic sysimage
+
+At `9d3535943851080ea8447dcc492e6f7ef9e209d5`, command:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_deadline.py tests/genesis_lite/test_v04_performance.py tests/genesis_lite/test_v04_runtime_assets.py tests/genesis_lite/test_v04_telemetry.py tests/genesis_lite/test_v04_isolation.py tests/genesis_lite/test_v04_pilot.py tests/genesis_lite/test_v04_decide.py tests/genesis_lite/test_v04_preregistration.py tests/genesis_lite/test_v04_arms.py tests/genesis_lite/test_analysis_v4.py`
+-> 160 passed, 3 expected environment skips, 34.75 s. This is also the EXACT ten-file command used on
+`f796744a` for the preceding recorded 4 failed / 155 passed / 3 skipped run. A direct mem/fd probe is now being
+added after review noted the earlier visible-process test covered maps/environment only.
+Independent scientific re-review at 9d353594…: PASS (static only), with that coverage-wording correction.
+`python tools/forge_check.py --changed --base 83e13ae1a344c661f8ef9e71870bc70ad00beab3 --workers 4 --dry-run --list`
+-> selection is full FAST; tests changed are certification_pinned, RECERTIFICATION_REQUIRED (owner-run, not done).
+
+`FORGE_PERF_DIAGNOSTICS=1 bash tools/genesis_performance/run_control.sh sysimage-packages --out /root/forge-perf-evidence-20261031/C-fit-1 --arms pysr_symbolic --workers 1 --repeats 1`
+-> public fit completed in 11.384 s, sampled aggregate PSS 854071 KiB. Parent /proc maps confirm packages.so.
+REJECTED for acceptance: Pareto equations differ from baseline despite identical selected simple law. The initial
+image used generic CPU target while ordinary compilation uses native. Native image and import-only native compiler
+cache are being investigated; no accepted speedup claim. Generic image digest:
+d709b2eeb319b09eef946a82db134824aab936d5f1ecb0a0f4bbbd63e460ed5a.
+Failed first function-workload attempt: verbosity specified both in Options and equation_search; removed the duplicate
+runtime option. This failure occurred before any image was created. Build environment is now scrubbed to public paths
+and explicit settings so a PackageCompiler exception cannot print unrelated operator environment values.

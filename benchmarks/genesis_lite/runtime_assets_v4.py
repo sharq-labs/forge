@@ -77,5 +77,32 @@ def runtime_identity(env):
                 raise ValueError(f"sysimage thread configuration mismatch: {name}")
         identity["sysimage"] = {"path": str(image), "sha256": manifest["sysimage_sha256"],
                                "build_manifest_sha256": hashlib.sha256(raw).hexdigest(), "build": manifest}
+    cache = env.get("FORGE_JULIA_CACHE")
+    if cache:
+        cache = check_read_only_asset(cache)
+        entries = env.get("JULIA_DEPOT_PATH", "").split(":")
+        if not entries or entries[0] != "/tmp/jdepot" or str(cache) not in entries[1:]:
+            raise ValueError("immutable Julia cache requires a private first depot")
+        manifest_path = check_read_only_asset(cache / "asset-manifest.json")
+        raw = manifest_path.read_bytes()
+        manifest = json.loads(raw)
+        actual = {}
+        for path in sorted(cache.rglob("*")):
+            check_read_only_asset(path)
+            if path.is_symlink():
+                raise ValueError("symlink in immutable cache")
+            if path.is_file() and path != manifest_path:
+                actual[str(path.relative_to(cache))] = sha(path)
+        if actual != manifest["files"]:
+            raise ValueError("Julia cache content mismatch")
+        if manifest["python_packages"] != identity["python_packages"]:
+            raise ValueError("Julia cache Python package identity mismatch")
+        for name in ("julia_executable", "Project.toml", "Manifest.toml"):
+            if manifest["runtime_files"][name]["sha256"] != files.get(name, {}).get("sha256"):
+                raise ValueError(f"Julia cache runtime mismatch: {name}")
+        for name, value in manifest["runtime_thread_env"].items():
+            if effective.get(name) != value:
+                raise ValueError(f"Julia cache thread configuration mismatch: {name}")
+        identity["immutable_cache"] = {"path": str(cache), "manifest_sha256": hashlib.sha256(raw).hexdigest(), "build": manifest}
     digest = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
     return {"sha256": digest, "content": identity}

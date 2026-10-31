@@ -10,9 +10,9 @@ function public_workload()
         y = units ? log.(2 .+ X[1, :] ./ X[2, :]) : 2 .+ X[1, :] ./ X[2, :]
         options = Options(binary_operators=[+, -, *, /], unary_operators=[exp, log],
                           populations=8, population_size=33, maxsize=units ? 20 : 15,
-                          deterministic=true, seed=0, verbosity=0, progress=false)
+                          deterministic=true, seed=0)
         equation_search(X, y; niterations=40, options=options, parallelism=:serial,
-                        variable_names=["x0", "x1"], return_state=true, verbosity=0,
+                        variable_names=["x0", "x1"], return_state=true, verbosity=0, progress=false,
                         X_units=units ? ["m", "m"] : nothing, y_units=units ? "1" : nothing)
     end
     nothing

@@ -65,3 +65,25 @@ def test_formal_runtime_must_be_explicitly_bound(tmp_path, monkeypatch):
         assert "not bound" in pilot_v4.formal_runtime_check(manifest)
     path.write_text(json.dumps({"proposer_runtime_identity_sha256": "runtime-a"}))
     assert pilot_v4.formal_runtime_check(manifest) == ""
+
+
+def test_immutable_cache_rejects_missing_private_depot_changed_and_added_files(tmp_path, monkeypatch):
+    env, _ = _asset(tmp_path, monkeypatch)
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    (cache / "code.so").write_bytes(b"compiled public package")
+    runtime = assets.runtime_identity(env)["content"]
+    doc = {"files": {"code.so": assets.sha(cache / "code.so")}, "python_packages": runtime["python_packages"],
+           "runtime_files": runtime["files"], "runtime_thread_env": {"PYTHON_JULIACALL_THREADS": "1"}}
+    (cache / "asset-manifest.json").write_text(json.dumps(doc))
+    env.update({"FORGE_JULIA_CACHE": str(cache), "JULIA_DEPOT_PATH": f"/tmp/jdepot:{cache}"})
+    assert "immutable_cache" in assets.runtime_identity(env)["content"]
+    with pytest.raises(ValueError, match="private first depot"):
+        assets.runtime_identity({**env, "JULIA_DEPOT_PATH": str(cache)})
+    (cache / "unexpected.so").write_bytes(b"unbound")
+    with pytest.raises(ValueError, match="cache content mismatch"):
+        assets.runtime_identity(env)
+    (cache / "unexpected.so").unlink()
+    (cache / "code.so").write_bytes(b"tampered")
+    with pytest.raises(ValueError, match="cache content mismatch"):
+        assets.runtime_identity(env)
