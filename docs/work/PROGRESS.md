@@ -1,5 +1,31 @@
 # Forge Work Progress
 
+## 2026-10-31 — fixed-worker performance follow-up, imports
+
+Owner authorized implementing the two researched opportunities; at 12:45 UTC
+explicitly required the same worker count in every comparison. Baseline is
+`368d085ec0b2ffdeb631fea6df7d44d67a8d0da8`. Work uses a separate clone; no original
+checkout changes, security changes, hashing shortcut, push, merge, OD-3 or formal run.
+
+Moved the grammar multiplicity import into actual selection. The ledger and
+scientific operations are unchanged. Bounded native WSL tests with the existing
+Python 3.12 environment:
+
+- `python -m pytest tests/mind/test_grammar_imports.py -q`: corrected baseline
+  control **1 failed / 1 passed** (fresh-process eager-import guard), candidate
+  **2 passed**. The initial injected-failure test patched an already-bound alias;
+  it was corrected to patch the ledger constructor, then both controls were rerun.
+- `python -m pytest tests/mind/test_grammar_imports.py tests/mind/test_grammar.py
+  tests/genesis_lite/test_v03_grammar_arm.py tests/genesis_lite/test_v04_arms.py -q`:
+  **78 passed / 1 skipped**, 17.07 s; before the constructor-test correction.
+- Three alternating fresh-process import comparisons: mean arms_v4 import
+  **0.79077 -> 0.21515 s**; process wall **0.84653 -> 0.24813 s**. Microbenchmark
+  only; campaign speedup is not yet established.
+
+Commands, return codes, logs and measurements are retained in
+`/root/forge-perf2-evidence-20261031` (`commands.jsonl`, `imports-*.log`,
+`imports-ab.json`), with task workspace copies prepared for final delivery.
+
 ## Approved D1/D2/D3 application and integration in progress — 2026-10-18
 
 Owner explicitly approved the exact three corrections and resumption of bounded final integration. Proposal hashes and preimages verified against owner-analysis manifest; all three `git apply --check <exact proposal>` commands exited0, then `git apply <exact proposal>` exited0 for each. No broader source change; application and32-file preservation snapshot recorded in `.pytest-review-temp/final-integration-approved-2026-10-18/application.json`. Fresh census-before diagnostic confirmed same20 identities, sole M1C physical model0.1.0 addition, no import loss/collisions. Owner disposition status updated from actual approval/application, not inferred from file existence.

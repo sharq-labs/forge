@@ -27,7 +27,6 @@ from typing import Sequence
 
 import numpy as np
 
-from ...claims.multiplicity import MultiplicityLedger, promote
 from .fit import Fit, fit
 from .grammar import EXP_CLIP, Structure, exp_argument, log_f
 
@@ -94,6 +93,10 @@ def _cv_mse(structure: Structure, L: np.ndarray, z: np.ndarray) -> float:
 
 def select(structures: Sequence[Structure], L: np.ndarray, z: np.ndarray, *, sigma: float | None, ledger_id: str,
            generated: int | None = None) -> Selection:
+    # Only selection uses the ledger. Importing dimensions or scoring must not
+    # initialize the entire claims/evaluation stack in each fresh proposer.
+    from ...claims.multiplicity import MultiplicityLedger, promote
+
     sigma = _sigma(sigma)
     if generated is not None and generated < len(structures):
         raise ValueError("generated counts the grammar before any cap: it cannot be below the structures given")

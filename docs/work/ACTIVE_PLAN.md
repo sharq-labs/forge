@@ -8,6 +8,16 @@ reference application).
 
 ## Current bounded task — Genesis-lite v0.4 performance (owner, 2026-10-31)
 
+Follow-up authorized 2026-10-31 12:40 UTC: implement and compare residual PySR
+precompilation and unnecessary eager grammar/claims imports locally. Use bounded
+public A/B controls first, preserve exact budgets, traces, Pareto outputs and
+fresh-world isolation; retain full runtime hashing. Relevant tests and ordinary
+aggregate gates are authorized. No formal run, OD-3, security changes, push or merge.
+The separate task workspace retains the diagnosis and new evidence; the original
+checkout is preserved until the tested local commits are ready to fast-forward.
+Owner clarification at 12:45 UTC: keep the worker count identical in every A/B
+pair; optimize operation and campaign latency, with no worker-count increase.
+
 Owner supplied the implementation request "Aggressive Performance Optimization (Genesis-lite v0.4)" in chat.
 Base: PR #187, `83e13ae1a344c661f8ef9e71870bc70ad00beab3` (80 commits preserved), dedicated
 `codex/genesis-v04-performance` worktree. Local commits only; no push, merge or main edits.
