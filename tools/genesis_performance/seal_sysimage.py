@@ -30,7 +30,7 @@ def main():
            "runtime_files": {k: {"path": str(p), "sha256": sha(p)} for k, p in files.items()},
            "runtime_thread_env": {"PYTHON_JULIACALL_THREADS": "1", "JULIA_NUM_GC_THREADS": "1",
                                   "OPENBLAS_NUM_THREADS": "1", "OMP_NUM_THREADS": "1", "MKL_NUM_THREADS": "1", "NUMEXPR_NUM_THREADS": "1"},
-           "build_thread_env": {"JULIA_NUM_THREADS": "1", "JULIA_NUM_GC_THREADS": "1", "JULIA_NUM_PRECOMPILE_TASKS": "1"},
+           "build_thread_env": {"JULIA_NUM_THREADS": "1", "JULIA_NUM_GC_THREADS": "1", "JULIA_NUM_PRECOMPILE_TASKS": "1", "JULIA_IMAGE_THREADS": "4"},
            "scripts": {name: sha(build / name) for name in scripts},
            "compiler_project": (build / "compiler/Project.toml").read_text(),
            "compiler_manifest": (build / "compiler/Manifest.toml").read_text(),

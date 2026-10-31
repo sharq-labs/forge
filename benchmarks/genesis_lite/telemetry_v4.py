@@ -60,21 +60,24 @@ class ProcessSampler:
         for pid in tree_pids(self.pid):
             try:
                 born = start_time(pid)
-                status = dict(line.split(":", 1) for line in pathlib.Path(f"/proc/{pid}/status").read_text().splitlines())
-                totals["rss_kib"] += int(status.get("VmRSS", "0 kB").split()[0])
-                totals["threads"] += int(status["Threads"])
-                totals["processes"] += 1
-                rollup = pathlib.Path(f"/proc/{pid}/smaps_rollup").read_text().splitlines()
+                status = dict(line.split(":", 1) for line in (PROC / str(pid) / "status").read_text().splitlines())
+                rss, threads = int(status.get("VmRSS", "0 kB").split()[0]), int(status["Threads"])
+                rollup = (PROC / str(pid) / "smaps_rollup").read_text().splitlines()
                 pss = sum(int(line.split()[1]) for line in rollup if line.startswith("Pss:"))
+                mapped = set()
+                for line in (PROC / str(pid) / "maps").read_text().splitlines():
+                    path = line.split()[-1]
+                    if path.startswith("/") and (path.endswith("/sys.so") or "forge-sysimage" in path):
+                        mapped.add(path)
                 if start_time(pid) != born:
                     self.incomplete += 1
                     continue
+                totals["rss_kib"] += rss
+                totals["threads"] += threads
+                totals["processes"] += 1
                 totals["pss_kib"] += pss
                 self.pss_observations += 1
-                for line in pathlib.Path(f"/proc/{pid}/maps").read_text().splitlines():
-                    path = line.split()[-1]
-                    if path.startswith("/") and (path.endswith("/sys.so") or "forge-sysimage" in path):
-                        self.sysimages.add(path)
+                self.sysimages.update(mapped)
             except (OSError, ValueError, KeyError):
                 self.incomplete += 1
         for k, v in totals.items():

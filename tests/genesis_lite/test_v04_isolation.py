@@ -195,7 +195,9 @@ def test_hidden_secrets_cannot_be_read_or_listed(secret_dir):
     assert not others, others                                    # another checkout under /opt is invisible
     # re-review M3: the process is uid 0 only of its own empty user namespace; outside, where file access is decided,
     # it is 65534 with every capability at zero (checked by verified above)
-    assert report["uid"] == 0 and report["ppid"] == 0
+    # The trusted root shell remains namespace init to kill busy descendants on
+    # worker death. Its private memory/fds are covered by the visible-process attack.
+    assert report["uid"] == 0 and report["ppid"] == 1
     assert outside["uid"] == [65534] * 4 and not any(outside["caps"].values())
     assert not any(k.startswith("FORGE") for k in report["env"])
 
@@ -265,7 +267,7 @@ def test_a_proposer_dying_mid_relay_is_an_infrastructure_failure(monkeypatch, er
         outside = {"inspected": True}
 
         def __init__(self, *a, **k):
-            pass
+            self.timing = {}
 
         def propose(self, *a, **k):
             raise error

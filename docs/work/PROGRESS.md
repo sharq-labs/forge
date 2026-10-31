@@ -11899,3 +11899,18 @@ Full SHAs for earlier abbreviated diary references: instrumentation `a70b8f0f0f5
 deadline `ff723f8c43fcf1bcf3fd13a4d6d529102b45a9d4`.
 At ba9c9f84…: `PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_runtime_assets.py tests/genesis_lite/test_v04_arms.py tests/genesis_lite/test_v04_decide.py tests/genesis_lite/test_v04_preregistration.py tests/genesis_lite/test_analysis_v4.py`
 -> 105 passed, 1 skipped (missing-PySR test when PySR is installed), 13.51 s.
+#### Review-repair regression at f796744a (full SHA in Git)
+
+Executed the ten-file v0.4 targeted command listed in the task transcript (deadline, performance, runtime_assets,
+telemetry, isolation, pilot, decide, preregistration, arms, analysis): 4 failed, 155 passed, 3 skipped in 32.80 s.
+Failures: `test_hidden_secrets_cannot_be_read_or_listed` expected old ppid=0 rather than the new trusted PID-1
+supervisor; the three `test_a_proposer_dying_mid_relay_is_an_infrastructure_failure` cases used a fake Host without
+its new timing dictionary. Updated those fixture expectations; no hidden-path or memory-access assertion removed.
+Independent reviewer statically found no new supervisor authority leak. Follow-up telemetry review caught RSS being
+added before a PID-reuse check; staged all metrics/maps before the check and added a PID-reuse adversarial test.
+
+Build attempt 2 failed because LLD could not locate Julia's libLLVM. Attempt 3 sets the linker subprocess library path
+explicitly; `python /opt/forge-sysimage-build-20261031/link_sysimage.py --probe` reports LLD 16.0.6.
+Package-only image now built (451 MiB). Experiment Project.toml and Manifest.toml are byte-identical to the isolated
+build copy (SHA-256 82b5f5e3878bc2035aa96730adf82354a3bee1b1950299deb489b6f31310b732 and
+958661e2ee61f0c4a1c99e3799e4177d9db943722a96da26c3a201912525296e respectively). Runtime smoke is next.

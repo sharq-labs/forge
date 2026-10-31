@@ -10,6 +10,10 @@ import sys
 
 lld = pathlib.Path("/opt/forge-mvp-20261028/.venv/julia_env/pyjuliapkg/install/libexec/julia/lld")
 args = sys.argv[1:]
+runtime = lld.parents[2]
+os.environ["LD_LIBRARY_PATH"] = str(runtime / "lib/julia") + ":" + str(runtime / "lib")
+if args == ["--probe"]:
+    os.execv(str(lld), [str(lld), "-flavor", "gnu", "--version"])
 if "-shared" not in args or any(a == "-c" or a.endswith((".c", ".cpp")) for a in args):
     raise SystemExit("this adapter accepts only PackageCompiler shared-object linking")
 link = []
