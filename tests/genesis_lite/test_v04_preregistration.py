@@ -28,6 +28,16 @@ def test_freeze_refuses_without_the_owners_approval():
         p4.freeze("  ", {})
 
 
+def test_the_crash_classification_and_the_proposer_environment_block_the_freeze():
+    blocking = {k for k, v in p4.OPEN_ITEMS.items() if v["blocking"]}
+    assert {"D15-crash-classification", "A1b-proposer-env", "A1-pysr-units-dev-pilot", "A6-cost"} <= blocking
+    assert not p4.OPEN_ITEMS["M-d-candidate-registration"]["blocking"]
+    others = {k: "resolved" for k in blocking - {"D15-crash-classification"}}
+    with pytest.raises(ValueError, match="D15-crash-classification"):
+        p4.freeze("owner: freeze", others)
+    assert not pilot_v4.PREREG.exists()
+
+
 def test_freeze_refuses_while_blocking_items_are_open():
     with pytest.raises(ValueError, match="blocking open items"):
         p4.freeze("owner: freeze", {"A6-cost": "measured"})

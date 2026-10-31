@@ -42,6 +42,14 @@ OPEN_ITEMS = {
     "D12-codex-review": {"blocking": True, "what": "independent (Codex) review of this preregistration, findings closed"},
     "review-12b-margin": {"blocking": True, "what": "owner reading: control-kind non-inferiority margin 0.10 vs P-1 "
                           "'no loss allowed in control cells'"},
+    "D15-crash-classification": {"blocking": True, "what": "owner decision: a proposer crash or timeout after its "
+                                 "outside verification is infrastructure (A), the arm's failure (B) or mixed (C), plus "
+                                 "a per-root attempt ledger"},
+    "A1b-proposer-env": {"blocking": True, "what": "the formal proposer environment and exposures fixed here and checked "
+                         "by the formal driver (G7 pilot: JULIA_DEPOT_PATH with a read-only depot under /opt, "
+                         "PYTHON_JULIACALL_PROJECT/EXE, PYTHON_JULIAPKG_OFFLINE, JULIA_NUM_THREADS)"},
+    "M-d-candidate-registration": {"blocking": False, "what": "a registration path for a candidate arm with its own "
+                                   "identity binding; Step 1 needs none, a Step 2 lift decision does"},
     "multiplicity-iut": {"blocking": False, "what": "proposal: replace holm_family by iut_all (valid at alpha without "
                          "correction and compares every arm); D9 stands until the owner decides"},
 }
