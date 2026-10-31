@@ -33789,6 +33789,52 @@
           "sha256": "1e1fec4c77c9b7687b35c450e0bb21028af247c6bcb4febcf1af9a96af066839"
         }
       ]
+    },
+    {
+      "path": "tests/fixtures/mesh_serialization_baseline.json",
+      "sha256": "d4d44833791020e0a9ba1541af15bd8bd18d5d2b6302bce9ffe5b8fd503fac8e",
+      "class": "SYNTHETIC",
+      "role": "SERIALIZATION_REGRESSION_FIXTURE",
+      "rationale": "Generated once from constructed mesh/state inputs by the clean d05b25ee baseline implementation, using the generation bodies in mesh_serialization_provenance.md. Exact golden serialization/hash verification only; no physical measurement, calibration, validation or certification.",
+      "evidence": [
+        {
+          "path": "tests/fixtures/mesh_serialization_provenance.md",
+          "sha256": "2d6e8be4a4b615d2450a15abd853a9ee59fc9f583f4010691d8961467dd8b480"
+        },
+        {
+          "path": "src/engcore/numerical/mesh_adaptation.py",
+          "sha256": "298cb3a9d3e2eb63d0ce2398cee778a463888c832c854d62cdedbd49cf5a2809",
+          "commit": "d05b25eec565b48b4a024799cbda4f046e872d6c"
+        }
+      ]
+    },
+    {
+      "path": "tests/fixtures/vertex_serialization_baseline.json",
+      "sha256": "22cb385a2bb96d51ec842cd55535e02010d0a8066e05b344daca7c574e3de664",
+      "class": "SYNTHETIC",
+      "role": "SERIALIZATION_REGRESSION_FIXTURE",
+      "rationale": "Generated once from constructed mesh/state inputs by the clean d05b25ee baseline implementation, using the generation bodies in mesh_serialization_provenance.md. Exact golden serialization/hash verification only; no physical measurement, calibration, validation or certification.",
+      "evidence": [
+        {
+          "path": "tests/fixtures/mesh_serialization_provenance.md",
+          "sha256": "2d6e8be4a4b615d2450a15abd853a9ee59fc9f583f4010691d8961467dd8b480"
+        },
+        {
+          "path": "src/engcore/numerical/mesh_adaptation.py",
+          "sha256": "298cb3a9d3e2eb63d0ce2398cee778a463888c832c854d62cdedbd49cf5a2809",
+          "commit": "d05b25eec565b48b4a024799cbda4f046e872d6c"
+        },
+        {
+          "path": "src/engcore/numerical/vertex_state.py",
+          "sha256": "49e34045b2c5b5d908f2e1ba80e24c826c2e728348dc163b75ed3dd4e5ba927d",
+          "commit": "d05b25eec565b48b4a024799cbda4f046e872d6c"
+        },
+        {
+          "path": "tests/test_m1b_vertex_dual_state.py",
+          "sha256": "0ec98155510e3514974c2a709e87be14836856577de6c74d736a2d3442d60129",
+          "commit": "d05b25eec565b48b4a024799cbda4f046e872d6c"
+        }
+      ]
     }
   ]
 }
