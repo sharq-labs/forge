@@ -35,11 +35,11 @@ its latest update describes.**
 | G4 FDA-19 | **CLOSED (tests).** v0.4 attacks cover the root dir, operator outputs, pilot_results, other /opt checkouts, drvfs, network, /proc and persistence | `test_v04_isolation.py`, 14 → 16 integration tests |
 | G5 B-LEAK | **IMPLEMENTED + EXECUTED on this host.** OS isolation per universe, verified from outside per process | root runs at `8fbcb710`; no claim beyond this host/config |
 | G6 FDA-21/22 | **DECIDED / DISCLOSED.** pysr_units uses the precision bar with its constant count; the region tell is disclosed and stratified | design draft §4–5; strata in `analysis_v4` |
-| G7 PySR | **OPEN.** pysr_units is implemented but has not run. The Julia depot (675 MB under /home, hidden in isolation) must be exposed read-only under /opt | waits for the OD-3 run to finish |
+| G7 PySR | **EXECUTED (development, descriptive).** Isolated pilot at `85fe073f`: 24/24 VALID. On discoverable worlds `pysr_units` passed the law in 2 of 8, `pysr_symbolic` in 0 of 8, `grammar_enumeration` in 4 of 8. So the EXC-5 rule (discoverable credit above 0) is met and the arm is not `NOT_QUALIFIED`. PySR needs a read-only depot copy under /opt and `PYTHON_JULIACALL_PROJECT`/`_EXE` (juliapkg writes a lock in the read-only venv). That proposer environment must be fixed by the preregistration | PROGRESS 2026-10-31 G7; `runs.jsonl` sha256 `420f6da3…` |
 | G8 driver | **CLOSED.** `pilot_v4` is in-tree; the root comes from a 0600 file outside the tree; the commitment is written before the run | `test_v04_pilot.py` root run |
 | G9 manifest | **CLOSED.** `environment.json` and its digest | same |
 | G10 cost | **OPEN.** Isolated measurement not run yet | waits for OD-3 |
-| G11 certificate | **OPEN (Session B).** The other session's OD-3 is running on `921f8d26`; the v0.4 files need the next batch | — |
+| G11 certificate | **OPEN (Session B).** OD-3 run 3 PASSED on `1979907f` (certificate child `1c45f51b`, verify PASS). That predates the review fixes, so the final OD-3 must run on the candidate SHA | PROGRESS 2026-10-31 OD-3 run 3 |
 | G12 independent review | **DECIDED (Codex, owner runs it).** Not done | — |
 | G13 dress rehearsal | **OPEN (Session B)** | — |
 | G14 operator identity | **CLOSED.** The operator is root; proposers are uid 65534 in another pid namespace; the visible-process attack finds no readable process | integration test |

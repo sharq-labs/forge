@@ -11747,3 +11747,43 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
 - Failed approach: `git commit` in the WSL clone failed with "empty ident name" (no git identity in WSL). Pass the
   identity per command with `git -c user.name=... -c user.email=...`, taken from the Windows checkout's config, rather
   than writing a global config.
+
+### 2026-10-31 — G7 / EXC-5 exit: isolated PySR development pilot (descriptive)
+
+- Staging, as root:
+  - copied the Julia depot to `/opt/julia-depot-20261031` (675 MB, root-owned, `a+rX,go-w`, `logs/` dropped);
+  - updated the clean clone `/opt/forge-v4-fa0ae0773448` to `85fe073f6b3355977983cd1285a6ebec3dc8c6d4` (clean tree).
+- Smoke runs (one `pysr_units` campaign, root `/root/gl-g7-20261031040859`, development only):
+  - Failed approach: the driver imported the venv's old `engcore` (`No module named 'engcore.mind.grammar'`). Fix:
+    put the tree's `src` on `PYTHONPATH` for the driver (the proposer runs `python -I`).
+  - Failed approach: inside isolation every PySR universe was `inadmissible`, because juliapkg wrote
+    `/opt/forge-mvp-20261028/.venv/julia_env/lock.pid` and the venv is read-only there (`PermissionError`). Fix: pass
+    `PYTHON_JULIACALL_PROJECT=<venv>/julia_env` and `PYTHON_JULIACALL_EXE=<venv>/julia_env/pyjuliapkg/install/bin/julia`.
+    With both set, juliacall skips juliapkg. Also pass `JULIA_DEPOT_PATH=/tmp/jdepot:/opt/julia-depot-20261031`
+    (private writable first entry, read-only copy second), `PYTHON_JULIAPKG_OFFLINE=yes`, `JULIA_NUM_THREADS=1`, and
+    `--expose /opt/julia-depot-20261031`. After this the campaign was VALID, at about 136 s per PySR universe.
+- Pilot (scratch `g7_pilot.sh`):
+  - Command, as root: `PYTHONPATH=/opt/forge-v4-fa0ae0773448/src nice -n 10 python -m benchmarks.genesis_lite.pilot_v4
+    --root-file <fresh 0600 dev root> --out /root/gl-g7pilot-20261031042032/out --arms pysr_units pysr_symbolic
+    grammar_enumeration --campaigns 2 --seeds 0 --workers 4 --deadline-seconds 6600 --env <the variables above>
+    --expose /opt/julia-depot-20261031`.
+  - Result: 24/24 completed, 0 not run, 3733 s. `runs.jsonl` sha256
+    `420f6da37dd7111da17b4e1ff7ce7e81d034ba75c9446da9d7b58095a1779004`.
+- Descriptive per arm (8 campaigns each, 2 campaigns x 4 presentations):
+
+  | arm | total credit | discoverable law_pass | median campaign wall |
+  |---|---|---|---|
+  | `grammar_enumeration` | 29.0 | 4/8 | 11 s |
+  | `pysr_units` | 23.0 | 2/8 | 845 s |
+  | `pysr_symbolic` | 16.5 | 0/8 | 815 s |
+
+  - The units check passed in all 37 universes where `pysr_units` fitted.
+  - `pysr_symbolic` reported `confounded` on 4/8 spurious-correlate worlds.
+- EXC-5 exit rule: discoverable credit is above 0 after one bounded attempt, so `pysr_units` is **not**
+  `NOT_QUALIFIED`. No tuning was done. This is development and descriptive only: no lift or superiority claim, no
+  formal tier.
+- Cost signal (not yet the G10 measurement): a PySR campaign took about 14 min at 4 workers. Extrapolating to the
+  formal grid (2,400 campaigns per arm) gives about 140 h per PySR arm at 4 workers. This is an extrapolation, not a
+  measurement.
+- Open for the preregistration: the PySR proposer environment (the variables and exposure above) must be fixed by the
+  preregistration, not left to the operator.
