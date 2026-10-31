@@ -11966,3 +11966,9 @@ parent PID/start-tick records; public-run preflight now included in total elapse
 New analysis/mutation helpers do not produce Blindfold decisions or alter the certified mutation population.
 Generated PySR CSV scratch directories from this worktree were moved, with SHA256 inventory, to
 `C:/Users/dev_kaeem/.codex/forge-perf-evidence-20261031/generated-pysr-csv`; no scratch output was deleted.
+
+Second review also rejected the first draft of the comparison helper: missing trace hashes could compare equal,
+duplicate task keys collapsed, and a retained WORKER_FAILED record was not summarized safely. Corrected before
+using the helper for any acceptance: full six-world trace coverage, explicit proposal or method-failure evidence,
+duplicate refusal, missing/extra task reporting, nonempty evidence and matched-only speedup statistics. Paired
+bootstrap groups both arms by their shared public seed/world set. Direct adversarial tests added; execution pending.

@@ -363,6 +363,7 @@ def per_universe_arm(spec: str, hidden: Sequence[str], checks: list[dict[str, An
                 host.timing["proposal_sha256"] = hashlib.sha256(json.dumps(proposal, sort_keys=True).encode()).hexdigest()
                 return proposal
             except Exception as exc:  # noqa: BLE001 - a dead pipe (OSError) is the host's failure too (re-review L2)
+                host.timing["proposer_failure"] = {"exception_type": type(exc).__name__, "message": str(exc)}
                 if not (isinstance(exc, RuntimeError) and str(exc).startswith("the proposer failed:")):
                     checks.append({"universe_id": card["universe_id"], "infrastructure_failure": str(exc)[:400]})
                 raise

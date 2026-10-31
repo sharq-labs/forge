@@ -10,7 +10,9 @@ import json
 import math
 import pathlib
 import random
+import re
 import statistics
+from collections import Counter
 
 
 def quantile(values, p):
@@ -48,13 +50,35 @@ def key(run):
 
 def semantics(run):
     if "runtime_diagnostic" in run:
+        if run["status"] != "PUBLIC_FIT_COMPLETED" or not run["runtime_diagnostic"]["equations"]:
+            raise ValueError("incomplete public fit")
         return {"status": run["status"], "equations": run["runtime_diagnostic"]["equations"]}
+    if run["status"] != "VALID":
+        raise ValueError("non-VALID campaign cannot establish complete equivalence")
     fields = ("status", "reasons", "observe_calls", "universes", "key_digest", "presented_card_digests",
               "leakage_audit", "evaluator_status", "v3_total_credit", "config_digest", "escrow_rule",
               "proposer_kind", "budget_fraction", "library_versions")
     result = {field: run[field] for field in fields}
-    result["traces"] = [{k: t.get(k) for k in ("universe_id", "proposal_sha256",
-                        "query_trace_without_transport_nonce_sha256")} for t in run["operator_timings"]]
+    expected = [u["universe_id"] for u in run["universes"]]
+    timings = run["operator_timings"]
+    seen = [t["universe_id"] for t in timings]
+    if len(expected) != 6 or len(set(expected)) != 6 or sorted(seen) != sorted(expected):
+        raise ValueError("missing or duplicate universe trace evidence")
+    traces = []
+    for timing in timings:
+        query = timing["query_trace_without_transport_nonce_sha256"]
+        if not isinstance(query, str) or not re.fullmatch("[0-9a-f]{64}", query):
+            raise ValueError("missing/invalid query trace hash")
+        proposal, failure = timing.get("proposal_sha256"), timing.get("proposer_failure")
+        if proposal is not None:
+            if failure is not None or not isinstance(proposal, str) or not re.fullmatch("[0-9a-f]{64}", proposal):
+                raise ValueError("ambiguous/invalid proposal evidence")
+        elif not (isinstance(failure, dict) and set(failure) == {"exception_type", "message"}
+                  and all(isinstance(value, str) and value for value in failure.values())):
+            raise ValueError("missing proposal/failure evidence")
+        traces.append({"universe_id": timing["universe_id"], "query_sha256": query,
+                       "proposal_sha256": proposal, "failure": failure})
+    result["traces"] = sorted(traces, key=lambda t: t["universe_id"])
     return result
 
 
@@ -73,29 +97,51 @@ def phase_durations(runs):
 
 
 def comparison(reference, runs):
-    base = {key(run): run for run in reference}
-    mismatches, matched, ratios = [], 0, []
+    def unique(records):
+        indexed = {}
+        for record in records:
+            if key(record) in indexed:
+                raise ValueError(f"duplicate comparison task: {key(record)}")
+            indexed[key(record)] = record
+        return indexed
+    base, candidate = unique(reference), unique(runs)
+    missing = sorted(set(base) - set(candidate))
+    extra = sorted(set(candidate) - set(base))
+    mismatches, incomplete, matched, ratios, clusters = [], [], 0, [], {}
     for run in runs:
         previous = base.get(key(run))
         if previous is None:
             continue
-        before, after = semantics(previous), semantics(run)
+        if previous["status"] != run["status"]:
+            mismatches.append({"key": key(run), "fields": ["status"]})
+            continue
+        try:
+            before, after = semantics(previous), semantics(run)
+        except (KeyError, ValueError, TypeError) as exc:
+            incomplete.append({"key": key(run), "reason": str(exc)})
+            continue
         different = [field for field in before if before[field] != after[field]]
         if different:
             mismatches.append({"key": key(run), "fields": different})
-        else:
-            matched += 1
+            continue
+        matched += 1
         if "campaign_total_seconds" in run and "campaign_total_seconds" in previous:
-            ratios.append(previous["campaign_total_seconds"] / run["campaign_total_seconds"])
+            ratio = previous["campaign_total_seconds"] / run["campaign_total_seconds"]
+            ratios.append(ratio)
+            clusters.setdefault((run["seed"], run["campaign_id"]), []).append(ratio)
     interval = None
-    if len(ratios) >= 3:
+    if len(clusters) >= 3:
         rng = random.Random(20261031)
-        means = [statistics.mean(rng.choices(ratios, k=len(ratios))) for _ in range(10000)]
+        groups = list(clusters.values())
+        means = [statistics.mean([x for group in rng.choices(groups, k=len(groups)) for x in group])
+                 for _ in range(10000)]
         interval = [quantile(means, .025), quantile(means, .975)]
-    return {"exact_matching_campaigns": matched, "mismatches": mismatches,
-            "unmatched_campaigns": len(runs) - matched - len(mismatches),
+    status = "FAIL" if mismatches else "UNKNOWN" if not matched or missing or extra or incomplete else "PASS"
+    return {"equivalence_status": status, "exact_matching_campaigns": matched, "mismatches": mismatches,
+            "incomplete_evidence": incomplete, "missing_reference_tasks": missing, "extra_candidate_tasks": extra,
             "paired_service_speedup": stats(ratios), "paired_bootstrap_95_percentile": interval,
-            "interval_scope": "public fixture service-time sample only; not full-grid uncertainty"}
+            "bootstrap_clusters": len(clusters),
+            "interval_scope": "clustered by public seed/world set; service-time sample only, not full-grid uncertainty"}
 
 
 def summarize(directory, reference):
@@ -112,6 +158,9 @@ def summarize(directory, reference):
                   for t in r.get("operator_timings", []) if "operator_process_identity" in t]
     return {"directory": str(directory), "source_sha": manifest["git_head"], "workers": summary["workers"],
             "n": len(runs), "valid": valid, "elapsed_seconds": summary["elapsed_seconds"],
+            "status_counts": dict(Counter(r["status"] for r in runs)),
+            "failures": [{"key": key(r), "status": r["status"], "reasons": r.get("reasons", [])}
+                         for r in runs if r["status"] not in ("VALID", "PUBLIC_FIT_COMPLETED")],
             "elapsed_includes_manifest_preflight": summary.get("elapsed_includes_manifest_preflight", False),
             "valid_campaigns_per_hour": valid * 3600 / summary["elapsed_seconds"], "arm_seconds": arm_times,
             "parent_launch_to_python_hello_seconds": stats(startup), "universe_lifetime_seconds": stats(lifetimes),

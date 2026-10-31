@@ -110,6 +110,8 @@ def main():
                     item = futures[future]
                     rec = {"arm": item[0], "index": item[1], "status": "WORKER_FAILED",
                            "reasons": [f"{type(exc).__name__}: {exc}"]}
+                    if item[2] == "campaign":
+                        rec.update(seed=item[1], campaign_id=f"public-perf-{item[1]}", presentation="anonymous")
                 stream.write(json.dumps(rec, sort_keys=True) + "\n")
                 stream.flush()
                 print(json.dumps({"arm": rec["arm"], "status": rec["status"], "elapsed": time.perf_counter() - start}), flush=True)
