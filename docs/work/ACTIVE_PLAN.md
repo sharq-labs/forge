@@ -18,6 +18,18 @@ checkout is preserved until the tested local commits are ready to fast-forward.
 Owner clarification at 12:45 UTC: keep the worker count identical in every A/B
 pair; optimize operation and campaign latency, with no worker-count increase.
 
+Follow-up measurements: four-worker six-campaign public batch mean **55.362 ->
+25.864 s** over three paired repetitions (2.141x, 53.28% less time). Separate
+19-arm coverage pair **70.661 -> 44.014 s**, one public seed only. All 74 campaign
+records VALID with exact cross-revision scientific parity, 444 distinct fresh
+proposers and no survivors. Full analytic Pareto 6/6 exact; root/grammar pack
+204 passed / 3 expected skips; deadline cleanup PASS. FAST has 13,785 passed,
+2 baseline certificate failures and 184 skips; SCIENTIFIC has 14,369 passed,
+the same 2 baseline certificate failures and 185 skips. Ordinary gates remain red.
+Report: [fixed-worker follow-up](../performance/genesis-v04-fixed-workers-2026-10-31.md).
+The weak 29.34-hour one-fixture extrapolation does not close the A6 cost rung or
+establish a full-grid uncertainty interval. Formal/runtime-binding decisions remain open.
+
 Owner supplied the implementation request "Aggressive Performance Optimization (Genesis-lite v0.4)" in chat.
 Base: PR #187, `83e13ae1a344c661f8ef9e71870bc70ad00beab3` (80 commits preserved), dedicated
 `codex/genesis-v04-performance` worktree. Local commits only; no push, merge or main edits.
@@ -30,7 +42,7 @@ Base: PR #187, `83e13ae1a344c661f8ef9e71870bc70ad00beab3` (80 commits preserved)
 - [x] Separate hard-deadline repair, with adversarial cancellation/record-retention checks.
 - [x] Targeted scientific/isolation regressions, independent scientific review and reproducible performance report.
 
-Local outcome: [performance report](../performance/genesis-v04-performance-2026-10-31.md). Matched four-worker PySR
+Earlier completed outcome, before the fixed-worker follow-up: [performance report](../performance/genesis-v04-performance-2026-10-31.md). Matched four-worker PySR
 throughput improved 21.43x; separate repeated bounded scaling supports 12 workers as the best observed tested count.
 Complete 19-arm public controls imply a conditional planning estimate of 15.26 h (not a formal run or full-grid CI).
 Targeted root pack: 174 passed / 3 expected skips; bounded mutations 9/9 killed. Ordinary FAST/SCIENTIFIC are NOT GREEN:

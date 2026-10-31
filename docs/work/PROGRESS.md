@@ -1,5 +1,38 @@
 # Forge Work Progress
 
+## 2026-10-31 - fixed-worker follow-up, measured acceptance
+
+Source baseline `368d085e`, measured candidate `84728311`; import commit `6fa867f3`.
+Three matched six-campaign public controls at **4 workers on both sides**:
+55.362 +/- 0.714 -> 25.864 +/- 0.721 s (mean +/- sample SD), **2.141x / 53.28% less**.
+Separate 19-arm one-seed coverage control: 70.661 -> 44.014 s. All 74 campaign
+records VALID; scientific scores, complete query/response/proposal/failure traces
+match across revisions. 444 distinct recorded proposer processes, none still live.
+Six complete analytic Pareto fronts/losses match across two arms and three seeds.
+
+The strict same-source analyzer is unchanged and retains its expected source-identity
+FAIL. A separately reviewed comparator independently binds exact clean source
+revisions, AST closures, runtime manifests and outside isolation before comparing
+all scientific fields except that verified identity difference. Positive control
+passed; 15 in-memory negative controls rejected tampered identities, tasks, scores,
+traces, exposure verification and process reuse. Independent review PASS is static.
+
+Final relevant root/Linux tests: **204 passed / 3 expected skips**, 44.00 s; separate
+deadline kill/descendant cleanup PASS. Serial dependency guard 1 passed. Focused
+certificate pack on baseline and candidate each **27 passed / 2 failed**, same
+pre-existing certificate/continuity nodes. FAST: **13,785 passed / 2 failed /
+184 skipped**, 348.83 s. SCIENTIFIC: **14,369 passed / 2 failed / 185 skipped**,
+535.97 s, with the same two certificate failures. Ordinary gates are not green.
+Full baseline tiers were not repeated; focused baseline reproduction is explicit.
+
+The public launcher now resolves its own repository instead of the older fixed
+native clone; syntax/help-only checks passed. Benchmark/gate commands used the
+measured clean native SHA directly. `docs/ai/check_docs.py` passed metadata/local
+paths only. Full commands, raw comparisons, identities and limits are in
+[the follow-up report](../performance/genesis-v04-fixed-workers-2026-10-31.md).
+No worker increase, dropped worlds, screening, mutable cache, runtime verification
+shortcut, dependency/security change, formal run, certificate edit, OD-3, push or merge.
+
 ## 2026-10-31 - fixed-worker follow-up, bridge build candidate
 
 Added an offline incremental image build mode using public analytic PySR arrays

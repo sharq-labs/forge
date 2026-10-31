@@ -1,7 +1,7 @@
 #!/bin/bash
 # Public development software controls only. No formal root read or generated.
 set -euo pipefail
-cd /opt/forge-perf-20261031
+cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.."
 venv=/opt/forge-mvp-20261028/.venv
 export PYTHONPATH="$PWD/src" OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1
 configuration=$1

@@ -8,8 +8,8 @@ algorithms, operators, seeds, six worlds and search budgets remain unchanged.
 Executed results, exact source/asset identities, scaling and estimate limitations
 are in the [2026-10-31 performance report](../../docs/performance/genesis-v04-performance-2026-10-31.md).
 
-The scripts describe the measured WSL2 environment, with the code in
-`/opt/forge-perf-20261031` and the existing interpreter in
+The scripts describe the measured WSL2 environment. `run_control.sh` uses its own
+repository checkout (deploy it in the required `/opt` isolation whitelist), and the existing interpreter in
 `/opt/forge-mvp-20261028/.venv`. They deliberately refuse incompatible pinned Julia
 versions. A different environment requires its own artifact and measurements.
 
@@ -73,6 +73,12 @@ The sealer checks the parent binary, runtime and package identities, CPU target
 and runtime thread configuration before creating a child manifest. Sealing is
 provenance, not acceptance: full Pareto, campaign trace and cleanup comparisons
 must pass before adopting the image. Keep worker counts identical in each pair.
+
+The fixed-worker follow-up compares `functions-reviewed.so` with
+`bridge-candidate-1.so`; its results and source revisions are recorded separately
+in `docs/performance/genesis-v04-fixed-workers-2026-10-31.md`. Select the latter with
+`sysimage-bridge-candidate-1`, keeping `--workers 4` and the same workload for both
+sides. This does not change a pilot configuration or freeze a formal runtime.
 
 ## Public comparisons
 
