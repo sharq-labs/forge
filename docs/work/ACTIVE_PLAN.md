@@ -6,13 +6,13 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
-## Current bounded task - mesh record serialization performance (owner, 2026-10-31)
+## Completed bounded task - mesh record serialization performance (owner, 2026-10-31)
 
 Owner approved the first project-wide review candidate at 14:17 UTC: reduce
 repeated representation construction within one call, with identical workers,
 workloads, hashes, mutation/substitution detection, authority and refusal semantics.
 This isolated branch starts at `d05b25eec565b48b4a024799cbda4f046e872d6c`.
-Only mesh/vertex serialization is being changed. No persistent identity cache,
+Only mesh/vertex serialization was changed, with byte-bound metadata for its new synthetic test fixtures. No persistent identity cache,
 skipped validation, security change, scientific protocol or solver setting change,
 push, merge, formal/OD-3, or 1000-campaign run is authorized.
 
@@ -20,9 +20,18 @@ The first two bounded candidates preserved exact serialized thermal records in
 three alternating A/B repetitions. The broader mesh/thermal/field pack passed
 201 tests before the final conservative fallback refinement. Independent review
 required builtin-shape eligibility before reading material and the complete
-original fallback expression; those corrections are under final verification.
-Final matched timing, ordinary FAST/SCIENTIFIC gates, and the independent review
-are required before delivery. Other project-wide review candidates remain proposals.
+original fallback expression; those corrections passed the final checks below.
+Final guarded implementation `458e0621` measured 11.02% less setup time and
+20.90-25.63% less time for the matched thermal-step/history cases at one worker.
+All 24 measured wire records agree exactly; eleven guard implementations and
+call counts are unchanged. Independent review PASS; final 27 serialization tests
+and dependency guard PASS. FAST/SCIENTIFIC completed with two known certificate
+failures and two new inventory failures. The metadata-only `ac14845a8` correction
+resolved both inventory failures in the complete domain/provenance plus
+serialization follow-up pack. Full tiers were not rerun after metadata correction;
+no aggregate green claim. The two baseline certificate failures remain.
+Report: [mesh serialization performance](../performance/mesh-record-performance-2026-10-31.md).
+Local implementation complete; no push or merge. Other review candidates remain proposals.
 
 ## Completed bounded task - Genesis-lite v0.4 performance (owner, 2026-10-31)
 

@@ -12324,3 +12324,25 @@ and normal records reuse only the current invocation's material. Added adversari
 cases cover one-shot iterators, fields becoming plain during serialization,
 later-conversion errors, malformed records, and subclass access/exception order.
 No broad cache or gate weakening was adopted. Final results follow below when run.
+
+## Mesh serialization final verification - 2026-10-31
+
+Implementation source: `458e06215901ada5e2f7d70cdc769b70e0a0b81d`; subsequent metadata-only revision `ac14845a8b423e40643b291bc42fb3558a60d148` and report commit preserve source, test code and fixture bytes.
+Final alternating A/B means (one worker, one numeric thread, three pairs): setup32 220.284 -> 196.007 ms; step32 664.438 -> 525.560 ms; history8x4 888.404 -> 666.799 ms; history32x2 1266.619 -> 941.937 ms. All24 full wire/hash records agree. These are synthetic local performance measurements, not physical validation or whole-project speedups.
+
+The final conservative candidate passed all27 `tests/test_mesh_record_serialization.py` cases and the dependency guard. Eleven issuance/lineage/adapter guard ASTs and profiled call counts are unchanged. Independent scientific review PASS after required fallback-order corrections; reviewer did not execute commands.
+
+| Ordinary gate | Passed | Failed | Skipped | Wall seconds |
+|---|---:|---:|---:|---:|
+| FAST on 458e0621 | 13810 | 4 | 184 | 384.003 |
+| SCIENTIFIC on 458e0621 | 14394 | 4 | 185 | 650.223 |
+
+These aggregate runs were red: two unchanged baseline certificate failures plus two new inventory failures because the new synthetic golden fixtures lacked explicit provenance declarations. The original failures and logs are retained. The metadata-only follow-up revision `ac14845a8b423e40643b291bc42fb3558a60d148` adds two exact SYNTHETIC declarations and their generation description. It changes no source, test code, fixture bytes, scanner, rule or gate. The complete domain/provenance test directory plus all 27 serialization tests then passed: **60 passed, 0 failed, 0 skipped**, in 49.015s. Historical-source hashes resolve to the actual immutable baseline commit. Independent static review of this correction: PASS.
+
+The two new inventory failures are resolved by that executed follow-up; the two baseline certificate failures remain unresolved. Full aggregate suites were not repeated after this metadata-only correction, so no aggregate green result or invented revised aggregate count is claimed. Skip node identities match the retained pre-change gates exactly.
+
+Executed exact commands and environment are preserved by task-workspace `mesh_validate.py` and native evidence `/home/dev_kaeem/forge-mesh-record-evidence-20261031/*-summary.json`, logs and JUnit XML. FAST uses `-m "not expensive" -q -n 4 --dist loadfile` with dependency guard run separately; SCIENTIFIC uses `-m "not campaign" -q -n 4 --dist loadfile` with the six standard CI deselections. No markers, gates, budgets, solver tolerances or security settings changed.
+
+Focused certificate comparison on baseline d05b25ee and candidate458e0621: each27passed/2failed. The unchanged failures are `tests/test_core_certificate.py::test_the_certificate_describes_this_tree` and `tests/test_core_certificate.py::test_the_certificate_records_the_v1_relationship_truthfully`. They remain failures; no certificate regenerated.
+
+Final report: [mesh record serialization performance](../performance/mesh-record-performance-2026-10-31.md). Original published checkout remains d05b25ee; isolated branch `codex/mesh-record-performance` is local only. No push, merge, formal/OD-3, or 1000-campaign run.
