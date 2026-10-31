@@ -31,6 +31,7 @@ umask=077, PROGRESS 2026-10-28); that is a deployment precondition this module c
 from __future__ import annotations
 
 import json
+import functools
 import os
 import pathlib
 import queue
@@ -157,14 +158,20 @@ def command(hidden: Sequence[str], env: Mapping[str, str], python: str = sys.exe
         f" && exec setpriv --reuid={DISCOVERY_UID} --regid={DISCOVERY_UID} --clear-groups --inh-caps=-all "
         f"--bounding-set=-all --no-new-privs -- {USER_NAMESPACE} /usr/bin/env -i {clean} {q(python)} -I "
         f"{q(str(host_script))} {q(str(_ROOT))} {q(str(_ROOT / 'src'))}")
-    return ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--", "/bin/sh", "-c",
+    return ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--kill-child=KILL", "--", "/bin/sh", "-c",
             inner]
 
 
-def _fresh_session_keyring() -> None:
+def _fresh_session_keyring(expected_parent: int | None = None) -> None:
     """In the launched child before exec: join a new anonymous session keyring, so no proposer inherits the launcher's
     (a PAM session under sudo/ssh has one) or shares one with another proposer (review 2026-10-31 M-a)."""
     import ctypes  # noqa: PLC0415 - Linux only, in the forked child
+    parent = os.getppid() if expected_parent is None else expected_parent
+    # A campaign killed at its deadline must not leave its namespace launcher alive.
+    if ctypes.CDLL(None, use_errno=True).prctl(1, 9, 0, 0, 0) < 0:  # PR_SET_PDEATHSIG, SIGKILL
+        raise OSError(ctypes.get_errno(), "could not arm launcher parent-death kill")
+    if os.getppid() != parent:
+        os._exit(125)
     if ctypes.CDLL(None, use_errno=True).syscall(250, 1, None) < 0:      # keyctl(KEYCTL_JOIN_SESSION_KEYRING, NULL)
         raise OSError(ctypes.get_errno(), "could not join a fresh session keyring")
 
@@ -229,7 +236,7 @@ class IsolatedProposerHost(h2.ProposerHost):
         self._err = tempfile.TemporaryFile()                     # operator-side; the proposer's private /tmp cannot see it
         self._proc = subprocess.Popen(command(hidden, env or {}, python, exposed), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                       stderr=self._err, cwd="/", env={"PATH": "/usr/bin:/bin"}, bufsize=0,
-                                      start_new_session=True, preexec_fn=_fresh_session_keyring)
+                                      start_new_session=True, preexec_fn=functools.partial(_fresh_session_keyring, os.getpid()))
         self.timing["popen_seconds"] = time.perf_counter() - self._started
         if self._usage_before is not None:
             from .telemetry_v4 import ProcessSampler

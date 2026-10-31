@@ -93,8 +93,9 @@ def test_a_development_run_commits_before_running_and_never_writes_the_root(tmp_
         import hashlib
         assert commitment["root_commitment_sha256"] == hashlib.sha256(root).hexdigest()
         assert (out / "commitment.json").stat().st_mtime <= (out / "runs.jsonl").stat().st_mtime
-        for p in out.iterdir():
-            assert root.hex() not in p.read_text() and root not in p.read_bytes()
+        for p in out.rglob("*"):
+            if p.is_file():
+                assert root.hex() not in p.read_text() and root not in p.read_bytes()
         manifest = json.loads((out / "environment.json").read_text())
         assert manifest["distributions"] and manifest["isolation_support"][0] is True
         assert str(secret) in manifest["hidden"] or "/root" in manifest["hidden"]

@@ -19,12 +19,10 @@ DEVELOPMENT runs make no claim; formal results are analysed only by :mod:`.analy
 from __future__ import annotations
 
 import argparse
-import concurrent.futures as cf
 import hashlib
 import hmac
 import importlib.metadata
 import json
-import multiprocessing as mp
 import os
 import pathlib
 import platform
@@ -184,31 +182,21 @@ def run(arms: Sequence[str], *, root_file: str, out: str, tier: str = "developme
     (out_dir / "environment.json.sha256").write_text(hashlib.sha256(text.encode()).hexdigest() + "  environment.json\n")
     runs = out_dir / "runs.jsonl"
     runs.write_text("")
-    t0, done, not_run = time.monotonic(), 0, 0
+    done = 0
 
     def keep(rec: Mapping[str, Any]) -> None:
         nonlocal done
-        done += 1
+        done += rec.get("status") not in ("NOT_STARTED", "DEADLINE_TERMINATED")
         with runs.open("a") as fh:
             fh.write(json.dumps(rec, sort_keys=True, default=str) + "\n")
 
     def seed_hex(task: Task) -> str:
         return master_seed(root, task.campaign, task.presentation, task.seed).hex()
 
-    with cf.ProcessPoolExecutor(max_workers=workers, mp_context=mp.get_context("spawn")) as ex:
-        futures = {ex.submit(_work, t, seed_hex(t), tier, hidden, exposed, env): t for t in tasks}
-        try:
-            for f in cf.as_completed(futures, timeout=deadline_seconds):
-                t = futures[f]
-                try:
-                    keep(f.result())
-                except Exception as exc:  # noqa: BLE001 - a crashed campaign is recorded, never lost
-                    keep({"arm": t.arm, "status": "WORKER_FAILED", "task": asdict(t),
-                          "reasons": [f"{type(exc).__name__}: {str(exc)[:300]}"]})
-        except cf.TimeoutError:
-            not_run = sum(1 for f in futures if f.cancel())
-    summary = {**commitment, "completed": done, "not_run_at_deadline": not_run,
-               "elapsed_seconds": time.monotonic() - t0, "workers": workers,
+    from .deadline_v4 import execute
+    execution = execute(_work, [(t, seed_hex(t), tier, hidden, exposed, env) for t in tasks],
+                        directory=out_dir / "task_results", workers=workers, deadline_seconds=deadline_seconds, keep=keep)
+    summary = {**commitment, **execution, "completed": done, "workers": workers,
                "runs_sha256": hashlib.sha256(runs.read_bytes()).hexdigest()}
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True))
     return summary

@@ -39,7 +39,7 @@ integration = pytest.mark.skipif(not _can_isolate(), reason="needs Linux, root a
 # ------------------------------------------------------------------------------------------- pure (every platform)
 def test_the_command_builds_every_namespace_hide_and_privilege_drop():
     cmd = ih.command(["/home", "/srv/x"], {"EXTRA": "1"}, python="/opt/py")
-    assert cmd[:9] == ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--"]
+    assert cmd[:10] == ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--kill-child=KILL", "--"]
     inner = cmd[-1]
     for p in ("/home", "/srv/x"):
         assert f"mount -t tmpfs -o size=64k,mode=000 tmpfs {shlex.quote(p)}" in inner

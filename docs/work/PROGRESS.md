@@ -11848,3 +11848,21 @@ Public software-control runner accepts no formal root. PackageCompiler installat
 - Failed approach: Windows Copy-Item to root-owned WSL clone was denied; the first identical pytest command collected
   nothing (exit 4, missing test). Use `wsl -u root -- cp` for files in the dedicated root-owned clone.
 - No speedup, scientific validation, certification or formal measurement claimed. Subsequent execution recorded below.
+#### Instrumentation execution and first public diagnostic pair
+
+At `a70b8f0f0` (full SHA in the run manifests), same WSL root /opt clone and Python 3.12.3:
+`PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_performance.py tests/genesis_lite/test_v04_isolation.py tests/genesis_lite/test_v04_pilot.py`
+-> 34 passed, 2 skipped in 14.03 s (off-Linux refusal and not-under-/opt refusal are inapplicable here).
+
+Public fixture, unchanged registered 40 iterations / 8 populations / population 33, serial deterministic:
+`FORGE_PERF_DIAGNOSTICS=1 bash /root/forge-perf-evidence-20261031/run_control.sh baseline --out /root/forge-perf-evidence-20261031/A-fit-1 --arms pysr_symbolic --workers 1 --repeats 1`
+-> PUBLIC_FIT_COMPLETED, 132.207 s; runtime introspection 20 Julia threads / 11 GC; parent phase arrivals place
+122.1 s in Julia loading (inclusive), 5.47 s in fit. Child phase labels/counters are diagnostics, not evidence authority.
+The corresponding `threads` command with `--out .../B-fit-1` -> 131.894 s, 1 Julia / 1 GC, same exact Pareto equations
+and losses. n=1 per configuration: no speedup claim. Both outside verifications passed. Parent observed repeated Julia
+package-compilation subprocesses and private /tmp cache writes. Evidence files remain outside the exposed tree.
+
+Deadline defect reproduced independently with the original executor pattern: submit `time.sleep(2)` to a spawn
+ProcessPoolExecutor; after 0.1 s `future.cancel()` returned False; shutdown returned after 2.092 s. A separate fix
+uses bounded campaign processes, an atomic result ledger and a launcher parent-death kill chain. No timing comparison
+mixes this correction into the two measurements above. Full regression and adversarial cleanup checks follow.
