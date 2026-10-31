@@ -6,6 +6,25 @@ as open, or list EXC-1 as an open exception are superseded by that decision. The
 bound by its Cross-Domain Scientific Architecture Requirements (physics-agnostic shared structure; heat is the first
 reference application).
 
+## Current bounded task — Genesis-lite v0.4 performance (owner, 2026-10-31)
+
+Owner supplied the implementation request "Aggressive Performance Optimization (Genesis-lite v0.4)" in chat.
+Base: PR #187, `83e13ae1a344c661f8ef9e71870bc70ad00beab3` (80 commits preserved), dedicated
+`codex/genesis-v04-performance` worktree. Local commits only; no push, merge or main edits.
+
+- [ ] Parent-observed development profiling; explicit Julia/GC/BLAS thread comparison on public synthetic fixtures.
+- [ ] Immutable Julia sysimage: package preload and representative first-fit precompilation, exact dependency and
+  artifact identities; no fitted population or benchmark worlds in the asset. Owner explicitly approved installing
+  pinned PackageCompiler in a separate build environment only (2026-10-31 chat); existing experiment environment unchanged.
+- [ ] Measured 4/8-worker throughput, 12 only if resources allow; retain only demonstrated improvements.
+- [ ] Separate hard-deadline repair, with adversarial cancellation/record-retention checks.
+- [ ] Targeted scientific/isolation regressions, independent scientific review and reproducible performance report.
+
+Preserve D11, six worlds, complete registered grid, all algorithms/operators/seeds/search budgets/scoring, serial
+deterministic PySR, private writable state and every namespace/keyring/mount protection. Public development data only.
+No formal root access/generation, formal campaign, preregistration freeze, full OD-3, v0.2 pin or certificate edits.
+Existing Session A scientific decisions remain in force. Certification and eventual preregistration binding remain open.
+
 ## Owner direction 2026-10-30 — time-saving review applied ("طبق كل ده")
 
 The owner approved applying the 2026-10-30 time-saving review (chat). Executed order and limits:

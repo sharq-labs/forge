@@ -11833,3 +11833,18 @@ and it is a Step 2 / Stage 2b design input (correct extrapolation is where disco
   tests/genesis_lite/test_v04_preregistration.py` -> 6 passed.
   - Failed approach: the same provenance test on the Windows checkout reports 1659 UNKNOWN_PROVENANCE files, because
     `core.autocrlf=true` changes the bytes it hashes. Run byte-hashing provenance checks in an LF clone.
+
+### 2026-10-31 — v0.4 performance: operator instrumentation (development only)
+
+Owner-authorized dedicated branch starts at `83e13ae1a344c661f8ef9e71870bc70ad00beab3`, PR #187 verified live (80 commits).
+Added parent-observed per-universe launch/verification/teardown and optional process-tree sampling; the v0.2-pinned
+proposer_host.py is untouched. Child phase/runtime annotations are explicitly untrusted diagnostics, never scientific evidence.
+Public software-control runner accepts no formal root. PackageCompiler installation approved in separate build env only.
+
+- Red-before, pristine Linux base above plus the new test file, Python 3.12.3:
+  `cd /opt/forge-perf-20261031 && PYTHONPATH=src OPENBLAS_NUM_THREADS=1 /opt/forge-mvp-20261028/.venv/bin/python -m pytest -q -p no:randomly tests/genesis_lite/test_v04_performance.py`
+  -> 2 failed: `test_profile_is_opt_in_and_the_pinned_host_is_unchanged`,
+  `test_isolated_startup_replaces_inherited_zero_and_keeps_checks_separate` (expected missing instrumentation).
+- Failed approach: Windows Copy-Item to root-owned WSL clone was denied; the first identical pytest command collected
+  nothing (exit 4, missing test). Use `wsl -u root -- cp` for files in the dedicated root-owned clone.
+- No speedup, scientific validation, certification or formal measurement claimed. Subsequent execution recorded below.

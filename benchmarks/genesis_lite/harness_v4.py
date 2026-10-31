@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import pathlib
+import time
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -21,7 +22,7 @@ from .isolated_host import ISOLATION_LABEL, per_universe_arm, verified
 
 HERE = pathlib.Path(__file__).resolve().parent
 V4_FILES = ("analysis_v4.py", "arms_v4.py", "decide_v4.py", "expressibility_v3.py", "harness_v4.py", "isolated_host.py",
-            "pilot_v4.py", "proposer_host.py", "reveal_v4.py")
+            "pilot_v4.py", "proposer_host.py", "proposer_profile_v4.py", "telemetry_v4.py", "reveal_v4.py")
 #: substrate the v0.4 files rely on outside the v0.3 closure (outside verification constants and /proc walk)
 SUBSTRATE_V4_FILES = ("src/engcore/blindfold/isolation.py",)
 KINDS = h2.KINDS
@@ -39,13 +40,17 @@ def run_one_v4(arm_name: str, spec: str, *, master_seed: bytes, campaign_id: str
                timeout: float = 600.0, exposed: Sequence[str] | None = None) -> dict[str, Any]:
     """One campaign of ``arm_name`` (resolved inside the isolated process from ``spec``, ``module:function``)."""
     checks: list[dict[str, Any]] = []
-    arm = per_universe_arm(spec, hidden, checks, env=env, timeout=timeout, exposed=exposed)
+    timings: list[dict[str, Any]] = []
+    started = time.perf_counter()
+    arm = per_universe_arm(spec, hidden, checks, env=env, timeout=timeout, exposed=exposed, timings=timings)
     rec = h3.run_one_v3(arm_name, arm, master_seed=master_seed, campaign_id=campaign_id, presentation=presentation,
                         seed=seed, isolation="in_process", budget_fraction=budget_fraction)
     out = rec.to_dict()
     identity, changed = development_identity_v4()
     out.update({"isolation": ISOLATION_LABEL, "isolation_checks": checks, "development_identity_v4": identity,
-                "arm_spec": spec})
+                "arm_spec": spec, "operator_timings": timings,
+                "campaign_total_seconds": time.perf_counter() - started,
+                "host_start_seconds": sum(t["launch_to_hello_seconds"] for t in timings)})
     problems = []
     if changed:
         problems.append(f"the shared v0.2 code differs from its preregistration: {changed[:5]}")

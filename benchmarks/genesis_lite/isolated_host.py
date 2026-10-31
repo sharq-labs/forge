@@ -40,6 +40,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -151,10 +152,11 @@ def command(hidden: Sequence[str], env: Mapping[str, str], python: str = sys.exe
               "if [ -d /dev/mqueue ]; then mount -t mqueue mqueue /dev/mqueue; fi", "cd /tmp"]
     clean = " ".join(q(f"{k}={v}") for k, v in sorted({"PATH": "/usr/bin:/bin", "HOME": "/tmp", **THREAD_ENV,
                                                        **dict(env)}.items()))
+    host_script = _HOST.with_name("proposer_profile_v4.py") if env.get("FORGE_PERF_DIAGNOSTICS") == "1" else _HOST
     inner = " && ".join(steps) + (
         f" && exec setpriv --reuid={DISCOVERY_UID} --regid={DISCOVERY_UID} --clear-groups --inh-caps=-all "
         f"--bounding-set=-all --no-new-privs -- {USER_NAMESPACE} /usr/bin/env -i {clean} {q(python)} -I "
-        f"{q(str(_HOST))} {q(str(_ROOT))} {q(str(_ROOT / 'src'))}")
+        f"{q(str(host_script))} {q(str(_ROOT))} {q(str(_ROOT / 'src'))}")
     return ["unshare", "--mount", "--pid", "--fork", "--net", "--ipc", "--uts", "--mount-proc", "--", "/bin/sh", "-c",
             inner]
 
@@ -214,25 +216,52 @@ class IsolatedProposerHost(h2.ProposerHost):
         if not ok:
             raise IsolationUnavailable(why)
         self._dir = None
+        self._started = time.perf_counter()
+        self.timing: dict[str, Any] = {"source": "operator", "diagnostic_events_untrusted": []}
+        self._sampler = None
+        self._usage_before = None
+        self._closed = False
+        if (env or {}).get("FORGE_PERF_RESOURCES") == "1":
+            from .telemetry_v4 import usage
+            self._usage_before = usage()
         self._timeout = timeout
         exposed = exposures() if exposed is None else tuple(exposed)
         self._err = tempfile.TemporaryFile()                     # operator-side; the proposer's private /tmp cannot see it
         self._proc = subprocess.Popen(command(hidden, env or {}, python, exposed), stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                       stderr=self._err, cwd="/", env={"PATH": "/usr/bin:/bin"}, bufsize=0,
                                       start_new_session=True, preexec_fn=_fresh_session_keyring)
+        self.timing["popen_seconds"] = time.perf_counter() - self._started
+        if self._usage_before is not None:
+            from .telemetry_v4 import ProcessSampler
+            self._sampler = ProcessSampler(self._proc.pid)
         self._lines: queue.Queue = queue.Queue()
         threading.Thread(target=self._pump, daemon=True).start()
-        hello = self._recv()
+        try:
+            hello = self._recv()
+        except BaseException:
+            self.close()
+            raise
+        self.timing["launch_to_hello_seconds"] = time.perf_counter() - self._started
         expected = str((_ROOT / "src" / "engcore" / "__init__.py").resolve())
         if hello.get("op") != "hello" or str(pathlib.Path(hello.get("engcore", "")).resolve()) != expected:
             self.close()
             raise IsolationUnavailable(f"the isolated proposer did not import this tree's engcore: {hello}")
-        self.outside = inspect(_leaf(self._proc.pid), hidden, exposed)
+        inspected = time.perf_counter()
+        try:
+            self.outside = inspect(_leaf(self._proc.pid), hidden, exposed)
+        except BaseException:
+            self.close()
+            raise
+        self.timing["outside_verification_seconds"] = time.perf_counter() - inspected
         if not verified(self.outside):
             self.close()
             raise IsolationUnavailable(f"the proposer process failed outside verification: {json.dumps(self.outside)}")
 
     def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        teardown = time.perf_counter()
         if self._proc.poll() is None:
             try:
                 self._proc.stdin.close()  # type: ignore[union-attr]
@@ -244,6 +273,12 @@ class IsolatedProposerHost(h2.ProposerHost):
                     pass
                 self._proc.wait(timeout=10)
         self._err.close()
+        self.timing["teardown_seconds"] = time.perf_counter() - teardown
+        self.timing["lifetime_seconds"] = time.perf_counter() - self._started
+        if self._sampler is not None:
+            self.timing["resources"] = self._sampler.close()
+            from .telemetry_v4 import usage
+            self.timing["resources"].update({k: v - self._usage_before[k] for k, v in usage().items()})
 
     def stderr_tail(self, limit: int = 600) -> str:
         """The last bytes the proposer wrote to stderr (its own text: diagnostic, never evidence)."""
@@ -255,14 +290,21 @@ class IsolatedProposerHost(h2.ProposerHost):
 
     def _recv(self) -> dict[str, Any]:
         try:
-            return super()._recv()
+            while True:
+                msg = super()._recv()
+                if msg.get("op") != "diagnostic":
+                    return msg
+                events = self.timing["diagnostic_events_untrusted"]
+                if len(events) >= 200:
+                    raise RuntimeError("too many proposer diagnostic messages")
+                events.append({"parent_elapsed_seconds": time.perf_counter() - self._started, "message": msg})
         except RuntimeError as exc:
             raise RuntimeError(f"{exc}; proposer stderr: {self.stderr_tail()!r}") from None
 
 
 def per_universe_arm(spec: str, hidden: Sequence[str], checks: list[dict[str, Any]], *,
                      env: Mapping[str, str] | None = None, timeout: float = 600.0,
-                     exposed: Sequence[str] | None = None):
+                     exposed: Sequence[str] | None = None, timings: list[dict[str, Any]] | None = None):
     """An arm callable for ``harness_v3._run_v3``: a fresh verified isolated process for every universe. Each
     process's outside verification is appended to ``checks`` (the run record keeps them)."""
     def arm(card: Mapping[str, Any], client: Any, *, seed: int = 0) -> Mapping[str, Any]:
@@ -283,6 +325,8 @@ def per_universe_arm(spec: str, hidden: Sequence[str], checks: list[dict[str, An
                 raise
         finally:
             host.close()
+            if timings is not None:
+                timings.append({"universe_id": card["universe_id"], **host.timing})
     return arm
 
 
