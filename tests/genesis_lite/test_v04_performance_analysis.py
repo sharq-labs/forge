@@ -39,8 +39,8 @@ def test_equal_missing_evidence_never_becomes_exact_equivalence(missing):
     else:
         del timings[0]["proposal_sha256" if missing == "proposal" else "query_trace_without_transport_nonce_sha256"]
     out = comparison([incomplete], [deepcopy(incomplete)])
-    assert out["equivalence_status"] == "UNKNOWN"
     assert out["exact_matching_campaigns"] == 0 and out["paired_service_speedup"]["n"] == 0
+    assert out["equivalence_status"] == "UNKNOWN"
 
 
 def test_duplicate_and_missing_tasks_do_not_collapse_into_a_complete_comparison():

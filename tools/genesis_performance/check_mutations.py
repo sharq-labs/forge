@@ -26,6 +26,14 @@ MUTANTS = (
      "test_v04_performance.py::test_unrequested_diagnostics_are_not_a_new_protocol_channel"),
     ("private_tmp_not_required", "isolated_host.py", 'and o["private_tmp"]', "and True",
      "test_v04_isolation.py::test_outside_verification_fails_closed_on_any_missing_property"),
+    ("missing_traces_equal", "analyse.py",
+     "if len(expected) != 6 or len(set(expected)) != 6 or sorted(seen) != sorted(expected):", "if False:",
+     "test_v04_performance_analysis.py::test_equal_missing_evidence_never_becomes_exact_equivalence[all]"),
+    ("duplicate_tasks_collapse", "analyse.py", "if key(record) in indexed:", "if False:",
+     "test_v04_performance_analysis.py::test_duplicate_and_missing_tasks_do_not_collapse_into_a_complete_comparison"),
+    ("empty_comparison_passes", "analyse.py", "not matched or missing or extra or incomplete",
+     "missing or extra or incomplete",
+     "test_v04_performance_analysis.py::test_duplicate_and_missing_tasks_do_not_collapse_into_a_complete_comparison"),
 )
 
 
@@ -51,7 +59,7 @@ def main():
         raise RuntimeError("CONTROL RED; mutants not executed")
     results = []
     for name, module, old, new, test in MUTANTS:
-        path = root / "benchmarks/genesis_lite" / module
+        path = root / ("tools/genesis_performance" if module == "analyse.py" else "benchmarks/genesis_lite") / module
         original = path.read_bytes()
         before = hashlib.sha256(original).hexdigest()
         source = original.decode()
